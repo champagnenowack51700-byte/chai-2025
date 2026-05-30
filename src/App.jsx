@@ -845,7 +845,7 @@ export default function App() {
           <div style={{fontSize:"13px",fontWeight:600,color:"#1a1205",marginBottom:"1px",paddingLeft:"6px"}}>{t.id}</div>
           <div style={{fontSize:"10px",color:"#6a5838",marginBottom:"6px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",paddingLeft:"6px"}}>{t.denomination}</div>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingLeft:"6px"}}>
-            <span style={{fontSize:"10px",color:"#7a6840"}}>{t.millesime||"-"} · {t.volume}L</span>
+            <span style={{fontSize:"10px",color:"#7a6840"}}>{t.marc?"Marc "+t.marc+" · ":""}{t.millesime||"-"} · {t.volume}L</span>
             <div style={{display:"flex",alignItems:"center",gap:"5px"}}>
               {hasNotes && <span style={{fontSize:"10px",color:apc.color,fontWeight:600}}>{ng?.toFixed(1)}*</span>}
               <span style={{fontSize:"11px",fontWeight:600,color:p<20?"#cc2222":p>90?"#1a7a40":apc.color}}>{t.contenuActuel}L</span>
@@ -1283,7 +1283,7 @@ export default function App() {
                         <div style={{width:`${selectedP}%`,height:"100%",background:selectedP<20?"#cc2222":"#b8860b",borderRadius:"2px"}}/>
                       </div>
                     </div>
-                    {[["Millesime vin",selectedT.millesime||"-"],["Certification",selectedT.certif||"-"],["Tonnelier",selectedT.tonnelier||"-"],["Grain",selectedT.grain||"-"],["Chauffe",selectedT.chauffe||"-"],["Capacite",`${selectedT.volume} L`]].map(([k,v])=>(
+                    {[["N Marc",selectedT.marc||"-"],["Millesime vin",selectedT.millesime||"-"],["Certification",selectedT.certif||"-"],["Tonnelier",selectedT.tonnelier||"-"],["Grain",selectedT.grain||"-"],["Chauffe",selectedT.chauffe||"-"],["Capacite",`${selectedT.volume} L`]].map(([k,v])=>(
                       <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:"1px solid #d0c4a0",fontSize:"12px"}}>
                         <span style={{color:"#8a7248"}}>{k}</span><span style={{color:"#1a1205"}}>{v}</span>
                       </div>
