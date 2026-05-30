@@ -2,59 +2,59 @@ import { useState, useEffect } from "react";
 
 const INIT_TONNEAUX = [
   // == VINS CLAIRS 2025 ======================================================
-  { id:"23.28", appellation:"vins_clairs_2025", denomination:"FONTINETTE",         millesime:2025, volume:500, certif:"BIO", tonnelier:"Francois Frère",  statut:"actif", contenuActuel:500 },
-  { id:"23.29", appellation:"vins_clairs_2025", denomination:"FONTINETTE",         millesime:2025, volume:500, certif:"BIO", tonnelier:"Francois Frère",  statut:"actif", contenuActuel:500 },
-  { id:"23.14", appellation:"vins_clairs_2025", denomination:"FONTINETTE",         millesime:2025, volume:500, certif:"BIO", tonnelier:"Mercurey",         statut:"actif", contenuActuel:500 },
-  { id:"21.44", appellation:"vins_clairs_2025", denomination:"FONTINETTE",         millesime:2025, volume:320, certif:"BIO", tonnelier:"Mercurey",         statut:"actif", contenuActuel:320 },
-  { id:"21.47", appellation:"vins_clairs_2025", denomination:"FONTINETTE",         millesime:2025, volume:320, certif:"BIO", tonnelier:"Seguin Moreau",    statut:"actif", contenuActuel:320 },
-  { id:"22.29", appellation:"vins_clairs_2025", denomination:"BAUCH THOMAS DU BAS",millesime:2025, volume:228, certif:"BIO", tonnelier:"Saint Martin",     statut:"actif", contenuActuel:228 },
-  { id:"20.15", appellation:"vins_clairs_2025", denomination:"BAUCH THOMAS DU BAS",millesime:2025, volume:228, certif:"BIO", tonnelier:"Seguin Moreau",    statut:"actif", contenuActuel:228 },
-  { id:"21.48", appellation:"vins_clairs_2025", denomination:"BAUCH THOMAS DU BAS",millesime:2025, volume:228, certif:"BIO", tonnelier:"Seguin Moreau",    statut:"actif", contenuActuel:228 },
-  { id:"105",   appellation:"vins_clairs_2025", denomination:"BAUCH THOMAS DU BAS",millesime:2025, volume:228, certif:"BIO", tonnelier:"Seguin Moreau",    statut:"actif", contenuActuel:228 },
-  { id:"22.52", appellation:"vins_clairs_2025", denomination:"BAUCH THOMAS DU BAS",millesime:2025, volume:228, certif:"BIO", tonnelier:"D",                statut:"actif", contenuActuel:228 },
-  { id:"69",    appellation:"vins_clairs_2025", denomination:"BAUCH THOMAS DU BAS",millesime:2025, volume:228, certif:"BIO", tonnelier:"Chassin",          statut:"actif", contenuActuel:228 },
-  { id:"23.15", appellation:"vins_clairs_2025", denomination:"BAUCHETS THOMAS PN", millesime:2025, volume:500, certif:"BIO", tonnelier:"Seguin Moreau",    statut:"actif", contenuActuel:500 },
-  { id:"23.13", appellation:"vins_clairs_2025", denomination:"BAUCHETS THOMAS PN", millesime:2025, volume:500, certif:"BIO", tonnelier:"ACF",              statut:"actif", contenuActuel:500 },
-  { id:"22.14", appellation:"vins_clairs_2025", denomination:"BAUCHETS THOMAS PN", millesime:2025, volume:320, certif:"BIO", tonnelier:"ACF",              statut:"actif", contenuActuel:320 },
-  { id:"22.47", appellation:"vins_clairs_2025", denomination:"BAUCHETS THOMAS PN", millesime:2025, volume:320, certif:"BIO", tonnelier:"Seguin Moreau",    statut:"actif", contenuActuel:320 },
-  { id:"21.16", appellation:"vins_clairs_2025", denomination:"LAURINETTE MEUNIER", millesime:2025, volume:228, certif:"BIO", tonnelier:"Francois Frère",   statut:"actif", contenuActuel:228 },
-  { id:"109",   appellation:"vins_clairs_2025", denomination:"LAURINETTE MEUNIER", millesime:2025, volume:228, certif:"BIO", tonnelier:"Jadot",            statut:"actif", contenuActuel:228 },
-  { id:"21.39", appellation:"vins_clairs_2025", denomination:"LAURINETTE MEUNIER", millesime:2025, volume:228, certif:"BIO", tonnelier:"Francois Frère",   statut:"actif", contenuActuel:228 },
-  { id:"22.38", appellation:"vins_clairs_2025", denomination:"LAURINETTE MEUNIER", millesime:2025, volume:228, certif:"BIO", tonnelier:"Mercurey",         statut:"actif", contenuActuel:228 },
-  { id:"104",   appellation:"vins_clairs_2025", denomination:"LAURINETTE MEUNIER", millesime:2025, volume:228, certif:"BIO", tonnelier:"Saint martin",     statut:"actif", contenuActuel:228 },
-  { id:"81",    appellation:"vins_clairs_2025", denomination:"LAURINETTE MEUNIER", millesime:2025, volume:228, certif:"BIO", tonnelier:"Chassins",         statut:"actif", contenuActuel:228 },
-  { id:"23.26", appellation:"vins_clairs_2025", denomination:"TERRES BLEUES",      millesime:2025, volume:500, certif:"BIO", tonnelier:"Francois Frère",   statut:"actif", contenuActuel:500 },
-  { id:"23.27", appellation:"vins_clairs_2025", denomination:"TERRES BLEUES",      millesime:2025, volume:500, certif:"BIO", tonnelier:"Francois Frère",   statut:"actif", contenuActuel:500 },
-  { id:"22.41", appellation:"vins_clairs_2025", denomination:"TERRES BLEUES",      millesime:2025, volume:320, certif:"BIO", tonnelier:"ACF",              statut:"actif", contenuActuel:320 },
-  { id:"22.30", appellation:"vins_clairs_2025", denomination:"MAISONS BRULEES",    millesime:2025, volume:228, certif:"BIO", tonnelier:"Mercurey",         statut:"actif", contenuActuel:228 },
-  { id:"34",    appellation:"vins_clairs_2025", denomination:"MAISONS BRULEES",    millesime:2025, volume:228, certif:"BIO", tonnelier:"Chassins",         statut:"actif", contenuActuel:228 },
-  { id:"21.30", appellation:"vins_clairs_2025", denomination:"MAISONS BRULEES",    millesime:2025, volume:228, certif:"BIO", tonnelier:"Chassins",         statut:"actif", contenuActuel:228 },
-  { id:"57",    appellation:"vins_clairs_2025", denomination:"MAISONS BRULEES",    millesime:2025, volume:228, certif:"BIO", tonnelier:"Damy",             statut:"surveillance", contenuActuel:228 },
-  { id:"20.40", appellation:"vins_clairs_2025", denomination:"MAISONS BRULEES",    millesime:2025, volume:228, certif:"BIO", tonnelier:"Cavin",            statut:"actif", contenuActuel:228 },
-  { id:"71",    appellation:"vins_clairs_2025", denomination:"MAISONS BRULEES",    millesime:2025, volume:228, certif:"BIO", tonnelier:"",                 statut:"actif", contenuActuel:228 },
-  { id:"45682", appellation:"vins_clairs_2025", denomination:"VINCELLES TRY",      millesime:2025, volume:228, certif:"BIO", tonnelier:"Chassin B",        statut:"actif", contenuActuel:228 },
-  { id:"21.20", appellation:"vins_clairs_2025", denomination:"VINCELLES TRY",      millesime:2025, volume:228, certif:"BIO", tonnelier:"Mercurey",         statut:"actif", contenuActuel:228 },
-  { id:"21.41", appellation:"vins_clairs_2025", denomination:"VINCELLES TRY",      millesime:2025, volume:228, certif:"BIO", tonnelier:"Jadot",            statut:"actif", contenuActuel:228 },
-  { id:"22.13", appellation:"vins_clairs_2025", denomination:"VINCELLES TRY",      millesime:2025, volume:228, certif:"BIO", tonnelier:"ACF",              statut:"actif", contenuActuel:228 },
-  { id:"45923", appellation:"vins_clairs_2025", denomination:"ARPENTS ROUGE",      millesime:2025, volume:500, certif:"BIO", tonnelier:"Cavin",            statut:"actif", contenuActuel:500 },
-  { id:"23.22", appellation:"vins_clairs_2025", denomination:"ARPENTS ROUGE",      millesime:2025, volume:500, certif:"BIO", tonnelier:"Saint Martin",     statut:"actif", contenuActuel:500 },
-  { id:"23.23", appellation:"vins_clairs_2025", denomination:"ARPENTS ROUGE",      millesime:2025, volume:500, certif:"BIO", tonnelier:"Saint Martin",     statut:"actif", contenuActuel:500 },
-  { id:"22.42", appellation:"vins_clairs_2025", denomination:"ARPENTS ROUGE",      millesime:2025, volume:320, certif:"BIO", tonnelier:"Seguin Moreau",    statut:"actif", contenuActuel:320 },
-  { id:"23.16", appellation:"vins_clairs_2025", denomination:"BELLEVUE",           millesime:2025, volume:500, certif:"BIO", tonnelier:"Cavin",            statut:"actif", contenuActuel:500 },
-  { id:"23.24", appellation:"vins_clairs_2025", denomination:"BELLEVUE",           millesime:2025, volume:500, certif:"BIO", tonnelier:"Saint Martin",     statut:"actif", contenuActuel:500 },
-  { id:"22.17", appellation:"vins_clairs_2025", denomination:"BELLEVUE",           millesime:2025, volume:320, certif:"BIO", tonnelier:"Mercurey",         statut:"actif", contenuActuel:320 },
-  { id:"22.16", appellation:"vins_clairs_2025", denomination:"BRANSCOURT",         millesime:2025, volume:320, certif:"BIO", tonnelier:"Seguin Moreau",    statut:"actif", contenuActuel:320 },
-  { id:"22.54", appellation:"vins_clairs_2025", denomination:"BRANSCOURT",         millesime:2025, volume:500, certif:"BIO", tonnelier:"Francois Frère",   statut:"actif", contenuActuel:500 },
-  { id:"22.76", appellation:"vins_clairs_2025", denomination:"BRANSCOURT",         millesime:2025, volume:500, certif:"BIO", tonnelier:"Francois Frère",   statut:"actif", contenuActuel:500 },
-  { id:"22.44", appellation:"vins_clairs_2025", denomination:"TUILERIE",           millesime:2025, volume:320, certif:"BIO", tonnelier:"ACF",              statut:"actif", contenuActuel:320 },
-  { id:"22.18", appellation:"vins_clairs_2025", denomination:"TUILERIE",           millesime:2025, volume:320, certif:"BIO", tonnelier:"Mercurey",         statut:"actif", contenuActuel:320 },
-  { id:"21.24", appellation:"vins_clairs_2025", denomination:"TUILERIE",           millesime:2025, volume:320, certif:"BIO", tonnelier:"Cavin",            statut:"actif", contenuActuel:320 },
-  { id:"21.49", appellation:"vins_clairs_2025", denomination:"EPERNAY",            millesime:2025, volume:320, certif:"",    tonnelier:"Seguin Moreau",    statut:"actif", contenuActuel:320 },
-  { id:"25.22", appellation:"vins_clairs_2025", denomination:"LE MESNIL",          millesime:2025, volume:320, certif:"BIO", tonnelier:"",                 statut:"actif", contenuActuel:320 },
-  { id:"25.21", appellation:"vins_clairs_2025", denomination:"LES GOESSES CRU A",  millesime:2025, volume:228, certif:"BIO", tonnelier:"",                 statut:"actif", contenuActuel:228 },
-  { id:"103",   appellation:"vins_clairs_2025", denomination:"LES GOESSES CRU B",  millesime:2025, volume:228, certif:"BIO", tonnelier:"",                 statut:"actif", contenuActuel:228 },
-  { id:"23.18", appellation:"vins_clairs_2025", denomination:"TRY / FESTIGNY",     millesime:2025, volume:500, certif:"BIO", tonnelier:"",                 statut:"surveillance", contenuActuel:500 },
-  { id:"23.19", appellation:"vins_clairs_2025", denomination:"TRY / FESTIGNY",     millesime:2025, volume:500, certif:"BIO", tonnelier:"Seguin Moreau",    statut:"actif", contenuActuel:500 },
+  { id:"23.28", appellation:"vins_clairs_2025", denomination:"FONTINETTE",         millesime:2025, volume:500, certif:"BIO", tonnelier:"Francois Frère",  statut:"actif", marc:5, contenuActuel:500 },
+  { id:"23.29", appellation:"vins_clairs_2025", denomination:"FONTINETTE",         millesime:2025, volume:500, certif:"BIO", tonnelier:"Francois Frère",  statut:"actif", marc:5, contenuActuel:500 },
+  { id:"23.14", appellation:"vins_clairs_2025", denomination:"FONTINETTE",         millesime:2025, volume:500, certif:"BIO", tonnelier:"Mercurey",         statut:"actif", marc:5, contenuActuel:500 },
+  { id:"21.44", appellation:"vins_clairs_2025", denomination:"FONTINETTE",         millesime:2025, volume:320, certif:"BIO", tonnelier:"Mercurey",         statut:"actif", marc:5, contenuActuel:320 },
+  { id:"21.47", appellation:"vins_clairs_2025", denomination:"FONTINETTE",         millesime:2025, volume:320, certif:"BIO", tonnelier:"Seguin Moreau",    statut:"actif", marc:5, contenuActuel:320 },
+  { id:"22.29", appellation:"vins_clairs_2025", denomination:"BAUCH THOMAS DU BAS",millesime:2025, volume:228, certif:"BIO", tonnelier:"Saint Martin",     statut:"actif", marc:6, contenuActuel:228 },
+  { id:"20.15", appellation:"vins_clairs_2025", denomination:"BAUCH THOMAS DU BAS",millesime:2025, volume:228, certif:"BIO", tonnelier:"Seguin Moreau",    statut:"actif", marc:6, contenuActuel:228 },
+  { id:"21.48", appellation:"vins_clairs_2025", denomination:"BAUCH THOMAS DU BAS",millesime:2025, volume:228, certif:"BIO", tonnelier:"Seguin Moreau",    statut:"actif", marc:6, contenuActuel:228 },
+  { id:"105",   appellation:"vins_clairs_2025", denomination:"BAUCH THOMAS DU BAS",millesime:2025, volume:228, certif:"BIO", tonnelier:"Seguin Moreau",    statut:"actif", marc:6, contenuActuel:228 },
+  { id:"22.52", appellation:"vins_clairs_2025", denomination:"BAUCH THOMAS DU BAS",millesime:2025, volume:228, certif:"BIO", tonnelier:"D",                statut:"actif", marc:6, contenuActuel:228 },
+  { id:"69",    appellation:"vins_clairs_2025", denomination:"BAUCH THOMAS DU BAS",millesime:2025, volume:228, certif:"BIO", tonnelier:"Chassin",          statut:"actif", marc:6, contenuActuel:228 },
+  { id:"23.15", appellation:"vins_clairs_2025", denomination:"BAUCHETS THOMAS PN", millesime:2025, volume:500, certif:"BIO", tonnelier:"Seguin Moreau",    statut:"actif", marc:7, contenuActuel:500 },
+  { id:"23.13", appellation:"vins_clairs_2025", denomination:"BAUCHETS THOMAS PN", millesime:2025, volume:500, certif:"BIO", tonnelier:"ACF",              statut:"actif", marc:7, contenuActuel:500 },
+  { id:"22.14", appellation:"vins_clairs_2025", denomination:"BAUCHETS THOMAS PN", millesime:2025, volume:320, certif:"BIO", tonnelier:"ACF",              statut:"actif", marc:7, contenuActuel:320 },
+  { id:"22.47", appellation:"vins_clairs_2025", denomination:"BAUCHETS THOMAS PN", millesime:2025, volume:320, certif:"BIO", tonnelier:"Seguin Moreau",    statut:"actif", marc:7, contenuActuel:320 },
+  { id:"21.16", appellation:"vins_clairs_2025", denomination:"LAURINETTE MEUNIER", millesime:2025, volume:228, certif:"BIO", tonnelier:"Francois Frère",   statut:"actif", marc:8, contenuActuel:228 },
+  { id:"109",   appellation:"vins_clairs_2025", denomination:"LAURINETTE MEUNIER", millesime:2025, volume:228, certif:"BIO", tonnelier:"Jadot",            statut:"actif", marc:8, contenuActuel:228 },
+  { id:"21.39", appellation:"vins_clairs_2025", denomination:"LAURINETTE MEUNIER", millesime:2025, volume:228, certif:"BIO", tonnelier:"Francois Frère",   statut:"actif", marc:8, contenuActuel:228 },
+  { id:"22.38", appellation:"vins_clairs_2025", denomination:"LAURINETTE MEUNIER", millesime:2025, volume:228, certif:"BIO", tonnelier:"Mercurey",         statut:"actif", marc:8, contenuActuel:228 },
+  { id:"104",   appellation:"vins_clairs_2025", denomination:"LAURINETTE MEUNIER", millesime:2025, volume:228, certif:"BIO", tonnelier:"Saint martin",     statut:"actif", marc:8, contenuActuel:228 },
+  { id:"81",    appellation:"vins_clairs_2025", denomination:"LAURINETTE MEUNIER", millesime:2025, volume:228, certif:"BIO", tonnelier:"Chassins",         statut:"actif", marc:8, contenuActuel:228 },
+  { id:"23.26", appellation:"vins_clairs_2025", denomination:"TERRES BLEUES",      millesime:2025, volume:500, certif:"BIO", tonnelier:"Francois Frère",   statut:"actif", marc:11, contenuActuel:500 },
+  { id:"23.27", appellation:"vins_clairs_2025", denomination:"TERRES BLEUES",      millesime:2025, volume:500, certif:"BIO", tonnelier:"Francois Frère",   statut:"actif", marc:11, contenuActuel:500 },
+  { id:"22.41", appellation:"vins_clairs_2025", denomination:"TERRES BLEUES",      millesime:2025, volume:320, certif:"BIO", tonnelier:"ACF",              statut:"actif", marc:11, contenuActuel:320 },
+  { id:"22.30", appellation:"vins_clairs_2025", denomination:"MAISONS BRULEES",    millesime:2025, volume:228, certif:"BIO", tonnelier:"Mercurey",         statut:"actif", marc:12, contenuActuel:228 },
+  { id:"34",    appellation:"vins_clairs_2025", denomination:"MAISONS BRULEES",    millesime:2025, volume:228, certif:"BIO", tonnelier:"Chassins",         statut:"actif", marc:12, contenuActuel:228 },
+  { id:"21.30", appellation:"vins_clairs_2025", denomination:"MAISONS BRULEES",    millesime:2025, volume:228, certif:"BIO", tonnelier:"Chassins",         statut:"actif", marc:12, contenuActuel:228 },
+  { id:"57",    appellation:"vins_clairs_2025", denomination:"MAISONS BRULEES",    millesime:2025, volume:228, certif:"BIO", tonnelier:"Damy",             statut:"surveillance", marc:12, contenuActuel:228 },
+  { id:"20.40", appellation:"vins_clairs_2025", denomination:"MAISONS BRULEES",    millesime:2025, volume:228, certif:"BIO", tonnelier:"Cavin",            statut:"actif", marc:12, contenuActuel:228 },
+  { id:"71",    appellation:"vins_clairs_2025", denomination:"MAISONS BRULEES",    millesime:2025, volume:228, certif:"BIO", tonnelier:"",                 statut:"actif", marc:12, contenuActuel:228 },
+  { id:"45682", appellation:"vins_clairs_2025", denomination:"VINCELLES TRY",      millesime:2025, volume:228, certif:"BIO", tonnelier:"Chassin B",        statut:"actif", marc:13, contenuActuel:228 },
+  { id:"21.20", appellation:"vins_clairs_2025", denomination:"VINCELLES TRY",      millesime:2025, volume:228, certif:"BIO", tonnelier:"Mercurey",         statut:"actif", marc:13, contenuActuel:228 },
+  { id:"21.41", appellation:"vins_clairs_2025", denomination:"VINCELLES TRY",      millesime:2025, volume:228, certif:"BIO", tonnelier:"Jadot",            statut:"actif", marc:13, contenuActuel:228 },
+  { id:"22.13", appellation:"vins_clairs_2025", denomination:"VINCELLES TRY",      millesime:2025, volume:228, certif:"BIO", tonnelier:"ACF",              statut:"actif", marc:13, contenuActuel:228 },
+  { id:"45923", appellation:"vins_clairs_2025", denomination:"ARPENTS ROUGE",      millesime:2025, volume:500, certif:"BIO", tonnelier:"Cavin",            statut:"actif", marc:14, contenuActuel:500 },
+  { id:"23.22", appellation:"vins_clairs_2025", denomination:"ARPENTS ROUGE",      millesime:2025, volume:500, certif:"BIO", tonnelier:"Saint Martin",     statut:"actif", marc:14, contenuActuel:500 },
+  { id:"23.23", appellation:"vins_clairs_2025", denomination:"ARPENTS ROUGE",      millesime:2025, volume:500, certif:"BIO", tonnelier:"Saint Martin",     statut:"actif", marc:14, contenuActuel:500 },
+  { id:"22.42", appellation:"vins_clairs_2025", denomination:"ARPENTS ROUGE",      millesime:2025, volume:320, certif:"BIO", tonnelier:"Seguin Moreau",    statut:"actif", marc:14, contenuActuel:320 },
+  { id:"23.16", appellation:"vins_clairs_2025", denomination:"BELLEVUE",           millesime:2025, volume:500, certif:"BIO", tonnelier:"Cavin",            statut:"actif", marc:15, contenuActuel:500 },
+  { id:"23.24", appellation:"vins_clairs_2025", denomination:"BELLEVUE",           millesime:2025, volume:500, certif:"BIO", tonnelier:"Saint Martin",     statut:"actif", marc:15, contenuActuel:500 },
+  { id:"22.17", appellation:"vins_clairs_2025", denomination:"BELLEVUE",           millesime:2025, volume:320, certif:"BIO", tonnelier:"Mercurey",         statut:"actif", marc:15, contenuActuel:320 },
+  { id:"22.16", appellation:"vins_clairs_2025", denomination:"BRANSCOURT",         millesime:2025, volume:320, certif:"BIO", tonnelier:"Seguin Moreau",    statut:"actif", marc:18, contenuActuel:320 },
+  { id:"22.54", appellation:"vins_clairs_2025", denomination:"BRANSCOURT",         millesime:2025, volume:500, certif:"BIO", tonnelier:"Francois Frère",   statut:"actif", marc:18, contenuActuel:500 },
+  { id:"22.76", appellation:"vins_clairs_2025", denomination:"BRANSCOURT",         millesime:2025, volume:500, certif:"BIO", tonnelier:"Francois Frère",   statut:"actif", marc:18, contenuActuel:500 },
+  { id:"22.44", appellation:"vins_clairs_2025", denomination:"TUILERIE",           millesime:2025, volume:320, certif:"BIO", tonnelier:"ACF",              statut:"actif", marc:19, contenuActuel:320 },
+  { id:"22.18", appellation:"vins_clairs_2025", denomination:"TUILERIE",           millesime:2025, volume:320, certif:"BIO", tonnelier:"Mercurey",         statut:"actif", marc:19, contenuActuel:320 },
+  { id:"21.24", appellation:"vins_clairs_2025", denomination:"TUILERIE",           millesime:2025, volume:320, certif:"BIO", tonnelier:"Cavin",            statut:"actif", marc:19, contenuActuel:320 },
+  { id:"21.49", appellation:"vins_clairs_2025", denomination:"EPERNAY",            millesime:2025, volume:320, certif:"",    tonnelier:"Seguin Moreau",    statut:"actif", marc:0, contenuActuel:320 },
+  { id:"25.22", appellation:"vins_clairs_2025", denomination:"LE MESNIL",          millesime:2025, volume:320, certif:"BIO", tonnelier:"",                 statut:"actif", marc:0, contenuActuel:320 },
+  { id:"25.21", appellation:"vins_clairs_2025", denomination:"LES GOESSES CRU A",  millesime:2025, volume:228, certif:"BIO", tonnelier:"",                 statut:"actif", marc:0, contenuActuel:228 },
+  { id:"103",   appellation:"vins_clairs_2025", denomination:"LES GOESSES CRU B",  millesime:2025, volume:228, certif:"BIO", tonnelier:"",                 statut:"actif", marc:0, contenuActuel:228 },
+  { id:"23.18", appellation:"vins_clairs_2025", denomination:"TRY / FESTIGNY",     millesime:2025, volume:500, certif:"BIO", tonnelier:"",                 statut:"surveillance", marc:16, contenuActuel:500 },
+  { id:"23.19", appellation:"vins_clairs_2025", denomination:"TRY / FESTIGNY",     millesime:2025, volume:500, certif:"BIO", tonnelier:"Seguin Moreau",    statut:"actif", marc:16, contenuActuel:500 },
   // == VINS DE RÉSERVE ======================================================
   { id:"C18.25",          appellation:"vins_reserve", denomination:"VDR TUILERIE 2020",           millesime:2020, volume:228,  certif:"BIO",     tonnelier:"",              statut:"actif", contenuActuel:220 },
   { id:"22.34",           appellation:"vins_reserve", denomination:"MESNIL SUR OGER",             millesime:null, volume:228,  certif:"BIO",     tonnelier:"Chassin",       statut:"actif", contenuActuel:220 },
@@ -291,7 +291,8 @@ const TYPES_MOUVEMENT = [
   { value:"soutirage",   label:"Soutirage (fût &rarr; fût)",  icon:"ti-arrows-exchange",color:"#1a7a40" },
   { value:"assemblage",  label:"Assemblage (plusieurs &rarr; 1)", icon:"ti-git-merge",  color:"#2d6a00" },
   { value:"ecoulage",    label:"Écoulage partiel",        icon:"ti-droplet-half-2", color:"#c47800" },
-  { value:"vidange",     label:"Vidange complète",        icon:"ti-circle-x",       color:"#cc2222" },
+  { value:"perte",       label:"Perte de volume",         icon:"ti-droplet-off",    color:"#cc2222" },
+  { value:"vidange",     label:"Vidange complète",        icon:"ti-circle-x",       color:"#8B0000" },
   { value:"remplissage", label:"Remplissage cuve",        icon:"ti-droplet-filled", color:"#533AB7" },
   { value:"batonnage",   label:"Bâtonnage",               icon:"ti-refresh",        color:"#5F5E5A" },
   { value:"ajout_produit",label:"Ajout produit",          icon:"ti-flask",          color:"#BA7517" },
@@ -348,6 +349,7 @@ export default function App() {
   const [ficheTab,    setFicheTab]    = useState("infos"); // infos | mouvements | degustations
   const [searchFut,   setSearchFut]   = useState("");
   const [filterDenom,      setFilterDenom]      = useState("");
+  const [filterStatut,     setFilterStatut]     = useState("actif");
   const [filterAppellation, setFilterAppellation] = useState("");
   const [filterOp,         setFilterOp]         = useState("");
   const [filterDegFut,     setFilterDegFut]     = useState("");
@@ -359,6 +361,64 @@ export default function App() {
   const [showImport,  setShowImport]  = useState(false);
   const [showReset,    setShowReset]    = useState(false);
   const [showEditDeg,  setShowEditDeg]  = useState(false);
+  const [showCampForm, setShowCampForm] = useState(false);
+  const [showTirageForm,   setShowTirageForm]   = useState(false);
+  const [showVendangeForm,  setShowVendangeForm]  = useState(false);
+  const [filterVendangeAn,  setFilterVendangeAn]  = useState("");
+  const [editingVendange,  setEditingVendange]  = useState(null);
+  const [vendanges,        setVendanges]        = useState(()=>load("chai_vendanges", []));
+  const [parcelles,        setParcelles]        = useState(()=>load("chai_parcelles", []));
+  const [showParcelleForm, setShowParcelleForm] = useState(false);
+  const [editingParcelle,  setEditingParcelle]  = useState(null);
+  const [parcelleForm,     setParcelleForm]     = useState({nom:"",cepage:"",certification:"BIO",surface:"",commune:"",observations:""});
+  const VENDANGE_EMPTY = {
+    annee: new Date().getFullYear().toString(),
+    date: new Date().toISOString().slice(0,10),
+    parcelleId: "",
+    operateur: "",
+    numeroMarc: "",
+    volumeRecolte: "",
+    degreePotentiel: "",
+    acidite: "",
+    so2: "",
+    rendement: "",
+    observations: "",
+    cuveReception: "",
+    nouvelleCuveNom: "",
+    nouvelleCuveVolume: "",
+    produitsAjoutes: [],
+  };
+  const [vendangeForm, setVendangeForm] = useState(VENDANGE_EMPTY);
+  const [showProduitVendange, setShowProduitVendange] = useState(false);
+  const [produitVendangeForm, setProduitVendangeForm] = useState({nom:"",dose:"",lot:"",date:""});
+  const [editingTirage,  setEditingTirage]  = useState(null);
+  const [tirages,        setTirages]        = useState(()=>load("chai_tirages", []));
+  const TIRAGE_EMPTY = {
+    date: new Date().toISOString().slice(0,10),
+    operateur: "",
+    cuvee: "",
+    millesime: "",
+    futsSources: [],
+    volumeTotal: "",
+    levainEau: "",
+    levainVin: "",
+    levainLevure: "",
+    levainLevureNom: "",
+    levainLot: "",
+    qte75: "",
+    qteMagnum: "",
+    qteJeroboam: "",
+    // Cuve de stockage apres assemblage
+    cuveDestMode: "existante",  // "existante" ou "nouvelle"
+    cuveDestId: "",             // id cuve existante
+    nouvelleCuveId: "",         // id nouvelle cuve
+    nouvelleCuveVolume: "",     // capacite nouvelle cuve
+    notes: "",
+  };
+  const [tirageForm, setTirageForm] = useState(TIRAGE_EMPTY);
+  const [campFutId,    setCampFutId]    = useState(null);
+  const [campagnes,    setCampagnes]    = useState(()=>load("chai_campagnes", []));
+  const [campForm,     setCampForm]     = useState({annee:"", denomination:"", millesime:"", notes:""});
   const [editingNote,  setEditingNote]  = useState(null);
   const [editNoteForm, setEditNoteForm] = useState({boise:"",longueur:"",noteG:"",commentaire:""});
   const [showFutForm, setShowFutForm] = useState(false);
@@ -367,13 +427,13 @@ export default function App() {
   const [importMsg,   setImportMsg]   = useState("");
 
   // Fût / Cuve form
-  const EMPTY_FUT = { id:"", appellation:"vins_clairs_2025", denomination:"", millesime:"2025", volume:"", tonnelier:"", grain:"", chauffe:"", certif:"BIO", statut:"actif", contenuActuel:"" };
+  const EMPTY_FUT = { id:"", appellation:"vins_clairs_2025", denomination:"", millesime:"2025", volume:"", tonnelier:"", grain:"", chauffe:"", certif:"BIO", statut:"actif", contenuActuel:"", marc:"", commentaire:"" };
   const [futForm, setFutForm] = useState(EMPTY_FUT);
 
   // Mouvement form
   const [mvtForm, setMvtForm] = useState({
     type:"ouillage", date:new Date().toISOString().slice(0,16),
-    operateur:"", futSource:[], futDest:"", volume:"", notes:"", produit:"", dosage:"",
+    operateur:"", futSource:[], futDest:"", volume:"", notes:"", produit:"", dosage:"", numeroLot:"",
   });
   // Dégustation form - une ligne par dégustateur
   const [degForm, setDegForm] = useState({
@@ -388,6 +448,10 @@ export default function App() {
   useEffect(()=>{ try{localStorage.setItem("chai_tonneaux",JSON.stringify(tonneaux));}catch{} },[tonneaux]);
   useEffect(()=>{ try{localStorage.setItem("chai_mouvements",JSON.stringify(mouvements));}catch{} },[mouvements]);
   useEffect(()=>{ try{localStorage.setItem("chai_degustations",JSON.stringify(degustations));}catch{} },[degustations]);
+  useEffect(()=>{ try{localStorage.setItem("chai_vendanges",JSON.stringify(vendanges));}catch{} },[vendanges]);
+  useEffect(()=>{ try{localStorage.setItem("chai_parcelles",JSON.stringify(parcelles));}catch{} },[parcelles]);
+  useEffect(()=>{ try{localStorage.setItem("chai_tirages",JSON.stringify(tirages));}catch{} },[tirages]);
+  useEffect(()=>{ try{localStorage.setItem("chai_campagnes",JSON.stringify(campagnes));}catch{} },[campagnes]);
   useEffect(()=>{ try{localStorage.setItem("chai_degustateurs_v2",JSON.stringify(degustateurs));}catch{} },[degustateurs]);
 
   const getTonneau = (id) => tonneaux.find(t=>t.id===id);
@@ -426,7 +490,7 @@ export default function App() {
     const fut = { id:futForm.id.trim(), appellation:futForm.appellation, denomination:futForm.denomination.trim(),
       millesime:futForm.millesime?+futForm.millesime:null, volume:vol, tonnelier:futForm.tonnelier,
       grain:futForm.grain, chauffe:futForm.chauffe, certif:futForm.certif,
-      statut:futForm.statut, contenuActuel:contenu };
+      statut:futForm.statut, contenuActuel:contenu, marc:futForm.marc||"", commentaire:futForm.commentaire||"" };
     if(editingFut) {
       setTonneaux(prev=>prev.map(t=>t.id===editingFut.id?fut:t));
     } else {
@@ -464,7 +528,7 @@ export default function App() {
     } else if(mvtForm.type==="assemblage" && mvtForm.futDest){
       const tot=mvtForm.futSource.reduce((s,id)=>s+(getTonneau(id)?.contenuActuel||0),0);
       upd=upd.map(t=>{ if(mvtForm.futSource.includes(t.id)) return{...t,contenuActuel:0,statut:"vide"}; if(t.id===mvtForm.futDest) return{...t,contenuActuel:Math.min(t.volume,tot)}; return t; });
-    } else if(["ecoulage"].includes(mvtForm.type) && mvtForm.futSource[0]){
+    } else if(["ecoulage","perte"].includes(mvtForm.type) && mvtForm.futSource[0]){
       upd=upd.map(t=>t.id===mvtForm.futSource[0]?{...t,contenuActuel:Math.max(0,t.contenuActuel-vol)}:t);
     } else if(mvtForm.type==="vidange"){
       upd=upd.map(t=>mvtForm.futSource.includes(t.id)?{...t,contenuActuel:0,statut:"vide"}:t);
@@ -472,8 +536,9 @@ export default function App() {
       upd=upd.map(t=>t.id===mvtForm.futDest?{...t,contenuActuel:Math.min(t.volume,t.contenuActuel+vol)}:t);
     }
     setTonneaux(upd);
+    if(mvtForm.type==="ajout_produit" && !mvtForm.numeroLot.trim()) return alert("Le numéro de lot est obligatoire pour un ajout de produit.");
     setMouvements(prev=>[{id:Date.now().toString(),...mvtForm,timestamp:new Date().toISOString()},...prev]);
-    setMvtForm({type:"ouillage",date:new Date().toISOString().slice(0,16),operateur:"",futSource:[],futDest:"",volume:"",notes:"",produit:"",dosage:""});
+    setMvtForm({type:"ouillage",date:new Date().toISOString().slice(0,16),operateur:"",futSource:[],futDest:"",volume:"",notes:"",produit:"",dosage:"",numeroLot:""});
     setShowMvtForm(false);
   };
 
@@ -557,6 +622,9 @@ export default function App() {
   const filteredTonneaux = tonneaux.filter(t=>{
     if(filterAppellation && t.appellation!==filterAppellation) return false;
     if(filterDenom && t.denomination!==filterDenom) return false;
+    if(filterStatut==="actif" && t.statut==="vide") return false;
+    if(filterStatut==="vide" && t.statut!=="vide") return false;
+    if(filterStatut==="surveillance" && t.statut!=="surveillance") return false;
     if(searchFut && !t.id.toLowerCase().includes(searchFut.toLowerCase()) && !t.denomination.toLowerCase().includes(searchFut.toLowerCase())) return false;
     return true;
   });
@@ -583,15 +651,15 @@ export default function App() {
         {/* actions top-right */}
         <div style={{position:"absolute",top:"4px",right:"4px",display:"flex",gap:"2px",opacity:0,transition:"opacity 0.15s"}} className="fut-actions">
           <button title="Modifier" style={{background:"#2a2a2c",border:"none",borderRadius:"3px",padding:"3px 5px",cursor:"pointer",color:"#5a4a30",fontSize:"11px"}}
-            onClick={e=>{e.stopPropagation();openEditFut(t);}}>
+            onClick={e=>{e.stopPropagation();openEditFut(selectedT);}}>
             <i className="ti ti-pencil"/>
           </button>
           <button title="Supprimer" style={{background:"#fdd0d0",border:"none",borderRadius:"3px",padding:"3px 5px",cursor:"pointer",color:"#cc2222",fontSize:"11px"}}
-            onClick={e=>{e.stopPropagation();deleteFut(t.id);}}>
+            onClick={e=>{e.stopPropagation();deleteFut(selectedT.id);}}>
             <i className="ti ti-trash"/>
           </button>
         </div>
-        <div style={{cursor:"pointer"}} onClick={()=>{setSelectedFut(t.id);setView("fiche");setFicheTab("infos");}}>
+        <div style={{cursor:"pointer"}} onClick={()=>{setSelectedFut(t.id);setView("fiche");setFicheTab("degustations");}}>
           <div style={{fontSize:"13px",fontWeight:600,color:"#1a1205",marginBottom:"1px",paddingLeft:"6px"}}>{t.id}</div>
           <div style={{fontSize:"10px",color:"#6a5838",marginBottom:"6px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",paddingLeft:"6px"}}>{t.denomination}</div>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingLeft:"6px"}}>
@@ -610,27 +678,43 @@ export default function App() {
     const srcs=(m.futSource||[]).map(id=>getTonneau(id)).filter(Boolean);
     const dest=m.futDest?getTonneau(m.futDest):null;
     return (
-      <div style={{borderBottom:"1px solid #d0c4a0",padding:"10px 0",display:"grid",gridTemplateColumns:"110px 1fr 1fr 80px",gap:"12px",fontSize:"12px",alignItems:"start"}}>
-        <div><div style={{...s.tag(typeColor(m.type)),marginBottom:"4px"}}>{typeLabel(m.type)}</div><div style={{color:"#8a7248",fontSize:"10px",marginTop:"3px"}}>{fmtDate(m.timestamp)}</div></div>
+      <div style={{borderBottom:"1px solid #d0c4a0",padding:"10px 4px",display:"grid",gridTemplateColumns:"120px 1fr 1fr 70px 70px",gap:"10px",fontSize:"12px",alignItems:"start"}}>
+        <div>
+          <div style={{...s.tag(typeColor(m.type)),marginBottom:"4px"}}>{typeLabel(m.type)}</div>
+          <div style={{color:"#8a7248",fontSize:"10px",marginTop:"3px"}}>{fmtDate(m.timestamp)}</div>
+        </div>
         <div>
           {srcs.length>0&&<div style={{marginBottom:"3px"}}><span style={{color:"#8a7248",marginRight:"4px"}}>De :</span>{srcs.map(f=><span key={f.id} style={{color:"#b8860b",marginRight:"6px"}}>{f.id}<span style={{color:"#7a6840"}}> ({f.denomination})</span></span>)}</div>}
           {dest&&<div><span style={{color:"#8a7248",marginRight:"4px"}}>Vers :</span><span style={{color:"#b8860b"}}>{dest.id}<span style={{color:"#7a6840"}}> ({dest.denomination})</span></span></div>}
           {m.volume&&<div style={{color:"#6a5838",marginTop:"2px"}}>Vol : <strong style={{color:"#1a1205"}}>{m.volume}L</strong></div>}
-          {m.produit&&<div style={{color:"#6a5838",marginTop:"2px"}}>{m.produit}{m.dosage&&` - ${m.dosage}`}</div>}
+          {m.produit&&<div style={{color:"#6a5838",marginTop:"2px"}}>{m.produit}{m.dosage&&` - ${m.dosage}`}{m.numeroLot&&<span style={{marginLeft:"6px",fontSize:"10px",background:"#fff8ee",border:"1px solid #d4c4a0",borderRadius:"3px",padding:"1px 5px",color:"#7a5200",fontFamily:"monospace"}}>Lot: {m.numeroLot}</span>}</div>}
         </div>
         <div style={{color:"#6a5838",fontStyle:"italic",fontSize:"11px"}}>{m.notes}</div>
-        <div style={{textAlign:"right",color:"#8a7248",fontSize:"11px"}}>{m.operateur}</div>
+        <div style={{color:"#8a7248",fontSize:"11px"}}>{m.operateur}</div>
+        <div style={{textAlign:"right"}}>
+          <button title="Annuler ce mouvement"
+            style={{background:"#fce8e8",color:"#cc2222",border:"1px solid #f0b4b4",borderRadius:"4px",padding:"4px 7px",fontSize:"10px",cursor:"pointer",fontFamily:"monospace",fontWeight:600,whiteSpace:"nowrap"}}
+            onClick={()=>annulerMouvement(m)}>
+            Annuler
+          </button>
+        </div>
       </div>
     );
   };
 
   const DegRow = ({d}) => (
-    <div style={{borderBottom:"1px solid #d0c4a0",padding:"8px 0",display:"grid",gridTemplateColumns:"100px 80px 80px 80px 1fr",gap:"10px",fontSize:"12px",alignItems:"start"}}>
+    <div style={{borderBottom:"1px solid #d0c4a0",padding:"8px 0",display:"grid",gridTemplateColumns:"100px 70px 70px 70px 1fr 64px",gap:"8px",fontSize:"12px",alignItems:"center"}}>
       <div style={{color:"#b8860b",fontWeight:600}}>{d.degustateur}</div>
-      <div style={{color:d.boise>=2.5?"#c47800":"#888"}}>{d.boise!=null?`B: ${d.boise}`:"-"}</div>
-      <div style={{color:"#5a4a30"}}>{d.longueur!=null?`L: ${d.longueur}`:"-"}</div>
-      <div style={{fontWeight:600,color:d.noteG>=4?"#1a7a40":d.noteG>=3?"#b8860b":"#888"}}>{d.noteG!=null?`${d.noteG}/5`:"-"}</div>
+      <div style={{color:d.boise>=2.5?"#c47800":"#6a5838"}}>{d.boise!=null?`B: ${d.boise}`:"-"}</div>
+      <div style={{color:"#6a5838"}}>{d.longueur!=null?`L: ${d.longueur}`:"-"}</div>
+      <div style={{fontWeight:600,color:d.noteG>=4?"#1a7a40":d.noteG>=3?"#b8860b":"#7a6840"}}>{d.noteG!=null?`${d.noteG}/5`:"-"}</div>
       <div style={{color:"#6a5838",fontStyle:"italic",fontSize:"11px"}}>{d.commentaire}</div>
+      <div style={{display:"flex",gap:"3px",justifyContent:"flex-end"}}>
+        <button title="Modifier" style={{background:"#fff8ee",border:"1px solid #d4c4a0",borderRadius:"3px",padding:"3px 6px",cursor:"pointer",color:"#7a5200",fontSize:"11px"}}
+          onClick={()=>openEditNote(d)}>Mod.</button>
+        <button title="Supprimer" style={{background:"#fce8e8",border:"1px solid #f0b4b4",borderRadius:"3px",padding:"3px 6px",cursor:"pointer",color:"#cc2222",fontSize:"11px"}}
+          onClick={()=>deleteNote(d.id)}>Sup.</button>
+      </div>
     </div>
   );
 
@@ -660,9 +744,9 @@ export default function App() {
     );
   };
 
-  const needsSource = ["soutirage","ecoulage","vidange","batonnage","assemblage"].includes(mvtForm.type);
+  const needsSource = ["soutirage","ecoulage","perte","vidange","batonnage","assemblage"].includes(mvtForm.type);
   const needsDest   = ["soutirage","assemblage","remplissage","ouillage"].includes(mvtForm.type);
-  const needsVol    = ["soutirage","ecoulage","remplissage","ouillage"].includes(mvtForm.type);
+  const needsVol    = ["soutirage","ecoulage","perte","remplissage","ouillage"].includes(mvtForm.type);
 
   const selectedT   = selectedFut ? getTonneau(selectedFut) : null;
   const selectedP   = selectedT ? Math.round((selectedT.contenuActuel/selectedT.volume)*100) : 0;
@@ -694,14 +778,12 @@ export default function App() {
       {/* NAV */}
       <nav style={s.nav}>
         <div style={s.brand}> Chai 2025</div>
-        {[["dashboard","Vue d'ensemble"],["tonneaux","Tonneaux"],["degustations","Dégustations"],["mouvements","Mouvements"]].map(([v,l])=>(
+        {[["vendanges","Vendange"],["dashboard","Vue d'ensemble"],["tonneaux","Tonneaux"],["degustations","Dégustations"],["mouvements","Mouvements"],["tirages","Tirage"]].map(([v,l])=>(
           <button key={v} style={s.navBtn(view===v)} onClick={()=>setView(v)}>{l}</button>
         ))}
         <div style={{flex:1}}/>
         <div style={{display:"flex",gap:"8px",alignItems:"center"}}>
-          <button style={{...s.ghost,fontSize:"11px",color:"#7a6840"}} onClick={()=>setShowReset(true)}>
-            <i className="ti ti-refresh" style={{marginRight:"4px"}}/>Réinitialiser
-          </button>
+
           <button style={{...s.ghost,fontSize:"11px"}} onClick={()=>{setFutForm(EMPTY_FUT);setEditingFut(null);setShowFutForm(true);}}>
             <i className="ti ti-barrel" style={{marginRight:"4px"}}/>Fût / Cuve
           </button>
@@ -1019,7 +1101,7 @@ export default function App() {
                         <div style={{width:`${selectedP}%`,height:"100%",background:selectedP<20?"#cc2222":"#b8860b",borderRadius:"2px"}}/>
                       </div>
                     </div>
-                    {[["Millésime vin",selectedT.millesime||"-"],["Certification",selectedT.certif||"-"],["Tonnelier",selectedT.tonnelier||"-"],["Capacité",`${selectedT.volume} L`]].map(([k,v])=>(
+                    {[["Millesime vin",selectedT.millesime||"-"],["Certification",selectedT.certif||"-"],["Tonnelier",selectedT.tonnelier||"-"],["Grain",selectedT.grain||"-"],["Chauffe",selectedT.chauffe||"-"],["Capacite",`${selectedT.volume} L`]].map(([k,v])=>(
                       <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:"1px solid #d0c4a0",fontSize:"12px"}}>
                         <span style={{color:"#8a7248"}}>{k}</span><span style={{color:"#1a1205"}}>{v}</span>
                       </div>
@@ -1034,7 +1116,17 @@ export default function App() {
                         </div>
                       </div>
                     )}
+                    {selectedT.commentaire&&(
+                        <div style={{margin:"8px 0 12px",padding:"9px 12px",background:"#fff8ee",borderRadius:"6px",border:"1px solid #d4c4a0"}}>
+                          <div style={{fontSize:"10px",letterSpacing:"0.08em",textTransform:"uppercase",color:"#9a8870",marginBottom:"4px",fontFamily:"monospace"}}>Notes</div>
+                          <div style={{color:"#1a1205",fontSize:"12px",lineHeight:"1.6"}}>{selectedT.commentaire}</div>
+                        </div>
+                      )}
                     <div style={{display:"flex",gap:"6px",marginTop:"14px",flexWrap:"wrap"}}>
+                      <button style={{...s.ghostSm,color:"#533AB7",borderColor:"#533AB744",width:"100%",textAlign:"center",marginBottom:"6px"}}
+                        onClick={()=>{setCampFutId(selectedT.id);setCampForm({annee:new Date().getFullYear().toString(),denomination:selectedT.denomination,millesime:selectedT.millesime||"",notes:""});setShowCampForm(true);}}>
+                        + Nouvelle campagne
+                      </button>
                       <button style={s.btnSm} onClick={()=>{setMvtForm(f=>({...f,futDest:selectedT.id,type:"ouillage"}));setShowMvtForm(true);}}>Ouiller</button>
                       <button style={s.ghostSm} onClick={()=>{setMvtForm(f=>({...f,futSource:[selectedT.id],type:"soutirage"}));setShowMvtForm(true);}}>Soutirer</button>
                       <button style={s.ghostSm} onClick={()=>{setDegForm({futId:selectedT.id,session:"",date:new Date().toISOString().slice(0,10),lignes:degustateurs.filter(d=>d.actif).map(d=>({degustateur:d.nom,boise:"",longueur:"",noteG:"",commentaire:""}))});setShowDegForm(true);}}>+ Dégustation</button>
@@ -1049,7 +1141,7 @@ export default function App() {
                       </div>
                     )}
                     <div style={{display:"flex",gap:"6px",marginTop:"6px",paddingTop:"10px",borderTop:"1px solid #e8dcc6"}}>
-                      <button style={{...s.ghostSm,color:"#5a4a30"}} onClick={()=>openEditFut(t)}>
+                      <button style={{...s.ghostSm,color:"#5a4a30"}} onClick={()=>openEditFut(selectedT)}>
                         <i className="ti ti-pencil" style={{marginRight:"3px"}}/>Modifier
                       </button>
                       <button style={{...s.ghostSm,color:"#cc2222",borderColor:"#A32D2D33"}} onClick={()=>deleteFut(selectedT.id)}>
@@ -1061,19 +1153,11 @@ export default function App() {
                 {/* Colonne droite - onglets */}
                 <div style={s.card}>
                   <div style={{display:"flex",borderBottom:"1px solid #cfc0a0",marginBottom:"16px",gap:"0"}}>
-                    {[["infos","Infos"],["degustations",`Dégustations (${notesForFut(selectedT.id).length})`],["mouvements",`Mouvements (${selectedMvts.length})`]].map(([tab,lbl])=>(
+                    {[["degustations",`Degustations (${notesForFut(selectedT.id).length})`],["mouvements",`Mouvements (${selectedMvts.length})`],["historique","Historique"]].map(([tab,lbl])=>(
                       <button key={tab} style={s.tabBtn(ficheTab===tab)} onClick={()=>setFicheTab(tab)}>{lbl}</button>
                     ))}
                   </div>
-                  {ficheTab==="infos"&&(
-                    <div style={{fontSize:"13px",color:"#6a5838"}}>
-                      <selectedP>Fût <strong style={{color:"#1a1205"}}>{selectedT.id}</strong> - {selectedT.denomination} {selectedT.millesime||""}</selectedP>
-                      <selectedP>Contenu actuel : <strong style={{color:"#b8860b"}}>{selectedT.contenuActuel} L</strong> sur {selectedT.volume} L ({selectedP}%)</selectedP>
-                      {selectedT.certif&&<selectedP>Certification : {selectedT.certif}</selectedP>}
-                      {selectedT.tonnelier&&<selectedP>Tonnelier : {selectedT.tonnelier}</selectedP>}
-                      <selectedP style={{marginTop:"16px",color:"#8a7248",fontSize:"12px"}}>Utilisez les onglets ci-dessus pour accéder aux notes de dégustation et à l'historique des mouvements.</selectedP>
-                    </div>
-                  )}
+
                   {ficheTab==="degustations"&&<NoteResume futId={selectedT.id}/>}
                   {ficheTab==="mouvements"&&(
                     <div>
@@ -1081,10 +1165,401 @@ export default function App() {
                       {selectedMvts.map(m=><MvtRow key={m.id} m={m}/>)}
                     </div>
                   )}
+                  {ficheTab==="historique"&&(()=>{
+                    // Regroupe notes et mouvements par session/annee
+                    const notesF = notesForFut(selectedT.id);
+                    const sessions = [...new Set(notesF.map(d=>d.session))].sort().reverse();
+                    const allMvts  = selectedMvts.slice().sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp));
+                    // Grouper mouvements par annee
+                    const mvtsByYear = {};
+                    allMvts.forEach(m=>{
+                      const yr = new Date(m.timestamp).getFullYear();
+                      if(!mvtsByYear[yr]) mvtsByYear[yr]=[];
+                      mvtsByYear[yr].push(m);
+                    });
+                    const years = [...new Set([
+                      ...Object.keys(mvtsByYear),
+                      ...sessions.map(s=>s.split("/").pop()?.trim()||s.slice(-4))
+                    ])].sort().reverse();
+                    return (
+                      <div>
+                        {years.length===0&&sessions.length===0&&allMvts.length===0&&(
+                          <div style={{color:"#8a7248",fontSize:"13px",padding:"12px 0"}}>Aucun historique disponible pour ce fut.</div>
+                        )}
+                        {years.map(yr=>{
+                          const notesAn = notesF.filter(d=>{
+                            const s=d.session||""; return s.includes(yr)||s.endsWith(yr);
+                          });
+                          const sessionsAn=[...new Set(notesAn.map(d=>d.session))];
+                          const mvtsAn = mvtsByYear[yr]||[];
+                          if(notesAn.length===0 && mvtsAn.length===0) return null;
+                          return (
+                            <div key={yr} style={{marginBottom:"24px"}}>
+                              {/* Annee header */}
+                              {(()=>{
+                                const camp=campagnes.find(c=>c.futId===selectedT.id && c.annee===yr);
+                                return (
+                                  <div style={{display:"flex",alignItems:"center",gap:"10px",marginBottom:"12px"}}>
+                                    <div style={{fontFamily:"Georgia,serif",fontSize:"16px",fontWeight:700,color:"#7a5200"}}>{yr}</div>
+                                    {camp&&(
+                                      <div style={{display:"flex",alignItems:"center",gap:"6px"}}>
+                                        <span style={{background:"#f5e8cc",color:"#7a5200",border:"1px solid #e0c050",borderRadius:"4px",padding:"2px 10px",fontSize:"12px",fontWeight:600}}>{camp.denomination}</span>
+                                        {camp.millesime&&<span style={{fontSize:"11px",color:"#9a8870"}}>Mill. {camp.millesime}</span>}
+                                        {camp.notes&&<span style={{fontSize:"11px",color:"#7a6840",fontStyle:"italic"}}>{camp.notes}</span>}
+                                        <button style={{background:"none",border:"none",color:"#cc222288",cursor:"pointer",fontSize:"11px",padding:"0 2px"}}
+                                          onClick={()=>deleteCampagne(camp.id)}>x</button>
+                                      </div>
+                                    )}
+                                    {!camp&&(
+                                      <button style={{background:"none",border:"1px dashed #ccc",borderRadius:"4px",padding:"2px 8px",fontSize:"10px",color:"#9a8870",cursor:"pointer"}}
+                                        onClick={()=>{setCampFutId(selectedT.id);setCampForm({annee:yr,denomination:selectedT.denomination,millesime:"",notes:""});setShowCampForm(true);}}>
+                                        + Ajouter vin
+                                      </button>
+                                    )}
+                                    <div style={{flex:1,height:"1px",background:"#d4c4a0"}}/>
+                                    <div style={{fontSize:"11px",color:"#9a8870",fontFamily:"monospace"}}>
+                                      {mvtsAn.length>0&&`${mvtsAn.length} op.`}{notesAn.length>0&&` - ${notesAn.length} notes`}
+                                    </div>
+                                  </div>
+                                );
+                              })()}
+
+                              {/* Sections degustation par session */}
+                              {sessionsAn.map(sess=>{
+                                const notesSess=notesAn.filter(d=>d.session===sess);
+                                const avgG=notesSess.map(d=>d.noteG).filter(Boolean);
+                                const moy=avgG.length?+(avgG.reduce((a,b)=>a+b,0)/avgG.length).toFixed(1):null;
+                                return (
+                                  <div key={sess} style={{marginBottom:"14px",padding:"12px 14px",background:"#fff8ee",borderRadius:"8px",border:"1px solid #e2d9c5"}}>
+                                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"8px"}}>
+                                      <div style={{fontSize:"12px",fontWeight:600,color:"#1a1205"}}>Degustation {sess}</div>
+                                      {moy&&<div style={{display:"flex",alignItems:"center",gap:"6px"}}>
+                                        <div style={{width:"40px",height:"4px",background:"#e8dcc6",borderRadius:"2px",overflow:"hidden"}}>
+                                          <div style={{width:`${(moy/5)*100}%`,height:"100%",background:moy>=4?"#1a7a40":"#b8860b",borderRadius:"2px"}}/>
+                                        </div>
+                                        <span style={{fontSize:"12px",fontWeight:700,color:moy>=4?"#1a7a40":"#b8860b"}}>{moy}/5</span>
+                                      </div>}
+                                    </div>
+                                    <table style={{width:"100%",borderCollapse:"collapse",fontSize:"11px"}}>
+                                      <tbody>
+                                        {notesSess.map(d=>(
+                                          <tr key={d.id} style={{borderBottom:"1px solid #eee6d6"}}>
+                                            <td style={{padding:"4px 6px",color:"#b8860b",fontWeight:600,width:"90px"}}>{d.degustateur}</td>
+                                            <td style={{padding:"4px 6px",color:"#7a6840",width:"50px"}}>{d.boise!=null?`B:${d.boise}`:""}</td>
+                                            <td style={{padding:"4px 6px",color:"#7a6840",width:"50px"}}>{d.longueur!=null?`L:${d.longueur}`:""}</td>
+                                            <td style={{padding:"4px 6px",fontWeight:600,color:d.noteG>=4?"#1a7a40":d.noteG>=3?"#b8860b":"#7a6840",width:"40px"}}>{d.noteG!=null?`${d.noteG}/5`:""}</td>
+                                            <td style={{padding:"4px 6px",color:"#6a5838",fontStyle:"italic"}}>{d.commentaire}</td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                );
+                              })}
+
+                              {/* Mouvements de l annee */}
+                              {mvtsAn.length>0&&(
+                                <div style={{marginTop:"8px"}}>
+                                  <div style={{fontSize:"10px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#9a8870",marginBottom:"6px",fontFamily:"monospace"}}>Operations</div>
+                                  {mvtsAn.map(m=>{
+                                    const srcs=(m.futSource||[]).map(id=>getTonneau(id)?.id).filter(Boolean);
+                                    const dest=m.futDest?getTonneau(m.futDest)?.id:null;
+                                    return (
+                                      <div key={m.id} style={{display:"flex",alignItems:"center",gap:"8px",padding:"5px 0",borderBottom:"1px solid #ede5d4",fontSize:"11px"}}>
+                                        <span style={{...s.tag(typeColor(m.type))}}>{typeLabel(m.type)}</span>
+                                        <span style={{color:"#8a7248",fontSize:"10px"}}>{fmtDate(m.timestamp)}</span>
+                                        {srcs.length>0&&<span style={{color:"#6a5838"}}>De: {srcs.join(", ")}</span>}
+                                        {dest&&<span style={{color:"#6a5838"}}>Vers: {dest}</span>}
+                                        {m.volume&&<span style={{color:"#b8860b",fontWeight:600}}>{m.volume}L</span>}
+                                        {m.produit&&<span style={{color:"#7a5200"}}>{m.produit}{m.numeroLot&&` (Lot: ${m.numeroLot})`}</span>}
+                                        <span style={{marginLeft:"auto",color:"#9a8870"}}>{m.operateur}</span>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             </div>
           )}
+
+        {/* -- VENDANGES -- */}
+        {view==="vendanges" && (
+          <div style={{display:"grid",gridTemplateColumns:"1fr 260px",gap:"20px",alignItems:"start"}}>
+
+            {/* Colonne principale */}
+            <div>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px"}}>
+                <div style={{fontSize:"13px",color:"#7a6840"}}>{vendanges.length} entree(s) de vendange</div>
+                <button style={s.btn} onClick={()=>{setVendangeForm(VENDANGE_EMPTY);setEditingVendange(null);setShowVendangeForm(true);}}>
+                  + Nouvelle entree
+                </button>
+              </div>
+
+              {/* Filtre par campagne */}
+              {[...new Set(vendanges.map(v=>v.annee))].length>1&&(
+                <div style={{display:"flex",gap:"6px",marginBottom:"16px",flexWrap:"wrap",alignItems:"center"}}>
+                  <span style={{fontSize:"10px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#9a8870",fontFamily:"monospace",marginRight:"4px"}}>Campagne :</span>
+                  <button onClick={()=>setFilterVendangeAn("")}
+                    style={{padding:"4px 12px",borderRadius:"4px",border:`0.5px solid ${!filterVendangeAn?"#b8860b":"#d4c4a0"}`,background:!filterVendangeAn?"#f5e8cc":"transparent",color:!filterVendangeAn?"#7a5200":"#9a8870",fontSize:"11px",cursor:"pointer",fontFamily:"monospace"}}>
+                    Toutes
+                  </button>
+                  {[...new Set(vendanges.map(v=>v.annee))].sort().reverse().map(an=>(
+                    <button key={an} onClick={()=>setFilterVendangeAn(an)}
+                      style={{padding:"4px 12px",borderRadius:"4px",border:`0.5px solid ${filterVendangeAn===an?"#2d6a00":"#d4c4a0"}`,background:filterVendangeAn===an?"#d4edc0":"transparent",color:filterVendangeAn===an?"#2d6a00":"#9a8870",fontSize:"11px",cursor:"pointer",fontFamily:"monospace"}}>
+                      {an} ({vendanges.filter(v=>v.annee===an).length})
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {vendanges.length===0&&(
+                <div style={{...s.card,textAlign:"center",padding:"40px",color:"#9a8870"}}>
+                  <div style={{fontSize:"13px",marginBottom:"16px"}}>Aucune vendange enregistree. Commencez par creer vos parcelles puis saisissez les apports.</div>
+                  <button style={s.btn} onClick={()=>{setVendangeForm(VENDANGE_EMPTY);setEditingVendange(null);setShowVendangeForm(true);}}>+ Premiere entree</button>
+                </div>
+              )}
+
+              {/* Grouper par annee */}
+              {[...new Set(vendanges.map(v=>v.annee))].sort().reverse().filter(an=>!filterVendangeAn||an===filterVendangeAn).map(annee=>{
+                const vAnnee = vendanges.filter(v=>v.annee===annee);
+                const volTotal = vAnnee.reduce((s,v)=>s+(parseFloat(v.volumeRecolte)||0),0);
+                return (
+                  <div key={annee} style={{marginBottom:"20px"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:"10px",marginBottom:"10px"}}>
+                      <div style={{fontFamily:"Georgia,serif",fontSize:"16px",fontWeight:500,color:"#7a5200"}}>Campagne {annee}</div>
+                      <div style={{flex:1,height:"0.5px",background:"#d4c4a0"}}/>
+                      <div style={{display:"flex",gap:"12px",fontSize:"11px",color:"#9a8870",fontFamily:"monospace"}}>
+                        <span>{vAnnee.length} apport(s)</span>
+                        <span style={{color:"#2d6a00",fontWeight:500}}>{volTotal.toFixed(0)} L</span>
+                        {vAnnee.filter(v=>v.numeroMarc).length>0&&(
+                          <span>{[...new Set(vAnnee.map(v=>v.numeroMarc).filter(Boolean))].sort().length} Marc(s)</span>
+                        )}
+                      </div>
+                    </div>
+                    {vAnnee.map(v=>{
+                      const parc = parcelles.find(p=>p.id===v.parcelleId);
+                      return (
+                        <div key={v.id} style={{...s.card,marginBottom:"10px",borderLeft:`3px solid #2d6a00`}}>
+                          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:"12px",marginBottom:"8px"}}>
+                            <div>
+                              <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"2px"}}>
+                                <div style={{fontWeight:500,color:"#1a1205",fontSize:"13px"}}>{parc?.nom||"Parcelle inconnue"}</div>
+                                {v.numeroMarc&&(
+                                  <span style={{background:"#f5e8cc",color:"#7a5200",border:"0.5px solid #e0c050",borderRadius:"4px",padding:"1px 8px",fontSize:"11px",fontWeight:500,fontFamily:"monospace"}}>Marc {v.numeroMarc}</span>
+                                )}
+                              </div>
+                              <div style={{display:"flex",alignItems:"center",gap:"5px",marginBottom:"2px"}}>
+                                {parc?.certification&&(
+                                  <span style={{fontSize:"10px",padding:"1px 5px",borderRadius:"3px",fontFamily:"monospace",fontWeight:500,
+                                    background:parc.certification==="BIO"?"#d4edc0":parc.certification==="NON BIO"?"#ede5d4":"#fde8b8",
+                                    color:parc.certification==="BIO"?"#2d6a00":parc.certification==="NON BIO"?"#5f5e5a":"#8b5e0a"}}>
+                                    {parc.certification}
+                                  </span>
+                                )}
+                                <span style={{fontSize:"11px",color:"#9a8870"}}>{parc?.cepage||""}{parc?.commune?` - ${parc.commune}`:""}</span>
+                              </div>
+                              <div style={{fontSize:"11px",color:"#7a6840",marginTop:"3px"}}>{v.date} - {v.operateur}</div>
+                            </div>
+                            <div>
+                              <div style={s.lbl}>Volume recolte</div>
+                              <div style={{fontSize:"18px",fontWeight:500,color:"#2d6a00"}}>{v.volumeRecolte} L</div>
+                              {v.rendement&&<div style={{fontSize:"11px",color:"#9a8870"}}>{v.rendement} kg/ha</div>}
+                            </div>
+                            <div>
+                              <div style={s.lbl}>Analyses</div>
+                              {v.degreePotentiel&&<div style={{fontSize:"12px",color:"#6a5838"}}>Degre : <strong>{v.degreePotentiel}%</strong></div>}
+                              {v.acidite&&<div style={{fontSize:"12px",color:"#6a5838"}}>Acidite : <strong>{v.acidite} g/L</strong></div>}
+                              {v.so2&&<div style={{fontSize:"12px",color:"#6a5838"}}>SO2 : <strong>{v.so2} mg/L</strong></div>}
+                            </div>
+                            <div>
+                              <div style={s.lbl}>Cuve reception</div>
+                              {(v.cuveReception||v.nouvelleCuveNom)?(
+                                <div style={{display:"inline-flex",alignItems:"center",background:"#eeedfe",color:"#533AB7",border:"0.5px solid #534ab744",borderRadius:"4px",padding:"2px 10px",fontFamily:"monospace",fontSize:"12px",fontWeight:500}}>
+                                  {v.cuveReception||v.nouvelleCuveNom}
+                                </div>
+                              ):<div style={{fontSize:"11px",color:"#9a8870",fontStyle:"italic"}}>Non definie</div>}
+                            </div>
+                          </div>
+                          {v.produitsAjoutes?.length>0&&(
+                            <div style={{borderTop:"0.5px solid #ede5d4",paddingTop:"8px",marginTop:"4px"}}>
+                              <div style={{...s.lbl,marginBottom:"5px"}}>Produits ajoutes</div>
+                              <div style={{display:"flex",gap:"6px",flexWrap:"wrap"}}>
+                                {v.produitsAjoutes.map(p=>(
+                                  <div key={p.id} style={{background:"#fff8ee",border:"0.5px solid #d4c4a0",borderRadius:"4px",padding:"3px 10px",fontSize:"11px",color:"#7a5200"}}>
+                                    <strong>{p.nom}</strong>{p.dose?` - ${p.dose}`:""}{p.lot?` (Lot: ${p.lot})`:""}{p.date?` - ${p.date}`:""}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {v.observations&&<div style={{borderTop:"0.5px solid #ede5d4",paddingTop:"6px",marginTop:"6px",fontSize:"12px",color:"#6a5838",fontStyle:"italic"}}>{v.observations}</div>}
+                          <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",marginTop:"8px"}}>
+                            <button style={{...s.ghostSm}} onClick={()=>openEditVendange(v)}>Modifier</button>
+                            <button style={{...s.ghostSm,color:"#cc2222",borderColor:"#f0b4b4"}}
+                              onClick={()=>{if(window.confirm("Supprimer cet apport ?")) setVendanges(prev=>prev.filter(x=>x.id!==v.id));}}>
+                              Supprimer
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Colonne droite - Parcelles */}
+            <div style={s.card}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
+                <span style={{...s.lbl,marginBottom:0}}>Parcelles</span>
+                <button style={s.btnSm} onClick={()=>{setParcelleForm({nom:"",cepage:"",surface:"",commune:""});setEditingParcelle(null);setShowParcelleForm(true);}}>+ Ajouter</button>
+              </div>
+              {parcelles.length===0&&<div style={{fontSize:"12px",color:"#9a8870",fontStyle:"italic"}}>Aucune parcelle. Ajoutez-en une pour commencer.</div>}
+              {parcelles.map(p=>(
+                <div key={p.id} style={{borderBottom:"0.5px solid #ede5d4",padding:"8px 0"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
+                    <div style={{flex:1}}>
+                      <div style={{display:"flex",alignItems:"center",gap:"6px",marginBottom:"2px"}}>
+                        <div style={{fontSize:"13px",fontWeight:500,color:"#1a1205"}}>{p.nom}</div>
+                        {p.certification&&(
+                          <span style={{fontSize:"10px",padding:"1px 6px",borderRadius:"3px",fontFamily:"monospace",fontWeight:500,
+                            background:p.certification==="BIO"?"#d4edc0":p.certification==="NON BIO"?"#ede5d4":p.certification==="C1"?"#fde8b8":p.certification==="C2"?"#fce8a8":"#fad4a0",
+                            color:p.certification==="BIO"?"#2d6a00":p.certification==="NON BIO"?"#5f5e5a":p.certification==="C1"?"#8b5e0a":p.certification==="C2"?"#7a4800":"#6b3a00"}}>
+                            {p.certification}
+                          </span>
+                        )}
+                      </div>
+                      {p.cepage&&<div style={{fontSize:"11px",color:"#9a8870"}}>{p.cepage}</div>}
+                      <div style={{fontSize:"11px",color:"#9a8870"}}>{p.commune||""}{p.surface?` - ${p.surface} ha`:""}</div>
+                      {p.observations&&<div style={{fontSize:"10px",color:"#7a6840",fontStyle:"italic",marginTop:"2px"}}>{p.observations}</div>}
+                      <div style={{fontSize:"10px",color:"#a8987e",marginTop:"2px"}}>{vendanges.filter(v=>v.parcelleId===p.id).length} apport(s)</div>
+                    </div>
+                    <div style={{display:"flex",gap:"4px"}}>
+                      <button style={{...s.ghostSm,fontSize:"10px"}} onClick={()=>{setParcelleForm({nom:p.nom,cepage:p.cepage||"",certification:p.certification||"BIO",surface:p.surface||"",commune:p.commune||"",observations:p.observations||""});setEditingParcelle(p);setShowParcelleForm(true);}}>Mod.</button>
+                      <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
+                        onClick={()=>{if(window.confirm("Supprimer cette parcelle ?")) setParcelles(prev=>prev.filter(x=>x.id!==p.id));}}>Sup.</button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* -- TIRAGES -- */}
+        {view==="tirages" && (
+          <div>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
+              <div style={{fontSize:"13px",color:"#7a6840"}}>{tirages.length} tirage(s) enregistré(s)</div>
+              <button style={s.btn} onClick={()=>{setTirageForm(TIRAGE_EMPTY);setEditingTirage(null);setShowTirageForm(true);}}>
+                + Nouveau tirage
+              </button>
+            </div>
+
+            {tirages.length===0 && (
+              <div style={{...s.card,textAlign:"center",padding:"40px",color:"#9a8870"}}>
+                <div style={{fontSize:"32px",marginBottom:"12px"}}>Aucun tirage enregistré</div>
+                <div style={{fontSize:"13px",marginBottom:"16px"}}>Créez votre premier tirage pour commencer le suivi.</div>
+                <button style={s.btn} onClick={()=>{setTirageForm(TIRAGE_EMPTY);setEditingTirage(null);setShowTirageForm(true);}}>+ Nouveau tirage</button>
+              </div>
+            )}
+
+            <div style={{display:"grid",gap:"14px"}}>
+              {tirages.map(t=>(
+                <div key={t.id} style={{...s.card,borderLeft:"3px solid #533AB7"}}>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:"16px"}}>
+                    {/* Identite */}
+                    <div>
+                      <div style={{fontFamily:"Georgia,serif",fontSize:"16px",fontWeight:500,color:"#7a5200",marginBottom:"2px"}}>{t.cuvee}</div>
+                      <div style={{fontSize:"12px",color:"#9a8870",marginBottom:"8px"}}>{t.date} - {t.operateur}</div>
+                      {t.millesime&&<div style={{fontSize:"11px",color:"#6a5838"}}>Millésime : <strong>{t.millesime}</strong></div>}
+                      {t.futsSources?.length>0&&(
+                        <div style={{fontSize:"11px",color:"#6a5838",marginTop:"3px"}}>
+                          Futs : {t.futsSources.join(", ")}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Volumes assembles */}
+                    <div style={{borderLeft:"0.5px solid #d4c4a0",paddingLeft:"14px"}}>
+                      <div style={s.lbl}>Volume assemblé</div>
+                      <div style={{fontSize:"20px",fontWeight:500,color:"#533AB7"}}>{t.volAssemble?.toFixed(1)} L</div>
+                      <div style={{fontSize:"11px",color:"#9a8870",marginTop:"4px"}}>
+                        Vin : {t.volumeTotal||0} L
+                      </div>
+                      {t.volLevain>0&&(
+                        <div style={{fontSize:"11px",color:"#9a8870"}}>
+                          Levain : {t.volLevain?.toFixed(1)} L
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Levain */}
+                    <div style={{borderLeft:"0.5px solid #d4c4a0",paddingLeft:"14px"}}>
+                      <div style={s.lbl}>Levain</div>
+                      {t.levainLevureNom ? (
+                        <div>
+                          <div style={{fontSize:"13px",fontWeight:500,color:"#1a1205",marginBottom:"3px"}}>{t.levainLevureNom}</div>
+                          {t.levainLot&&<div style={{display:"inline-flex",alignItems:"center",background:"#fff8ee",border:"0.5px solid #d4c4a0",borderRadius:"3px",padding:"1px 7px",fontSize:"10px",color:"#7a5200",fontFamily:"monospace",marginBottom:"4px"}}>Lot: {t.levainLot}</div>}
+                          <div style={{fontSize:"11px",color:"#9a8870"}}>
+                            Eau: {t.levainEau||0}L · Vin: {t.levainVin||0}L · Lev: {t.levainLevure||0}L
+                          </div>
+                        </div>
+                      ) : <div style={{fontSize:"12px",color:"#9a8870",fontStyle:"italic"}}>Pas de levain</div>}
+                    </div>
+
+                    {/* Bouteilles */}
+                    <div style={{borderLeft:"0.5px solid #d4c4a0",paddingLeft:"14px"}}>
+                      <div style={s.lbl}>Mise en bouteilles</div>
+                      <div style={{fontSize:"20px",fontWeight:500,color:"#1a7a40"}}>{t.volBouteilles?.toFixed(1)} L</div>
+                      <div style={{marginTop:"6px",display:"flex",flexDirection:"column",gap:"3px"}}>
+                        {(parseFloat(t.qte75)||0)>0&&<div style={{fontSize:"11px",color:"#6a5838"}}>
+                          <span style={{display:"inline-block",width:"18px",height:"18px",background:"#d4edc0",borderRadius:"3px",textAlign:"center",lineHeight:"18px",fontSize:"10px",marginRight:"5px",color:"#2d6a00",fontFamily:"monospace"}}>75</span>
+                          {t.qte75} bouteilles = {((parseFloat(t.qte75)||0)*0.75).toFixed(0)}L
+                        </div>}
+                        {(parseFloat(t.qteMagnum)||0)>0&&<div style={{fontSize:"11px",color:"#6a5838"}}>
+                          <span style={{display:"inline-block",width:"18px",height:"18px",background:"#fde8b8",borderRadius:"3px",textAlign:"center",lineHeight:"18px",fontSize:"10px",marginRight:"5px",color:"#7a5200",fontFamily:"monospace"}}>M</span>
+                          {t.qteMagnum} magnums = {((parseFloat(t.qteMagnum)||0)*1.5).toFixed(0)}L
+                        </div>}
+                        {(parseFloat(t.qteJeroboam)||0)>0&&<div style={{fontSize:"11px",color:"#6a5838"}}>
+                          <span style={{display:"inline-block",width:"18px",height:"18px",background:"#fdd0d0",borderRadius:"3px",textAlign:"center",lineHeight:"18px",fontSize:"10px",marginRight:"5px",color:"#8B0000",fontFamily:"monospace"}}>J</span>
+                          {t.qteJeroboam} jeroboams = {((parseFloat(t.qteJeroboam)||0)*3.0).toFixed(0)}L
+                        </div>}
+                      </div>
+                    </div>
+                  </div>
+                  {(t.cuveDestId||t.nouvelleCuveId)&&(
+                    <div style={{marginTop:"10px",paddingTop:"10px",borderTop:"0.5px solid #ede5d4",display:"flex",alignItems:"center",gap:"8px",fontSize:"12px"}}>
+                      <span style={{color:"#9a8870"}}>Stocke dans :</span>
+                      <span style={{background:"#eeedfe",color:"#533AB7",border:"0.5px solid #534ab744",borderRadius:"4px",padding:"2px 10px",fontFamily:"monospace",fontWeight:500}}>
+                        {t.cuveDestId || t.nouvelleCuveId}
+                      </span>
+                      <span style={{color:"#9a8870",fontSize:"11px"}}>{t.volAssemble?.toFixed(1)} L</span>
+                    </div>
+                  )}
+                  {t.notes&&<div style={{marginTop:"12px",paddingTop:"10px",borderTop:"0.5px solid #ede5d4",fontSize:"12px",color:"#6a5838",fontStyle:"italic"}}>{t.notes}</div>}
+                  <div style={{marginTop:"10px",display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #ede5d4",paddingTop:"10px"}}>
+                    <button style={{background:"#fff8ee",color:"#7a5200",border:"0.5px solid #d4c4a0",borderRadius:"4px",padding:"4px 12px",fontSize:"11px",cursor:"pointer",fontFamily:"monospace"}}
+                      onClick={()=>openEditTirage(t)}>
+                      Modifier
+                    </button>
+                    <button style={{background:"#fce8e8",color:"#cc2222",border:"0.5px solid #f0b4b4",borderRadius:"4px",padding:"4px 12px",fontSize:"11px",cursor:"pointer",fontFamily:"monospace"}}
+                      onClick={()=>{if(window.confirm("Supprimer ce tirage ? Cette action est irreversible.")) setTirages(prev=>prev.filter(tr=>tr.id!==t.id));}}>
+                      Supprimer
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* -- MOUVEMENTS -- */}
         {view==="mouvements"&&(
@@ -1160,9 +1635,18 @@ export default function App() {
               )}
               {needsVol&&<div><span style={s.lbl}>Volume (L)</span><input type="number" style={s.inp} placeholder="ex. 15" value={mvtForm.volume} onChange={e=>setMvtForm(f=>({...f,volume:e.target.value}))}/></div>}
               {mvtForm.type==="ajout_produit"&&(
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
-                  <div><span style={s.lbl}>Produit</span><input style={s.inp} placeholder="SO2, ACT'O..." value={mvtForm.produit} onChange={e=>setMvtForm(f=>({...f,produit:e.target.value}))}/></div>
-                  <div><span style={s.lbl}>Dosage</span><input style={s.inp} placeholder="2cl/HL..." value={mvtForm.dosage} onChange={e=>setMvtForm(f=>({...f,dosage:e.target.value}))}/></div>
+                <div style={{display:"grid",gap:"12px"}}>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                    <div><span style={s.lbl}>Produit</span><input style={s.inp} placeholder="SO2, ACT'O..." value={mvtForm.produit} onChange={e=>setMvtForm(f=>({...f,produit:e.target.value}))}/></div>
+                    <div><span style={s.lbl}>Dosage</span><input style={s.inp} placeholder="2cl/HL..." value={mvtForm.dosage} onChange={e=>setMvtForm(f=>({...f,dosage:e.target.value}))}/></div>
+                  </div>
+                  <div>
+                    <span style={s.lbl}>Numéro de lot <span style={{color:"#cc2222"}}>*</span></span>
+                    <input style={{...s.inp, borderColor: mvtForm.type==="ajout_produit" && !mvtForm.numeroLot ? "#e8a0a0" : undefined}}
+                      placeholder="ex. LOT-2025-001 (obligatoire)"
+                      value={mvtForm.numeroLot}
+                      onChange={e=>setMvtForm(f=>({...f,numeroLot:e.target.value}))}/>
+                  </div>
                 </div>
               )}
               <div><span style={s.lbl}>Notes</span><textarea style={{...s.inp,height:"64px",resize:"vertical"}} value={mvtForm.notes} onChange={e=>setMvtForm(f=>({...f,notes:e.target.value}))}/></div>
@@ -1313,8 +1797,14 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Dénomination + millésime */}
-              <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:"12px"}}>
+              {/* Marc + Denomination + millesime */}
+              <div style={{display:"grid",gridTemplateColumns:"100px 2fr 1fr",gap:"12px"}}>
+                <div>
+                  <span style={s.lbl}>N° Marc</span>
+                  <input type="number" style={s.inp} placeholder="ex. 5"
+                    value={futForm.marc||""}
+                    onChange={e=>setFutForm(f=>({...f,marc:e.target.value}))}/>
+                </div>
                 <div>
                   <span style={s.lbl}>Dénomination / Cuvée *</span>
                   <input style={s.inp} value={futForm.denomination}
