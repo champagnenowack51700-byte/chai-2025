@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, writeBatch } from "firebase/firestore";
+import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, getDocs, writeBatch } from "firebase/firestore";
 
 // Firebase config
 const firebaseConfig = {
@@ -21,15 +21,38 @@ const fbSave = (col, id, data) => {
 };
 const fbDelete = (col, id) => deleteDoc(doc(db, col, String(id)));
 const fbWatch = (col, setter) => {
+  // Primary: real-time listener
   const unsub = onSnapshot(
     collection(db, col),
-    { includeMetadataChanges: false },
     snap => {
       setter(snap.docs.map(d => ({...d.data(), id: d.id})));
     },
-    err => console.error("fbWatch error", col, err)
+    err => {
+      console.warn("onSnapshot failed for", col, "- using polling fallback");
+      // Fallback: poll every 3 seconds
+      const poll = setInterval(async () => {
+        try {
+          const snap = await getDocs(collection(db, col));
+          setter(snap.docs.map(d => ({...d.data(), id: d.id})));
+        } catch(e) { console.error("poll error", col, e); }
+      }, 3000);
+      return () => clearInterval(poll);
+    }
   );
   return unsub;
+};
+
+// Also poll every 5s as safety net for real-time sync
+const fbPoll = (col, setter) => {
+  const poll = async () => {
+    try {
+      const snap = await getDocs(collection(db, col));
+      setter(snap.docs.map(d => ({...d.data(), id: d.id})));
+    } catch(e) {}
+  };
+  poll();
+  const id = setInterval(poll, 5000);
+  return () => clearInterval(id);
 };
 
 const INIT_TONNEAUX = [
