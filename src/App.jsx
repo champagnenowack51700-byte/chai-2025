@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, getDocs, writeBatch } from "firebase/firestore";
+import { getFirestore, collection, doc, setDoc, deleteDoc, getDocs, writeBatch } from "firebase/firestore";
 
 // Firebase config
 const firebaseConfig = {
@@ -20,39 +20,12 @@ const fbSave = (col, id, data) => {
   return setDoc(doc(db, col, String(id)), {...clean, _ts: new Date().toISOString()});
 };
 const fbDelete = (col, id) => deleteDoc(doc(db, col, String(id)));
-const fbWatch = (col, setter) => {
-  // Primary: real-time listener
-  const unsub = onSnapshot(
-    collection(db, col),
-    snap => {
-      setter(snap.docs.map(d => ({...d.data(), id: d.id})));
-    },
-    err => {
-      console.warn("onSnapshot failed for", col, "- using polling fallback");
-      // Fallback: poll every 3 seconds
-      const poll = setInterval(async () => {
-        try {
-          const snap = await getDocs(collection(db, col));
-          setter(snap.docs.map(d => ({...d.data(), id: d.id})));
-        } catch(e) { console.error("poll error", col, e); }
-      }, 3000);
-      return () => clearInterval(poll);
-    }
-  );
-  return unsub;
-};
-
-// Also poll every 5s as safety net for real-time sync
-const fbPoll = (col, setter) => {
-  const poll = async () => {
-    try {
-      const snap = await getDocs(collection(db, col));
-      setter(snap.docs.map(d => ({...d.data(), id: d.id})));
-    } catch(e) {}
-  };
-  poll();
-  const id = setInterval(poll, 5000);
-  return () => clearInterval(id);
+const fbLoad = async (col, setter) => {
+  try {
+    const snap = await getDocs(collection(db, col));
+    const data = snap.docs.map(d => ({...d.data(), id: d.id}));
+    if(data.length > 0) setter(data);
+  } catch(e) { console.error("fbLoad error", col, e); }
 };
 
 const INIT_TONNEAUX = [
@@ -1047,6 +1020,9 @@ export default function App() {
         <div style={{flex:1}}/>
         <div style={{display:"flex",gap:"8px",alignItems:"center"}}>
 
+          <button style={{...s.ghost,fontSize:"11px",color:"#2d6a00",borderColor:"#7ab84880"}} onClick={refreshFromFirebase} title="Synchroniser avec Firebase">
+            <i className="ti ti-refresh" style={{marginRight:"4px"}}/>Sync
+          </button>
           <button style={{...s.ghost,fontSize:"11px"}} onClick={()=>{setFutForm(EMPTY_FUT);setEditingFut(null);setShowFutForm(true);}}>
             <i className="ti ti-barrel" style={{marginRight:"4px"}}/>Fût / Cuve
           </button>
