@@ -1,0 +1,1458 @@
+import { useState, useEffect } from "react";
+
+const INIT_TONNEAUX = [
+  // == VINS CLAIRS 2025 ======================================================
+  { id:"23.28", appellation:"vins_clairs_2025", denomination:"FONTINETTE",         millesime:2025, volume:500, certif:"BIO", tonnelier:"Francois Frère",  statut:"actif", contenuActuel:500 },
+  { id:"23.29", appellation:"vins_clairs_2025", denomination:"FONTINETTE",         millesime:2025, volume:500, certif:"BIO", tonnelier:"Francois Frère",  statut:"actif", contenuActuel:500 },
+  { id:"23.14", appellation:"vins_clairs_2025", denomination:"FONTINETTE",         millesime:2025, volume:500, certif:"BIO", tonnelier:"Mercurey",         statut:"actif", contenuActuel:500 },
+  { id:"21.44", appellation:"vins_clairs_2025", denomination:"FONTINETTE",         millesime:2025, volume:320, certif:"BIO", tonnelier:"Mercurey",         statut:"actif", contenuActuel:320 },
+  { id:"21.47", appellation:"vins_clairs_2025", denomination:"FONTINETTE",         millesime:2025, volume:320, certif:"BIO", tonnelier:"Seguin Moreau",    statut:"actif", contenuActuel:320 },
+  { id:"22.29", appellation:"vins_clairs_2025", denomination:"BAUCH THOMAS DU BAS",millesime:2025, volume:228, certif:"BIO", tonnelier:"Saint Martin",     statut:"actif", contenuActuel:228 },
+  { id:"20.15", appellation:"vins_clairs_2025", denomination:"BAUCH THOMAS DU BAS",millesime:2025, volume:228, certif:"BIO", tonnelier:"Seguin Moreau",    statut:"actif", contenuActuel:228 },
+  { id:"21.48", appellation:"vins_clairs_2025", denomination:"BAUCH THOMAS DU BAS",millesime:2025, volume:228, certif:"BIO", tonnelier:"Seguin Moreau",    statut:"actif", contenuActuel:228 },
+  { id:"105",   appellation:"vins_clairs_2025", denomination:"BAUCH THOMAS DU BAS",millesime:2025, volume:228, certif:"BIO", tonnelier:"Seguin Moreau",    statut:"actif", contenuActuel:228 },
+  { id:"22.52", appellation:"vins_clairs_2025", denomination:"BAUCH THOMAS DU BAS",millesime:2025, volume:228, certif:"BIO", tonnelier:"D",                statut:"actif", contenuActuel:228 },
+  { id:"69",    appellation:"vins_clairs_2025", denomination:"BAUCH THOMAS DU BAS",millesime:2025, volume:228, certif:"BIO", tonnelier:"Chassin",          statut:"actif", contenuActuel:228 },
+  { id:"23.15", appellation:"vins_clairs_2025", denomination:"BAUCHETS THOMAS PN", millesime:2025, volume:500, certif:"BIO", tonnelier:"Seguin Moreau",    statut:"actif", contenuActuel:500 },
+  { id:"23.13", appellation:"vins_clairs_2025", denomination:"BAUCHETS THOMAS PN", millesime:2025, volume:500, certif:"BIO", tonnelier:"ACF",              statut:"actif", contenuActuel:500 },
+  { id:"22.14", appellation:"vins_clairs_2025", denomination:"BAUCHETS THOMAS PN", millesime:2025, volume:320, certif:"BIO", tonnelier:"ACF",              statut:"actif", contenuActuel:320 },
+  { id:"22.47", appellation:"vins_clairs_2025", denomination:"BAUCHETS THOMAS PN", millesime:2025, volume:320, certif:"BIO", tonnelier:"Seguin Moreau",    statut:"actif", contenuActuel:320 },
+  { id:"21.16", appellation:"vins_clairs_2025", denomination:"LAURINETTE MEUNIER", millesime:2025, volume:228, certif:"BIO", tonnelier:"Francois Frère",   statut:"actif", contenuActuel:228 },
+  { id:"109",   appellation:"vins_clairs_2025", denomination:"LAURINETTE MEUNIER", millesime:2025, volume:228, certif:"BIO", tonnelier:"Jadot",            statut:"actif", contenuActuel:228 },
+  { id:"21.39", appellation:"vins_clairs_2025", denomination:"LAURINETTE MEUNIER", millesime:2025, volume:228, certif:"BIO", tonnelier:"Francois Frère",   statut:"actif", contenuActuel:228 },
+  { id:"22.38", appellation:"vins_clairs_2025", denomination:"LAURINETTE MEUNIER", millesime:2025, volume:228, certif:"BIO", tonnelier:"Mercurey",         statut:"actif", contenuActuel:228 },
+  { id:"104",   appellation:"vins_clairs_2025", denomination:"LAURINETTE MEUNIER", millesime:2025, volume:228, certif:"BIO", tonnelier:"Saint martin",     statut:"actif", contenuActuel:228 },
+  { id:"81",    appellation:"vins_clairs_2025", denomination:"LAURINETTE MEUNIER", millesime:2025, volume:228, certif:"BIO", tonnelier:"Chassins",         statut:"actif", contenuActuel:228 },
+  { id:"23.26", appellation:"vins_clairs_2025", denomination:"TERRES BLEUES",      millesime:2025, volume:500, certif:"BIO", tonnelier:"Francois Frère",   statut:"actif", contenuActuel:500 },
+  { id:"23.27", appellation:"vins_clairs_2025", denomination:"TERRES BLEUES",      millesime:2025, volume:500, certif:"BIO", tonnelier:"Francois Frère",   statut:"actif", contenuActuel:500 },
+  { id:"22.41", appellation:"vins_clairs_2025", denomination:"TERRES BLEUES",      millesime:2025, volume:320, certif:"BIO", tonnelier:"ACF",              statut:"actif", contenuActuel:320 },
+  { id:"22.30", appellation:"vins_clairs_2025", denomination:"MAISONS BRULEES",    millesime:2025, volume:228, certif:"BIO", tonnelier:"Mercurey",         statut:"actif", contenuActuel:228 },
+  { id:"34",    appellation:"vins_clairs_2025", denomination:"MAISONS BRULEES",    millesime:2025, volume:228, certif:"BIO", tonnelier:"Chassins",         statut:"actif", contenuActuel:228 },
+  { id:"21.30", appellation:"vins_clairs_2025", denomination:"MAISONS BRULEES",    millesime:2025, volume:228, certif:"BIO", tonnelier:"Chassins",         statut:"actif", contenuActuel:228 },
+  { id:"57",    appellation:"vins_clairs_2025", denomination:"MAISONS BRULEES",    millesime:2025, volume:228, certif:"BIO", tonnelier:"Damy",             statut:"surveillance", contenuActuel:228 },
+  { id:"20.40", appellation:"vins_clairs_2025", denomination:"MAISONS BRULEES",    millesime:2025, volume:228, certif:"BIO", tonnelier:"Cavin",            statut:"actif", contenuActuel:228 },
+  { id:"71",    appellation:"vins_clairs_2025", denomination:"MAISONS BRULEES",    millesime:2025, volume:228, certif:"BIO", tonnelier:"",                 statut:"actif", contenuActuel:228 },
+  { id:"45682", appellation:"vins_clairs_2025", denomination:"VINCELLES TRY",      millesime:2025, volume:228, certif:"BIO", tonnelier:"Chassin B",        statut:"actif", contenuActuel:228 },
+  { id:"21.20", appellation:"vins_clairs_2025", denomination:"VINCELLES TRY",      millesime:2025, volume:228, certif:"BIO", tonnelier:"Mercurey",         statut:"actif", contenuActuel:228 },
+  { id:"21.41", appellation:"vins_clairs_2025", denomination:"VINCELLES TRY",      millesime:2025, volume:228, certif:"BIO", tonnelier:"Jadot",            statut:"actif", contenuActuel:228 },
+  { id:"22.13", appellation:"vins_clairs_2025", denomination:"VINCELLES TRY",      millesime:2025, volume:228, certif:"BIO", tonnelier:"ACF",              statut:"actif", contenuActuel:228 },
+  { id:"45923", appellation:"vins_clairs_2025", denomination:"ARPENTS ROUGE",      millesime:2025, volume:500, certif:"BIO", tonnelier:"Cavin",            statut:"actif", contenuActuel:500 },
+  { id:"23.22", appellation:"vins_clairs_2025", denomination:"ARPENTS ROUGE",      millesime:2025, volume:500, certif:"BIO", tonnelier:"Saint Martin",     statut:"actif", contenuActuel:500 },
+  { id:"23.23", appellation:"vins_clairs_2025", denomination:"ARPENTS ROUGE",      millesime:2025, volume:500, certif:"BIO", tonnelier:"Saint Martin",     statut:"actif", contenuActuel:500 },
+  { id:"22.42", appellation:"vins_clairs_2025", denomination:"ARPENTS ROUGE",      millesime:2025, volume:320, certif:"BIO", tonnelier:"Seguin Moreau",    statut:"actif", contenuActuel:320 },
+  { id:"23.16", appellation:"vins_clairs_2025", denomination:"BELLEVUE",           millesime:2025, volume:500, certif:"BIO", tonnelier:"Cavin",            statut:"actif", contenuActuel:500 },
+  { id:"23.24", appellation:"vins_clairs_2025", denomination:"BELLEVUE",           millesime:2025, volume:500, certif:"BIO", tonnelier:"Saint Martin",     statut:"actif", contenuActuel:500 },
+  { id:"22.17", appellation:"vins_clairs_2025", denomination:"BELLEVUE",           millesime:2025, volume:320, certif:"BIO", tonnelier:"Mercurey",         statut:"actif", contenuActuel:320 },
+  { id:"22.16", appellation:"vins_clairs_2025", denomination:"BRANSCOURT",         millesime:2025, volume:320, certif:"BIO", tonnelier:"Seguin Moreau",    statut:"actif", contenuActuel:320 },
+  { id:"22.54", appellation:"vins_clairs_2025", denomination:"BRANSCOURT",         millesime:2025, volume:500, certif:"BIO", tonnelier:"Francois Frère",   statut:"actif", contenuActuel:500 },
+  { id:"22.76", appellation:"vins_clairs_2025", denomination:"BRANSCOURT",         millesime:2025, volume:500, certif:"BIO", tonnelier:"Francois Frère",   statut:"actif", contenuActuel:500 },
+  { id:"22.44", appellation:"vins_clairs_2025", denomination:"TUILERIE",           millesime:2025, volume:320, certif:"BIO", tonnelier:"ACF",              statut:"actif", contenuActuel:320 },
+  { id:"22.18", appellation:"vins_clairs_2025", denomination:"TUILERIE",           millesime:2025, volume:320, certif:"BIO", tonnelier:"Mercurey",         statut:"actif", contenuActuel:320 },
+  { id:"21.24", appellation:"vins_clairs_2025", denomination:"TUILERIE",           millesime:2025, volume:320, certif:"BIO", tonnelier:"Cavin",            statut:"actif", contenuActuel:320 },
+  { id:"21.49", appellation:"vins_clairs_2025", denomination:"EPERNAY",            millesime:2025, volume:320, certif:"",    tonnelier:"Seguin Moreau",    statut:"actif", contenuActuel:320 },
+  { id:"25.22", appellation:"vins_clairs_2025", denomination:"LE MESNIL",          millesime:2025, volume:320, certif:"BIO", tonnelier:"",                 statut:"actif", contenuActuel:320 },
+  { id:"25.21", appellation:"vins_clairs_2025", denomination:"LES GOESSES CRU A",  millesime:2025, volume:228, certif:"BIO", tonnelier:"",                 statut:"actif", contenuActuel:228 },
+  { id:"103",   appellation:"vins_clairs_2025", denomination:"LES GOESSES CRU B",  millesime:2025, volume:228, certif:"BIO", tonnelier:"",                 statut:"actif", contenuActuel:228 },
+  { id:"23.18", appellation:"vins_clairs_2025", denomination:"TRY / FESTIGNY",     millesime:2025, volume:500, certif:"BIO", tonnelier:"",                 statut:"surveillance", contenuActuel:500 },
+  { id:"23.19", appellation:"vins_clairs_2025", denomination:"TRY / FESTIGNY",     millesime:2025, volume:500, certif:"BIO", tonnelier:"Seguin Moreau",    statut:"actif", contenuActuel:500 },
+  // == VINS DE RÉSERVE ======================================================
+  { id:"C18.25",          appellation:"vins_reserve", denomination:"VDR TUILERIE 2020",           millesime:2020, volume:228,  certif:"BIO",     tonnelier:"",              statut:"actif", contenuActuel:220 },
+  { id:"22.34",           appellation:"vins_reserve", denomination:"MESNIL SUR OGER",             millesime:null, volume:228,  certif:"BIO",     tonnelier:"Chassin",       statut:"actif", contenuActuel:220 },
+  { id:"22.27",           appellation:"vins_reserve", denomination:"AMBONNAY",                    millesime:null, volume:228,  certif:"BIO",     tonnelier:"Saint martin",  statut:"actif", contenuActuel:220 },
+  { id:"Foudre Baptiste", appellation:"vins_reserve", denomination:"TUILERIE 2021-2022-2023",     millesime:null, volume:4000, certif:"BIO",     tonnelier:"",              statut:"actif", contenuActuel:3800 },
+  { id:"Foudre 3",        appellation:"vins_reserve", denomination:"ASSEMBLAGE SA 2022",          millesime:null, volume:5000, certif:"BIO",     tonnelier:"",              statut:"actif", contenuActuel:4800 },
+  { id:"Foudre 2",        appellation:"vins_reserve", denomination:"ASSEMBLAGE SA 2023",          millesime:null, volume:5000, certif:"BIO",     tonnelier:"",              statut:"actif", contenuActuel:4800 },
+  { id:"Foudre 6",        appellation:"vins_reserve", denomination:"ASSEMBLAGE SA 2023",          millesime:null, volume:5000, certif:"BIO",     tonnelier:"",              statut:"actif", contenuActuel:4800 },
+  { id:"Foudre Fernand",  appellation:"vins_reserve", denomination:"BAUCHETS 2021-2022-2023",     millesime:null, volume:4000, certif:"BIO",     tonnelier:"",              statut:"actif", contenuActuel:3800 },
+  { id:"Cuve Font.",      appellation:"vins_reserve", denomination:"FONTINETTE 2022-2023",        millesime:null, volume:2550, certif:"BIO",     tonnelier:"",              statut:"actif", contenuActuel:2400 },
+  { id:"Cuve Arp.",       appellation:"vins_reserve", denomination:"ARPENTS ROUGE 2020-2021-2023",millesime:null, volume:2550, certif:"BIO",     tonnelier:"",              statut:"actif", contenuActuel:2400 },
+  { id:"Foudre Cuis",     appellation:"vins_reserve", denomination:"CUIS 2020-2023",              millesime:null, volume:1000, certif:"NON BIO", tonnelier:"",              statut:"actif", contenuActuel:950 },
+  { id:"Foudre Epernay",  appellation:"vins_reserve", denomination:"EPERNAY 2020-2023",           millesime:null, volume:1000, certif:"NON BIO", tonnelier:"",              statut:"actif", contenuActuel:950 },
+  { id:"C18.26",          appellation:"vins_reserve", denomination:"FONT EXP",                    millesime:null, volume:228,  certif:"BIO",     tonnelier:"",              statut:"actif", contenuActuel:220 },
+  { id:"45681",           appellation:"vins_reserve", denomination:"VDR ARPENTS CLAIRS",          millesime:null, volume:500,  certif:"BIO",     tonnelier:"",              statut:"actif", contenuActuel:480 },
+  { id:"46015",           appellation:"vins_reserve", denomination:"VDR TERRES BLEUES",           millesime:null, volume:500,  certif:"BIO",     tonnelier:"",              statut:"actif", contenuActuel:480 },
+  { id:"45924",           appellation:"vins_reserve", denomination:"VDR ARPENT ROUGE",            millesime:null, volume:500,  certif:"BIO",     tonnelier:"",              statut:"actif", contenuActuel:480 },
+  { id:"45740",           appellation:"vins_reserve", denomination:"VDR FONTINETTE",              millesime:null, volume:500,  certif:"BIO",     tonnelier:"",              statut:"actif", contenuActuel:480 },
+  { id:"45832",           appellation:"vins_reserve", denomination:"VDR DIVERS",                  millesime:null, volume:500,  certif:"BIO",     tonnelier:"",              statut:"actif", contenuActuel:480 },
+  { id:"45712",           appellation:"vins_reserve", denomination:"VDR ARPENT ROUGE",            millesime:null, volume:500,  certif:"BIO",     tonnelier:"",              statut:"actif", contenuActuel:480 },
+  { id:"45954",           appellation:"vins_reserve", denomination:"VDR FONTINETTE",              millesime:null, volume:500,  certif:"BIO",     tonnelier:"",              statut:"actif", contenuActuel:480 },
+  { id:"45985",           appellation:"vins_reserve", denomination:"VDR ARPENT ROUGE",            millesime:null, volume:500,  certif:"BIO",     tonnelier:"",              statut:"actif", contenuActuel:480 },
+  { id:"45862",           appellation:"vins_reserve", denomination:"VDR FONTINETTE",              millesime:null, volume:500,  certif:"BIO",     tonnelier:"",              statut:"actif", contenuActuel:480 },
+  { id:"45893",           appellation:"vins_reserve", denomination:"VDR ARPENT ROUGE",            millesime:null, volume:500,  certif:"BIO",     tonnelier:"",              statut:"actif", contenuActuel:480 },
+  { id:"45771",           appellation:"vins_reserve", denomination:"VDR FONTINETTE",              millesime:null, volume:500,  certif:"BIO",     tonnelier:"",              statut:"actif", contenuActuel:480 },
+  { id:"45801",           appellation:"vins_reserve", denomination:"VDR ARPENT ROUGE",            millesime:null, volume:500,  certif:"BIO",     tonnelier:"",              statut:"actif", contenuActuel:480 },
+  // == COTEAUX CHAMPENOIS ====================================================
+  { id:"21.53",  appellation:"coteaux", denomination:"FONTINETTE ROUGE 2023",  millesime:2023, volume:228, certif:"BIO", tonnelier:"",             statut:"actif", contenuActuel:220 },
+  { id:"128-3",  appellation:"coteaux", denomination:"COTEAUX FONTINETTE ROUGE",millesime:null, volume:228, certif:"BIO", tonnelier:"",             statut:"actif", contenuActuel:220 },
+  { id:"458-1",  appellation:"coteaux", denomination:"COTEAUX FONTINETTE ROUGE",millesime:null, volume:228, certif:"BIO", tonnelier:"",             statut:"actif", contenuActuel:220 },
+  { id:"D 2022", appellation:"coteaux", denomination:"COTEAUX FONTINETTE ROUGE",millesime:2022, volume:228, certif:"BIO", tonnelier:"",             statut:"actif", contenuActuel:220 },
+  { id:"25.13",  appellation:"coteaux", denomination:"FONTINETTE ROUGE 2025",   millesime:2025, volume:500, certif:"",    tonnelier:"Saint Martin", statut:"actif", contenuActuel:480 },
+  // == RATAFIA ===============================================================
+  // 2019-2022
+  { id:"46013", appellation:"ratafia", denomination:"RATAFIA 2019-2022", millesime:null, volume:228, certif:"", tonnelier:"SM",   statut:"actif", contenuActuel:220 },
+  { id:"22.37", appellation:"ratafia", denomination:"RATAFIA 2019-2022", millesime:null, volume:228, certif:"", tonnelier:"DAMY", statut:"actif", contenuActuel:220 },
+  { id:"45799", appellation:"ratafia", denomination:"RATAFIA 2019-2022", millesime:null, volume:228, certif:"", tonnelier:"FF",   statut:"actif", contenuActuel:220 },
+  { id:"22.23", appellation:"ratafia", denomination:"RATAFIA 2019-2022", millesime:null, volume:228, certif:"", tonnelier:"SM",   statut:"actif", contenuActuel:220 },
+  { id:"22.24", appellation:"ratafia", denomination:"RATAFIA 2019-2022", millesime:null, volume:228, certif:"", tonnelier:"",     statut:"actif", contenuActuel:220 },
+  { id:"45952", appellation:"ratafia", denomination:"RATAFIA 2019-2022", millesime:null, volume:228, certif:"", tonnelier:"DAMY", statut:"actif", contenuActuel:220 },
+  { id:"22.26", appellation:"ratafia", denomination:"RATAFIA 2019-2022", millesime:null, volume:228, certif:"", tonnelier:"SM",   statut:"actif", contenuActuel:220 },
+  // 2023
+  { id:"12",    appellation:"ratafia", denomination:"RATAFIA 2023", millesime:2023, volume:228, certif:"", tonnelier:"",   statut:"actif", contenuActuel:220 },
+  { id:"82",    appellation:"ratafia", denomination:"RATAFIA 2023", millesime:2023, volume:228, certif:"", tonnelier:"",   statut:"actif", contenuActuel:220 },
+  { id:"20.10", appellation:"ratafia", denomination:"RATAFIA 2023", millesime:2023, volume:228, certif:"", tonnelier:"",   statut:"actif", contenuActuel:220 },
+  { id:"45830", appellation:"ratafia", denomination:"RATAFIA 2023", millesime:2023, volume:228, certif:"", tonnelier:"",   statut:"actif", contenuActuel:220 },
+  { id:"45738", appellation:"ratafia", denomination:"RATAFIA 2023", millesime:2023, volume:228, certif:"", tonnelier:"SM", statut:"actif", contenuActuel:220 },
+  { id:"45891", appellation:"ratafia", denomination:"RATAFIA 2023", millesime:2023, volume:228, certif:"", tonnelier:"SM", statut:"actif", contenuActuel:220 },
+  // 2024
+  { id:"45860", appellation:"ratafia", denomination:"RATAFIA 2024", millesime:2024, volume:228, certif:"", tonnelier:"SM", statut:"actif", contenuActuel:220 },
+  { id:"22.25", appellation:"ratafia", denomination:"RATAFIA 2024", millesime:2024, volume:228, certif:"", tonnelier:"SM", statut:"actif", contenuActuel:220 },
+];
+
+// Notes de dégustation - Session du 09/04/2026
+const INIT_DEGUSTATIONS = [
+  { id:"d1", futId:"23.28", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.0, longueur:1.5, noteG:3.0, commentaire:"Nez grillé - net droit" },
+  { id:"d2", futId:"23.28", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:1.5, longueur:2.5, noteG:4.5, commentaire:"Equilibré, fruit/bois (mûre) - puissant équilibre" },
+  { id:"d3", futId:"23.28", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:1.0, longueur:2.0, noteG:3.5, commentaire:"Moins de bois - Plus de fruit - Acide et tannique" },
+  { id:"d4", futId:"23.29", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.0, longueur:1.5, noteG:3.5, commentaire:"Nez grillé - net droit - sans longueur" },
+  { id:"d5", futId:"23.29", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:1.5, longueur:2.0, noteG:4.0, commentaire:"Patissier, plain blanc (Acidité/Acidité verte)" },
+  { id:"d6", futId:"23.29", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:2.5, longueur:2.0, noteG:2.5, commentaire:"Plus dilué - tannique au nez & bouche" },
+  { id:"d7", futId:"23.14", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.0, longueur:1.0, noteG:3.0, commentaire:"Nez similaire - net droit - vin faible" },
+  { id:"d8", futId:"23.14", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:2.5, longueur:2.5, noteG:3.0, commentaire:"Fumé grillé - noix cajou, boisé" },
+  { id:"d9", futId:"23.14", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:3.0, longueur:2.0, noteG:3.5, commentaire:"Bois - Grillé - Fumé - Vol mais bcp tannin" },
+  { id:"d10", futId:"21.44", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.0, longueur:1.0, noteG:3.0, commentaire:"Net - droit (Bon mais un peu creux)" },
+  { id:"d11", futId:"21.44", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:1.0, longueur:1.5, noteG:2.0, commentaire:"Manque de netteté (Terreux/végétal)" },
+  { id:"d12", futId:"21.44", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:1.0, longueur:2.0, noteG:3.5, commentaire:"Plus élevé - Oxy - Vol en bouche" },
+  { id:"d13", futId:"21.47", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.5, longueur:2.0, noteG:3.0, commentaire:"Nez vif, net, droit (sans prétention)" },
+  { id:"d14", futId:"21.47", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:2.0, longueur:2.5, noteG:4.0, commentaire:"Grillé, fumé, boisé traditionnel" },
+  { id:"d15", futId:"21.47", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:3.0, longueur:2.5, noteG:4.0, commentaire:"Bois +++ - Fruits - Longueur" },
+  { id:"d16", futId:"22.21", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.0, longueur:1.5, noteG:3.0, commentaire:"Nez OK - riche - un peu grossier - manque d\'équilibre" },
+  { id:"d17", futId:"22.21", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:1.5, longueur:1.5, noteG:1.5, commentaire:"Boisé réduction grillé (vaseux)" },
+  { id:"d18", futId:"22.21", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:1.5, longueur:1.5, noteG:2.5, commentaire:"Pas de bois au nez - Acidité - Court" },
+  { id:"d19", futId:"22.29", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.0, longueur:1.5, noteG:3.0, commentaire:"Nez OK, riche" },
+  { id:"d20", futId:"22.29", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:1.5, longueur:2.0, noteG:3.0, commentaire:"Mature - Fin léger animal" },
+  { id:"d21", futId:"22.29", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:2.0, longueur:3.0, noteG:4.0, commentaire:"Structuré - Acide - Equilibre & Longueur" },
+  { id:"d22", futId:"20.15", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.0, longueur:2.5, noteG:3.5, commentaire:"Net, droit++ - belle longueur" },
+  { id:"d23", futId:"20.15", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:2.0, longueur:2.5, noteG:3.5, commentaire:"Franc, complet, riche" },
+  { id:"d24", futId:"20.15", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:2.0, longueur:2.0, noteG:3.5, commentaire:"Plus silex - volumineux en bouche + acidité" },
+  { id:"d25", futId:"21.48", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.0, longueur:1.5, noteG:3.0, commentaire:"Nez frais - riche" },
+  { id:"d26", futId:"21.48", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:1.5, longueur:2.5, noteG:3.5, commentaire:"Franc, simple - Riche, gras, acide (Ananas?)" },
+  { id:"d27", futId:"21.48", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:2.0, longueur:3.0, noteG:4.0, commentaire:"Boisé, grillé, fumée - Acidité & structuré" },
+  { id:"d28", futId:"105", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.0, longueur:2.5, noteG:3.5, commentaire:"Joli nez + - Droit - net" },
+  { id:"d29", futId:"105", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:2.0, longueur:2.5, noteG:2.5, commentaire:"Nez frais - Bois frais (Vif)" },
+  { id:"d30", futId:"105", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:3.0, longueur:2.0, noteG:4.0, commentaire:"Fût au nez & bouche" },
+  { id:"d31", futId:"22.52", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.0, longueur:2.0, noteG:3.0, commentaire:"Riche - beau vin - belle base" },
+  { id:"d32", futId:"22.52", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:2.0, longueur:2.5, noteG:3.5, commentaire:"Franc - Classique - Boisé vanille (Standard, longueur aromatique vanillé)" },
+  { id:"d33", futId:"22.52", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:2.0, longueur:1.0, noteG:2.5, commentaire:"Bois bien présent - pas de longueur" },
+  { id:"d34", futId:"69", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.0, longueur:1.5, noteG:3.0, commentaire:"Plus large - Fût fatigué" },
+  { id:"d35", futId:"69", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:1.0, longueur:2.0, noteG:3.0, commentaire:"Frais - fin - équilibré (Vif, ferme, léger tannin)" },
+  { id:"d36", futId:"69", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:1.0, longueur:2.0, noteG:3.5, commentaire:"Fruits rouges, fûts ? - Complexe - acide" },
+  { id:"d37", futId:"23.15", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.5, longueur:2.0, noteG:3.5, commentaire:"Très droit, équilibré, agréable" },
+  { id:"d38", futId:"23.15", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:2.0, longueur:2.0, noteG:3.0, commentaire:"Boisé présent - moins fin" },
+  { id:"d39", futId:"23.15", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:2.0, longueur:2.5, noteG:2.5, commentaire:"Bois moins présent au nez - Leger - Pas de puissance" },
+  { id:"d40", futId:"23.13", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.5, longueur:2.5, noteG:4.0, commentaire:"Droit, nez en fruit" },
+  { id:"d41", futId:"23.13", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:1.5, longueur:2.5, noteG:4.0, commentaire:"Nez harmonieux - équilibre vin bois" },
+  { id:"d42", futId:"23.13", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:2.0, longueur:3.0, noteG:3.5, commentaire:"Pas bcp de vol - tannin présent en bouche" },
+  { id:"d43", futId:"22.14", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.5, longueur:1.5, noteG:3.5, commentaire:"Un peu fermé, gourmand, riche et bon équilibre" },
+  { id:"d44", futId:"22.14", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:1.5, longueur:2.0, noteG:3.5, commentaire:"Fruit noir - réservé - vif - dur" },
+  { id:"d45", futId:"22.14", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:2.0, longueur:2.0, noteG:2.5, commentaire:"Plus sur les fruits - Pas de bois - Acide & Patine" },
+  { id:"d46", futId:"22.47", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.5, longueur:2.0, noteG:3.5, commentaire:"Jolie nez gourmand" },
+  { id:"d47", futId:"22.47", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:1.5, longueur:2.5, noteG:4.0, commentaire:"Boisé, fin, un peu ?" },
+  { id:"d48", futId:"22.47", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:2.0, longueur:3.0, noteG:4.0, commentaire:"Vieux bois - lactée - Longueur matière - Final acide" },
+  { id:"d49", futId:"21.16", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:2.0, longueur:2.5, noteG:4.0, commentaire:"Net droit - belle longueur - complet" },
+  { id:"d50", futId:"21.16", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:2.0, longueur:2.0, noteG:3.5, commentaire:"Boisé présent (manque de finesse)" },
+  { id:"d51", futId:"21.16", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:3.0, longueur:2.0, noteG:4.0, commentaire:"Fruits & Acidité - Longueur" },
+  { id:"d52", futId:"109", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:2.0, longueur:2.5, noteG:4.0, commentaire:"Nez grillé - net - droit - précis" },
+  { id:"d53", futId:"109", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:1.0, longueur:2.5, noteG:3.5, commentaire:"Légère rusticité" },
+  { id:"d54", futId:"109", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:1.0, longueur:3.0, noteG:4.5, commentaire:"Grillé - Fruits rouge - acidité - Longueur" },
+  { id:"d55", futId:"21.39", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:2.0, longueur:2.0, noteG:3.0, commentaire:"Droit, un vin moins complet (plus creux)" },
+  { id:"d56", futId:"21.39", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:1.0, longueur:2.5, noteG:2.5, commentaire:"Boisé gourmand vanillé - equilibré" },
+  { id:"d57", futId:"21.39", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:2.0, longueur:2.0, noteG:4.0, commentaire:"Bois - Tabac blanc - Rondeur - Acidité - Fond à la fin" },
+  { id:"d58", futId:"22.38", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:2.5, longueur:2.5, noteG:4.0, commentaire:"Beau nez - net droit - un peu faible" },
+  { id:"d59", futId:"22.38", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:2.0, longueur:3.0, noteG:4.0, commentaire:"Boisé équilibré" },
+  { id:"d60", futId:"22.38", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:2.5, longueur:3.0, noteG:4.0, commentaire:"Moins de vol - Plus d\'acidité & longueur" },
+  { id:"d61", futId:"104", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.0, longueur:1.5, noteG:3.0, commentaire:"Nez grillé, net, droit, sec, fruit léger" },
+  { id:"d62", futId:"104", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:1.5, longueur:2.0, noteG:3.0, commentaire:"Boisé - moins fin" },
+  { id:"d63", futId:"104", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:1.5, longueur:2.5, noteG:4.5, commentaire:"Plus d\'alcool - Bois sec - Acidité - Austère" },
+  { id:"d64", futId:"81", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.0, longueur:1.5, noteG:3.0, commentaire:"Joli nez - fleurs - net droit - bon vin un peu marqué" },
+  { id:"d65", futId:"81", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:1.5, longueur:2.0, noteG:3.0, commentaire:"boisé - fruit rouge, acidulé (groseille)" },
+  { id:"d66", futId:"81", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:1.5, longueur:2.5, noteG:2.5, commentaire:"Pas beaucoup d\'évolution - fumé - Lacté" },
+  { id:"d67", futId:"23.26", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.0, longueur:2.0, noteG:3.5, commentaire:"Nez plus structuré - net droit - riche, bien construit" },
+  { id:"d68", futId:"23.26", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:2.5, longueur:2.0, noteG:3.5, commentaire:"Boisé poivré" },
+  { id:"d69", futId:"23.26", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:3.0, longueur:1.5, noteG:3.5, commentaire:"Moins expressif au nez - Bouche équilibré" },
+  { id:"d70", futId:"23.27", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:2.0, longueur:2.5, noteG:4.0, commentaire:"Goût boisé, net droit riche et gourmand" },
+  { id:"d71", futId:"23.27", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:2.0, longueur:1.5, noteG:3.0, commentaire:"Nez riche expressif" },
+  { id:"d72", futId:"23.27", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:1.5, longueur:2.0, noteG:2.5, commentaire:"Léger - Manque de vol - pas très expressif" },
+  { id:"d73", futId:"22.41", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.0, longueur:2.5, noteG:4.0, commentaire:"Nez droit - franc, droit, pur" },
+  { id:"d74", futId:"22.41", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:2.0, longueur:2.0, noteG:3.5, commentaire:"Complet - aromatique (grillé) - simple" },
+  { id:"d75", futId:"22.41", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:2.5, longueur:1.0, noteG:3.0, commentaire:"Bois présent - tannique & Acide - ?" },
+  { id:"d76", futId:"22.30", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.5, longueur:3.5, noteG:4.0, commentaire:"Droit - net - belle longueur - vivant" },
+  { id:"d77", futId:"22.30", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:1.0, longueur:2.0, noteG:3.5, commentaire:"Fruit rouge - boisé frais" },
+  { id:"d78", futId:"22.30", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:2.5, longueur:3.0, noteG:4.0, commentaire:"Pas bcp d\'expression au nez - Acidité fût +++" },
+  { id:"d79", futId:"34", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:2.0, longueur:2.5, noteG:4.0, commentaire:"Belle longueur - droit & complet" },
+  { id:"d80", futId:"34", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:2.5, longueur:2.0, noteG:3.0, commentaire:"Complet - léger - fruit rouge - Harmonieux et équilibré" },
+  { id:"d81", futId:"34", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:2.0, longueur:2.0, noteG:3.5, commentaire:"Plus d\'équilibre, volume et acidité manque de ?" },
+  { id:"d82", futId:"21.30", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.5, longueur:2.5, noteG:3.5, commentaire:"Net, frais, droit, riche, complet" },
+  { id:"d83", futId:"21.30", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:1.0, longueur:2.0, noteG:2.5, commentaire:"Faible bois - Leger terreux (Intensité faible)" },
+  { id:"d84", futId:"21.30", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:2.0, longueur:2.0, noteG:3.5, commentaire:"Evolution - bois - Lactée - Acidité & tannin" },
+  { id:"d85", futId:"57", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.5, longueur:2.5, noteG:4.0, commentaire:"Frais au nez, riche, complexe" },
+  { id:"d86", futId:"57", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:2.0, longueur:2.0, noteG:3.5, commentaire:"Expressif harmonieux - vanille - complet/simple" },
+  { id:"d87", futId:"57", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:0.5, longueur:1.0, noteG:2.0, commentaire:"Oxydée - fatiguée - Acidité et pas de corps" },
+  { id:"d88", futId:"20.40", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.0, longueur:1.5, noteG:3.0, commentaire:"Fin, net, droit, complexe, dense" },
+  { id:"d89", futId:"20.40", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:1.5, longueur:1.5, noteG:3.0, commentaire:"Frais vert - malique" },
+  { id:"d90", futId:"20.40", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:1.0, longueur:1.5, noteG:3.0, commentaire:"Leger végétale - Fruits blanc - manque de longueur" },
+  { id:"d91", futId:"71", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.0, longueur:1.5, noteG:3.0, commentaire:"Jolie vin, net, droit, belle finesse" },
+  { id:"d92", futId:"71", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:1.0, longueur:2.0, noteG:3.0, commentaire:"Simple - franc (Acidité)" },
+  { id:"d93", futId:"71", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:2.0, longueur:2.0, noteG:3.0, commentaire:"Vanille - bois fin - toujours un manque de vol en bouche" },
+  { id:"d94", futId:"45682", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:3.0, longueur:2.5, noteG:4.5, commentaire:"Net - droit - franc & complet" },
+  { id:"d95", futId:"45682", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:3.0, longueur:2.5, noteG:3.5, commentaire:"Viande grillée (Chassin?) - Final tannique/Sciure" },
+  { id:"d96", futId:"45682", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:3.0, longueur:2.0, noteG:3.0, commentaire:"Bois +++ / Bois et vins 2 choses différentes" },
+  { id:"d97", futId:"21.20", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.5, longueur:2.5, noteG:4.0, commentaire:"Jolie nez frais - net - franc & droit en fruit" },
+  { id:"d98", futId:"21.20", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:1.5, longueur:2.0, noteG:4.0, commentaire:"Chêne chaud/Fruit frais - Complet - riche - rond - gras équilibré" },
+  { id:"d99", futId:"21.20", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:1.5, longueur:1.0, noteG:3.5, commentaire:"Plus terreux - acidité & Tannique en bouche" },
+  { id:"d100", futId:"21.41", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.5, longueur:3.0, noteG:4.0, commentaire:"Fruité - Net et précis" },
+  { id:"d101", futId:"21.41", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:2.5, longueur:2.0, noteG:3.5, commentaire:"Vanillé - sucrant" },
+  { id:"d102", futId:"21.41", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:2.5, longueur:1.5, noteG:3.5, commentaire:"Grillé - Fumée - Fruit rouge - Bien - Leger ?" },
+  { id:"d103", futId:"22.13", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.0, longueur:2.0, noteG:3.5, commentaire:"Jolie nez - net - droit - tendu" },
+  { id:"d104", futId:"22.13", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:2.0, longueur:2.0, noteG:3.5, commentaire:"Boisé - vanillé (Classique, puissance/acidité)" },
+  { id:"d105", futId:"22.13", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:2.0, longueur:2.0, noteG:4.0, commentaire:"Fût bien intégré, acidité, longueur" },
+  { id:"d106", futId:"45923", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.0, longueur:1.5, noteG:3.0, commentaire:"Riche - droit - net - beau fruit - bonne base" },
+  { id:"d107", futId:"45923", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:2.5, longueur:2.0, noteG:3.0, commentaire:"Complet - puissant - acide" },
+  { id:"d108", futId:"45923", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:3.0, longueur:2.0, noteG:3.5, commentaire:"Bois + plus d\'évolution mais belle acidité" },
+  { id:"d109", futId:"23.22", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.0, longueur:1.5, noteG:3.0, commentaire:"Belle base" },
+  { id:"d110", futId:"23.22", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:1.0, longueur:2.5, noteG:4.0, commentaire:"Frais - franc - Structure aérienne - légère - final technique" },
+  { id:"d111", futId:"23.22", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:2.0, longueur:1.5, noteG:2.5, commentaire:"Plat, bois, oxydation" },
+  { id:"d112", futId:"23.23", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.0, longueur:1.5, noteG:3.0, commentaire:"Belle longueur - riche - net - droit" },
+  { id:"d113", futId:"23.23", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:2.0, longueur:2.5, noteG:4.0, commentaire:"Evolué - mature ox (Acidité fraiche)" },
+  { id:"d114", futId:"23.23", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:2.0, longueur:2.5, noteG:4.0, commentaire:"Acidité, corp longueur (Léger tannin en fin de bouche)" },
+  { id:"d115", futId:"22.42", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.0, longueur:2.0, noteG:3.5, commentaire:"Nez floral - belle longueur - riche & droit" },
+  { id:"d116", futId:"22.42", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:1.0, longueur:2.0, noteG:4.0, commentaire:"Crémeux - Calcaire - Fruit complexité" },
+  { id:"d117", futId:"22.42", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:2.0, longueur:2.5, noteG:3.5, commentaire:"Acidité, tannin léger végétale" },
+  { id:"d118", futId:"23.16", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.5, longueur:2.0, noteG:3.5, commentaire:"Riche - beau - droit - complet" },
+  { id:"d119", futId:"23.16", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:1.5, longueur:2.5, noteG:4.0, commentaire:"Frais - légèrement mentholé?" },
+  { id:"d120", futId:"23.16", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:1.0, longueur:2.0, noteG:4.0, commentaire:"Léger fumé - Grillé - longueur puis acidité" },
+  { id:"d121", futId:"23.24", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.0, longueur:3.0, noteG:3.5, commentaire:"Frais, gourmand - complet - beau vin" },
+  { id:"d122", futId:"23.24", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:1.5, longueur:2.0, noteG:4.0, commentaire:"Fumée viande grillée (Faible intensité)" },
+  { id:"d123", futId:"23.24", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:1.5, longueur:2.0, noteG:3.5, commentaire:"Bois mieux intégré au nez - Bouche plus expressive - Final acide" },
+  { id:"d124", futId:"22.17", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.0, longueur:1.5, noteG:3.5, commentaire:"Gourmand Beurré - Mais légère réduction" },
+  { id:"d125", futId:"22.17", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:1.0, longueur:1.0, noteG:3.0, commentaire:"Frais - franc - fumé ; grain rugueux - Longueur moyenne" },
+  { id:"d126", futId:"22.17", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:2.0, longueur:2.0, noteG:3.0, commentaire:"Beurré - pas bcp de longueur - technique" },
+  { id:"d127", futId:"23.18", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.0, longueur:2.0, noteG:3.5, commentaire:"Nez ok, droit riche en finesse, net, droit" },
+  { id:"d128", futId:"23.18", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:2.0, longueur:2.5, noteG:2.0, commentaire:"Vif - grillé - cuir frais (Ferme, vif)" },
+  { id:"d129", futId:"23.18", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:2.0, longueur:1.0, noteG:1.0, commentaire:"Animal + végetal (Acide mais pas concentré) ? brette" },
+  { id:"d130", futId:"23.19", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.0, longueur:2.0, noteG:3.5, commentaire:"Jolie nez, net, droit, plus de tension" },
+  { id:"d131", futId:"23.19", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:1.0, longueur:2.0, noteG:2.5, commentaire:"Simple - Acidité, vif, frais" },
+  { id:"d132", futId:"23.19", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:1.0, longueur:3.0, noteG:4.0, commentaire:"Pas bcp de bois mais longueur et tannin" },
+  { id:"d133", futId:"21.14", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.5, longueur:2.5, noteG:4.0, commentaire:"Jolie nez floral, frais, belle longueur plus complet" },
+  { id:"d134", futId:"21.14", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:1.0, longueur:1.5, noteG:3.5, commentaire:"Mine de crayons + d\'acidité - minéralité (tuffeaux)" },
+  { id:"d135", futId:"21.14", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:1.0, longueur:2.5, noteG:3.0, commentaire:"Patisserie - Beurre - Tannin + intégré au vin" },
+  { id:"d136", futId:"23.25", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.5, longueur:2.5, noteG:4.0, commentaire:"Belle fraîcheur, très droit, complet, beau vin" },
+  { id:"d137", futId:"23.25", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:1.5, longueur:1.5, noteG:3.5, commentaire:"Nez frais - floral & boisé chêne (Harmonieux complet)" },
+  { id:"d138", futId:"23.25", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:1.0, longueur:2.0, noteG:3.5, commentaire:"Fruits à noyaux - Pas bcp de vol - Final tannique" },
+  { id:"d139", futId:"23.20", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:2.0, longueur:2.0, noteG:3.5, commentaire:"Nez gras - beurré (en malo?) beau bois" },
+  { id:"d140", futId:"23.20", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:1.5, longueur:2.0, noteG:4.0, commentaire:"Nez équilibré (vin/bois)" },
+  { id:"d141", futId:"23.20", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:2.0, longueur:2.0, noteG:3.0, commentaire:"Beurre - Vanille - Corp - Acidité & Tannin" },
+  { id:"d142", futId:"23.21", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.5, longueur:2.0, noteG:4.0, commentaire:"Jolie nez, franc, légère reduc en beurre" },
+  { id:"d143", futId:"23.21", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:1.5, longueur:1.0, noteG:3.0, commentaire:"Franc/fumé (cendre) - Faible expression du vin" },
+  { id:"d144", futId:"23.21", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:2.0, longueur:2.0, noteG:3.0, commentaire:"Grillé - Bois - Pas de corp central - Tannique" },
+  { id:"d145", futId:"22.16", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.0, longueur:3.0, noteG:2.5, commentaire:"Large - riche - Un peu grossier" },
+  { id:"d146", futId:"22.16", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:1.5, longueur:1.5, noteG:3.0, commentaire:"Expressif - Puissant" },
+  { id:"d147", futId:"22.16", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:1.0, longueur:2.0, noteG:2.5, commentaire:"Reglisse? Aerer - Manque de vol - Pointe acide" },
+  { id:"d148", futId:"22.76", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.0, longueur:1.0, noteG:2.5, commentaire:"Oeil coloré - riche - droit bien fait" },
+  { id:"d149", futId:"22.76", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:1.5, longueur:2.5, noteG:4.0, commentaire:"Leger oeil - fruit rouge (Fraise) gourmand - Vif" },
+  { id:"d150", futId:"22.76", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:1.5, longueur:2.5, noteG:4.0, commentaire:"Légère acidité, volume, vin complet" },
+  { id:"d151", futId:"22.54", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.0, longueur:1.0, noteG:2.5, commentaire:"Nez riche, plus ostère - Sans défaut mais lourd" },
+  { id:"d152", futId:"22.54", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:1.5, longueur:2.0, noteG:2.0, commentaire:"Boisé - Fruits confiture" },
+  { id:"d153", futId:"22.54", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:2.0, longueur:1.5, noteG:2.5, commentaire:"Bois mais Léger dilution, tannin à la fin" },
+  { id:"d154", futId:"22.44", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.5, longueur:2.5, noteG:4.0, commentaire:"Frais, droit, complet - beau vin" },
+  { id:"d155", futId:"22.44", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:1.0, longueur:2.0, noteG:3.0, commentaire:"Grillé, léger fumée" },
+  { id:"d156", futId:"22.44", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:1.0, longueur:2.0, noteG:2.0, commentaire:"Réduit - Bois en bouche - longueur - Structure - Tannin" },
+  { id:"d157", futId:"22.18", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.0, longueur:1.5, noteG:3.5, commentaire:"Nez légère réduction - frais - droit - plus ostère" },
+  { id:"d158", futId:"22.18", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:1.0, longueur:2.0, noteG:4.0, commentaire:"Harmonieux - meilleur équilibre vin/bois" },
+  { id:"d159", futId:"22.18", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:1.0, longueur:2.0, noteG:1.5, commentaire:"Réduit - Plat - Pas de volume - Tanique - ?" },
+  { id:"d160", futId:"21.24", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.0, longueur:1.5, noteG:3.0, commentaire:"Nez réduit - Beau vin équilibré - net" },
+  { id:"d161", futId:"21.24", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:2.0, longueur:2.5, noteG:4.0, commentaire:"Boisé - fin - complet (Rugueux, puissance, tannique)" },
+  { id:"d162", futId:"21.24", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:1.0, longueur:2.0, noteG:3.5, commentaire:"Bois & réduction - complexe au nez - Volume en bouche" },
+  { id:"d163", futId:"21.49", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.0, longueur:1.5, noteG:3.5, commentaire:"Jolie vin - complet + belle tension" },
+  { id:"d164", futId:"21.49", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:1.5, longueur:1.5, noteG:2.5, commentaire:"Franc - Puissant - Gourmand" },
+  { id:"d165", futId:"21.49", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:2.5, longueur:1.5, noteG:3.5, commentaire:"Pas très nette mais bois ok sur le finale" },
+  { id:"d166", futId:"25.22", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:2.5, longueur:2.5, noteG:4.0, commentaire:"Frais - droit - beau chardo" },
+  { id:"d167", futId:"25.22", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:2.0, longueur:2.5, noteG:4.0, commentaire:"Body building ; Gras - puissant - rustique - fruité - lourd" },
+  { id:"d168", futId:"25.22", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:2.0, longueur:2.0, noteG:4.0, commentaire:"Intense, fruits blanc - Acidité, fût très bien" },
+  { id:"d169", futId:"25.21", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.0, longueur:1.5, noteG:3.5, commentaire:"Moins précis - net - plus ostère" },
+  { id:"d170", futId:"25.21", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:2.0, longueur:2.0, noteG:3.5, commentaire:"Réservé - grillé - fin" },
+  { id:"d171", futId:"25.21", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:2.0, longueur:2.5, noteG:3.5, commentaire:"Pas très propre, animal, fût bien intégré" },
+  { id:"d172", futId:"103", session:"09/04/2026", date:"2026-04-09", degustateur:"Flavien", boise:1.0, longueur:1.0, noteG:3.0, commentaire:"?" },
+  { id:"d173", futId:"103", session:"09/04/2026", date:"2026-04-09", degustateur:"Sébastien", boise:1.5, longueur:2.0, noteG:3.5, commentaire:"Puissant - Equilibré - complexe Rustique - Manque de finesse" },
+  { id:"d174", futId:"103", session:"09/04/2026", date:"2026-04-09", degustateur:"Ricardo", boise:2.5, longueur:1.5, noteG:3.0, commentaire:"Complexe - Dense / Torréfié mais plat" },
+];
+
+const TYPES_MOUVEMENT = [
+  { value:"ouillage",    label:"Ouillage",               icon:"ti-droplet",        color:"#185FA5" },
+  { value:"soutirage",   label:"Soutirage (fût &rarr; fût)",  icon:"ti-arrows-exchange",color:"#1a7a40" },
+  { value:"assemblage",  label:"Assemblage (plusieurs &rarr; 1)", icon:"ti-git-merge",  color:"#2d6a00" },
+  { value:"ecoulage",    label:"Écoulage partiel",        icon:"ti-droplet-half-2", color:"#c47800" },
+  { value:"vidange",     label:"Vidange complète",        icon:"ti-circle-x",       color:"#cc2222" },
+  { value:"remplissage", label:"Remplissage cuve",        icon:"ti-droplet-filled", color:"#533AB7" },
+  { value:"batonnage",   label:"Bâtonnage",               icon:"ti-refresh",        color:"#5F5E5A" },
+  { value:"ajout_produit",label:"Ajout produit",          icon:"ti-flask",          color:"#BA7517" },
+];
+
+
+// Appellations fixes (non liées au millésime)
+const APPELLATION_FIXED = {
+  vins_reserve: { label:"Vins de réserve", color:"#7a5200", bg:"#fde8b8", border:"#c89020" },
+  coteaux:      { label:"Coteaux",         color:"#8B0000", bg:"#fdd0d0", border:"#c85050" },
+  ratafia:      { label:"Ratafia",         color:"#5c2a08", bg:"#ecd8c4", border:"#9a6040" },
+};
+// Couleur unique pour tous les vins clairs (peu importe le millésime)
+const VINS_CLAIRS_COLOR = { color:"#2d6a00", bg:"#d4edc0", border:"#7ab84880" };
+
+// Retourne le config d'appellation pour un fût donné
+function getApc(appellation) {
+  if(!appellation) return { color:"#5a4a30", bg:"transparent", border:"#2a2a2c" };
+  if(appellation.startsWith("vins_clairs")) return { ...VINS_CLAIRS_COLOR, label: appellation.replace("vins_clairs_","Vins clairs ").replace("vins_clairs","Vins clairs") };
+  return APPELLATION_FIXED[appellation] || { color:"#5a4a30", bg:"transparent", border:"#2a2a2c" };
+}
+
+// Constante APPELLATION pour les sélecteurs - reconstituée dynamiquement dans le composant
+const APPELLATION = {
+  vins_reserve: APPELLATION_FIXED.vins_reserve,
+  coteaux:      APPELLATION_FIXED.coteaux,
+  ratafia:      APPELLATION_FIXED.ratafia,
+};
+const fmtDate = (d) => new Date(d).toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
+const typeLabel = (v) => TYPES_MOUVEMENT.find(t=>t.value===v)?.label||v;
+const typeColor = (v) => TYPES_MOUVEMENT.find(t=>t.value===v)?.color||"#888";
+const avg = (arr) => arr.length ? +(arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(2) : null;
+const stars = (n,max=5) => { if(!n) return "-"; const f=Math.round(n); return "*".repeat(f)+"o".repeat(max-f); };
+
+function load(key,def){ try{ const s=localStorage.getItem(key); return s?JSON.parse(s):def; }catch{return def;} }
+
+export default function App() {
+  const [appError, setAppError] = useState(null);
+  const [tonneaux,      setTonneaux]      = useState(()=>load("chai_tonneaux",    INIT_TONNEAUX));
+  const [mouvements,    setMouvements]    = useState(()=>load("chai_mouvements",  []));
+  const [degustations,  setDegustations]  = useState(()=>load("chai_degustations",INIT_DEGUSTATIONS));
+  const [degustateurs,  setDegustateurs]  = useState(()=>{
+    const saved = load("chai_degustateurs_v2", null);
+    if(saved) return saved;
+    const old = load("chai_degustateurs", null);
+    const names = old && typeof old[0]==="string" ? old : ["Flavien","Sébastien","Ricardo","Julien","Clément","Thib","Arthur","Gas'"];
+    return names.map(n=>({nom:n, actif:true}));
+  });
+  const [editingDeg,    setEditingDeg]    = useState(false);
+  const [degDraft,      setDegDraft]      = useState([]);
+
+  const [view,        setView]        = useState("dashboard");
+  const [selectedFut, setSelectedFut] = useState(null);
+  const [ficheTab,    setFicheTab]    = useState("infos"); // infos | mouvements | degustations
+  const [searchFut,   setSearchFut]   = useState("");
+  const [filterDenom,      setFilterDenom]      = useState("");
+  const [filterAppellation, setFilterAppellation] = useState("");
+  const [filterOp,         setFilterOp]         = useState("");
+  const [filterDegFut,     setFilterDegFut]     = useState("");
+  const [filterDegCuvee,   setFilterDegCuvee]   = useState("");
+  const [filterDegFabric,  setFilterDegFabric]  = useState("");
+  const [filterFut,   setFilterFut]   = useState("");
+  const [showMvtForm, setShowMvtForm] = useState(false);
+  const [showDegForm, setShowDegForm] = useState(false);
+  const [showImport,  setShowImport]  = useState(false);
+  const [showReset,    setShowReset]    = useState(false);
+  const [showEditDeg,  setShowEditDeg]  = useState(false);
+  const [editingNote,  setEditingNote]  = useState(null);
+  const [editNoteForm, setEditNoteForm] = useState({boise:"",longueur:"",noteG:"",commentaire:""});
+  const [showFutForm, setShowFutForm] = useState(false);
+  const [editingFut,  setEditingFut]  = useState(null); // null=ajout, objet=édition
+  const [importText,  setImportText]  = useState("");
+  const [importMsg,   setImportMsg]   = useState("");
+
+  // Fût / Cuve form
+  const EMPTY_FUT = { id:"", appellation:"vins_clairs_2025", denomination:"", millesime:"2025", volume:"", tonnelier:"", grain:"", chauffe:"", certif:"BIO", statut:"actif", contenuActuel:"" };
+  const [futForm, setFutForm] = useState(EMPTY_FUT);
+
+  // Mouvement form
+  const [mvtForm, setMvtForm] = useState({
+    type:"ouillage", date:new Date().toISOString().slice(0,16),
+    operateur:"", futSource:[], futDest:"", volume:"", notes:"", produit:"", dosage:"",
+  });
+  // Dégustation form - une ligne par dégustateur
+  const [degForm, setDegForm] = useState({
+    futId:"", session:"", date:new Date().toISOString().slice(0,10),
+    lignes: degustateurs.filter(d=>d.actif).map(d=>({ degustateur:d.nom, boise:"", longueur:"", noteG:"", commentaire:"" })),
+  });
+
+  useEffect(()=>{
+    window.addEventListener('error', (e) => setAppError(e.message + ' at ' + e.filename + ':' + e.lineno));
+    window.addEventListener('unhandledrejection', (e) => setAppError(String(e.reason)));
+  }, []);
+  useEffect(()=>{ try{localStorage.setItem("chai_tonneaux",JSON.stringify(tonneaux));}catch{} },[tonneaux]);
+  useEffect(()=>{ try{localStorage.setItem("chai_mouvements",JSON.stringify(mouvements));}catch{} },[mouvements]);
+  useEffect(()=>{ try{localStorage.setItem("chai_degustations",JSON.stringify(degustations));}catch{} },[degustations]);
+  useEffect(()=>{ try{localStorage.setItem("chai_degustateurs_v2",JSON.stringify(degustateurs));}catch{} },[degustateurs]);
+
+  const getTonneau = (id) => tonneaux.find(t=>t.id===id);
+  const degsActifs = degustateurs.filter(d=>d.actif).map(d=>d.nom);
+  const toggleActif = (i) => setDegustateurs(prev=>prev.map((d,j)=>j===i?{...d,actif:!d.actif}:d));
+
+  // Appellations vins clairs dynamiques (une par millésime présent dans les données)
+  const vinsClairsAnnes = [...new Set(
+    tonneaux.filter(t=>t.appellation&&t.appellation.startsWith("vins_clairs"))
+      .map(t=>t.appellation)
+  )].sort();
+  // Toutes les appellations disponibles pour les filtres
+  const allAppellations = [...vinsClairsAnnes, "vins_reserve","coteaux","ratafia"];
+  // Passer un fût en réserve
+  const passerEnReserve = (id) => {
+    setTonneaux(prev=>prev.map(t=>t.id===id ? {...t, appellation:"vins_reserve"} : t));
+  };
+  const pct = (t) => Math.round((t.contenuActuel/t.volume)*100);
+  const denominations = [...new Set(tonneaux.map(t=>t.denomination))].sort();
+
+  // Notes résumé pour un fût
+  const notesForFut = (futId) => degustations.filter(d=>d.futId===futId);
+  const avgNoteG = (futId) => { const ns=notesForFut(futId).map(d=>d.noteG).filter(Boolean); return avg(ns); };
+  const avgBoise = (futId) => { const ns=notesForFut(futId).map(d=>d.boise).filter(Boolean); return avg(ns); };
+  const avgLong  = (futId) => { const ns=notesForFut(futId).map(d=>d.longueur).filter(Boolean); return avg(ns); };
+  const sessions = (futId) => [...new Set(notesForFut(futId).map(d=>d.session))];
+
+  // Submit ajout/modif fût
+  const submitFut = () => {
+    if(!futForm.id.trim())     return alert("Le N° de fût est requis.");
+    if(!futForm.denomination.trim()) return alert("La dénomination est requise.");
+    if(!futForm.volume || isNaN(+futForm.volume)) return alert("Le volume doit être un nombre.");
+    if(!editingFut && tonneaux.find(t=>t.id===futForm.id.trim())) return alert(`Le fût "${futForm.id}" existe déjà.`);
+    const vol = +futForm.volume;
+    const contenu = futForm.contenuActuel!==""?Math.min(vol,+futForm.contenuActuel):vol;
+    const fut = { id:futForm.id.trim(), appellation:futForm.appellation, denomination:futForm.denomination.trim(),
+      millesime:futForm.millesime?+futForm.millesime:null, volume:vol, tonnelier:futForm.tonnelier,
+      grain:futForm.grain, chauffe:futForm.chauffe, certif:futForm.certif,
+      statut:futForm.statut, contenuActuel:contenu };
+    if(editingFut) {
+      setTonneaux(prev=>prev.map(t=>t.id===editingFut.id?fut:t));
+    } else {
+      setTonneaux(prev=>[...prev, fut]);
+    }
+    setShowFutForm(false); setEditingFut(null); setFutForm(EMPTY_FUT);
+  };
+
+  // Supprimer un fût
+  const deleteFut = (id) => {
+    if(!window.confirm(`Supprimer le fût "${id}" ? Cette action est irréversible.`)) return;
+    setTonneaux(prev=>prev.filter(t=>t.id!==id));
+    setDegustations(prev=>prev.filter(d=>d.futId!==id));
+    if(selectedFut===id){ setSelectedFut(null); setView("tonneaux"); }
+    setShowFutForm(false); setEditingFut(null);
+  };
+
+  // Ouvrir formulaire en mode édition
+  const openEditFut = (t) => {
+    setFutForm({ id:t.id, appellation:t.appellation||"vins_clairs", denomination:t.denomination,
+      millesime:t.millesime||"", volume:t.volume, tonnelier:t.tonnelier||"",
+      grain:t.grain||"", chauffe:t.chauffe||"", certif:t.certif||"BIO",
+      statut:t.statut||"actif", contenuActuel:t.contenuActuel });
+    setEditingFut(t);
+    setShowFutForm(true);
+  };
+
+  // Submit mouvement
+  const submitMouvement = () => {
+    if(!mvtForm.operateur) return alert("Opérateur requis.");
+    const vol = parseFloat(mvtForm.volume)||0;
+    let upd = [...tonneaux];
+    if(mvtForm.type==="soutirage" && mvtForm.futSource[0] && mvtForm.futDest){
+      upd=upd.map(t=>{ if(t.id===mvtForm.futSource[0]) return{...t,contenuActuel:Math.max(0,t.contenuActuel-vol)}; if(t.id===mvtForm.futDest) return{...t,contenuActuel:Math.min(t.volume,t.contenuActuel+vol)}; return t; });
+    } else if(mvtForm.type==="assemblage" && mvtForm.futDest){
+      const tot=mvtForm.futSource.reduce((s,id)=>s+(getTonneau(id)?.contenuActuel||0),0);
+      upd=upd.map(t=>{ if(mvtForm.futSource.includes(t.id)) return{...t,contenuActuel:0,statut:"vide"}; if(t.id===mvtForm.futDest) return{...t,contenuActuel:Math.min(t.volume,tot)}; return t; });
+    } else if(["ecoulage"].includes(mvtForm.type) && mvtForm.futSource[0]){
+      upd=upd.map(t=>t.id===mvtForm.futSource[0]?{...t,contenuActuel:Math.max(0,t.contenuActuel-vol)}:t);
+    } else if(mvtForm.type==="vidange"){
+      upd=upd.map(t=>mvtForm.futSource.includes(t.id)?{...t,contenuActuel:0,statut:"vide"}:t);
+    } else if(["remplissage","ouillage"].includes(mvtForm.type) && mvtForm.futDest){
+      upd=upd.map(t=>t.id===mvtForm.futDest?{...t,contenuActuel:Math.min(t.volume,t.contenuActuel+vol)}:t);
+    }
+    setTonneaux(upd);
+    setMouvements(prev=>[{id:Date.now().toString(),...mvtForm,timestamp:new Date().toISOString()},...prev]);
+    setMvtForm({type:"ouillage",date:new Date().toISOString().slice(0,16),operateur:"",futSource:[],futDest:"",volume:"",notes:"",produit:"",dosage:""});
+    setShowMvtForm(false);
+  };
+
+  // Submit dégustation (multi-dégustateurs en une fois)
+  const submitDegustation = () => {
+    if(!degForm.futId) return alert("Sélectionner un fût.");
+    if(!degForm.session) return alert("Nom de session requis (ex. Avril 2026).");
+    const lignesRemplies = degForm.lignes.filter(l=>l.noteG!==""||l.commentaire!=="");
+    if(lignesRemplies.length===0) return alert("Saisir au moins une note.");
+    const nouvelles = lignesRemplies.map((l,i)=>({
+      id: `d_${Date.now()}_${i}`,
+      futId: degForm.futId,
+      session: degForm.session,
+      date: degForm.date,
+      degustateur: l.degustateur,
+      boise:   l.boise   !==""?parseFloat(l.boise):null,
+      longueur:l.longueur!==""?parseFloat(l.longueur):null,
+      noteG:   l.noteG   !==""?parseFloat(l.noteG):null,
+      commentaire: l.commentaire,
+    }));
+    setDegustations(prev=>[...prev,...nouvelles]);
+    setDegForm({futId:"",session:"",date:new Date().toISOString().slice(0,10),lignes:degustateurs.filter(d=>d.actif).map(d=>({degustateur:d.nom,boise:"",longueur:"",noteG:"",commentaire:""}))});
+    setShowDegForm(false);
+  };
+
+  // Import CSV des notes existantes
+  const handleImport = () => {
+    setImportMsg("");
+    const lines = importText.trim().split("\n").filter(l=>l.trim());
+    if(lines.length<2){setImportMsg("X Format invalide. Vérifiez le fichier."); return;}
+    const header = lines[0].split(";").map(h=>h.trim().toLowerCase());
+    const required = ["fut_id","session","degustateur","note_g"];
+    const missing = required.filter(r=>!header.includes(r));
+    if(missing.length>0){setImportMsg(`X Colonnes manquantes : ${missing.join(", ")}`); return;}
+    const idx = (col) => header.indexOf(col);
+    const nouvelles = [];
+    for(let i=1;i<lines.length;i++){
+      const cols = lines[i].split(";").map(c=>c.trim());
+      const futId = cols[idx("fut_id")];
+      if(!futId) continue;
+      nouvelles.push({
+        id:`imp_${Date.now()}_${i}`,
+        futId,
+        session: cols[idx("session")]||"",
+        date:    cols[idx("date")]||"",
+        degustateur: cols[idx("degustateur")]||"",
+        boise:   cols[idx("boise")]   !==""&&cols[idx("boise")]   !==undefined ? parseFloat(cols[idx("boise")]) : null,
+        longueur:cols[idx("longueur")]!==""&&cols[idx("longueur")]!==undefined ? parseFloat(cols[idx("longueur")]) : null,
+        noteG:   cols[idx("note_g")] !==""&&cols[idx("note_g")] !==undefined  ? parseFloat(cols[idx("note_g")]) : null,
+        commentaire: cols[idx("commentaire")]||"",
+      });
+    }
+    if(nouvelles.length===0){setImportMsg("X Aucune ligne valide trouvée."); return;}
+    setDegustations(prev=>[...prev,...nouvelles]);
+    setImportMsg(`OK ${nouvelles.length} notes importées avec succès !`);
+    setImportText("");
+  };
+
+  // Styles
+  const s = {
+    app:      { fontFamily:"'Lora','Georgia',serif", minHeight:"100vh", background:"#f0e9d6", color:"#1a1205" },
+    nav:      { display:"flex", alignItems:"center", borderBottom:"2px solid #c8a850", padding:"0 28px", background:"#fffdf7", boxShadow:"0 1px 0 #d4c4a0" },
+    brand:    { fontFamily:"'Playfair Display',Georgia,serif", fontSize:"19px", fontWeight:700, color:"#7a5200", padding:"14px 24px 14px 0", marginRight:"24px", borderRight:"1px solid #d4c4a0", letterSpacing:"0.01em" },
+    navBtn:   (a)=>({ padding:"15px 15px", fontSize:"11px", letterSpacing:"0.09em", textTransform:"uppercase", cursor:"pointer", color:a?"#7a5200":"#9a8c78", background:"none", border:"none", borderBottom:a?"2px solid #b8860b":"2px solid transparent", fontFamily:"'IBM Plex Mono',monospace", fontWeight:a?600:400, transition:"color 0.15s" }),
+    main:     { padding:"28px 32px" },
+    card:     { background:"#fffdf7", border:"1px solid #d4c4a0", borderRadius:"10px", padding:"18px 22px", boxShadow:"0 1px 3px rgba(139,105,20,0.06)" },
+    cardSm:   { background:"#fffdf7", border:"1px solid #cfc0a0", borderRadius:"8px", padding:"12px 14px", boxShadow:"0 1px 2px rgba(139,105,20,0.05)" },
+    btn:      { background:"#b8860b", color:"#1a1208", border:"none", borderRadius:"6px", padding:"8px 18px", fontSize:"12px", fontWeight:700, letterSpacing:"0.06em", textTransform:"uppercase", cursor:"pointer", fontFamily:"'IBM Plex Mono',monospace", boxShadow:"0 1px 3px rgba(139,105,20,0.25)", transition:"background 0.15s" },
+    btnSm:    { background:"#b8860b", color:"#1a1208", border:"none", borderRadius:"5px", padding:"5px 11px", fontSize:"11px", fontWeight:700, cursor:"pointer", fontFamily:"'IBM Plex Mono',monospace", letterSpacing:"0.04em" },
+    ghost:    { background:"none", color:"#5a4a30", border:"1px solid #c8b894", borderRadius:"6px", padding:"6px 13px", fontSize:"12px", cursor:"pointer", fontFamily:"'IBM Plex Mono',monospace", transition:"background 0.12s" },
+    ghostSm:  { background:"none", color:"#6a5838", border:"1px solid #ccbe9a", borderRadius:"5px", padding:"4px 9px", fontSize:"11px", cursor:"pointer", fontFamily:"'IBM Plex Mono',monospace" },
+    lbl:      { fontSize:"10px", letterSpacing:"0.12em", textTransform:"uppercase", color:"#7a6840", marginBottom:"5px", display:"block", fontFamily:"'IBM Plex Mono',monospace" },
+    inp:      { background:"#fffbf3", border:"1px solid #c8b894", borderRadius:"6px", padding:"8px 11px", fontSize:"13px", color:"#1a1205", width:"100%", fontFamily:"'Lora',serif", boxSizing:"border-box", outline:"none" },
+    sel:      { background:"#fffbf3", border:"1px solid #c8b894", borderRadius:"6px", padding:"8px 11px", fontSize:"13px", color:"#1a1205", width:"100%", fontFamily:"'Lora',serif", boxSizing:"border-box" },
+    tag:      (c)=>({ display:"inline-flex", alignItems:"center", background:c+"18", color:c, border:`1px solid ${c}55`, borderRadius:"4px", padding:"2px 8px", fontSize:"10px", fontWeight:700, letterSpacing:"0.05em", fontFamily:"'IBM Plex Mono',monospace" }),
+    tabBtn:   (a)=>({ padding:"9px 16px", fontSize:"11px", letterSpacing:"0.07em", textTransform:"uppercase", cursor:"pointer", color:a?"#7a5200":"#7a6840", background:a?"#fffbf3":"none", border:"none", borderBottom:a?"2px solid #b8860b":"2px solid transparent", fontFamily:"'IBM Plex Mono',monospace", fontWeight:a?600:400 }),
+    modal:    { position:"fixed", inset:0, background:"rgba(30,20,5,0.78)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:1000, backdropFilter:"blur(2px)" },
+    modalBox: { background:"#fffdf7", border:"1px solid #cfc0a0", borderRadius:"12px", padding:"30px", width:"640px", maxHeight:"92vh", overflowY:"auto", boxShadow:"0 8px 32px rgba(44,36,22,0.18)" },
+  };
+
+  const filteredTonneaux = tonneaux.filter(t=>{
+    if(filterAppellation && t.appellation!==filterAppellation) return false;
+    if(filterDenom && t.denomination!==filterDenom) return false;
+    if(searchFut && !t.id.toLowerCase().includes(searchFut.toLowerCase()) && !t.denomination.toLowerCase().includes(searchFut.toLowerCase())) return false;
+    return true;
+  });
+  const filteredMouvements = mouvements.filter(m=>{
+    if(filterOp && m.operateur!==filterOp) return false;
+    if(filterFut && !m.futSource?.includes(filterFut) && m.futDest!==filterFut) return false;
+    return true;
+  });
+
+  const totalVin = tonneaux.reduce((s,t)=>s+t.contenuActuel,0);
+  const totalCap = tonneaux.reduce((s,t)=>s+t.volume,0);
+
+  // -- COMPOSANTS ------------------------------------------------------------
+
+  const FutCard = ({t}) => {
+    const p=pct(t); const ng=avgNoteG(t.id); const hasNotes=notesForFut(t.id).length>0;
+    const apc = getApc(t.appellation);
+    const borderCol = t.statut==="surveillance" ? "#854F0B88" : apc.border;
+    const barCol    = t.statut==="surveillance" ? "#c47800"   : apc.color;
+    return (
+      <div style={{...s.cardSm,position:"relative",overflow:"hidden", borderColor:borderCol, background:apc.bg||"#1a1a1c"}}>
+        <div style={{position:"absolute",bottom:0,left:0,width:`${p}%`,height:"2px",background:barCol}}/>
+        <div style={{position:"absolute",top:0,left:0,width:"3px",height:"100%",background:apc.color,opacity:0.7}}/>
+        {/* actions top-right */}
+        <div style={{position:"absolute",top:"4px",right:"4px",display:"flex",gap:"2px",opacity:0,transition:"opacity 0.15s"}} className="fut-actions">
+          <button title="Modifier" style={{background:"#2a2a2c",border:"none",borderRadius:"3px",padding:"3px 5px",cursor:"pointer",color:"#5a4a30",fontSize:"11px"}}
+            onClick={e=>{e.stopPropagation();openEditFut(t);}}>
+            <i className="ti ti-pencil"/>
+          </button>
+          <button title="Supprimer" style={{background:"#fdd0d0",border:"none",borderRadius:"3px",padding:"3px 5px",cursor:"pointer",color:"#cc2222",fontSize:"11px"}}
+            onClick={e=>{e.stopPropagation();deleteFut(t.id);}}>
+            <i className="ti ti-trash"/>
+          </button>
+        </div>
+        <div style={{cursor:"pointer"}} onClick={()=>{setSelectedFut(t.id);setView("fiche");setFicheTab("infos");}}>
+          <div style={{fontSize:"13px",fontWeight:600,color:"#1a1205",marginBottom:"1px",paddingLeft:"6px"}}>{t.id}</div>
+          <div style={{fontSize:"10px",color:"#6a5838",marginBottom:"6px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",paddingLeft:"6px"}}>{t.denomination}</div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingLeft:"6px"}}>
+            <span style={{fontSize:"10px",color:"#7a6840"}}>{t.millesime||"-"} · {t.volume}L</span>
+            <div style={{display:"flex",alignItems:"center",gap:"5px"}}>
+              {hasNotes && <span style={{fontSize:"10px",color:apc.color,fontWeight:600}}>{ng?.toFixed(1)}*</span>}
+              <span style={{fontSize:"11px",fontWeight:600,color:p<20?"#cc2222":p>90?"#1a7a40":apc.color}}>{t.contenuActuel}L</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const MvtRow = ({m}) => {
+    const srcs=(m.futSource||[]).map(id=>getTonneau(id)).filter(Boolean);
+    const dest=m.futDest?getTonneau(m.futDest):null;
+    return (
+      <div style={{borderBottom:"1px solid #d0c4a0",padding:"10px 0",display:"grid",gridTemplateColumns:"110px 1fr 1fr 80px",gap:"12px",fontSize:"12px",alignItems:"start"}}>
+        <div><div style={{...s.tag(typeColor(m.type)),marginBottom:"4px"}}>{typeLabel(m.type)}</div><div style={{color:"#8a7248",fontSize:"10px",marginTop:"3px"}}>{fmtDate(m.timestamp)}</div></div>
+        <div>
+          {srcs.length>0&&<div style={{marginBottom:"3px"}}><span style={{color:"#8a7248",marginRight:"4px"}}>De :</span>{srcs.map(f=><span key={f.id} style={{color:"#b8860b",marginRight:"6px"}}>{f.id}<span style={{color:"#7a6840"}}> ({f.denomination})</span></span>)}</div>}
+          {dest&&<div><span style={{color:"#8a7248",marginRight:"4px"}}>Vers :</span><span style={{color:"#b8860b"}}>{dest.id}<span style={{color:"#7a6840"}}> ({dest.denomination})</span></span></div>}
+          {m.volume&&<div style={{color:"#6a5838",marginTop:"2px"}}>Vol : <strong style={{color:"#1a1205"}}>{m.volume}L</strong></div>}
+          {m.produit&&<div style={{color:"#6a5838",marginTop:"2px"}}>{m.produit}{m.dosage&&` - ${m.dosage}`}</div>}
+        </div>
+        <div style={{color:"#6a5838",fontStyle:"italic",fontSize:"11px"}}>{m.notes}</div>
+        <div style={{textAlign:"right",color:"#8a7248",fontSize:"11px"}}>{m.operateur}</div>
+      </div>
+    );
+  };
+
+  const DegRow = ({d}) => (
+    <div style={{borderBottom:"1px solid #d0c4a0",padding:"8px 0",display:"grid",gridTemplateColumns:"100px 80px 80px 80px 1fr",gap:"10px",fontSize:"12px",alignItems:"start"}}>
+      <div style={{color:"#b8860b",fontWeight:600}}>{d.degustateur}</div>
+      <div style={{color:d.boise>=2.5?"#c47800":"#888"}}>{d.boise!=null?`B: ${d.boise}`:"-"}</div>
+      <div style={{color:"#5a4a30"}}>{d.longueur!=null?`L: ${d.longueur}`:"-"}</div>
+      <div style={{fontWeight:600,color:d.noteG>=4?"#1a7a40":d.noteG>=3?"#b8860b":"#888"}}>{d.noteG!=null?`${d.noteG}/5`:"-"}</div>
+      <div style={{color:"#6a5838",fontStyle:"italic",fontSize:"11px"}}>{d.commentaire}</div>
+    </div>
+  );
+
+  const NoteResume = ({futId}) => {
+    const notes=notesForFut(futId); if(!notes.length) return <div style={{color:"#8a7248",fontSize:"13px",padding:"8px 0"}}>Aucune note de dégustation.</div>;
+    const ng=avgNoteG(futId); const nb=avgBoise(futId); const nl=avgLong(futId);
+    const sessionsUniques=[...new Set(notes.map(d=>d.session))];
+    return (
+      <div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:"10px",marginBottom:"16px"}}>
+          {[["Note globale moy.", ng?.toFixed(2)||"-", ng>=4?"#1a7a40":ng>=3?"#b8860b":"#888"],
+            ["Boisé moyen",      nb?.toFixed(2)||"-", "#888"],
+            ["Longueur moy.",    nl?.toFixed(2)||"-", "#888"]].map(([lbl,val,col],i)=>(
+            <div key={i} style={{background:"#fffbf3",borderRadius:"6px",padding:"10px 14px"}}>
+              <div style={{fontSize:"10px",color:"#8a7248",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:"4px"}}>{lbl}</div>
+              <div style={{fontSize:"20px",fontWeight:600,color:col}}>{val}</div>
+            </div>
+          ))}
+        </div>
+        {sessionsUniques.map(sess=>(
+          <div key={sess} style={{marginBottom:"16px"}}>
+            <div style={{fontSize:"10px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7a6840",marginBottom:"8px",paddingBottom:"6px",borderBottom:"1px solid #e8dcc6"}}>{sess}</div>
+            {notes.filter(d=>d.session===sess).map(d=><DegRow key={d.id} d={d}/>)}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const needsSource = ["soutirage","ecoulage","vidange","batonnage","assemblage"].includes(mvtForm.type);
+  const needsDest   = ["soutirage","assemblage","remplissage","ouillage"].includes(mvtForm.type);
+  const needsVol    = ["soutirage","ecoulage","remplissage","ouillage"].includes(mvtForm.type);
+
+  const selectedT   = selectedFut ? getTonneau(selectedFut) : null;
+  const selectedP   = selectedT ? Math.round((selectedT.contenuActuel/selectedT.volume)*100) : 0;
+  const selectedMvts= selectedT ? mouvements.filter(m=>m.futSource?.includes(selectedT.id)||m.futDest===selectedT.id) : [];
+  const futsAvecNotes = tonneaux.filter(t=>notesForFut(t.id).length>0);
+  const cuveeOptions  = [...new Set(futsAvecNotes.map(t=>t.denomination))].sort();
+  const fabricOptions = [...new Set(futsAvecNotes.map(t=>t.tonnelier).filter(Boolean))].sort();
+  const futsFiltres   = futsAvecNotes.filter(t=>{
+    if(filterDegFut    && !t.id.toLowerCase().includes(filterDegFut.toLowerCase())) return false;
+    if(filterDegCuvee  && t.denomination!==filterDegCuvee) return false;
+    if(filterDegFabric && t.tonnelier!==filterDegFabric) return false;
+    return true;
+  });
+  const hasFilter = filterDegFut||filterDegCuvee||filterDegFabric;
+
+  const degView = () => (
+    <div style={s.app}>
+      <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=IBM+Plex+Mono:wght@400;600&family=Lora:wght@400;500;600&display=swap" rel="stylesheet"/>
+      {appError && <div style={{position:"fixed",top:0,left:0,right:0,background:"red",color:"white",padding:"20px",zIndex:9999,fontSize:"12px",fontFamily:"monospace",whiteSpace:"pre-wrap"}}>{String(appError)}</div>}
+      <style>{`
+  body { background:#f0e9d6; }
+  .fut-actions { opacity:0 !important; transition:opacity 0.15s; }
+  div:hover > .fut-actions { opacity:1 !important; }
+  button:hover { filter:brightness(0.96); }
+  input:focus, select:focus, textarea:focus { border-color:#b8860b !important; box-shadow:0 0 0 2px rgba(201,169,110,0.15) !important; outline:none; }
+  ::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-track { background:#e8dcc6; } ::-webkit-scrollbar-thumb { background:#c8b894; border-radius:3px; }
+`}</style>
+
+      {/* NAV */}
+      <nav style={s.nav}>
+        <div style={s.brand}> Chai 2025</div>
+        {[["dashboard","Vue d'ensemble"],["tonneaux","Tonneaux"],["degustations","Dégustations"],["mouvements","Mouvements"]].map(([v,l])=>(
+          <button key={v} style={s.navBtn(view===v)} onClick={()=>setView(v)}>{l}</button>
+        ))}
+        <div style={{flex:1}}/>
+        <div style={{display:"flex",gap:"8px",alignItems:"center"}}>
+          <button style={{...s.ghost,fontSize:"11px",color:"#7a6840"}} onClick={()=>setShowReset(true)}>
+            <i className="ti ti-refresh" style={{marginRight:"4px"}}/>Réinitialiser
+          </button>
+          <button style={{...s.ghost,fontSize:"11px"}} onClick={()=>{setFutForm(EMPTY_FUT);setEditingFut(null);setShowFutForm(true);}}>
+            <i className="ti ti-barrel" style={{marginRight:"4px"}}/>Fût / Cuve
+          </button>
+          <button style={s.btn} onClick={()=>setShowMvtForm(true)}>
+            <i className="ti ti-plus" style={{marginRight:"4px"}}/>Mouvement
+          </button>
+        </div>
+      </nav>
+
+      <div style={s.main}>
+
+        {/* -- DASHBOARD -- */}
+        {view==="dashboard" && (
+          <div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:"12px",marginBottom:"24px"}}>
+              {[
+                {lbl:"Volume total en chai",val:`${totalVin.toLocaleString("fr-FR")} L`,sub:`/ ${totalCap.toLocaleString("fr-FR")} L capacité`},
+                {lbl:"Fûts actifs",val:tonneaux.filter(t=>t.statut==="actif").length,sub:`${tonneaux.length} fûts au total`},
+                {lbl:"Mouvements",val:mouvements.length,sub:"enregistrés"},
+                {lbl:"Notes de dégustation",val:degustations.length,sub:`${[...new Set(degustations.map(d=>d.session))].length} session(s)`},
+              ].map((it,i)=>(
+                <div key={i} style={s.card}>
+                  <div style={s.lbl}>{it.lbl}</div>
+                  <div style={{fontSize:"26px",fontWeight:600,color:"#b8860b",lineHeight:1.1}}>{it.val}</div>
+                  <div style={{fontSize:"11px",color:"#8a7248",marginTop:"3px"}}>{it.sub}</div>
+                </div>
+              ))}
+            </div>
+            {/* Légende appellations */}
+            <div style={{display:"flex",gap:"8px",marginBottom:"20px",flexWrap:"wrap"}}>
+              {allAppellations.map(key=>{
+                const apc=getApc(key);
+                const count=tonneaux.filter(t=>t.appellation===key).length;
+                if(count===0) return null;
+                return (
+                  <button key={key} onClick={()=>{setFilterAppellation(key);setView("tonneaux");}}
+                    style={{display:"flex",alignItems:"center",gap:"6px",padding:"5px 12px",borderRadius:"4px",background:apc.bg,border:`1px solid ${apc.border}`,fontSize:"11px",color:apc.color,cursor:"pointer",fontFamily:"inherit"}}>
+                    <span style={{width:"7px",height:"7px",borderRadius:"50%",background:apc.color,flexShrink:0}}/>
+                    {apc.label} - <strong>{count}</strong> fûts
+                  </button>
+                );
+              })}
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"20px"}}>
+              <div style={s.card}>
+                <div style={{...s.lbl,marginBottom:"12px"}}>Derniers mouvements</div>
+                {mouvements.length===0&&<div style={{color:"#8a7248",fontSize:"13px"}}>Aucun mouvement enregistré.</div>}
+                {mouvements.slice(0,5).map(m=>(
+                  <div key={m.id} style={{borderBottom:"1px solid #e8dcc6",padding:"7px 0",display:"flex",justifyContent:"space-between",alignItems:"center",gap:"10px"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:"7px"}}>
+                      <span style={s.tag(typeColor(m.type))}>{typeLabel(m.type)}</span>
+                      <span style={{fontSize:"11px",color:"#6a5838"}}>{m.futSource?.join(", ")}{m.futDest&&` &rarr; ${m.futDest}`}</span>
+                    </div>
+                    <span style={{fontSize:"10px",color:"#8a7248",whiteSpace:"nowrap"}}>{fmtDate(m.timestamp)}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={s.card}>
+                <div style={{...s.lbl,marginBottom:"12px"}}>Meilleures notes (moyenne globale)</div>
+                {tonneaux.filter(t=>avgNoteG(t.id)!=null).sort((a,b)=>(avgNoteG(b.id)||0)-(avgNoteG(a.id)||0)).slice(0,7).map(t=>(
+                  <div key={t.id} onClick={()=>{setSelectedFut(t.id);setView("fiche");setFicheTab("degustations");}}
+                    style={{borderBottom:"1px solid #e8dcc6",padding:"7px 0",display:"flex",justifyContent:"space-between",cursor:"pointer",alignItems:"center"}}>
+                    <div>
+                      <span style={{fontSize:"12px",color:"#b8860b",marginRight:"8px"}}>{t.id}</span>
+                      <span style={{fontSize:"11px",color:"#7a6840"}}>{t.denomination}</span>
+                    </div>
+                    <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
+                      <span style={{fontSize:"11px",color:"#8a7248"}}>{avgNoteG(t.id)?.toFixed(1)}/5</span>
+                      <div style={{width:"60px",height:"4px",background:"#e8dcc6",borderRadius:"2px"}}>
+                        <div style={{width:`${((avgNoteG(t.id)||0)/5)*100}%`,height:"100%",background:"#b8860b",borderRadius:"2px"}}/>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {tonneaux.filter(t=>avgNoteG(t.id)!=null).length===0&&<div style={{color:"#8a7248",fontSize:"13px"}}>Aucune note encore.</div>}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* -- TONNEAUX -- */}
+        {view==="tonneaux" && (
+          <div>
+            {/* Onglets appellation */}
+            <div style={{display:"flex",gap:"6px",marginBottom:"16px",flexWrap:"wrap"}}>
+              <button onClick={()=>setFilterAppellation("")}
+                style={{padding:"5px 14px",borderRadius:"4px",border:`1px solid ${!filterAppellation?"#b8860b":"#2a2a2c"}`,background:!filterAppellation?"#fce8a8":"transparent",color:!filterAppellation?"#7a5200":"#7a6840",fontSize:"12px",cursor:"pointer",fontFamily:"inherit"}}>
+                Tous ({tonneaux.length})
+              </button>
+              {allAppellations.map(key=>{
+                const apc=getApc(key);
+                const count=tonneaux.filter(t=>t.appellation===key).length;
+                if(count===0) return null;
+                const active=filterAppellation===key;
+                return (
+                  <button key={key} onClick={()=>setFilterAppellation(active?"":key)}
+                    style={{padding:"5px 14px",borderRadius:"4px",border:`1px solid ${active?apc.color:apc.border}`,background:active?apc.bg:"transparent",color:active?apc.color:"#7a6840",fontSize:"12px",cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:"5px"}}>
+                    <span style={{width:"7px",height:"7px",borderRadius:"50%",background:apc.color,display:"inline-block"}}/>
+                    {apc.label} ({count})
+                  </button>
+                );
+              })}
+            </div>
+            <div style={{display:"flex",gap:"10px",marginBottom:"14px",alignItems:"center"}}>
+              <input style={{...s.inp,maxWidth:"220px"}} placeholder="Recherche fût ou cuvée..." value={searchFut} onChange={e=>setSearchFut(e.target.value)}/>
+              <select style={{...s.sel,maxWidth:"200px"}} value={filterDenom} onChange={e=>setFilterDenom(e.target.value)}>
+                <option value="">Toutes les cuvées</option>
+                {[...new Set(filteredTonneaux.map(t=>t.denomination))].sort().map(d=><option key={d} value={d}>{d}</option>)}
+              </select>
+              <span style={{color:"#8a7248",fontSize:"11px",marginLeft:"auto"}}>{filteredTonneaux.length} fûts</span>
+              <button style={s.btnSm} onClick={()=>{setFutForm(EMPTY_FUT);setEditingFut(null);setShowFutForm(true);}}>
+                <i className="ti ti-plus" style={{marginRight:"3px"}}/>Ajouter
+              </button>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(170px,1fr))",gap:"9px"}}>
+              {filteredTonneaux.map(t=><FutCard key={t.id} t={t}/>)}
+            </div>
+          </div>
+        )}
+
+        {/* -- DÉGUSTATIONS (vue globale) -- */}
+        {view==="degustations" && (
+          <div style={{display:"grid",gridTemplateColumns:"1fr 280px",gap:"20px",alignItems:"start"}}>
+
+            {/* Colonne principale */}
+            <div>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px"}}>
+                <div style={{fontSize:"13px",color:"#7a6840"}}>{degustations.length} notes · {[...new Set(degustations.map(d=>d.session))].length} sessions · {futsAvecNotes.length} fûts</div>
+                <div style={{display:"flex",gap:"8px"}}>
+                  <button style={s.ghost} onClick={()=>setShowImport(true)}>
+                    <i className="ti ti-file-import" style={{marginRight:"4px"}}/>Importer (CSV)
+                  </button>
+                  <button style={s.btn} onClick={()=>{setDegForm({futId:"",session:"",date:new Date().toISOString().slice(0,10),lignes:degustateurs.filter(d=>d.actif).map(d=>({degustateur:d.nom,boise:"",longueur:"",noteG:"",commentaire:""}))});setShowDegForm(true);}}>
+                    <i className="ti ti-plus" style={{marginRight:"4px"}}/>Nouvelle dégustation
+                  </button>
+                </div>
+              </div>
+
+              {/* Barre de filtres */}
+              <div style={{display:"flex",gap:"8px",marginBottom:"14px",flexWrap:"wrap",alignItems:"center",padding:"10px 14px",background:"#fffbf3",border:"1px solid #cfc0a0",borderRadius:"8px"}}>
+                <i className="ti ti-filter" style={{fontSize:"14px",color:"#b8860b",flexShrink:0}}/>
+                <input style={{...s.inp,maxWidth:"150px",padding:"5px 9px",fontSize:"12px"}}
+                  placeholder="N° fût..." value={filterDegFut}
+                  onChange={e=>setFilterDegFut(e.target.value)}/>
+                <select style={{...s.sel,maxWidth:"190px",padding:"5px 9px",fontSize:"12px"}}
+                  value={filterDegCuvee} onChange={e=>setFilterDegCuvee(e.target.value)}>
+                  <option value="">Toutes les cuvées</option>
+                  {cuveeOptions.map(c=><option key={c} value={c}>{c}</option>)}
+                </select>
+                <select style={{...s.sel,maxWidth:"170px",padding:"5px 9px",fontSize:"12px"}}
+                  value={filterDegFabric} onChange={e=>setFilterDegFabric(e.target.value)}>
+                  <option value="">Tous les fabricants</option>
+                  {fabricOptions.map(f=><option key={f} value={f}>{f}</option>)}
+                </select>
+                {hasFilter && (
+                  <button style={{...s.ghostSm,color:"#cc2222",borderColor:"#e8888855",fontSize:"11px"}}
+                    onClick={()=>{setFilterDegFut("");setFilterDegCuvee("");setFilterDegFabric("");}}>
+                    <i className="ti ti-x" style={{marginRight:"3px"}}/>Réinitialiser
+                  </button>
+                )}
+                <span style={{marginLeft:"auto",fontSize:"11px",color:"#8a7248"}}>{futsFiltres.length} / {futsAvecNotes.length} fûts</span>
+              </div>
+
+              <div style={s.card}>
+                <div style={{overflowX:"auto"}}>
+                  <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
+                    <thead>
+                      <tr style={{borderBottom:"2px solid #d4c4a0",background:"#fff8ee"}}>
+                        {["N° Fût","Cuvée","Fabricant","Mill.","Moy. Note G","Moy. Boisé","Moy. Long.","Nb notes","Sessions"].map(h=>(
+                          <th key={h} style={{textAlign:"left",padding:"8px 10px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#8a7248",fontWeight:600}}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {futsFiltres.sort((a,b)=>(avgNoteG(b.id)||0)-(avgNoteG(a.id)||0)).map((t,i)=>{
+                        const ng=avgNoteG(t.id); const nb=avgBoise(t.id); const nl=avgLong(t.id);
+                        return (
+                          <tr key={t.id}
+                            style={{borderBottom:"1px solid #e8dcc6",cursor:"pointer",background:i%2===0?"transparent":"#fffbf3",transition:"background 0.1s"}}
+                            onClick={()=>{setSelectedFut(t.id);setView("fiche");setFicheTab("degustations");}}>
+                            <td style={{padding:"9px 10px",color:"#b8860b",fontWeight:700,fontFamily:"'IBM Plex Mono',monospace"}}>{t.id}</td>
+                            <td style={{padding:"9px 10px",color:"#1a1205",fontWeight:500,maxWidth:"160px"}}>
+                              <div style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.denomination}</div>
+                            </td>
+                            <td style={{padding:"9px 10px"}}>
+                              {t.tonnelier
+                                ? <span style={{background:"#fce8a8",color:"#7a5200",border:"1px solid #e0c050",borderRadius:"3px",padding:"1px 7px",fontSize:"11px",fontWeight:600,whiteSpace:"nowrap"}}>{t.tonnelier}</span>
+                                : <span style={{color:"#c0b090",fontSize:"11px"}}>-</span>
+                              }
+                            </td>
+                            <td style={{padding:"9px 10px",color:"#6a5838",fontFamily:"'IBM Plex Mono',monospace"}}>{t.millesime||"-"}</td>
+                            <td style={{padding:"9px 10px"}}>
+                              <div style={{display:"flex",alignItems:"center",gap:"6px"}}>
+                                <div style={{width:"44px",height:"5px",background:"#e8dcc6",borderRadius:"3px",overflow:"hidden"}}>
+                                  <div style={{width:`${((ng||0)/5)*100}%`,height:"100%",background:ng>=4?"#1a7a40":ng>=3?"#b8860b":"#cc6622",borderRadius:"3px"}}/>
+                                </div>
+                                <span style={{fontWeight:700,color:ng>=4?"#1a7a40":ng>=3?"#b8860b":"#8a7248",fontFamily:"'IBM Plex Mono',monospace",minWidth:"28px"}}>{ng?.toFixed(1)||"-"}</span>
+                              </div>
+                            </td>
+                            <td style={{padding:"9px 10px",color:"#6a5838",fontFamily:"'IBM Plex Mono',monospace"}}>{nb?.toFixed(1)||"-"}</td>
+                            <td style={{padding:"9px 10px",color:"#6a5838",fontFamily:"'IBM Plex Mono',monospace"}}>{nl?.toFixed(1)||"-"}</td>
+                            <td style={{padding:"9px 10px",color:"#7a6840",textAlign:"center"}}>{notesForFut(t.id).length}</td>
+                            <td style={{padding:"9px 10px",color:"#8a7248",fontSize:"11px",maxWidth:"120px"}}>
+                              <div style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{sessions(t.id).join(", ")}</div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                      {futsFiltres.length===0&&(
+                        <tr><td colSpan={9} style={{padding:"24px 10px",color:"#8a7248",fontSize:"13px",textAlign:"center"}}>
+                          {hasFilter?"Aucun fût ne correspond aux filtres.":"Aucune note encore."}
+                        </td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            {/* Colonne droite - gestion des dégustateurs */}
+            <div style={s.card}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px"}}>
+                <span style={{...s.lbl,marginBottom:0}}>Dégustateurs</span>
+                {editingDeg && (
+                  <div style={{display:"flex",gap:"6px"}}>
+                    <button style={s.ghostSm} onClick={()=>setEditingDeg(false)}>Annuler</button>
+                    <button style={s.btnSm} onClick={()=>{setDegustateurs(degDraft.filter(d=>d.nom.trim()));setEditingDeg(false);}}>
+                      <i className="ti ti-check" style={{marginRight:"3px"}}/>Sauver
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {!editingDeg ? (
+                <div>
+                  {degustateurs.map((d,i)=>(
+                    <div key={i} style={{display:"flex",alignItems:"center",gap:"8px",padding:"7px 0",borderBottom:"1px solid #d0c4a0",opacity:d.actif?1:0.45}}>
+                      <div style={{width:"26px",height:"26px",borderRadius:"50%",background:d.actif?"#b8860b22":"#2a2a2c",border:`1px solid ${d.actif?"#b8860b33":"#3a3a3c"}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"11px",fontWeight:600,color:d.actif?"#b8860b":"#555",flexShrink:0}}>
+                        {d.nom.charAt(0).toUpperCase()}
+                      </div>
+                      <span style={{fontSize:"13px",color:d.actif?"#e8e4d8":"#555",flex:1}}>{d.nom}</span>
+                      <span style={{fontSize:"10px",color:"#8a7248",marginRight:"4px"}}>{degustations.filter(dg=>dg.degustateur===d.nom).length}</span>
+                      <button title={d.actif?"Marquer absent":"Marquer présent"}
+                        style={{...s.ghostSm,padding:"3px 7px",color:d.actif?"#555":"#c47800",borderColor:d.actif?"#2a2a2c":"#854F0B44",fontSize:"11px"}}
+                        onClick={()=>toggleActif(i)}>
+                        {d.actif
+                          ? <><i className="ti ti-eye-off" style={{fontSize:"13px",verticalAlign:"middle"}}/></>
+                          : <><i className="ti ti-eye" style={{fontSize:"13px",verticalAlign:"middle"}}/></>
+                        }
+                      </button>
+                    </div>
+                  ))}
+                  <div style={{marginTop:"10px",padding:"8px",background:"#fffbf3",borderRadius:"5px",fontSize:"11px",color:"#8a7248"}}>
+                    {degustateurs.filter(d=>!d.actif).length===0
+                      ? "Tous présents - les absents sont masqués du formulaire de saisie."
+                      : `${degustateurs.filter(d=>!d.actif).length} absent(s) - masqué(s) du prochain formulaire.`
+                    }
+                  </div>
+                  <button style={{...s.ghostSm,width:"100%",marginTop:"10px",textAlign:"center"}}
+                    onClick={()=>{setDegDraft(degustateurs.map(d=>({...d})));setEditingDeg(true);}}>
+                    <i className="ti ti-pencil" style={{marginRight:"3px"}}/>Renommer / Ajouter
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <div style={{fontSize:"11px",color:"#7a6840",marginBottom:"10px"}}>Laissez vide pour supprimer. Les notes existantes sont conservées.</div>
+                  {degDraft.map((d,i)=>(
+                    <div key={i} style={{display:"flex",alignItems:"center",gap:"6px",marginBottom:"6px"}}>
+                      <input style={{...s.inp,padding:"6px 8px",fontSize:"12px",flex:1}} value={d.nom}
+                        onChange={e=>{const nd=[...degDraft];nd[i]={...nd[i],nom:e.target.value};setDegDraft(nd);}}
+                        placeholder={`Dégustateur ${i+1}`}/>
+                      <button style={{...s.ghostSm,padding:"5px 7px",color:"#cc2222",borderColor:"#A32D2D33",flexShrink:0}}
+                        onClick={()=>setDegDraft(degDraft.filter((_,j)=>j!==i))}>
+                        <i className="ti ti-x"/>
+                      </button>
+                    </div>
+                  ))}
+                  <button style={{...s.ghostSm,width:"100%",marginTop:"6px",textAlign:"center"}}
+                    onClick={()=>setDegDraft([...degDraft,{nom:"",actif:true}])}>
+                    <i className="ti ti-plus" style={{marginRight:"3px"}}/>Ajouter une ligne
+                  </button>
+                </div>
+              )}
+            </div>
+
+          </div>
+        )}
+
+        {/* -- FICHE FÛT -- */}
+        {view==="fiche" && selectedT && (
+            <div>
+              <button style={{...s.ghost,marginBottom:"16px"}} onClick={()=>setView("tonneaux")}>Retour Tonneaux</button>
+              <div style={{display:"grid",gridTemplateColumns:"300px 1fr",gap:"20px"}}>
+                {/* Colonne gauche */}
+                <div>
+                  <div style={s.card}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"start",marginBottom:"14px"}}>
+                      <div>
+                        <div style={{fontFamily:"'Playfair Display',serif",fontSize:"22px",color:"#b8860b"}}>{selectedT.id}</div>
+                        <div style={{fontSize:"12px",color:"#6a5838",marginTop:"2px"}}>{selectedT.denomination}</div>
+                        {selectedT.appellation && <div style={{marginTop:"6px",display:"inline-flex",alignItems:"center",gap:"5px",padding:"2px 8px",borderRadius:"3px",background:getApc(selectedT.appellation).bg,border:`1px solid ${getApc(selectedT.appellation).border}`,fontSize:"10px",color:getApc(selectedT.appellation).color,letterSpacing:"0.06em",textTransform:"uppercase"}}>
+                            <span style={{width:"5px",height:"5px",borderRadius:"50%",background:getApc(selectedT.appellation).color}}/>
+                            {getApc(selectedT.appellation).label}
+                          </div>}
+                      </div>
+                      <span style={s.tag(selectedT.statut==="surveillance"?"#c47800":selectedT.contenuActuel<10?"#cc2222":"#1a7a40")}>
+                        {selectedT.statut==="surveillance"?"surveillance":selectedT.contenuActuel<10?"vide":"actif"}
+                      </span>
+                    </div>
+                    <div style={{marginBottom:"14px"}}>
+                      <div style={{display:"flex",justifyContent:"space-between",fontSize:"10px",color:"#7a6840",marginBottom:"5px"}}>
+                        <span>Niveau</span><span style={{color:"#b8860b",fontWeight:600}}>{selectedT.contenuActuel}L / {selectedT.volume}L ({selectedP}%)</span>
+                      </div>
+                      <div style={{background:"#fffbf3",borderRadius:"2px",height:"6px",overflow:"hidden"}}>
+                        <div style={{width:`${selectedP}%`,height:"100%",background:selectedP<20?"#cc2222":"#b8860b",borderRadius:"2px"}}/>
+                      </div>
+                    </div>
+                    {[["Millésime vin",selectedT.millesime||"-"],["Certification",selectedT.certif||"-"],["Tonnelier",selectedT.tonnelier||"-"],["Capacité",`${selectedT.volume} L`]].map(([k,v])=>(
+                      <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:"1px solid #d0c4a0",fontSize:"12px"}}>
+                        <span style={{color:"#8a7248"}}>{k}</span><span style={{color:"#1a1205"}}>{v}</span>
+                      </div>
+                    ))}
+                    {avgNoteG(selectedT.id)!=null&&(
+                      <div style={{marginTop:"14px",padding:"10px",background:"#fffbf3",borderRadius:"6px"}}>
+                        <div style={{fontSize:"10px",color:"#8a7248",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:"6px"}}>Note dégustation</div>
+                        <div style={{display:"flex",gap:"16px"}}>
+                          <div><div style={{fontSize:"18px",fontWeight:600,color:avgNoteG(selectedT.id)>=4?"#1a7a40":"#b8860b"}}>{avgNoteG(selectedT.id)?.toFixed(1)}<span style={{fontSize:"11px",color:"#8a7248"}}>/5</span></div><div style={{fontSize:"10px",color:"#8a7248"}}>Note globale</div></div>
+                          {avgBoise(selectedT.id)&&<div><div style={{fontSize:"18px",fontWeight:600,color:"#5a4a30"}}>{avgBoise(selectedT.id)?.toFixed(1)}</div><div style={{fontSize:"10px",color:"#8a7248"}}>Boisé</div></div>}
+                          {avgLong(selectedT.id)&&<div><div style={{fontSize:"18px",fontWeight:600,color:"#5a4a30"}}>{avgLong(selectedT.id)?.toFixed(1)}</div><div style={{fontSize:"10px",color:"#8a7248"}}>Longueur</div></div>}
+                        </div>
+                      </div>
+                    )}
+                    <div style={{display:"flex",gap:"6px",marginTop:"14px",flexWrap:"wrap"}}>
+                      <button style={s.btnSm} onClick={()=>{setMvtForm(f=>({...f,futDest:selectedT.id,type:"ouillage"}));setShowMvtForm(true);}}>Ouiller</button>
+                      <button style={s.ghostSm} onClick={()=>{setMvtForm(f=>({...f,futSource:[selectedT.id],type:"soutirage"}));setShowMvtForm(true);}}>Soutirer</button>
+                      <button style={s.ghostSm} onClick={()=>{setDegForm({futId:selectedT.id,session:"",date:new Date().toISOString().slice(0,10),lignes:degustateurs.filter(d=>d.actif).map(d=>({degustateur:d.nom,boise:"",longueur:"",noteG:"",commentaire:""}))});setShowDegForm(true);}}>+ Dégustation</button>
+                    </div>
+                    {selectedT.appellation&&selectedT.appellation.startsWith("vins_clairs")&&(
+                      <div style={{marginTop:"8px"}}>
+                        <button style={{...s.ghostSm,color:"#BA7517",borderColor:"#BA751744",width:"100%",justifyContent:"center",display:"flex",alignItems:"center",gap:"5px",padding:"6px 10px"}}
+                          onClick={()=>{if(window.confirm(`Passer le fût "${selectedT.id}" en Vin de réserve ?`)) passerEnReserve(selectedT.id);}}>
+                          <i className="ti ti-arrow-right" style={{fontSize:"12px"}}/>
+                          Passer en Vin de réserve
+                        </button>
+                      </div>
+                    )}
+                    <div style={{display:"flex",gap:"6px",marginTop:"6px",paddingTop:"10px",borderTop:"1px solid #e8dcc6"}}>
+                      <button style={{...s.ghostSm,color:"#5a4a30"}} onClick={()=>openEditFut(t)}>
+                        <i className="ti ti-pencil" style={{marginRight:"3px"}}/>Modifier
+                      </button>
+                      <button style={{...s.ghostSm,color:"#cc2222",borderColor:"#A32D2D33"}} onClick={()=>deleteFut(selectedT.id)}>
+                        <i className="ti ti-trash" style={{marginRight:"3px"}}/>Supprimer
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                {/* Colonne droite - onglets */}
+                <div style={s.card}>
+                  <div style={{display:"flex",borderBottom:"1px solid #cfc0a0",marginBottom:"16px",gap:"0"}}>
+                    {[["infos","Infos"],["degustations",`Dégustations (${notesForFut(selectedT.id).length})`],["mouvements",`Mouvements (${selectedMvts.length})`]].map(([tab,lbl])=>(
+                      <button key={tab} style={s.tabBtn(ficheTab===tab)} onClick={()=>setFicheTab(tab)}>{lbl}</button>
+                    ))}
+                  </div>
+                  {ficheTab==="infos"&&(
+                    <div style={{fontSize:"13px",color:"#6a5838"}}>
+                      <selectedP>Fût <strong style={{color:"#1a1205"}}>{selectedT.id}</strong> - {selectedT.denomination} {selectedT.millesime||""}</selectedP>
+                      <selectedP>Contenu actuel : <strong style={{color:"#b8860b"}}>{selectedT.contenuActuel} L</strong> sur {selectedT.volume} L ({selectedP}%)</selectedP>
+                      {selectedT.certif&&<selectedP>Certification : {selectedT.certif}</selectedP>}
+                      {selectedT.tonnelier&&<selectedP>Tonnelier : {selectedT.tonnelier}</selectedP>}
+                      <selectedP style={{marginTop:"16px",color:"#8a7248",fontSize:"12px"}}>Utilisez les onglets ci-dessus pour accéder aux notes de dégustation et à l'historique des mouvements.</selectedP>
+                    </div>
+                  )}
+                  {ficheTab==="degustations"&&<NoteResume futId={selectedT.id}/>}
+                  {ficheTab==="mouvements"&&(
+                    <div>
+                      {selectedMvts.length===0&&<div style={{color:"#8a7248",fontSize:"13px"}}>Aucun mouvement enregistré.</div>}
+                      {selectedMvts.map(m=><MvtRow key={m.id} m={m}/>)}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+        {/* -- MOUVEMENTS -- */}
+        {view==="mouvements"&&(
+          <div>
+            <div style={{display:"flex",gap:"10px",marginBottom:"18px",alignItems:"center"}}>
+              <input style={{...s.inp,maxWidth:"180px"}} placeholder="N° fût..." value={filterFut} onChange={e=>setFilterFut(e.target.value)}/>
+              <select style={{...s.sel,maxWidth:"160px"}} value={filterOp} onChange={e=>setFilterOp(e.target.value)}>
+                <option value="">Tous opérateurs</option>
+                {degustateurs.map(d=><option key={d.nom} value={d.nom}>{d.nom}{!d.actif?" (absent)":""}</option>)}
+              </select>
+              <span style={{color:"#8a7248",fontSize:"11px",marginLeft:"auto"}}>{filteredMouvements.length} mouvements</span>
+            </div>
+            <div style={s.card}>
+              {filteredMouvements.length===0&&<div style={{color:"#8a7248",fontSize:"13px"}}>Aucun mouvement. Créez-en un avec le bouton "Mouvement".</div>}
+              {filteredMouvements.map(m=><MvtRow key={m.id} m={m}/>)}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* == MODAL MOUVEMENT == */}
+      {showMvtForm&&(
+        <div style={s.modal}>
+          <div style={s.modalBox}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"22px"}}>
+              <div style={{fontFamily:"'Playfair Display',serif",fontSize:"18px",color:"#b8860b"}}>Nouveau mouvement</div>
+              <button style={s.ghost} onClick={()=>setShowMvtForm(false)}>x</button>
+            </div>
+            <div style={{display:"grid",gap:"14px"}}>
+              <div>
+                <span style={s.lbl}>Type d'opération *</span>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"7px"}}>
+                  {TYPES_MOUVEMENT.map(t=>(
+                    <div key={t.value} onClick={()=>setMvtForm(f=>({...f,type:t.value}))}
+                      style={{padding:"9px 11px",border:`1px solid ${mvtForm.type===t.value?t.color:"#2a2a2c"}`,borderRadius:"5px",cursor:"pointer",background:mvtForm.type===t.value?t.color+"14":"transparent",display:"flex",alignItems:"center",gap:"7px",fontSize:"12px",color:mvtForm.type===t.value?t.color:"#6a5838"}}>
+                      <i className={`ti ${t.icon}`} style={{fontSize:"15px"}}/>{t.label}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                <div><span style={s.lbl}>Date *</span><input type="datetime-local" style={s.inp} value={mvtForm.date} onChange={e=>setMvtForm(f=>({...f,date:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Opérateur *</span>
+                  <select style={s.sel} value={mvtForm.operateur} onChange={e=>setMvtForm(f=>({...f,operateur:e.target.value}))}>
+                    <option value="">Sélectionner...</option>
+                    {degustateurs.map(d=><option key={d.nom}>{d.nom}</option>)}
+                  </select>
+                </div>
+              </div>
+              {needsSource&&(
+                <div>
+                  <span style={s.lbl}>Fût(s) source {mvtForm.type==="assemblage"?"(multi)":""} *</span>
+                  <div style={{maxHeight:"180px",overflowY:"auto",border:"1px solid #cfc0a0",borderRadius:"4px",padding:"7px"}}>
+                    {tonneaux.filter(t=>t.contenuActuel>0).map(t=>(
+                      <label key={t.id} style={{display:"flex",alignItems:"center",gap:"8px",padding:"4px",cursor:"pointer",fontSize:"12px"}}>
+                        <input type={mvtForm.type==="assemblage"?"checkbox":"radio"} name="src" checked={mvtForm.futSource.includes(t.id)}
+                          onChange={()=>setMvtForm(f=>({...f,futSource:mvtForm.type==="assemblage"?(f.futSource.includes(t.id)?f.futSource.filter(x=>x!==t.id):[...f.futSource,t.id]):[t.id]}))}/>
+                        <span style={{color:"#b8860b",minWidth:"52px"}}>{t.id}</span>
+                        <span style={{color:"#7a6840"}}>{t.denomination}</span>
+                        <span style={{marginLeft:"auto",color:"#6a5838"}}>{t.contenuActuel}L</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {needsDest&&(
+                <div><span style={s.lbl}>Fût destination *</span>
+                  <select style={s.sel} value={mvtForm.futDest} onChange={e=>setMvtForm(f=>({...f,futDest:e.target.value}))}>
+                    <option value="">Sélectionner...</option>
+                    {tonneaux.filter(t=>!mvtForm.futSource.includes(t.id)).map(t=><option key={t.id} value={t.id}>{t.id} - {t.denomination} ({t.contenuActuel}L/{t.volume}L)</option>)}
+                  </select>
+                </div>
+              )}
+              {needsVol&&<div><span style={s.lbl}>Volume (L)</span><input type="number" style={s.inp} placeholder="ex. 15" value={mvtForm.volume} onChange={e=>setMvtForm(f=>({...f,volume:e.target.value}))}/></div>}
+              {mvtForm.type==="ajout_produit"&&(
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                  <div><span style={s.lbl}>Produit</span><input style={s.inp} placeholder="SO2, ACT'O..." value={mvtForm.produit} onChange={e=>setMvtForm(f=>({...f,produit:e.target.value}))}/></div>
+                  <div><span style={s.lbl}>Dosage</span><input style={s.inp} placeholder="2cl/HL..." value={mvtForm.dosage} onChange={e=>setMvtForm(f=>({...f,dosage:e.target.value}))}/></div>
+                </div>
+              )}
+              <div><span style={s.lbl}>Notes</span><textarea style={{...s.inp,height:"64px",resize:"vertical"}} value={mvtForm.notes} onChange={e=>setMvtForm(f=>({...f,notes:e.target.value}))}/></div>
+              {mvtForm.type==="soutirage"&&mvtForm.futSource[0]&&mvtForm.futDest&&mvtForm.volume&&(
+                <div style={{background:"#d0f0dc",border:"1px solid #a8d4b4",borderRadius:"5px",padding:"10px 12px",fontSize:"12px"}}>
+                  <div style={{color:"#1a7a40",fontWeight:600,marginBottom:"3px"}}>Aperçu</div>
+                  <div style={{color:"#6a5838"}}>{mvtForm.futSource[0]} : {getTonneau(mvtForm.futSource[0])?.contenuActuel}L &rarr; <strong style={{color:"#1a1205"}}>{Math.max(0,(getTonneau(mvtForm.futSource[0])?.contenuActuel||0)-parseFloat(mvtForm.volume||0))}L</strong></div>
+                  <div style={{color:"#6a5838"}}>{mvtForm.futDest} : {getTonneau(mvtForm.futDest)?.contenuActuel}L &rarr; <strong style={{color:"#1a1205"}}>{Math.min((getTonneau(mvtForm.futDest)?.volume||999),(getTonneau(mvtForm.futDest)?.contenuActuel||0)+parseFloat(mvtForm.volume||0))}L</strong></div>
+                </div>
+              )}
+              <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"1px solid #cfc0a0",paddingTop:"14px"}}>
+                <button style={s.ghost} onClick={()=>setShowMvtForm(false)}>Annuler</button>
+                <button style={s.btn} onClick={submitMouvement}>Enregistrer</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* == MODAL DÉGUSTATION == */}
+      {showDegForm&&(
+        <div style={s.modal}>
+          <div style={{...s.modalBox,width:"720px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
+              <div style={{fontFamily:"'Playfair Display',serif",fontSize:"18px",color:"#b8860b"}}>Nouvelle dégustation</div>
+              <button style={s.ghost} onClick={()=>setShowDegForm(false)}>x</button>
+            </div>
+            <div style={{display:"grid",gap:"14px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
+                <div><span style={s.lbl}>Fût *</span>
+                  <select style={s.sel} value={degForm.futId} onChange={e=>setDegForm(f=>({...f,futId:e.target.value}))}>
+                    <option value="">Sélectionner...</option>
+                    {tonneaux.map(t=><option key={t.id} value={t.id}>{t.id} - {t.denomination}</option>)}
+                  </select>
+                </div>
+                <div><span style={s.lbl}>Session *</span><input style={s.inp} placeholder="ex. Avril 2026" value={degForm.session} onChange={e=>setDegForm(f=>({...f,session:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Date</span><input type="date" style={s.inp} value={degForm.date} onChange={e=>setDegForm(f=>({...f,date:e.target.value}))}/></div>
+              </div>
+
+              {/* Tableau de saisie multi-dégustateurs */}
+              <div>
+                <span style={s.lbl}>Notes par dégustateur</span>
+                <div style={{border:"1px solid #cfc0a0",borderRadius:"6px",overflow:"hidden"}}>
+                  <div style={{display:"grid",gridTemplateColumns:"120px 80px 80px 80px 1fr",gap:"0",background:"#fffbf3",padding:"7px 10px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#8a7248"}}>
+                    <div>Dégustateur</div><div>Boisé /3</div><div>Longueur /3</div><div>Note G /5</div><div>Commentaire</div>
+                  </div>
+                  {degForm.lignes.map((l,i)=>(
+                    <div key={l.degustateur} style={{display:"grid",gridTemplateColumns:"120px 80px 80px 80px 1fr",gap:"0",borderTop:"1px solid #d0c4a0",padding:"5px 8px",alignItems:"center"}}>
+                      <div style={{fontSize:"12px",color:"#b8860b",padding:"0 2px"}}>{l.degustateur}</div>
+                      <div style={{padding:"0 4px"}}><input type="number" min="0" max="3" step="0.5" style={{...s.inp,padding:"4px 6px",fontSize:"12px"}} placeholder="-" value={l.boise} onChange={e=>{const lg=[...degForm.lignes];lg[i]={...lg[i],boise:e.target.value};setDegForm(f=>({...f,lignes:lg}));}}/></div>
+                      <div style={{padding:"0 4px"}}><input type="number" min="0" max="3" step="0.5" style={{...s.inp,padding:"4px 6px",fontSize:"12px"}} placeholder="-" value={l.longueur} onChange={e=>{const lg=[...degForm.lignes];lg[i]={...lg[i],longueur:e.target.value};setDegForm(f=>({...f,lignes:lg}));}}/></div>
+                      <div style={{padding:"0 4px"}}><input type="number" min="0" max="5" step="0.5" style={{...s.inp,padding:"4px 6px",fontSize:"12px"}} placeholder="-" value={l.noteG} onChange={e=>{const lg=[...degForm.lignes];lg[i]={...lg[i],noteG:e.target.value};setDegForm(f=>({...f,lignes:lg}));}}/></div>
+                      <div style={{padding:"0 4px"}}><input style={{...s.inp,padding:"4px 6px",fontSize:"12px"}} placeholder="Commentaire libre..." value={l.commentaire} onChange={e=>{const lg=[...degForm.lignes];lg[i]={...lg[i],commentaire:e.target.value};setDegForm(f=>({...f,lignes:lg}));}}/></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"1px solid #cfc0a0",paddingTop:"14px"}}>
+                <button style={s.ghost} onClick={()=>setShowDegForm(false)}>Annuler</button>
+                <button style={s.btn} onClick={submitDegustation}>Enregistrer les notes</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* == MODAL IMPORT CSV == */}
+      {showImport&&(
+        <div style={s.modal}>
+          <div style={{...s.modalBox,width:"620px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
+              <div style={{fontFamily:"'Playfair Display',serif",fontSize:"18px",color:"#b8860b"}}>Importer des notes depuis Excel</div>
+              <button style={s.ghost} onClick={()=>{setShowImport(false);setImportMsg("");}}>x</button>
+            </div>
+            <div style={{display:"grid",gap:"14px"}}>
+              <div style={{background:"#fffbf3",borderRadius:"6px",padding:"14px",fontSize:"12px",color:"#6a5838",lineHeight:"1.7"}}>
+                <div style={{color:"#5a4a30",marginBottom:"8px",fontWeight:600}}>Format attendu (CSV séparé par ;)</div>
+                <code style={{display:"block",color:"#b8860b",fontSize:"11px",marginBottom:"6px"}}>fut_id;session;date;degustateur;boise;longueur;note_g;commentaire</code>
+                <code style={{display:"block",color:"#7a6840",fontSize:"11px"}}>23.28;Avril 2026;2026-04-15;Flavien;1;1.5;3;Nez grillé net droit</code>
+                <code style={{display:"block",color:"#7a6840",fontSize:"11px"}}>23.28;Avril 2026;2026-04-15;Sébastien;1.5;2.5;4.5;Equilibré fruit/bois</code>
+                <div style={{marginTop:"8px",color:"#8a7248",fontSize:"11px"}}> Dans Excel : Fichier &rarr; Enregistrer sous &rarr; CSV (séparateur point-virgule). Les colonnes <em>boise</em>, <em>longueur</em> et <em>date</em> sont optionnelles.</div>
+              </div>
+              <div>
+                <span style={s.lbl}>Coller le contenu CSV ici</span>
+                <textarea style={{...s.inp,height:"160px",resize:"vertical",fontSize:"12px"}} placeholder={"fut_id;session;date;degustateur;boise;longueur;note_g;commentaire\n23.28;Avril 2026;2026-04-15;Flavien;1;1.5;3;Nez grillé net droit"} value={importText} onChange={e=>setImportText(e.target.value)}/>
+              </div>
+              {importMsg&&<div style={{padding:"10px 14px",background:importMsg.startsWith("OK")?"#0F6E5618":"#A32D2D18",border:`1px solid ${importMsg.startsWith("OK")?"#0F6E5633":"#A32D2D33"}`,borderRadius:"5px",fontSize:"13px",color:importMsg.startsWith("OK")?"#1a7a40":"#cc2222"}}>{importMsg}</div>}
+              <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"1px solid #cfc0a0",paddingTop:"14px"}}>
+                <button style={s.ghost} onClick={()=>{setShowImport(false);setImportMsg("");}}>Fermer</button>
+                <button style={s.btn} onClick={handleImport}>Importer</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* == MODAL AJOUT / MODIFICATION FÛT == */}
+      {showFutForm && (
+        <div style={s.modal}>
+          <div style={{...s.modalBox,width:"560px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"22px"}}>
+              <div style={{fontFamily:"'Playfair Display',serif",fontSize:"18px",color:"#b8860b"}}>
+                {editingFut ? `Modifier - ${editingFut.id}` : "Nouveau fût / Cuve"}
+              </div>
+              <button style={s.ghost} onClick={()=>{setShowFutForm(false);setEditingFut(null);}}>x</button>
+            </div>
+            <div style={{display:"grid",gap:"14px"}}>
+
+              {/* N° fût */}
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                <div>
+                  <span style={s.lbl}>N° Fût / Nom *</span>
+                  <input style={{...s.inp, opacity:editingFut?0.5:1}} value={futForm.id}
+                    readOnly={!!editingFut}
+                    onChange={e=>setFutForm(f=>({...f,id:e.target.value}))}
+                    placeholder="ex. 23.28, Foudre 7, Cuve Meunier"/>
+                  {editingFut && <div style={{fontSize:"10px",color:"#7a6840",marginTop:"3px"}}>Non modifiable - crée un nouveau fût si besoin</div>}
+                </div>
+                <div>
+                  <span style={s.lbl}>Appellation *</span>
+                  <select style={s.sel} value={futForm.appellation} onChange={e=>{
+                    const v=e.target.value;
+                    // si vins_clairs, synchro le millésime
+                    if(v.startsWith("vins_clairs_")){
+                      const yr=v.replace("vins_clairs_","");
+                      setFutForm(f=>({...f,appellation:v,millesime:yr}));
+                    } else {
+                      setFutForm(f=>({...f,appellation:v}));
+                    }
+                  }}>
+                    <optgroup label="Vins clairs (par millésime)">
+                      {/* années déjà présentes */}
+                      {vinsClairsAnnes.map(k=>{
+                        const yr=k.replace("vins_clairs_","").replace("vins_clairs","");
+                        return <option key={k} value={k}>Vins clairs {yr||"(sans année)"}</option>;
+                      })}
+                      {/* option pour créer une nouvelle année */}
+                      {[2024,2025,2026,2027,2028].filter(y=>!vinsClairsAnnes.includes(`vins_clairs_${y}`)).map(y=>(
+                        <option key={y} value={`vins_clairs_${y}`}>+ Vins clairs {y} (nouveau)</option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="Autres appellations">
+                      {Object.entries(APPELLATION_FIXED).map(([k,a])=>(
+                        <option key={k} value={k}>{a.label}</option>
+                      ))}
+                    </optgroup>
+                  </select>
+                </div>
+              </div>
+
+              {/* Dénomination + millésime */}
+              <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:"12px"}}>
+                <div>
+                  <span style={s.lbl}>Dénomination / Cuvée *</span>
+                  <input style={s.inp} value={futForm.denomination}
+                    onChange={e=>setFutForm(f=>({...f,denomination:e.target.value}))}
+                    placeholder="ex. FONTINETTE, VDR ARPENT ROUGE"/>
+                </div>
+                <div>
+                  <span style={s.lbl}>Millésime</span>
+                  <input type="number" style={s.inp} value={futForm.millesime}
+                    onChange={e=>setFutForm(f=>({...f,millesime:e.target.value}))}
+                    placeholder="ex. 2025"/>
+                </div>
+              </div>
+
+              {/* Volume + contenu actuel */}
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                <div>
+                  <span style={s.lbl}>Volume total (L) *</span>
+                  <input type="number" style={s.inp} value={futForm.volume}
+                    onChange={e=>setFutForm(f=>({...f,volume:e.target.value}))}
+                    placeholder="ex. 228, 320, 500, 4000"/>
+                </div>
+                <div>
+                  <span style={s.lbl}>Contenu actuel (L)</span>
+                  <input type="number" style={s.inp} value={futForm.contenuActuel}
+                    onChange={e=>setFutForm(f=>({...f,contenuActuel:e.target.value}))}
+                    placeholder="Laissez vide = volume max"/>
+                </div>
+              </div>
+
+              {/* Tonnelier + grain + chauffe */}
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
+                <div>
+                  <span style={s.lbl}>Tonnelier</span>
+                  <input style={s.inp} value={futForm.tonnelier}
+                    onChange={e=>setFutForm(f=>({...f,tonnelier:e.target.value}))}
+                    placeholder="ex. Seguin Moreau"/>
+                </div>
+                <div>
+                  <span style={s.lbl}>Grain</span>
+                  <input style={s.inp} value={futForm.grain}
+                    onChange={e=>setFutForm(f=>({...f,grain:e.target.value}))}
+                    placeholder="ex. GF, Pierre"/>
+                </div>
+                <div>
+                  <span style={s.lbl}>Chauffe</span>
+                  <input style={s.inp} value={futForm.chauffe}
+                    onChange={e=>setFutForm(f=>({...f,chauffe:e.target.value}))}
+                    placeholder="ex. ML, GC, EP"/>
+                </div>
+              </div>
+
+              {/* Certification + statut */}
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                <div>
+                  <span style={s.lbl}>Certification</span>
+                  <select style={s.sel} value={futForm.certif} onChange={e=>setFutForm(f=>({...f,certif:e.target.value}))}>
+                    <option value="BIO">BIO</option>
+                    <option value="NON BIO">NON BIO</option>
+                    <option value="">-</option>
+                  </select>
+                </div>
+                <div>
+                  <span style={s.lbl}>Statut initial</span>
+                  <select style={s.sel} value={futForm.statut} onChange={e=>setFutForm(f=>({...f,statut:e.target.value}))}>
+                    <option value="actif">Actif</option>
+                    <option value="surveillance">Surveillance</option>
+                    <option value="vide">Vide</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Aperçu */}
+              {futForm.id && futForm.volume && (
+                <div style={{background:"#fffbf3",borderRadius:"5px",padding:"10px 14px",fontSize:"12px",color:"#6a5838",display:"flex",alignItems:"center",gap:"10px"}}>
+                  {futForm.appellation && <span style={{width:"8px",height:"8px",borderRadius:"50%",background:getApc(futForm.appellation).color,flexShrink:0}}/>}
+                  <span style={{color:"#1a1205",fontWeight:600}}>{futForm.id}</span>
+                  <span>{futForm.denomination||"-"}</span>
+                  {futForm.millesime && <span style={{color:"#7a6840"}}>· {futForm.millesime}</span>}
+                  <span style={{marginLeft:"auto",color:"#b8860b",fontWeight:600}}>{futForm.volume} L</span>
+                </div>
+              )}
+
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",borderTop:"1px solid #cfc0a0",paddingTop:"14px"}}>
+                <div>
+                  {editingFut && (
+                    <button style={{...s.ghost,color:"#cc2222",borderColor:"#A32D2D33",fontSize:"12px"}} onClick={()=>deleteFut(editingFut.id)}>
+                      <i className="ti ti-trash" style={{marginRight:"5px"}}/>Supprimer ce fût
+                    </button>
+                  )}
+                </div>
+                <div style={{display:"flex",gap:"8px"}}>
+                  <button style={s.ghost} onClick={()=>{setShowFutForm(false);setEditingFut(null);}}>Annuler</button>
+                  <button style={s.btn} onClick={submitFut}>
+                    <i className="ti ti-check" style={{marginRight:"5px"}}/>
+                    {editingFut ? "Enregistrer" : "Ajouter"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL RÉINITIALISATION */}
+      {showReset && (
+        <div style={{position:"fixed",inset:0,background:"rgba(30,20,5,0.78)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:2000}}>
+          <div style={{background:"#fffdf7",border:"1px solid #e8a0a0",borderRadius:"10px",padding:"32px",width:"440px"}}>
+            <div style={{fontFamily:"'Playfair Display',serif",fontSize:"18px",color:"#cc2222",marginBottom:"12px"}}>
+              <i className="ti ti-alert-triangle" style={{marginRight:"8px"}}/>Réinitialiser les données
+            </div>
+            <p style={{fontSize:"13px",color:"#5a4a30",lineHeight:"1.7",marginBottom:"8px"}}>
+              Cette action va <strong style={{color:"#1a1205"}}>effacer toutes les données sauvegardées</strong> dans ce navigateur et recharger les <strong style={{color:"#1a1205"}}>90 fûts</strong> avec les 4 appellations.
+            </p>
+            <p style={{fontSize:"12px",color:"#7a6840",lineHeight:"1.6",marginBottom:"24px"}}>
+              Mouvements, notes de dégustation et préférences de dégustateurs seront perdus. À utiliser si les données affichées semblent incorrectes ou vides.
+            </p>
+            <div style={{display:"flex",gap:"10px",justifyContent:"flex-end"}}>
+              <button style={{background:"none",color:"#6a5838",border:"1px solid #cfc0a0",borderRadius:"4px",padding:"8px 16px",fontSize:"12px",cursor:"pointer",fontFamily:"inherit"}}
+                onClick={()=>setShowReset(false)}>
+                Annuler
+              </button>
+              <button style={{background:"#cc2222",color:"#fff",border:"none",borderRadius:"4px",padding:"8px 16px",fontSize:"12px",fontWeight:700,cursor:"pointer",fontFamily:"inherit",letterSpacing:"0.05em"}}
+                onClick={()=>{
+                  ["chai_tonneaux","chai_mouvements","chai_degustations","chai_degustateurs","chai_degustateurs_v2"].forEach(k=>{ try{localStorage.removeItem(k);}catch{} });
+                  setTonneaux(INIT_TONNEAUX);
+                  setMouvements([]);
+                  setDegustations(INIT_DEGUSTATIONS);
+                  setDegustateurs(["Flavien","Sébastien","Ricardo","Julien","Clément","Thib","Arthur","Gas'"].map(n=>({nom:n,actif:true})));
+                  setShowReset(false);
+                  setView("dashboard");
+                }}>
+                <i className="ti ti-trash" style={{marginRight:"6px"}}/>Réinitialiser
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
