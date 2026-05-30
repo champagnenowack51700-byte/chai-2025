@@ -493,6 +493,18 @@ export default function App() {
   const saveParcelle = (p) => fbSave("parcelles", p.id, p);
   const deleteParcelleFb = (id) => fbDelete("parcelles", id);
 
+  // Refresh depuis Firebase
+  const refreshFromFirebase = () => {
+    fbLoad("tonneaux",     setTonneaux);
+    fbLoad("mouvements",   setMouvements);
+    fbLoad("degustations", setDegustations);
+    fbLoad("campagnes",    setCampagnes);
+    fbLoad("tirages",      setTirages);
+    fbLoad("vendanges",    setVendanges);
+    fbLoad("parcelles",    setParcelles);
+    fbLoad("degustateurs", data => { if(data.length>0) setDegustateurs(data[0].liste||degustateurs); });
+  };
+
   const getTonneau = (id) => tonneaux.find(t=>t.id===id);
   const degsActifs = degustateurs.filter(d=>d.actif).map(d=>d.nom);
   const toggleActif = (i) => setDegustateurs(prev=>prev.map((d,j)=>j===i?{...d,actif:!d.actif}:d));
