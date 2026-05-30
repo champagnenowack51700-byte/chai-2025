@@ -678,7 +678,7 @@ export default function App() {
   });
   const hasFilter = filterDegFut||filterDegCuvee||filterDegFabric;
 
-  const degView = () => (
+  return (
     <div style={s.app}>
       <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=IBM+Plex+Mono:wght@400;600&family=Lora:wght@400;500;600&display=swap" rel="stylesheet"/>
       {appError && <div style={{position:"fixed",top:0,left:0,right:0,background:"red",color:"white",padding:"20px",zIndex:9999,fontSize:"12px",fontFamily:"monospace",whiteSpace:"pre-wrap"}}>{String(appError)}</div>}
