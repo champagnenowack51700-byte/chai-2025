@@ -1,4 +1,29 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { initializeApp } from "firebase/app";
+import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, writeBatch } from "firebase/firestore";
+
+// Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyDRTi_7yt5u0Vnc396fCZVXGZAmgpIFsEs",
+  authDomain: "gestion-chai-nowack.firebaseapp.com",
+  projectId: "gestion-chai-nowack",
+  storageBucket: "gestion-chai-nowack.firebasestorage.app",
+  messagingSenderId: "869476292374",
+  appId: "1:869476292374:web:469b1f38ddbc93bc24e237"
+};
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp);
+
+// Helper: save a document
+const fbSave = (col, id, data) => {
+  const clean = JSON.parse(JSON.stringify(data)); // strip undefined
+  return setDoc(doc(db, col, String(id)), {...clean, _ts: new Date().toISOString()});
+};
+const fbDelete = (col, id) => deleteDoc(doc(db, col, String(id)));
+const fbWatch = (col, setter) =>
+  onSnapshot(collection(db, col), snap => {
+    setter(snap.docs.map(d => ({...d.data(), id: d.id})));
+  });
 
 const INIT_TONNEAUX = [
   // == VINS CLAIRS 2025 ======================================================
@@ -327,20 +352,15 @@ const typeColor = (v) => TYPES_MOUVEMENT.find(t=>t.value===v)?.color||"#888";
 const avg = (arr) => arr.length ? +(arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(2) : null;
 const stars = (n,max=5) => { if(!n) return "-"; const f=Math.round(n); return "*".repeat(f)+"o".repeat(max-f); };
 
+// Firebase replaces localStorage - load() kept for migration only
 function load(key,def){ try{ const s=localStorage.getItem(key); return s?JSON.parse(s):def; }catch{return def;} }
 
 export default function App() {
   const [appError, setAppError] = useState(null);
-  const [tonneaux,      setTonneaux]      = useState(()=>load("chai_tonneaux",    INIT_TONNEAUX));
-  const [mouvements,    setMouvements]    = useState(()=>load("chai_mouvements",  []));
-  const [degustations,  setDegustations]  = useState(()=>load("chai_degustations",INIT_DEGUSTATIONS));
-  const [degustateurs,  setDegustateurs]  = useState(()=>{
-    const saved = load("chai_degustateurs_v2", null);
-    if(saved) return saved;
-    const old = load("chai_degustateurs", null);
-    const names = old && typeof old[0]==="string" ? old : ["Flavien","Sébastien","Ricardo","Julien","Clément","Thib","Arthur","Gas'"];
-    return names.map(n=>({nom:n, actif:true}));
-  });
+  const [tonneaux,      setTonneaux]      = useState(INIT_TONNEAUX);
+  const [mouvements,    setMouvements]    = useState([]);
+  const [degustations,  setDegustations]  = useState(INIT_DEGUSTATIONS);
+  const [degustateurs,  setDegustateurs]  = useState(["Flavien","Sébastien","Ricardo","Julien","Clément","Thib","Arthur","Gas'"].map(n=>({nom:n,actif:true})));
   const [editingDeg,    setEditingDeg]    = useState(false);
   const [degDraft,      setDegDraft]      = useState([]);
 
@@ -366,8 +386,8 @@ export default function App() {
   const [showVendangeForm,  setShowVendangeForm]  = useState(false);
   const [filterVendangeAn,  setFilterVendangeAn]  = useState("");
   const [editingVendange,  setEditingVendange]  = useState(null);
-  const [vendanges,        setVendanges]        = useState(()=>load("chai_vendanges", []));
-  const [parcelles,        setParcelles]        = useState(()=>load("chai_parcelles", []));
+  const [vendanges,        setVendanges]        = useState([]);
+  const [parcelles,        setParcelles]        = useState([]);
   const [showParcelleForm, setShowParcelleForm] = useState(false);
   const [editingParcelle,  setEditingParcelle]  = useState(null);
   const [parcelleForm,     setParcelleForm]     = useState({nom:"",cepage:"",certification:"BIO",surface:"",commune:"",observations:""});
@@ -392,7 +412,7 @@ export default function App() {
   const [showProduitVendange, setShowProduitVendange] = useState(false);
   const [produitVendangeForm, setProduitVendangeForm] = useState({nom:"",dose:"",lot:"",date:""});
   const [editingTirage,  setEditingTirage]  = useState(null);
-  const [tirages,        setTirages]        = useState(()=>load("chai_tirages", []));
+  const [tirages,        setTirages]        = useState([]);
   const TIRAGE_EMPTY = {
     date: new Date().toISOString().slice(0,10),
     operateur: "",
@@ -417,7 +437,7 @@ export default function App() {
   };
   const [tirageForm, setTirageForm] = useState(TIRAGE_EMPTY);
   const [campFutId,    setCampFutId]    = useState(null);
-  const [campagnes,    setCampagnes]    = useState(()=>load("chai_campagnes", []));
+  const [campagnes,    setCampagnes]    = useState([]);
   const [campForm,     setCampForm]     = useState({annee:"", denomination:"", millesime:"", notes:""});
   const [editingNote,  setEditingNote]  = useState(null);
   const [editNoteForm, setEditNoteForm] = useState({boise:"",longueur:"",noteG:"",commentaire:""});
@@ -454,6 +474,22 @@ export default function App() {
   useEffect(()=>{ try{localStorage.setItem("chai_campagnes",JSON.stringify(campagnes));}catch{} },[campagnes]);
   useEffect(()=>{ try{localStorage.setItem("chai_degustateurs_v2",JSON.stringify(degustateurs));}catch{} },[degustateurs]);
 
+  // Firebase save helpers
+  const saveTonneau = (t) => fbSave("tonneaux", t.id, t);
+  const deleteTonneauFb = (id) => fbDelete("tonneaux", id);
+  const saveMouvement = (m) => fbSave("mouvements", m.id, m);
+  const deleteMouvementFb = (id) => fbDelete("mouvements", id);
+  const saveDegustation = (d) => fbSave("degustations", d.id, d);
+  const deleteDegustationFb = (id) => fbDelete("degustations", id);
+  const saveCampagne = (c) => fbSave("campagnes", c.id, c);
+  const deleteCampagneFb = (id) => fbDelete("campagnes", id);
+  const saveTirage = (t) => fbSave("tirages", t.id, t);
+  const deleteTirageFb = (id) => fbDelete("tirages", id);
+  const saveVendange = (v) => fbSave("vendanges", v.id, v);
+  const deleteVendangeFb = (id) => fbDelete("vendanges", id);
+  const saveParcelle = (p) => fbSave("parcelles", p.id, p);
+  const deleteParcelleFb = (id) => fbDelete("parcelles", id);
+
   const getTonneau = (id) => tonneaux.find(t=>t.id===id);
   const degsActifs = degustateurs.filter(d=>d.actif).map(d=>d.nom);
   const toggleActif = (i) => setDegustateurs(prev=>prev.map((d,j)=>j===i?{...d,actif:!d.actif}:d));
@@ -467,7 +503,7 @@ export default function App() {
   const allAppellations = [...vinsClairsAnnes, "vins_reserve","coteaux","ratafia"];
   // Passer un fût en réserve
   const passerEnReserve = (id) => {
-    setTonneaux(prev=>prev.map(t=>t.id===id ? {...t, appellation:"vins_reserve"} : t));
+    setTonneaux(prev=>prev.map(t=>{ if(t.id===id){ const u={...t,appellation:"vins_reserve"}; saveTonneau(u); return u; } return t; }));
   };
   const pct = (t) => Math.round((t.contenuActuel/t.volume)*100);
   const denominations = [...new Set(tonneaux.map(t=>t.denomination))].sort();
@@ -496,6 +532,7 @@ export default function App() {
     } else {
       setTonneaux(prev=>[...prev, fut]);
     }
+    saveTonneau(fut);
     setShowFutForm(false); setEditingFut(null); setFutForm(EMPTY_FUT);
   };
 
@@ -504,6 +541,7 @@ export default function App() {
     if(!window.confirm(`Supprimer le fût "${id}" ? Cette action est irréversible.`)) return;
     setTonneaux(prev=>prev.filter(t=>t.id!==id));
     setDegustations(prev=>prev.filter(d=>d.futId!==id));
+    deleteTonneauFb(id);
     if(selectedFut===id){ setSelectedFut(null); setView("tonneaux"); }
     setShowFutForm(false); setEditingFut(null);
   };
@@ -592,6 +630,7 @@ export default function App() {
       }
       setTonneaux(updatedTonneaux);
     }
+    saveTirage(updated);
     setTirageForm(TIRAGE_EMPTY); setEditingTirage(null); setShowTirageForm(false);
   };
 
@@ -602,11 +641,12 @@ export default function App() {
     const newC = { id:`camp_${Date.now()}`, futId:campFutId, annee:campForm.annee,
       denomination:campForm.denomination.trim(), millesime:campForm.millesime, notes:campForm.notes };
     setCampagnes(prev=>[...prev.filter(c=>!(c.futId===campFutId && c.annee===campForm.annee)), newC]);
+    saveCampagne(newC);
     setShowCampForm(false); setCampFutId(null); setCampForm({annee:"",denomination:"",millesime:"",notes:""});
   };
   const deleteCampagne = (id) => {
     if(!window.confirm("Supprimer cette campagne ?")) return;
-    setCampagnes(prev=>prev.filter(c=>c.id!==id));
+    setCampagnes(prev=>prev.filter(c=>c.id!==id)); deleteCampagneFb(id);
   };
 
   // -- VENDANGE -------------------------------------------------------------
@@ -618,6 +658,7 @@ export default function App() {
     } else {
       setParcelles(prev=>[...prev,p]);
     }
+    saveParcelle(p);
     setParcelleForm({nom:"",cepage:"",certification:"BIO",surface:"",commune:"",observations:""});
     setEditingParcelle(null); setShowParcelleForm(false);
   };
@@ -660,6 +701,8 @@ export default function App() {
           ?{...t,contenuActuel:Math.min(t.volume,t.contenuActuel+vol)}:t));
       }
     }
+    saveVendange(v);
+    if(!editingVendange) { tonneaux.forEach(t=>saveTonneau(t)); }
     setVendangeForm(VENDANGE_EMPTY); setEditingVendange(null); setShowVendangeForm(false);
   };
 
@@ -677,7 +720,9 @@ export default function App() {
       if(!window.confirm("L'assemblage ne peut pas etre restaure automatiquement. Supprimer quand meme ?")) return;
     }
     setTonneaux(upd);
+    upd.forEach(t=>saveTonneau(t));
     setMouvements(prev=>prev.filter(m=>m.id!==mvt.id));
+    deleteMouvementFb(mvt.id);
   };
 
   // Notes de degustation
@@ -687,18 +732,19 @@ export default function App() {
     setShowEditDeg(true);
   };
   const saveEditNote = () => {
-    setDegustations(prev=>prev.map(d=>d.id===editingNote.id?{
-      ...d,
+    const updated = {...editingNote,
       boise:   editNoteForm.boise!==''?parseFloat(editNoteForm.boise):null,
       longueur:editNoteForm.longueur!==''?parseFloat(editNoteForm.longueur):null,
       noteG:   editNoteForm.noteG!==''?parseFloat(editNoteForm.noteG):null,
       commentaire:editNoteForm.commentaire,
-    }:d));
+    };
+    setDegustations(prev=>prev.map(d=>d.id===editingNote.id?updated:d));
+    saveDegustation(updated);
     setShowEditDeg(false); setEditingNote(null);
   };
   const deleteNote = (id) => {
     if(!window.confirm("Supprimer cette note ?")) return;
-    setDegustations(prev=>prev.filter(d=>d.id!==id));
+    setDegustations(prev=>prev.filter(d=>d.id!==id)); deleteDegustationFb(id);
   };
 
   const submitMouvement = () => {
@@ -719,7 +765,11 @@ export default function App() {
     }
     setTonneaux(upd);
     if(mvtForm.type==="ajout_produit" && !mvtForm.numeroLot.trim()) return alert("Le numéro de lot est obligatoire pour un ajout de produit.");
-    setMouvements(prev=>[{id:Date.now().toString(),...mvtForm,timestamp:new Date().toISOString()},...prev]);
+    const newMvt = {id:Date.now().toString(),...mvtForm,timestamp:new Date().toISOString()};
+    setMouvements(prev=>[newMvt,...prev]);
+    saveMouvement(newMvt);
+    // Save updated tonneaux to Firebase
+    setTimeout(()=>{ tonneaux.forEach(t=>saveTonneau(t)); }, 100);
     setMvtForm({type:"ouillage",date:new Date().toISOString().slice(0,16),operateur:"",futSource:[],futDest:"",volume:"",notes:"",produit:"",dosage:"",numeroLot:""});
     setShowMvtForm(false);
   };
@@ -742,6 +792,7 @@ export default function App() {
       commentaire: l.commentaire,
     }));
     setDegustations(prev=>[...prev,...nouvelles]);
+    nouvelles.forEach(d=>saveDegustation(d));
     setDegForm({futId:"",session:"",date:new Date().toISOString().slice(0,10),lignes:degustateurs.filter(d=>d.actif).map(d=>({degustateur:d.nom,boise:"",longueur:"",noteG:"",commentaire:""}))});
     setShowDegForm(false);
   };
@@ -1585,7 +1636,7 @@ export default function App() {
                           <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",marginTop:"8px"}}>
                             <button style={{...s.ghostSm}} onClick={()=>openEditVendange(v)}>Modifier</button>
                             <button style={{...s.ghostSm,color:"#cc2222",borderColor:"#f0b4b4"}}
-                              onClick={()=>{if(window.confirm("Supprimer cet apport ?")) setVendanges(prev=>prev.filter(x=>x.id!==v.id));}}>
+                              onClick={()=>{if(window.confirm("Supprimer cet apport ?")) { setVendanges(prev=>prev.filter(x=>x.id!==v.id)); deleteVendangeFb(v.id); }}}>
                               Supprimer
                             </button>
                           </div>
@@ -1626,7 +1677,7 @@ export default function App() {
                     <div style={{display:"flex",gap:"4px"}}>
                       <button style={{...s.ghostSm,fontSize:"10px"}} onClick={()=>{setParcelleForm({nom:p.nom,cepage:p.cepage||"",certification:p.certification||"BIO",surface:p.surface||"",commune:p.commune||"",observations:p.observations||""});setEditingParcelle(p);setShowParcelleForm(true);}}>Mod.</button>
                       <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
-                        onClick={()=>{if(window.confirm("Supprimer cette parcelle ?")) setParcelles(prev=>prev.filter(x=>x.id!==p.id));}}>Sup.</button>
+                        onClick={()=>{if(window.confirm("Supprimer cette parcelle ?")) { setParcelles(prev=>prev.filter(x=>x.id!==p.id)); deleteParcelleFb(p.id); }}}>Sup.</button>
                     </div>
                   </div>
                 </div>
@@ -1733,7 +1784,7 @@ export default function App() {
                       Modifier
                     </button>
                     <button style={{background:"#fce8e8",color:"#cc2222",border:"0.5px solid #f0b4b4",borderRadius:"4px",padding:"4px 12px",fontSize:"11px",cursor:"pointer",fontFamily:"monospace"}}
-                      onClick={()=>{if(window.confirm("Supprimer ce tirage ? Cette action est irreversible.")) setTirages(prev=>prev.filter(tr=>tr.id!==t.id));}}>
+                      onClick={()=>{if(window.confirm("Supprimer ce tirage ? Cette action est irreversible.")) { setTirages(prev=>prev.filter(tr=>tr.id!==t.id)); deleteTirageFb(t.id); }}}>
                       Supprimer
                     </button>
                   </div>
@@ -2467,14 +2518,14 @@ export default function App() {
                 Annuler
               </button>
               <button style={{background:"#cc2222",color:"#fff",border:"none",borderRadius:"4px",padding:"8px 16px",fontSize:"12px",fontWeight:700,cursor:"pointer",fontFamily:"inherit",letterSpacing:"0.05em"}}
-                onClick={()=>{
-                  ["chai_tonneaux","chai_mouvements","chai_degustations","chai_degustateurs","chai_degustateurs_v2"].forEach(k=>{ try{localStorage.removeItem(k);}catch{} });
-                  setTonneaux(INIT_TONNEAUX);
-                  setMouvements([]);
-                  setDegustations(INIT_DEGUSTATIONS);
-                  setDegustateurs(["Flavien","Sébastien","Ricardo","Julien","Clément","Thib","Arthur","Gas'"].map(n=>({nom:n,actif:true})));
-                  setShowReset(false);
-                  setView("dashboard");
+                onClick={async ()=>{
+                  // Save initial data to Firebase
+                  const batch = writeBatch(db);
+                  INIT_TONNEAUX.forEach(t=>batch.set(doc(db,"tonneaux",t.id),{...t,_ts:new Date().toISOString()}));
+                  INIT_DEGUSTATIONS.forEach(d=>batch.set(doc(db,"degustations",d.id),{...d,_ts:new Date().toISOString()}));
+                  await batch.commit();
+                  setMouvements([]); setCampagnes([]); setTirages([]); setVendanges([]); setParcelles([]);
+                  setShowReset(false); setView("dashboard");
                 }}>
                 <i className="ti ti-trash" style={{marginRight:"6px"}}/>Réinitialiser
               </button>
