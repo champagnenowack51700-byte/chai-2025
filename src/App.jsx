@@ -519,6 +519,45 @@ export default function App() {
   };
 
   // Submit mouvement
+  // Annuler un mouvement et restaurer les volumes
+  const annulerMouvement = (mvt) => {
+    if(!window.confirm("Annuler ce mouvement et restaurer les volumes ?")) return;
+    const vol = parseFloat(mvt.volume)||0;
+    let upd = [...tonneaux];
+    if(mvt.type==="soutirage" && mvt.futSource?.[0] && mvt.futDest){
+      upd=upd.map(t=>{ if(t.id===mvt.futSource[0]) return{...t,contenuActuel:Math.min(t.volume,t.contenuActuel+vol)}; if(t.id===mvt.futDest) return{...t,contenuActuel:Math.max(0,t.contenuActuel-vol)}; return t; });
+    } else if(["ecoulage","perte"].includes(mvt.type) && mvt.futSource?.[0]){
+      upd=upd.map(t=>t.id===mvt.futSource[0]?{...t,contenuActuel:Math.min(t.volume,t.contenuActuel+vol)}:t);
+    } else if(["remplissage","ouillage"].includes(mvt.type) && mvt.futDest){
+      upd=upd.map(t=>t.id===mvt.futDest?{...t,contenuActuel:Math.max(0,t.contenuActuel-vol)}:t);
+    } else if(mvt.type==="assemblage"){
+      if(!window.confirm("L'assemblage ne peut pas etre restaure automatiquement. Supprimer quand meme ?")) return;
+    }
+    setTonneaux(upd);
+    setMouvements(prev=>prev.filter(m=>m.id!==mvt.id));
+  };
+
+  // Notes de degustation
+  const openEditNote = (note) => {
+    setEditingNote(note);
+    setEditNoteForm({boise:note.boise??'',longueur:note.longueur??'',noteG:note.noteG??'',commentaire:note.commentaire||''});
+    setShowEditDeg(true);
+  };
+  const saveEditNote = () => {
+    setDegustations(prev=>prev.map(d=>d.id===editingNote.id?{
+      ...d,
+      boise:   editNoteForm.boise!==''?parseFloat(editNoteForm.boise):null,
+      longueur:editNoteForm.longueur!==''?parseFloat(editNoteForm.longueur):null,
+      noteG:   editNoteForm.noteG!==''?parseFloat(editNoteForm.noteG):null,
+      commentaire:editNoteForm.commentaire,
+    }:d));
+    setShowEditDeg(false); setEditingNote(null);
+  };
+  const deleteNote = (id) => {
+    if(!window.confirm("Supprimer cette note ?")) return;
+    setDegustations(prev=>prev.filter(d=>d.id!==id));
+  };
+
   const submitMouvement = () => {
     if(!mvtForm.operateur) return alert("Opérateur requis.");
     const vol = parseFloat(mvtForm.volume)||0;
