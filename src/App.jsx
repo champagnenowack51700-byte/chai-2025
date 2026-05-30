@@ -385,7 +385,32 @@ export default function App() {
   const [showReset,    setShowReset]    = useState(false);
   const [showEditDeg,  setShowEditDeg]  = useState(false);
   const [showCampForm, setShowCampForm] = useState(false);
-  const [showTirageForm,   setShowTirageForm]   = useState(false);
+  const [showTirageForm,     setShowTirageForm]     = useState(false);
+  const [showDegorgeForm,   setShowDegorgeForm]   = useState(false);
+  const [editingDegorge,    setEditingDegorge]    = useState(null);
+  const [degorgements,      setDegorgements]      = useState([]);
+  const [showStockMvtForm,  setShowStockMvtForm]  = useState(false);
+  const [showCloture,       setShowCloture]       = useState(false);
+  const [clotures,          setClotures]          = useState([]);
+  const LIEUX_STOCK = ["Domaine", "Lorain Champagnisation", "Epernay"];
+  const FORMATS = [{key:"75", label:"Bouteille 75cl", vol:0.75}, {key:"magnum", label:"Magnum 1.5L", vol:1.5}, {key:"jeroboam", label:"Jeroboam 3L", vol:3.0}];
+  const STATUTS_BOUTEILLES = ["Sur latte / Sur pointe", "En cours de degorgement", "Degorge", "Habille"];
+  const DEGORGE_EMPTY = {
+    lotId: "", date:"", operateur:"",
+    lieuDepart:"Domaine", lieuArrivee:"Lorain Champagnisation",
+    statut:"En cours de degorgement",
+    dosageLiqueur:"", descriptionDosage:"",
+    pertes:"0", notes:"",
+  };
+  const [degorgeForm, setDegorgeForm] = useState(DEGORGE_EMPTY);
+  const CLOTURE_EMPTY = {
+    date: new Date().toISOString().slice(0,7),
+    operateur:"",
+    lignes:[],
+    notes:"",
+    importCsv:"",
+  };
+  const [clotureForm, setClotureForm] = useState(CLOTURE_EMPTY);
   const [showVendangeForm,  setShowVendangeForm]  = useState(false);
   const [filterVendangeAn,  setFilterVendangeAn]  = useState("");
   const [editingVendange,  setEditingVendange]  = useState(null);
@@ -494,6 +519,94 @@ export default function App() {
   const deleteParcelleFb = (id) => fbDelete("parcelles", id);
 
   // Refresh depuis Firebase
+  // -- STOCK HELPERS ----------------------------------------------------
+  // Calcule les lots de bouteilles depuis les tirages
+  const getLots = () => {
+    const lots = [];
+    tirages.forEach(t => {
+      const moisDepuisTirage = t.date ? Math.floor((new Date()-new Date(t.date))/(1000*60*60*24*30.5)) : 0;
+      const commercialisable = moisDepuisTirage >= 15;
+      [["75", t.qte75, t.lot75, "Bouteille 75cl"],
+       ["magnum", t.qteMagnum, t.lotMagnum, "Magnum 1.5L"],
+       ["jeroboam", t.qteJeroboam, t.lotJeroboam, "Jeroboam 3L"]
+      ].forEach(([fmt, qte, lot, label]) => {
+        if((parseInt(qte)||0) > 0 && lot) {
+          // Trouver le dernier mouvement de ce lot
+          const mouvLot = degorgements.filter(d=>d.lotId===lot).sort((a,b)=>new Date(b.date)-new Date(a.date));
+          const dernierMvt = mouvLot[0];
+          // Calculer les pertes
+          const pertesTotales = mouvLot.reduce((s,d)=>s+(parseInt(d.pertes)||0),0);
+          // Deduire les clotures
+          const vendu = clotures.reduce((s,c)=>{
+            return s + (c.lignes||[]).filter(l=>l.lot===lot).reduce((ss,l)=>ss+(parseInt(l.qte)||0),0);
+          }, 0);
+          const qteActuelle = Math.max(0, (parseInt(qte)||0) - pertesTotales - vendu);
+          lots.push({
+            id: `${t.id}_${fmt}`,
+            lot: lot||"",
+            tirageId: t.id,
+            cuvee: t.cuvee,
+            millesime: t.millesime,
+            format: fmt,
+            formatLabel: label,
+            dateTirage: t.date,
+            moisDepuisTirage,
+            commercialisable,
+            statut: dernierMvt?.statut || "Sur latte / Sur pointe",
+            lieu: dernierMvt?.lieuArrivee || "Domaine",
+            qteInitiale: parseInt(qte)||0,
+            pertesTotales,
+            vendu,
+            qteActuelle,
+          });
+        }
+      });
+    });
+    return lots.filter(l=>l.qteActuelle>0);
+  };
+
+  const getStockActuel = () => getLots();
+
+  const submitDegorgement = () => {
+    if(!degorgeForm.lotId) return alert("Selectionnez un lot.");
+    if(!degorgeForm.date) return alert("La date est requise.");
+    if(!degorgeForm.operateur) return alert("L'operateur est requis.");
+    const d = { id:editingDegorge?editingDegorge.id:`deg_${Date.now()}`, ...degorgeForm, timestamp:new Date().toISOString() };
+    if(editingDegorge){ setDegorgements(prev=>prev.map(x=>x.id===d.id?d:x)); }
+    else { setDegorgements(prev=>[d,...prev]); }
+    fbSave("degorgements", d.id, d);
+    setDegorgeForm(DEGORGE_EMPTY); setEditingDegorge(null); setShowDegorgeForm(false);
+  };
+
+  const submitCloture = () => {
+    if(!clotureForm.date) return alert("Le mois est requis.");
+    if(!clotureForm.operateur) return alert("L'operateur est requis.");
+    if(clotureForm.lignes.length===0) return alert("Ajoutez au moins une ligne.");
+    const c = { id:`cloture_${Date.now()}`, ...clotureForm, timestamp:new Date().toISOString() };
+    setClotures(prev=>[c,...prev]);
+    fbSave("clotures", c.id, c);
+    setClotureForm(CLOTURE_EMPTY); setShowCloture(false);
+  };
+
+  const importCsvCloture = () => {
+    const lines = clotureForm.importCsv.trim().split("
+").filter(l=>l.trim());
+    if(lines.length<2){ alert("Format invalide. Ligne 1: en-tetes, suite: donnees"); return; }
+    const headers = lines[0].split(";").map(h=>h.trim().toLowerCase());
+    const lignes = [];
+    for(let i=1;i<lines.length;i++){
+      const cols = lines[i].split(";").map(c=>c.trim());
+      lignes.push({
+        cuvee:   cols[headers.indexOf("cuvee")]||"",
+        millesime: cols[headers.indexOf("millesime")]||"",
+        format:  cols[headers.indexOf("format")]||"75",
+        lieu:    cols[headers.indexOf("lieu")]||"Epernay",
+        qte:     parseInt(cols[headers.indexOf("qte")])||0,
+      });
+    }
+    setClotureForm(f=>({...f, lignes:[...f.lignes,...lignes], importCsv:""}));
+  };
+
   const refreshFromFirebase = () => {
     fbLoad("tonneaux",     setTonneaux);
     fbLoad("mouvements",   setMouvements);
@@ -502,6 +615,8 @@ export default function App() {
     fbLoad("tirages",      setTirages);
     fbLoad("vendanges",    setVendanges);
     fbLoad("parcelles",    setParcelles);
+    fbLoad("degorgements", setDegorgements);
+    fbLoad("clotures",     setClotures);
     fbLoad("degustateurs", data => { if(data.length>0) setDegustateurs(data[0].liste||degustateurs); });
   };
 
@@ -1026,7 +1141,7 @@ export default function App() {
       {/* NAV */}
       <nav style={s.nav}>
         <div style={s.brand}> Chai 2025</div>
-        {[["vendanges","Vendange"],["dashboard","Vue d'ensemble"],["tonneaux","Tonneaux"],["degustations","Dégustations"],["mouvements","Mouvements"],["tirages","Tirage"]].map(([v,l])=>(
+        {[["vendanges","Vendange"],["dashboard","Vue d'ensemble"],["tonneaux","Tonneaux"],["degustations","Dégustations"],["mouvements","Mouvements"],["tirages","Tirage"],["stock","Stock"]].map(([v,l])=>(
           <button key={v} style={s.navBtn(view===v)} onClick={()=>setView(v)}>{l}</button>
         ))}
         <div style={{flex:1}}/>
@@ -1704,6 +1819,146 @@ export default function App() {
           </div>
         )}
 
+        {/* -- STOCK -- */}
+        {view==="stock" && (()=>{
+          const stock = getStockActuel();
+          const now = new Date();
+          const stockMoins15 = stock.filter(s=>s.moisDepuisTirage<15);
+          const stockPlus15  = stock.filter(s=>s.moisDepuisTirage>=15);
+          const alertes = stock.filter(s=>s.moisDepuisTirage>=14 && s.moisDepuisTirage<16);
+          return (
+            <div>
+              {/* KPIs */}
+              <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:"12px",marginBottom:"20px"}}>
+                {[
+                  {lbl:"Total en stock",val:stock.reduce((s,x)=>s+x.qte,0)+" btl",sub:"tous formats confondus"},
+                  {lbl:"< 15 mois (non comm.)",val:stockMoins15.reduce((s,x)=>s+x.qte,0)+" btl",col:"#cc2222",sub:"non commercialisables"},
+                  {lbl:"> 15 mois (comm.)",val:stockPlus15.reduce((s,x)=>s+x.qte,0)+" btl",col:"#1a7a40",sub:"commercialisables"},
+                  {lbl:"Alertes 15 mois",val:alertes.length+" ref.",col:"#c47800",sub:"passent le cap ce mois"},
+                ].map((k,i)=>(
+                  <div key={i} style={s.card}>
+                    <div style={s.lbl}>{k.lbl}</div>
+                    <div style={{fontSize:"24px",fontWeight:500,color:k.col||"#b8860b"}}>{k.val}</div>
+                    <div style={{fontSize:"11px",color:"#9a8870",marginTop:"3px"}}>{k.sub}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Alertes 15 mois */}
+              {alertes.length>0&&(
+                <div style={{marginBottom:"16px",padding:"12px 16px",background:"#fde8b8",border:"1px solid #e8c888",borderRadius:"8px"}}>
+                  <div style={{fontWeight:500,color:"#c47800",marginBottom:"8px",fontSize:"13px"}}>Alertes 15 mois - A passer en commercialisable</div>
+                  {alertes.map((a,i)=>(
+                    <div key={i} style={{fontSize:"12px",color:"#7a5200",display:"flex",gap:"12px",padding:"3px 0"}}>
+                      <span style={{fontWeight:500}}>{a.cuvee} {a.millesime}</span>
+                      <span>{a.format==="75"?"75cl":a.format==="magnum"?"Magnum":"Jeroboam"}</span>
+                      <span>{a.qte} bouteilles</span>
+                      <span style={{color:"#c47800"}}>{a.moisDepuisTirage} mois depuis le tirage</span>
+                      <span style={{color:"#9a8870"}}>{a.lieu}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px"}}>
+                <div style={{fontSize:"13px",color:"#7a6840"}}>{degorgements.length} degorgement(s)</div>
+                <div style={{display:"flex",gap:"8px"}}>
+                  <button style={s.ghost} onClick={()=>setShowCloture(true)}>Cloture mensuelle</button>
+                  <button style={s.btn} onClick={()=>{setDegorgeForm(DEGORGE_EMPTY);setEditingDegorge(null);setShowDegorgeForm(true);}}>+ Nouveau degorgement</button>
+                </div>
+              </div>
+
+              {/* Tableau lots par lieu */}
+              {LIEUX_STOCK.map(lieu=>{
+                const lotsLieu = stock.filter(x=>x.lieu===lieu);
+                if(lotsLieu.length===0) return null;
+                return (
+                  <div key={lieu} style={{...s.card,marginBottom:"14px"}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
+                      <div style={{fontFamily:"Georgia,serif",fontSize:"15px",fontWeight:500,color:"#7a5200"}}>{lieu}</div>
+                      <div style={{fontSize:"12px",color:"#9a8870"}}>{lotsLieu.reduce((t,x)=>t+x.qteActuelle,0)} bouteilles</div>
+                    </div>
+                    <div style={{display:"grid",gap:"8px"}}>
+                      {lotsLieu.sort((a,b)=>a.moisDepuisTirage-b.moisDepuisTirage).map((x,i)=>(
+                        <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 80px 100px 80px 120px 80px 80px",gap:"10px",padding:"10px",background:x.moisDepuisTirage>=14&&x.moisDepuisTirage<16?"#fff8e8":"#fff8ee",borderRadius:"6px",border:`0.5px solid ${x.moisDepuisTirage>=15?"#a8d4b4":x.moisDepuisTirage>=14?"#e8c888":"#e2d9c5"}`,alignItems:"center",fontSize:"12px"}}>
+                          <div>
+                            <div style={{fontWeight:500,color:"#1a1205"}}>{x.cuvee} {x.millesime||""}</div>
+                            <div style={{fontSize:"10px",color:"#7a5200",fontFamily:"monospace",marginTop:"1px"}}>{x.lot}</div>
+                          </div>
+                          <div style={{color:"#6a5838"}}>{x.formatLabel.split(" ")[1]||x.formatLabel}</div>
+                          <div>
+                            <span style={{padding:"2px 8px",borderRadius:"4px",fontSize:"10px",fontFamily:"monospace",fontWeight:500,
+                              background:x.statut==="Habille"?"#d0f0dc":x.statut==="Degorge"?"#edf5e4":x.statut==="En cours de degorgement"?"#fde8b8":"#e6f0fb",
+                              color:x.statut==="Habille"?"#1a7a40":x.statut==="Degorge"?"#2d6a00":x.statut==="En cours de degorgement"?"#c47800":"#185FA5"}}>
+                              {x.statut}
+                            </span>
+                          </div>
+                          <div style={{fontFamily:"monospace",color:x.moisDepuisTirage>=15?"#1a7a40":x.moisDepuisTirage>=14?"#c47800":"#cc2222",fontWeight:500}}>
+                            {x.moisDepuisTirage}m
+                          </div>
+                          <div>
+                            {x.commercialisable
+                              ? <span style={{background:"#d0f0dc",color:"#1a7a40",borderRadius:"3px",padding:"2px 8px",fontSize:"10px",fontFamily:"monospace",fontWeight:500}}>COMM.</span>
+                              : <span style={{background:"#fdd0d0",color:"#cc2222",borderRadius:"3px",padding:"2px 8px",fontSize:"10px",fontFamily:"monospace",fontWeight:500}}>NON COMM.</span>
+                            }
+                          </div>
+                          <div style={{fontWeight:500,color:"#1a1205",textAlign:"center"}}>{x.qteActuelle} btl</div>
+                          <button style={{...s.btnSm,fontSize:"10px",background:"#f5e8cc",color:"#7a5200"}}
+                            onClick={()=>{setDegorgeForm({...DEGORGE_EMPTY,lotId:x.lot});setShowDegorgeForm(true);}}>
+                            Mouvement
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Historique degorgements */}
+              {degorgements.length>0&&(
+                <div style={s.card}>
+                  <div style={{...s.lbl,marginBottom:"12px"}}>Historique des degorgements</div>
+                  {degorgements.map(d=>{
+                    const tirage = tirages.find(t=>t.id===d.tirageId);
+                    const total = (parseInt(d.qte75)||0)+(parseInt(d.qteMagnum)||0)+(parseInt(d.qteJeroboam)||0);
+                    const pertes = (parseInt(d.pertes75)||0)+(parseInt(d.pertesMagnum)||0)+(parseInt(d.pertesJeroboam)||0);
+                    return (
+                      <div key={d.id} style={{borderBottom:"1px solid #ede5d4",padding:"10px 0",display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 80px",gap:"12px",fontSize:"12px",alignItems:"start"}}>
+                        <div>
+                          <div style={{fontWeight:500,color:"#1a1205"}}>{tirage?.cuvee||d.tirageId}</div>
+                          <div style={{fontSize:"11px",color:"#9a8870"}}>{d.date} - {d.operateur}</div>
+                          {d.lotDegorge&&<div style={{fontSize:"10px",color:"#7a5200",fontFamily:"monospace",marginTop:"2px"}}>Lot: {d.lotDegorge}</div>}
+                        </div>
+                        <div>
+                          <div style={{fontSize:"11px",color:"#9a8870"}}>Degorge</div>
+                          {(parseInt(d.qte75)||0)>0&&<div>{d.qte75} x 75cl</div>}
+                          {(parseInt(d.qteMagnum)||0)>0&&<div>{d.qteMagnum} x Magnum</div>}
+                          {(parseInt(d.qteJeroboam)||0)>0&&<div>{d.qteJeroboam} x Jeroboam</div>}
+                        </div>
+                        <div>
+                          <div style={{fontSize:"11px",color:"#9a8870"}}>{d.lieuDepart} -> {d.lieuArrivee}</div>
+                          {d.dosageLiqueur&&<div style={{fontSize:"11px",color:"#6a5838"}}>Dosage: {d.dosageLiqueur}g/L</div>}
+                          {d.descriptionDosage&&<div style={{fontSize:"11px",color:"#6a5838"}}>{d.descriptionDosage}</div>}
+                          <div style={{fontSize:"11px",color:"#6a5838"}}>Statut: {d.statutBouteilles}</div>
+                        </div>
+                        <div>
+                          {pertes>0&&<div style={{color:"#cc2222",fontSize:"11px"}}>Pertes: {pertes} btl</div>}
+                          {d.notes&&<div style={{fontSize:"11px",color:"#6a5838",fontStyle:"italic"}}>{d.notes}</div>}
+                        </div>
+                        <div style={{display:"flex",gap:"4px",justifyContent:"flex-end"}}>
+                          <button style={{...s.ghostSm,fontSize:"10px"}} onClick={()=>{setDegorgeForm({...DEGORGE_EMPTY,...d});setEditingDegorge(d);setShowDegorgeForm(true);}}>Mod.</button>
+                          <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
+                            onClick={()=>{if(window.confirm("Supprimer ?")){ setDegorgements(prev=>prev.filter(x=>x.id!==d.id)); fbDelete("degorgements",d.id); }}}>Sup.</button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
         {/* -- TIRAGES -- */}
         {view==="tirages" && (
           <div>
@@ -2377,6 +2632,128 @@ export default function App() {
         </div>
       )}
 
+      {/* == MODAL DEGORGEMENT == */}
+      {showDegorgeForm && (
+        <div style={s.modal}>
+          <div style={{...s.modalBox,width:"680px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"18px",color:"#7a5200"}}>{editingDegorge?"Modifier le mouvement":"Nouveau mouvement de lot"}</div>
+              <button style={s.ghost} onClick={()=>{setShowDegorgeForm(false);setEditingDegorge(null);}}>x</button>
+            </div>
+            <div style={{display:"grid",gap:"14px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
+                <div><span style={s.lbl}>Lot *</span>
+                  <select style={s.sel} value={degorgeForm.lotId} onChange={e=>setDegorgeForm(f=>({...f,lotId:e.target.value}))}>
+                    <option value="">Selectionner un lot...</option>
+                    {getLots().map(l=>(
+                      <option key={l.id} value={l.lot}>{l.lot} - {l.cuvee} {l.formatLabel} ({l.qteActuelle} btl)</option>
+                    ))}
+                  </select></div>
+                <div><span style={s.lbl}>Date *</span>
+                  <input type="date" style={s.inp} value={degorgeForm.date} onChange={e=>setDegorgeForm(f=>({...f,date:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Operateur *</span>
+                  <select style={s.sel} value={degorgeForm.operateur} onChange={e=>setDegorgeForm(f=>({...f,operateur:e.target.value}))}>
+                    <option value="">Selectionner...</option>
+                    {degustateurs.map(d=><option key={d.nom} value={d.nom}>{d.nom}</option>)}
+                  </select></div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                <div><span style={s.lbl}>Nouveau statut *</span>
+                  <select style={s.sel} value={degorgeForm.statut} onChange={e=>setDegorgeForm(f=>({...f,statut:e.target.value}))}>
+                    {STATUTS_BOUTEILLES.map(st=><option key={st} value={st}>{st}</option>)}
+                  </select></div>
+                <div><span style={s.lbl}>Deplacement vers</span>
+                  <select style={s.sel} value={degorgeForm.lieuArrivee} onChange={e=>setDegorgeForm(f=>({...f,lieuArrivee:e.target.value}))}>
+                    {LIEUX_STOCK.map(l=><option key={l} value={l}>{l}</option>)}
+                  </select></div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
+                <div><span style={s.lbl}>Dosage (g/L)</span>
+                  <input type="number" step="0.1" style={s.inp} placeholder="ex. 8.5" value={degorgeForm.dosageLiqueur} onChange={e=>setDegorgeForm(f=>({...f,dosageLiqueur:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Description liqueur</span>
+                  <input style={s.inp} placeholder="ex. Brut, Demi-sec..." value={degorgeForm.descriptionDosage} onChange={e=>setDegorgeForm(f=>({...f,descriptionDosage:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Pertes (bouteilles)</span>
+                  <input type="number" style={s.inp} placeholder="0" value={degorgeForm.pertes} onChange={e=>setDegorgeForm(f=>({...f,pertes:e.target.value}))}/></div>
+              </div>
+              <div><span style={s.lbl}>Notes</span>
+                <textarea style={{...s.inp,height:"58px",resize:"vertical"}} value={degorgeForm.notes} onChange={e=>setDegorgeForm(f=>({...f,notes:e.target.value}))}/></div>
+              <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
+                <button style={s.ghost} onClick={()=>{setShowDegorgeForm(false);setEditingDegorge(null);}}>Annuler</button>
+                <button style={s.btn} onClick={submitDegorgement}>{editingDegorge?"Sauvegarder":"Enregistrer"}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* == MODAL CLOTURE MENSUELLE == */}
+      {showCloture && (
+        <div style={s.modal}>
+          <div style={{...s.modalBox,width:"660px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"18px",color:"#7a5200"}}>Cloture mensuelle</div>
+              <button style={s.ghost} onClick={()=>setShowCloture(false)}>x</button>
+            </div>
+            <div style={{display:"grid",gap:"14px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                <div><span style={s.lbl}>Mois *</span>
+                  <input type="month" style={s.inp} value={clotureForm.date} onChange={e=>setClotureForm(f=>({...f,date:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Operateur *</span>
+                  <select style={s.sel} value={clotureForm.operateur} onChange={e=>setClotureForm(f=>({...f,operateur:e.target.value}))}>
+                    <option value="">Selectionner...</option>
+                    {degustateurs.map(d=><option key={d.nom} value={d.nom}>{d.nom}</option>)}
+                  </select></div>
+              </div>
+
+              {/* Saisie manuelle */}
+              <div style={{background:"#fff8ee",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"10px"}}>
+                  <span style={s.lbl}>Ventes par reference</span>
+                  <button style={s.btnSm} onClick={()=>setClotureForm(f=>({...f,lignes:[...f.lignes,{cuvee:"",millesime:"",format:"75",lieu:"Epernay",qte:0}]}))}>+ Ligne</button>
+                </div>
+                {clotureForm.lignes.length===0&&<div style={{fontSize:"12px",color:"#9a8870",fontStyle:"italic"}}>Aucune ligne. Ajoutez ou importez.</div>}
+                {clotureForm.lignes.map((l,i)=>(
+                  <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 80px 80px 1fr 60px 30px",gap:"6px",marginBottom:"6px",alignItems:"center"}}>
+                    <input style={{...s.inp,padding:"5px 8px",fontSize:"12px"}} placeholder="Cuvee" value={l.cuvee} onChange={e=>{const ls=[...clotureForm.lignes];ls[i]={...ls[i],cuvee:e.target.value};setClotureForm(f=>({...f,lignes:ls}));}}/>
+                    <input style={{...s.inp,padding:"5px 8px",fontSize:"12px"}} placeholder="Mill." value={l.millesime} onChange={e=>{const ls=[...clotureForm.lignes];ls[i]={...ls[i],millesime:e.target.value};setClotureForm(f=>({...f,lignes:ls}));}}/>
+                    <select style={{...s.sel,padding:"5px 8px",fontSize:"12px"}} value={l.format} onChange={e=>{const ls=[...clotureForm.lignes];ls[i]={...ls[i],format:e.target.value};setClotureForm(f=>({...f,lignes:ls}));}}>
+                      <option value="75">75cl</option><option value="magnum">Magnum</option><option value="jeroboam">Jeroboam</option>
+                    </select>
+                    <select style={{...s.sel,padding:"5px 8px",fontSize:"12px"}} value={l.lieu} onChange={e=>{const ls=[...clotureForm.lignes];ls[i]={...ls[i],lieu:e.target.value};setClotureForm(f=>({...f,lignes:ls}));}}>
+                      {LIEUX_STOCK.map(loc=><option key={loc} value={loc}>{loc}</option>)}
+                    </select>
+                    <input type="number" style={{...s.inp,padding:"5px 8px",fontSize:"12px"}} placeholder="Qte" value={l.qte} onChange={e=>{const ls=[...clotureForm.lignes];ls[i]={...ls[i],qte:parseInt(e.target.value)||0};setClotureForm(f=>({...f,lignes:ls}));}}/>
+                    <button style={{...s.ghostSm,color:"#cc2222",borderColor:"#f0b4b4",padding:"4px 6px"}} onClick={()=>setClotureForm(f=>({...f,lignes:f.lignes.filter((_,j)=>j!==i)}))}>x</button>
+                  </div>
+                ))}
+              </div>
+
+              {/* Import CSV */}
+              <div style={{background:"#fff8ee",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
+                <div style={{...s.lbl,marginBottom:"8px"}}>Import CSV (format: cuvee;millesime;format;lieu;qte)</div>
+                <textarea style={{...s.inp,height:"80px",resize:"vertical",fontSize:"12px"}} placeholder={"cuvee;millesime;format;lieu;qte
+FONTINETTE;2025;75;Epernay;120"} value={clotureForm.importCsv} onChange={e=>setClotureForm(f=>({...f,importCsv:e.target.value}))}/>
+                <button style={{...s.ghostSm,marginTop:"6px"}} onClick={importCsvCloture}>Importer les lignes</button>
+              </div>
+
+              <div><span style={s.lbl}>Notes</span>
+                <textarea style={{...s.inp,height:"58px",resize:"vertical"}} value={clotureForm.notes} onChange={e=>setClotureForm(f=>({...f,notes:e.target.value}))}/></div>
+
+              {clotureForm.lignes.length>0&&(
+                <div style={{background:"#d0f0dc",borderRadius:"6px",padding:"10px 14px",fontSize:"12px",color:"#1a7a40"}}>
+                  <strong>{clotureForm.lignes.reduce((s,l)=>s+(parseInt(l.qte)||0),0)} bouteilles</strong> seront deduites du stock.
+                </div>
+              )}
+
+              <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
+                <button style={s.ghost} onClick={()=>setShowCloture(false)}>Annuler</button>
+                <button style={s.btn} onClick={submitCloture}>Valider la cloture</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* == MODAL TIRAGE == */}
       {showTirageForm && (
         <div style={s.modal}>
@@ -2488,17 +2865,23 @@ export default function App() {
                 )}
               </div>
               <div style={{background:"#fff8ee",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
-                <div style={{...s.lbl,marginBottom:"10px",fontSize:"11px"}}>Mise en bouteilles</div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
-                  <div><span style={s.lbl}>Bouteilles 75cl</span>
-                    <input type="number" style={s.inp} placeholder="0" value={tirageForm.qte75} onChange={e=>setTirageForm(f=>({...f,qte75:e.target.value}))}/>
-                    {tirageForm.qte75&&<div style={{fontSize:"11px",color:"#2d6a00",marginTop:"3px",fontFamily:"monospace"}}>{((parseFloat(tirageForm.qte75)||0)*0.75).toFixed(1)} L</div>}</div>
-                  <div><span style={s.lbl}>Magnums 1.5L</span>
-                    <input type="number" style={s.inp} placeholder="0" value={tirageForm.qteMagnum} onChange={e=>setTirageForm(f=>({...f,qteMagnum:e.target.value}))}/>
-                    {tirageForm.qteMagnum&&<div style={{fontSize:"11px",color:"#8b5e0a",marginTop:"3px",fontFamily:"monospace"}}>{((parseFloat(tirageForm.qteMagnum)||0)*1.5).toFixed(1)} L</div>}</div>
-                  <div><span style={s.lbl}>Jeroboams 3L</span>
-                    <input type="number" style={s.inp} placeholder="0" value={tirageForm.qteJeroboam} onChange={e=>setTirageForm(f=>({...f,qteJeroboam:e.target.value}))}/>
-                    {tirageForm.qteJeroboam&&<div style={{fontSize:"11px",color:"#8B0000",marginTop:"3px",fontFamily:"monospace"}}>{((parseFloat(tirageForm.qteJeroboam)||0)*3.0).toFixed(1)} L</div>}</div>
+                <div style={{...s.lbl,marginBottom:"10px",fontSize:"11px"}}>Mise en bouteilles - 1 numero de lot par format</div>
+                <div style={{display:"grid",gap:"10px"}}>
+                  {[["Bouteilles 75cl","qte75","lot75","#2d6a00",0.75],["Magnums 1.5L","qteMagnum","lotMagnum","#8b5e0a",1.5],["Jeroboams 3L","qteJeroboam","lotJeroboam","#8B0000",3.0]].map(([lbl,qk,lk,col,vol])=>(
+                    <div key={lbl} style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px",padding:"10px",background:"#fffdf7",borderRadius:"6px",border:"0.5px solid #e2d9c5"}}>
+                      <div>
+                        <span style={s.lbl}>{lbl}</span>
+                        <input type="number" style={s.inp} placeholder="0" value={tirageForm[qk]} onChange={e=>setTirageForm(f=>({...f,[qk]:e.target.value}))}/>
+                        {tirageForm[qk]&&<div style={{fontSize:"11px",color:col,marginTop:"3px",fontFamily:"monospace"}}>{((parseFloat(tirageForm[qk])||0)*vol).toFixed(1)} L</div>}
+                      </div>
+                      <div>
+                        <span style={s.lbl}>N° de lot <span style={{color:"#cc2222"}}>*</span></span>
+                        <input style={{...s.inp,borderColor:tirageForm[qk]&&!tirageForm[lk]?"#e8a0a0":undefined}}
+                          placeholder={`ex. LOT-${new Date().getFullYear()}-001`}
+                          value={tirageForm[lk]} onChange={e=>setTirageForm(f=>({...f,[lk]:e.target.value}))}/>
+                      </div>
+                    </div>
+                  ))}
                 </div>
                 {(tirageForm.qte75||tirageForm.qteMagnum||tirageForm.qteJeroboam)&&(
                   <div style={{marginTop:"12px",padding:"10px",background:"#d0f0dc",borderRadius:"6px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
