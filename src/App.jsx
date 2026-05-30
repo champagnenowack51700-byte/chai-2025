@@ -963,9 +963,9 @@ export default function App() {
   const s = {
     app:      { fontFamily:"'Lora','Georgia',serif", minHeight:"100vh", background:"#f0e9d6", color:"#1a1205" },
     nav:      { display:"flex", alignItems:"center", borderBottom:"2px solid #c8a850", padding:"0 28px", background:"#fffdf7", boxShadow:"0 1px 0 #d4c4a0" },
-    brand:    { fontFamily:"'Playfair Display',Georgia,serif", fontSize:"19px", fontWeight:700, color:"#7a5200", padding:"14px 24px 14px 0", marginRight:"24px", borderRight:"1px solid #d4c4a0", letterSpacing:"0.01em" },
-    navBtn:   (a)=>({ padding:"15px 15px", fontSize:"11px", letterSpacing:"0.09em", textTransform:"uppercase", cursor:"pointer", color:a?"#7a5200":"#9a8c78", background:"none", border:"none", borderBottom:a?"2px solid #b8860b":"2px solid transparent", fontFamily:"'IBM Plex Mono',monospace", fontWeight:a?600:400, transition:"color 0.15s" }),
-    main:     { padding:"28px 32px" },
+    brand:    { fontFamily:"'Playfair Display',Georgia,serif", fontSize:"clamp(14px,2vw,19px)", fontWeight:700, color:"#7a5200", padding:"12px 16px 12px 0", marginRight:"12px", borderRight:"1px solid #d4c4a0", letterSpacing:"0.01em", whiteSpace:"nowrap" },
+    navBtn:   (a)=>({ padding:"12px 10px", fontSize:"10px", letterSpacing:"0.09em", textTransform:"uppercase", cursor:"pointer", color:a?"#7a5200":"#9a8c78", background:"none", border:"none", borderBottom:a?"2px solid #b8860b":"2px solid transparent", fontFamily:"'IBM Plex Mono',monospace", fontWeight:a?600:400, transition:"color 0.15s" }),
+    main:     { padding:"clamp(12px, 3vw, 28px) clamp(12px, 3vw, 32px)" },
     card:     { background:"#fffdf7", border:"1px solid #d4c4a0", borderRadius:"10px", padding:"18px 22px", boxShadow:"0 1px 3px rgba(139,105,20,0.06)" },
     cardSm:   { background:"#fffdf7", border:"1px solid #cfc0a0", borderRadius:"8px", padding:"12px 14px", boxShadow:"0 1px 2px rgba(139,105,20,0.05)" },
     btn:      { background:"#b8860b", color:"#1a1208", border:"none", borderRadius:"6px", padding:"8px 18px", fontSize:"12px", fontWeight:700, letterSpacing:"0.06em", textTransform:"uppercase", cursor:"pointer", fontFamily:"'IBM Plex Mono',monospace", boxShadow:"0 1px 3px rgba(139,105,20,0.25)", transition:"background 0.15s" },
@@ -1138,7 +1138,7 @@ export default function App() {
 `}</style>
 
       {/* NAV */}
-      <nav style={s.nav}>
+      <nav style={{...s.nav, flexWrap:"nowrap", overflowX:"auto", WebkitOverflowScrolling:"touch"}} className="nav-scroll">
         <div style={s.brand}> Chai 2025</div>
         {[["vendanges","Vendange"],["dashboard","Vue d'ensemble"],["tonneaux","Tonneaux"],["degustations","Dégustations"],["mouvements","Mouvements"],["tirages","Tirage"],["stock","Stock"]].map(([v,l])=>(
           <button key={v} style={s.navBtn(view===v)} onClick={()=>setView(v)}>{l}</button>
@@ -1192,7 +1192,7 @@ export default function App() {
                 );
               })}
             </div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"20px"}}>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:"16px"}}>
               <div style={s.card}>
                 <div style={{...s.lbl,marginBottom:"12px"}}>Derniers mouvements</div>
                 {mouvements.length===0&&<div style={{color:"#8a7248",fontSize:"13px"}}>Aucun mouvement enregistré.</div>}
@@ -1233,7 +1233,7 @@ export default function App() {
         {view==="tonneaux" && (
           <div>
             {/* Onglets appellation */}
-            <div style={{display:"flex",gap:"6px",marginBottom:"16px",flexWrap:"wrap"}}>
+            <div style={{display:"flex",gap:"6px",marginBottom:"16px",flexWrap:"wrap",overflowX:"auto"}}>
               <button onClick={()=>setFilterAppellation("")}
                 style={{padding:"5px 14px",borderRadius:"4px",border:`1px solid ${!filterAppellation?"#b8860b":"#2a2a2c"}`,background:!filterAppellation?"#fce8a8":"transparent",color:!filterAppellation?"#7a5200":"#7a6840",fontSize:"12px",cursor:"pointer",fontFamily:"inherit"}}>
                 Tous ({tonneaux.length})
@@ -1263,7 +1263,7 @@ export default function App() {
                 <i className="ti ti-plus" style={{marginRight:"3px"}}/>Ajouter
               </button>
             </div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(170px,1fr))",gap:"9px"}}>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))",gap:"8px"}}>
               {filteredTonneaux.map(t=><FutCard key={t.id} t={t}/>)}
             </div>
           </div>
@@ -1441,7 +1441,7 @@ export default function App() {
         {view==="fiche" && selectedT && (
             <div>
               <button style={{...s.ghost,marginBottom:"16px"}} onClick={()=>setView("tonneaux")}>Retour Tonneaux</button>
-              <div style={{display:"grid",gridTemplateColumns:"300px 1fr",gap:"20px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"clamp(240px,30vw,300px) 1fr",gap:"20px"}}>
                 {/* Colonne gauche */}
                 <div>
                   <div style={s.card}>
@@ -1656,7 +1656,7 @@ export default function App() {
 
         {/* -- VENDANGES -- */}
         {view==="vendanges" && (
-          <div style={{display:"grid",gridTemplateColumns:"1fr 260px",gap:"20px",alignItems:"start"}}>
+          <div style={{display:"grid",gridTemplateColumns:"clamp(200px,1fr,1fr) clamp(200px,260px,30vw)",gap:"16px",alignItems:"start"}}>
 
             {/* Colonne principale */}
             <div>
@@ -1828,7 +1828,7 @@ export default function App() {
           return (
             <div>
               {/* KPIs */}
-              <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:"12px",marginBottom:"20px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:"12px",marginBottom:"20px"}}>
                 {[
                   {lbl:"Total en stock",val:stock.reduce((s,x)=>s+x.qte,0)+" btl",sub:"tous formats confondus"},
                   {lbl:"< 15 mois (non comm.)",val:stockMoins15.reduce((s,x)=>s+x.qte,0)+" btl",col:"#cc2222",sub:"non commercialisables"},
@@ -2180,7 +2180,7 @@ export default function App() {
               <button style={s.ghost} onClick={()=>setShowDegForm(false)}>x</button>
             </div>
             <div style={{display:"grid",gap:"14px"}}>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:"12px"}}>
                 <div><span style={s.lbl}>Fût *</span>
                   <select style={s.sel} value={degForm.futId} onChange={e=>setDegForm(f=>({...f,futId:e.target.value}))}>
                     <option value="">Sélectionner...</option>
@@ -2341,7 +2341,7 @@ export default function App() {
               </div>
 
               {/* Tonnelier + grain + chauffe */}
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:"12px"}}>
                 <div>
                   <span style={s.lbl}>Tonnelier</span>
                   <input style={s.inp} value={futForm.tonnelier}
@@ -2430,7 +2430,7 @@ export default function App() {
               Fut <strong style={{color:"#b8860b"}}>{editingNote.futId}</strong> - Session <strong>{editingNote.session}</strong>
             </div>
             <div style={{display:"grid",gap:"12px"}}>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:"12px"}}>
                 <div><span style={s.lbl}>Boise /3</span>
                   <input type="number" min="0" max="3" step="0.5" style={s.inp} value={editNoteForm.boise} onChange={e=>setEditNoteForm(f=>({...f,boise:e.target.value}))}/></div>
                 <div><span style={s.lbl}>Longueur /3</span>
@@ -2498,7 +2498,7 @@ export default function App() {
                     <option value="C3">C3 (3eme annee conversion)</option>
                   </select></div>
               </div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:"12px"}}>
                 <div><span style={s.lbl}>Cepage</span>
                   <input style={s.inp} placeholder="ex. Chardonnay..." value={parcelleForm.cepage} onChange={e=>setParcelleForm(f=>({...f,cepage:e.target.value}))}/></div>
                 <div><span style={s.lbl}>Surface (ha)</span>
@@ -2528,7 +2528,7 @@ export default function App() {
             <div style={{display:"grid",gap:"14px"}}>
               <div style={{background:"#fff8ee",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
                 <div style={{...s.lbl,marginBottom:"10px"}}>Identification</div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:"12px"}}>
                   <div><span style={s.lbl}>Annee *</span>
                     <input type="number" style={s.inp} value={vendangeForm.annee} onChange={e=>setVendangeForm(f=>({...f,annee:e.target.value}))}/></div>
                   <div><span style={s.lbl}>Date *</span>
@@ -2640,7 +2640,7 @@ export default function App() {
               <button style={s.ghost} onClick={()=>{setShowDegorgeForm(false);setEditingDegorge(null);}}>x</button>
             </div>
             <div style={{display:"grid",gap:"14px"}}>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:"12px"}}>
                 <div><span style={s.lbl}>Lot *</span>
                   <select style={s.sel} value={degorgeForm.lotId} onChange={e=>setDegorgeForm(f=>({...f,lotId:e.target.value}))}>
                     <option value="">Selectionner un lot...</option>
@@ -2666,7 +2666,7 @@ export default function App() {
                     {LIEUX_STOCK.map(l=><option key={l} value={l}>{l}</option>)}
                   </select></div>
               </div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:"12px"}}>
                 <div><span style={s.lbl}>Dosage (g/L)</span>
                   <input type="number" step="0.1" style={s.inp} placeholder="ex. 8.5" value={degorgeForm.dosageLiqueur} onChange={e=>setDegorgeForm(f=>({...f,dosageLiqueur:e.target.value}))}/></div>
                 <div><span style={s.lbl}>Description liqueur</span>
@@ -2763,7 +2763,7 @@ export default function App() {
             <div style={{display:"grid",gap:"16px"}}>
               <div style={{background:"#fff8ee",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
                 <div style={{...s.lbl,marginBottom:"10px",fontSize:"11px"}}>Identification du tirage</div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:"12px"}}>
                   <div><span style={s.lbl}>Date *</span>
                     <input type="date" style={s.inp} value={tirageForm.date} onChange={e=>setTirageForm(f=>({...f,date:e.target.value}))}/></div>
                   <div><span style={s.lbl}>Operateur *</span>
