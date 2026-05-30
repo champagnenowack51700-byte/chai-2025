@@ -520,6 +520,149 @@ export default function App() {
 
   // Submit mouvement
   // Annuler un mouvement et restaurer les volumes
+  // -- CALCULS TIRAGE ------------------------------------------------------
+  const calcVolLevain = (f) => {
+    return (parseFloat(f.levainEau)||0) + (parseFloat(f.levainVin)||0) + (parseFloat(f.levainLevure)||0);
+  };
+  const calcVolBouteilles = (f) => {
+    return ((parseFloat(f.qte75)||0)*0.75) + ((parseFloat(f.qteMagnum)||0)*1.5) + ((parseFloat(f.qteJeroboam)||0)*3.0);
+  };
+  const calcTotalAssemble = (f) => {
+    return (parseFloat(f.volumeTotal)||0) + calcVolLevain(f);
+  };
+
+  // -- TIRAGE ---------------------------------------------------------------
+  const openEditTirage = (t) => {
+    setTirageForm({
+      date:t.date||"", operateur:t.operateur||"", cuvee:t.cuvee||"",
+      millesime:t.millesime||"", futsSources:t.futsSources||[],
+      volumeTotal:t.volumeTotal||"", levainEau:t.levainEau||"",
+      levainVin:t.levainVin||"", levainLevure:t.levainLevure||"",
+      levainLevureNom:t.levainLevureNom||"", levainLot:t.levainLot||"",
+      qte75:t.qte75||"", qteMagnum:t.qteMagnum||"",
+      qteJeroboam:t.qteJeroboam||"", notes:t.notes||"",
+      cuveDestMode:t.cuveDestMode||"existante",
+      cuveDestId:t.cuveDestId||"",
+      nouvelleCuveId:t.nouvelleCuveId||"",
+      nouvelleCuveVolume:t.nouvelleCuveVolume||"",
+    });
+    setEditingTirage(t); setShowTirageForm(true);
+  };
+
+  const submitTirage = () => {
+    if(!tirageForm.cuvee.trim()) return alert("La cuvee est requise.");
+    if(!tirageForm.date) return alert("La date est requise.");
+    if(!tirageForm.operateur) return alert("L'operateur est requis.");
+    const updated = {
+      id: editingTirage ? editingTirage.id : `tirage_${Date.now()}`,
+      ...tirageForm,
+      volLevain: calcVolLevain(tirageForm),
+      volBouteilles: calcVolBouteilles(tirageForm),
+      volAssemble: calcTotalAssemble(tirageForm),
+      timestamp: editingTirage ? editingTirage.timestamp : new Date().toISOString(),
+    };
+    if(editingTirage) {
+      setTirages(prev=>prev.map(t=>t.id===editingTirage.id ? updated : t));
+    } else {
+      setTirages(prev=>[updated, ...prev]);
+      const volAssemble = calcTotalAssemble(tirageForm);
+      let updatedTonneaux = [...tonneaux];
+      if(tirageForm.futsSources.length > 0) {
+        const volParFut = (parseFloat(tirageForm.volumeTotal)||0) / tirageForm.futsSources.length;
+        updatedTonneaux = updatedTonneaux.map(t=>
+          tirageForm.futsSources.includes(t.id)
+            ? {...t, contenuActuel:Math.max(0,t.contenuActuel-volParFut), statut:"vide"} : t
+        );
+      }
+      if(tirageForm.cuveDestMode==="existante" && tirageForm.cuveDestId) {
+        updatedTonneaux = updatedTonneaux.map(t=>
+          t.id===tirageForm.cuveDestId ? {...t, contenuActuel:Math.min(t.volume,t.contenuActuel+volAssemble)} : t
+        );
+      } else if(tirageForm.cuveDestMode==="nouvelle" && tirageForm.nouvelleCuveId.trim()) {
+        updatedTonneaux = [...updatedTonneaux, {
+          id:tirageForm.nouvelleCuveId.trim(),
+          appellation:"vins_clairs_"+(tirageForm.millesime||new Date().getFullYear()),
+          denomination:tirageForm.cuvee||"Cuve tirage",
+          millesime:tirageForm.millesime?+tirageForm.millesime:null,
+          volume:parseFloat(tirageForm.nouvelleCuveVolume)||Math.ceil(volAssemble*1.1),
+          tonnelier:"",grain:"",chauffe:"",certif:"BIO",statut:"actif",
+          contenuActuel:volAssemble, marc:"",
+          commentaire:`Cuve creee lors du tirage du ${tirageForm.date} - ${tirageForm.cuvee}`,
+        }];
+      }
+      setTonneaux(updatedTonneaux);
+    }
+    setTirageForm(TIRAGE_EMPTY); setEditingTirage(null); setShowTirageForm(false);
+  };
+
+  // -- CAMPAGNE -------------------------------------------------------------
+  const submitCampagne = () => {
+    if(!campForm.annee) return alert("L'annee est requise.");
+    if(!campForm.denomination.trim()) return alert("La denomination est requise.");
+    const newC = { id:`camp_${Date.now()}`, futId:campFutId, annee:campForm.annee,
+      denomination:campForm.denomination.trim(), millesime:campForm.millesime, notes:campForm.notes };
+    setCampagnes(prev=>[...prev.filter(c=>!(c.futId===campFutId && c.annee===campForm.annee)), newC]);
+    setShowCampForm(false); setCampFutId(null); setCampForm({annee:"",denomination:"",millesime:"",notes:""});
+  };
+  const deleteCampagne = (id) => {
+    if(!window.confirm("Supprimer cette campagne ?")) return;
+    setCampagnes(prev=>prev.filter(c=>c.id!==id));
+  };
+
+  // -- VENDANGE -------------------------------------------------------------
+  const submitParcelle = () => {
+    if(!parcelleForm.nom.trim()) return alert("Le nom de la parcelle est requis.");
+    const p = { id:editingParcelle?editingParcelle.id:`parc_${Date.now()}`, ...parcelleForm };
+    if(editingParcelle) {
+      setParcelles(prev=>prev.map(x=>x.id===editingParcelle.id?p:x));
+    } else {
+      setParcelles(prev=>[...prev,p]);
+    }
+    setParcelleForm({nom:"",cepage:"",certification:"BIO",surface:"",commune:"",observations:""});
+    setEditingParcelle(null); setShowParcelleForm(false);
+  };
+
+  const addProduitVendange = () => {
+    if(!produitVendangeForm.nom.trim()) return;
+    setVendangeForm(f=>({...f, produitsAjoutes:[...f.produitsAjoutes,{...produitVendangeForm,id:`prod_${Date.now()}`}]}));
+    setProduitVendangeForm({nom:"",dose:"",lot:"",date:""}); setShowProduitVendange(false);
+  };
+
+  const openEditVendange = (v) => {
+    setVendangeForm({...VENDANGE_EMPTY,...v});
+    setEditingVendange(v); setShowVendangeForm(true);
+  };
+
+  const submitVendange = () => {
+    if(!vendangeForm.parcelleId) return alert("Selectionner une parcelle.");
+    if(!vendangeForm.date) return alert("La date est requise.");
+    if(!vendangeForm.volumeRecolte) return alert("Le volume recolte est requis.");
+    const v = { id:editingVendange?editingVendange.id:`vend_${Date.now()}`, ...vendangeForm, timestamp:new Date().toISOString() };
+    if(editingVendange) {
+      setVendanges(prev=>prev.map(x=>x.id===editingVendange.id?v:x));
+    } else {
+      setVendanges(prev=>[v,...prev]);
+      const vol = parseFloat(vendangeForm.volumeRecolte)||0;
+      if(vendangeForm.nouvelleCuveNom.trim()) {
+        const cuve = {
+          id:vendangeForm.nouvelleCuveNom.trim(),
+          appellation:"vins_clairs_"+vendangeForm.annee,
+          denomination:parcelles.find(p=>p.id===vendangeForm.parcelleId)?.nom||"Vendange",
+          millesime:+vendangeForm.annee,
+          volume:parseFloat(vendangeForm.nouvelleCuveVolume)||Math.ceil(vol*1.1),
+          tonnelier:"",grain:"",chauffe:"",certif:"BIO",statut:"actif",
+          contenuActuel:vol, marc:vendangeForm.numeroMarc||"",
+          commentaire:`Marc ${vendangeForm.numeroMarc||"-"} - Vendange ${vendangeForm.annee} - ${parcelles.find(p=>p.id===vendangeForm.parcelleId)?.nom||""}`,
+        };
+        setTonneaux(prev=>[...prev,cuve]);
+      } else if(vendangeForm.cuveReception) {
+        setTonneaux(prev=>prev.map(t=>t.id===vendangeForm.cuveReception
+          ?{...t,contenuActuel:Math.min(t.volume,t.contenuActuel+vol)}:t));
+      }
+    }
+    setVendangeForm(VENDANGE_EMPTY); setEditingVendange(null); setShowVendangeForm(false);
+  };
+
   const annulerMouvement = (mvt) => {
     if(!window.confirm("Annuler ce mouvement et restaurer les volumes ?")) return;
     const vol = parseFloat(mvt.volume)||0;
@@ -1949,6 +2092,363 @@ export default function App() {
       )}
 
       {/* MODAL RÉINITIALISATION */}
+
+      {/* == MODAL EDITION NOTE DEGUSTATION == */}
+      {showEditDeg && editingNote && (
+        <div style={s.modal}>
+          <div style={{...s.modalBox,width:"480px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#7a5200"}}>
+                Modifier la note - {editingNote.degustateur}
+              </div>
+              <button style={s.ghost} onClick={()=>setShowEditDeg(false)}>x</button>
+            </div>
+            <div style={{fontSize:"12px",color:"#7a6840",marginBottom:"16px",padding:"8px 12px",background:"#fff8ee",borderRadius:"6px",border:"0.5px solid #d4c4a0"}}>
+              Fut <strong style={{color:"#b8860b"}}>{editingNote.futId}</strong> - Session <strong>{editingNote.session}</strong>
+            </div>
+            <div style={{display:"grid",gap:"12px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
+                <div><span style={s.lbl}>Boise /3</span>
+                  <input type="number" min="0" max="3" step="0.5" style={s.inp} value={editNoteForm.boise} onChange={e=>setEditNoteForm(f=>({...f,boise:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Longueur /3</span>
+                  <input type="number" min="0" max="3" step="0.5" style={s.inp} value={editNoteForm.longueur} onChange={e=>setEditNoteForm(f=>({...f,longueur:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Note globale /5</span>
+                  <input type="number" min="0" max="5" step="0.5" style={s.inp} value={editNoteForm.noteG} onChange={e=>setEditNoteForm(f=>({...f,noteG:e.target.value}))}/></div>
+              </div>
+              <div><span style={s.lbl}>Commentaire</span>
+                <textarea style={{...s.inp,height:"80px",resize:"vertical"}} value={editNoteForm.commentaire} onChange={e=>setEditNoteForm(f=>({...f,commentaire:e.target.value}))}/></div>
+              <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
+                <button style={s.ghost} onClick={()=>setShowEditDeg(false)}>Annuler</button>
+                <button style={s.btn} onClick={saveEditNote}>Enregistrer</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* == MODAL CAMPAGNE == */}
+      {showCampForm && (
+        <div style={s.modal}>
+          <div style={{...s.modalBox,width:"460px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#7a5200"}}>Nouvelle campagne - {campFutId}</div>
+              <button style={s.ghost} onClick={()=>setShowCampForm(false)}>x</button>
+            </div>
+            <div style={{display:"grid",gap:"12px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                <div><span style={s.lbl}>Annee de campagne *</span>
+                  <input type="number" style={s.inp} placeholder="ex. 2025" value={campForm.annee} onChange={e=>setCampForm(f=>({...f,annee:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Millesime du vin</span>
+                  <input type="number" style={s.inp} placeholder="ex. 2025" value={campForm.millesime} onChange={e=>setCampForm(f=>({...f,millesime:e.target.value}))}/></div>
+              </div>
+              <div><span style={s.lbl}>Denomination / Cuvee *</span>
+                <input style={s.inp} placeholder="ex. FONTINETTE, ARPENTS ROUGE..." value={campForm.denomination} onChange={e=>setCampForm(f=>({...f,denomination:e.target.value}))}/></div>
+              <div><span style={s.lbl}>Notes</span>
+                <textarea style={{...s.inp,height:"64px",resize:"vertical"}} placeholder="Observations..." value={campForm.notes} onChange={e=>setCampForm(f=>({...f,notes:e.target.value}))}/></div>
+              <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
+                <button style={s.ghost} onClick={()=>setShowCampForm(false)}>Annuler</button>
+                <button style={s.btn} onClick={submitCampagne}>Enregistrer</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* == MODAL PARCELLE == */}
+      {showParcelleForm && (
+        <div style={s.modal}>
+          <div style={{...s.modalBox,width:"560px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#7a5200"}}>{editingParcelle?"Modifier la parcelle":"Nouvelle parcelle"}</div>
+              <button style={s.ghost} onClick={()=>setShowParcelleForm(false)}>x</button>
+            </div>
+            <div style={{display:"grid",gap:"12px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                <div><span style={s.lbl}>Nom de la parcelle *</span>
+                  <input style={s.inp} placeholder="ex. Les Grouttes..." value={parcelleForm.nom} onChange={e=>setParcelleForm(f=>({...f,nom:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Certification</span>
+                  <select style={s.sel} value={parcelleForm.certification||"BIO"} onChange={e=>setParcelleForm(f=>({...f,certification:e.target.value}))}>
+                    <option value="BIO">BIO</option>
+                    <option value="NON BIO">NON BIO</option>
+                    <option value="C1">C1 (1ere annee conversion)</option>
+                    <option value="C2">C2 (2eme annee conversion)</option>
+                    <option value="C3">C3 (3eme annee conversion)</option>
+                  </select></div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
+                <div><span style={s.lbl}>Cepage</span>
+                  <input style={s.inp} placeholder="ex. Chardonnay..." value={parcelleForm.cepage} onChange={e=>setParcelleForm(f=>({...f,cepage:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Surface (ha)</span>
+                  <input type="number" step="0.01" style={s.inp} placeholder="ex. 0.35" value={parcelleForm.surface} onChange={e=>setParcelleForm(f=>({...f,surface:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Commune / Lieu-dit</span>
+                  <input style={s.inp} placeholder="ex. Vincelles..." value={parcelleForm.commune} onChange={e=>setParcelleForm(f=>({...f,commune:e.target.value}))}/></div>
+              </div>
+              <div><span style={s.lbl}>Observations</span>
+                <textarea style={{...s.inp,height:"58px",resize:"vertical"}} placeholder="Notes sur la parcelle..." value={parcelleForm.observations||""} onChange={e=>setParcelleForm(f=>({...f,observations:e.target.value}))}/></div>
+              <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
+                <button style={s.ghost} onClick={()=>setShowParcelleForm(false)}>Annuler</button>
+                <button style={s.btn} onClick={submitParcelle}>Enregistrer</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* == MODAL VENDANGE == */}
+      {showVendangeForm && (
+        <div style={s.modal}>
+          <div style={{...s.modalBox,width:"680px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"18px",color:"#7a5200"}}>{editingVendange?"Modifier l'entree":"Nouvelle entree de vendange"}</div>
+              <button style={s.ghost} onClick={()=>{setShowVendangeForm(false);setEditingVendange(null);}}>x</button>
+            </div>
+            <div style={{display:"grid",gap:"14px"}}>
+              <div style={{background:"#fff8ee",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
+                <div style={{...s.lbl,marginBottom:"10px"}}>Identification</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
+                  <div><span style={s.lbl}>Annee *</span>
+                    <input type="number" style={s.inp} value={vendangeForm.annee} onChange={e=>setVendangeForm(f=>({...f,annee:e.target.value}))}/></div>
+                  <div><span style={s.lbl}>Date *</span>
+                    <input type="date" style={s.inp} value={vendangeForm.date} onChange={e=>setVendangeForm(f=>({...f,date:e.target.value}))}/></div>
+                  <div><span style={s.lbl}>Operateur</span>
+                    <select style={s.sel} value={vendangeForm.operateur} onChange={e=>setVendangeForm(f=>({...f,operateur:e.target.value}))}>
+                      <option value="">Selectionner...</option>
+                      {degustateurs.map(d=><option key={d.nom} value={d.nom}>{d.nom}</option>)}
+                    </select></div>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 140px",gap:"12px",marginTop:"10px"}}>
+                  <div><span style={s.lbl}>Parcelle *</span>
+                    <select style={s.sel} value={vendangeForm.parcelleId} onChange={e=>setVendangeForm(f=>({...f,parcelleId:e.target.value}))}>
+                      <option value="">Selectionner une parcelle...</option>
+                      {parcelles.map(p=><option key={p.id} value={p.id}>{p.nom}{p.cepage?` - ${p.cepage}`:""}{p.surface?` (${p.surface} ha)`:""}</option>)}
+                    </select>
+                    {parcelles.length===0&&<div style={{fontSize:"11px",color:"#cc2222",marginTop:"4px"}}>Aucune parcelle.</div>}
+                  </div>
+                  <div><span style={s.lbl}>N° Marc</span>
+                    <input type="number" style={s.inp} placeholder="ex. 5" value={vendangeForm.numeroMarc||""} onChange={e=>setVendangeForm(f=>({...f,numeroMarc:e.target.value}))}/>
+                    <div style={{fontSize:"10px",color:"#9a8870",marginTop:"3px"}}>Suit le tonneau</div>
+                  </div>
+                </div>
+              </div>
+              <div style={{background:"#fff8ee",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
+                <div style={{...s.lbl,marginBottom:"10px"}}>Volume et analyses</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr",gap:"10px"}}>
+                  <div><span style={s.lbl}>Volume (L) *</span>
+                    <input type="number" style={{...s.inp,fontWeight:500,color:"#2d6a00"}} placeholder="0" value={vendangeForm.volumeRecolte} onChange={e=>setVendangeForm(f=>({...f,volumeRecolte:e.target.value}))}/></div>
+                  <div><span style={s.lbl}>Rendement kg/ha</span>
+                    <input type="number" style={s.inp} placeholder="0" value={vendangeForm.rendement} onChange={e=>setVendangeForm(f=>({...f,rendement:e.target.value}))}/></div>
+                  <div><span style={s.lbl}>Degre pot. (%)</span>
+                    <input type="number" step="0.1" style={s.inp} placeholder="0.0" value={vendangeForm.degreePotentiel} onChange={e=>setVendangeForm(f=>({...f,degreePotentiel:e.target.value}))}/></div>
+                  <div><span style={s.lbl}>Acidite (g/L)</span>
+                    <input type="number" step="0.1" style={s.inp} placeholder="0.0" value={vendangeForm.acidite} onChange={e=>setVendangeForm(f=>({...f,acidite:e.target.value}))}/></div>
+                  <div><span style={s.lbl}>SO2 (mg/L)</span>
+                    <input type="number" style={s.inp} placeholder="0" value={vendangeForm.so2} onChange={e=>setVendangeForm(f=>({...f,so2:e.target.value}))}/></div>
+                </div>
+              </div>
+              <div style={{background:"#fff8ee",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
+                <div style={{...s.lbl,marginBottom:"10px"}}>Cuve de reception</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                  <div><span style={s.lbl}>Cuve existante</span>
+                    <select style={s.sel} value={vendangeForm.cuveReception} onChange={e=>setVendangeForm(f=>({...f,cuveReception:e.target.value,nouvelleCuveNom:""}))}>
+                      <option value="">-- Creer une nouvelle cuve --</option>
+                      {tonneaux.map(t=><option key={t.id} value={t.id}>{t.id} - {t.denomination} ({t.contenuActuel}L/{t.volume}L)</option>)}
+                    </select></div>
+                  {!vendangeForm.cuveReception&&(
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px"}}>
+                      <div><span style={s.lbl}>Nom nouvelle cuve</span>
+                        <input style={s.inp} placeholder="ex. CV-2025-01" value={vendangeForm.nouvelleCuveNom} onChange={e=>setVendangeForm(f=>({...f,nouvelleCuveNom:e.target.value}))}/></div>
+                      <div><span style={s.lbl}>Capacite (L)</span>
+                        <input type="number" style={s.inp} placeholder="optionnel" value={vendangeForm.nouvelleCuveVolume} onChange={e=>setVendangeForm(f=>({...f,nouvelleCuveVolume:e.target.value}))}/></div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div style={{background:"#fff8ee",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"10px"}}>
+                  <span style={s.lbl}>Produits ajoutes</span>
+                  <button style={s.btnSm} onClick={()=>setShowProduitVendange(true)}>+ Ajouter</button>
+                </div>
+                {vendangeForm.produitsAjoutes.length===0&&<div style={{fontSize:"12px",color:"#9a8870",fontStyle:"italic"}}>Aucun produit ajoute.</div>}
+                {vendangeForm.produitsAjoutes.map((p,i)=>(
+                  <div key={p.id} style={{display:"flex",alignItems:"center",gap:"8px",padding:"5px 0",borderBottom:"0.5px solid #ede5d4",fontSize:"12px"}}>
+                    <span style={{fontWeight:500,color:"#7a5200",flex:1}}>{p.nom}</span>
+                    {p.dose&&<span style={{color:"#9a8870"}}>{p.dose}</span>}
+                    {p.lot&&<span style={{background:"#fff8ee",border:"0.5px solid #d4c4a0",borderRadius:"3px",padding:"1px 6px",fontSize:"10px",color:"#7a5200",fontFamily:"monospace"}}>Lot: {p.lot}</span>}
+                    <button style={{...s.ghostSm,color:"#cc2222",borderColor:"#f0b4b4",padding:"2px 6px"}}
+                      onClick={()=>setVendangeForm(f=>({...f,produitsAjoutes:f.produitsAjoutes.filter((_,j)=>j!==i)}))}>x</button>
+                  </div>
+                ))}
+                {showProduitVendange&&(
+                  <div style={{marginTop:"10px",padding:"10px",background:"#fffdf7",borderRadius:"6px",border:"0.5px solid #d4c4a0"}}>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr auto",gap:"8px",alignItems:"end"}}>
+                      <div><span style={s.lbl}>Produit *</span>
+                        <input style={s.inp} placeholder="SO2, levures..." value={produitVendangeForm.nom} onChange={e=>setProduitVendangeForm(f=>({...f,nom:e.target.value}))}/></div>
+                      <div><span style={s.lbl}>Dose</span>
+                        <input style={s.inp} placeholder="ex. 5g/hL" value={produitVendangeForm.dose} onChange={e=>setProduitVendangeForm(f=>({...f,dose:e.target.value}))}/></div>
+                      <div><span style={s.lbl}>N° Lot</span>
+                        <input style={s.inp} placeholder="LOT-..." value={produitVendangeForm.lot} onChange={e=>setProduitVendangeForm(f=>({...f,lot:e.target.value}))}/></div>
+                      <div><span style={s.lbl}>Date ajout</span>
+                        <input type="date" style={s.inp} value={produitVendangeForm.date} onChange={e=>setProduitVendangeForm(f=>({...f,date:e.target.value}))}/></div>
+                      <div style={{display:"flex",gap:"4px"}}>
+                        <button style={s.btnSm} onClick={addProduitVendange}>OK</button>
+                        <button style={s.ghostSm} onClick={()=>setShowProduitVendange(false)}>x</button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div><span style={s.lbl}>Observations</span>
+                <textarea style={{...s.inp,height:"64px",resize:"vertical"}} placeholder="Etat sanitaire, conditions..." value={vendangeForm.observations} onChange={e=>setVendangeForm(f=>({...f,observations:e.target.value}))}/></div>
+              <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
+                <button style={s.ghost} onClick={()=>{setShowVendangeForm(false);setEditingVendange(null);}}>Annuler</button>
+                <button style={s.btn} onClick={submitVendange}>{editingVendange?"Sauvegarder":"Enregistrer l'apport"}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* == MODAL TIRAGE == */}
+      {showTirageForm && (
+        <div style={s.modal}>
+          <div style={{...s.modalBox,width:"700px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"22px"}}>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"18px",color:"#7a5200"}}>{editingTirage ? `Modifier tirage - ${editingTirage.cuvee}` : "Nouveau tirage"}</div>
+              <button style={s.ghost} onClick={()=>{setShowTirageForm(false);setEditingTirage(null);setTirageForm(TIRAGE_EMPTY);}}>x</button>
+            </div>
+            <div style={{display:"grid",gap:"16px"}}>
+              <div style={{background:"#fff8ee",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
+                <div style={{...s.lbl,marginBottom:"10px",fontSize:"11px"}}>Identification du tirage</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
+                  <div><span style={s.lbl}>Date *</span>
+                    <input type="date" style={s.inp} value={tirageForm.date} onChange={e=>setTirageForm(f=>({...f,date:e.target.value}))}/></div>
+                  <div><span style={s.lbl}>Operateur *</span>
+                    <select style={s.sel} value={tirageForm.operateur} onChange={e=>setTirageForm(f=>({...f,operateur:e.target.value}))}>
+                      <option value="">Selectionner...</option>
+                      {degustateurs.map(d=><option key={d.nom} value={d.nom}>{d.nom}</option>)}
+                    </select></div>
+                  <div><span style={s.lbl}>Millesime</span>
+                    <input type="number" style={s.inp} placeholder="ex. 2025" value={tirageForm.millesime} onChange={e=>setTirageForm(f=>({...f,millesime:e.target.value}))}/></div>
+                </div>
+                <div style={{marginTop:"10px"}}>
+                  <span style={s.lbl}>Cuvee / Denomination *</span>
+                  <input style={s.inp} placeholder="ex. FONTINETTE..." value={tirageForm.cuvee} onChange={e=>setTirageForm(f=>({...f,cuvee:e.target.value}))}/></div>
+              </div>
+              <div style={{background:"#fff8ee",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
+                <div style={{...s.lbl,marginBottom:"10px",fontSize:"11px"}}>Volume vin (depuis les futs)</div>
+                {editingTirage&&<div style={{fontSize:"11px",color:"#c47800",background:"#fde8b8",border:"0.5px solid #e8c888",borderRadius:"4px",padding:"6px 10px",marginBottom:"10px"}}>En mode modification, les volumes des futs ne sont pas recalcules automatiquement.</div>}
+                <div style={{display:"grid",gridTemplateColumns:"1fr 140px",gap:"12px"}}>
+                  <div>
+                    <span style={s.lbl}>Futs sources (selection multiple)</span>
+                    <div style={{maxHeight:"130px",overflowY:"auto",border:"0.5px solid #d4c4a0",borderRadius:"6px",padding:"6px",background:"#fffdf7"}}>
+                      {tonneaux.filter(t=>t.contenuActuel>0).map(t=>(
+                        <label key={t.id} style={{display:"flex",alignItems:"center",gap:"7px",padding:"3px",cursor:"pointer",fontSize:"12px"}}>
+                          <input type="checkbox" checked={tirageForm.futsSources.includes(t.id)}
+                            onChange={()=>setTirageForm(f=>({...f,futsSources:f.futsSources.includes(t.id)?f.futsSources.filter(x=>x!==t.id):[...f.futsSources,t.id]}))}/>
+                          <span style={{color:"#b8860b",minWidth:"54px",fontFamily:"monospace"}}>{t.id}</span>
+                          <span style={{color:"#6a5838"}}>{t.denomination}</span>
+                          <span style={{marginLeft:"auto",color:"#9a8870"}}>{t.contenuActuel}L</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <span style={s.lbl}>Volume vin (L)</span>
+                    <input type="number" style={{...s.inp,fontSize:"18px",fontWeight:500,color:"#533AB7",textAlign:"center",padding:"12px"}} placeholder="0"
+                      value={tirageForm.volumeTotal} onChange={e=>setTirageForm(f=>({...f,volumeTotal:e.target.value}))}/></div>
+                </div>
+              </div>
+              <div style={{background:"#fff8ee",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
+                <div style={{...s.lbl,marginBottom:"10px",fontSize:"11px"}}>Preparation du levain</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px",marginBottom:"10px"}}>
+                  <div><span style={s.lbl}>Nom de la levure</span>
+                    <input style={s.inp} placeholder="ex. EC1118, Zymaflore..." value={tirageForm.levainLevureNom} onChange={e=>setTirageForm(f=>({...f,levainLevureNom:e.target.value}))}/></div>
+                  <div><span style={s.lbl}>Numero de lot levure</span>
+                    <input style={s.inp} placeholder="ex. LOT-2025-042" value={tirageForm.levainLot} onChange={e=>setTirageForm(f=>({...f,levainLot:e.target.value}))}/></div>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:"10px"}}>
+                  <div><span style={s.lbl}>Eau (L)</span>
+                    <input type="number" style={s.inp} placeholder="0" value={tirageForm.levainEau} onChange={e=>setTirageForm(f=>({...f,levainEau:e.target.value}))}/></div>
+                  <div><span style={s.lbl}>Vin (L)</span>
+                    <input type="number" style={s.inp} placeholder="0" value={tirageForm.levainVin} onChange={e=>setTirageForm(f=>({...f,levainVin:e.target.value}))}/></div>
+                  <div><span style={s.lbl}>Levures (L)</span>
+                    <input type="number" style={s.inp} placeholder="0" value={tirageForm.levainLevure} onChange={e=>setTirageForm(f=>({...f,levainLevure:e.target.value}))}/></div>
+                  <div style={{display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
+                    <div style={{background:"#d4edc0",borderRadius:"6px",padding:"8px",textAlign:"center"}}>
+                      <div style={{fontSize:"10px",color:"#2d6a00",fontFamily:"monospace",marginBottom:"2px"}}>Total levain</div>
+                      <div style={{fontSize:"16px",fontWeight:500,color:"#2d6a00"}}>{calcVolLevain(tirageForm).toFixed(1)} L</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div style={{background:"#f5e8cc",borderRadius:"8px",padding:"14px",border:"0.5px solid #e0c050"}}>
+                <div style={{...s.lbl,marginBottom:"8px",fontSize:"11px",color:"#7a5200"}}>Volume total assemble</div>
+                <div style={{display:"flex",alignItems:"baseline",gap:"8px"}}>
+                  <div style={{fontSize:"28px",fontWeight:500,color:"#7a5200"}}>{calcTotalAssemble(tirageForm).toFixed(1)} L</div>
+                  <div style={{fontSize:"12px",color:"#9a8870"}}>= {tirageForm.volumeTotal||0} L vin + {calcVolLevain(tirageForm).toFixed(1)} L levain</div>
+                </div>
+              </div>
+              <div style={{background:"#fff8ee",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
+                <div style={{...s.lbl,marginBottom:"10px",fontSize:"11px"}}>Stockage apres assemblage</div>
+                <div style={{display:"flex",gap:"8px",marginBottom:"12px"}}>
+                  {[["existante","Cuve existante"],["nouvelle","Creer une nouvelle cuve"]].map(([val,lbl])=>(
+                    <button key={val} onClick={()=>setTirageForm(f=>({...f,cuveDestMode:val}))}
+                      style={{padding:"6px 14px",borderRadius:"5px",border:`0.5px solid ${tirageForm.cuveDestMode===val?"#533AB7":"#d4c4a0"}`,background:tirageForm.cuveDestMode===val?"#eeedfe":"transparent",color:tirageForm.cuveDestMode===val?"#533AB7":"#9a8870",fontSize:"12px",cursor:"pointer",fontFamily:"monospace"}}>
+                      {lbl}
+                    </button>
+                  ))}
+                </div>
+                {tirageForm.cuveDestMode==="existante"&&(
+                  <div>
+                    <span style={s.lbl}>Selectionner la cuve de destination</span>
+                    <select style={s.sel} value={tirageForm.cuveDestId} onChange={e=>setTirageForm(f=>({...f,cuveDestId:e.target.value}))}>
+                      <option value="">-- Aucune --</option>
+                      {tonneaux.filter(t=>!tirageForm.futsSources.includes(t.id)).map(t=>(
+                        <option key={t.id} value={t.id}>{t.id} -- {t.denomination} ({t.contenuActuel}L/{t.volume}L)</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                {tirageForm.cuveDestMode==="nouvelle"&&(
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                    <div><span style={s.lbl}>N° / Nom de la nouvelle cuve *</span>
+                      <input style={s.inp} placeholder="ex. CT-001..." value={tirageForm.nouvelleCuveId} onChange={e=>setTirageForm(f=>({...f,nouvelleCuveId:e.target.value}))}/></div>
+                    <div><span style={s.lbl}>Capacite (L)</span>
+                      <input type="number" style={s.inp} placeholder="optionnel" value={tirageForm.nouvelleCuveVolume} onChange={e=>setTirageForm(f=>({...f,nouvelleCuveVolume:e.target.value}))}/></div>
+                  </div>
+                )}
+              </div>
+              <div style={{background:"#fff8ee",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
+                <div style={{...s.lbl,marginBottom:"10px",fontSize:"11px"}}>Mise en bouteilles</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
+                  <div><span style={s.lbl}>Bouteilles 75cl</span>
+                    <input type="number" style={s.inp} placeholder="0" value={tirageForm.qte75} onChange={e=>setTirageForm(f=>({...f,qte75:e.target.value}))}/>
+                    {tirageForm.qte75&&<div style={{fontSize:"11px",color:"#2d6a00",marginTop:"3px",fontFamily:"monospace"}}>{((parseFloat(tirageForm.qte75)||0)*0.75).toFixed(1)} L</div>}</div>
+                  <div><span style={s.lbl}>Magnums 1.5L</span>
+                    <input type="number" style={s.inp} placeholder="0" value={tirageForm.qteMagnum} onChange={e=>setTirageForm(f=>({...f,qteMagnum:e.target.value}))}/>
+                    {tirageForm.qteMagnum&&<div style={{fontSize:"11px",color:"#8b5e0a",marginTop:"3px",fontFamily:"monospace"}}>{((parseFloat(tirageForm.qteMagnum)||0)*1.5).toFixed(1)} L</div>}</div>
+                  <div><span style={s.lbl}>Jeroboams 3L</span>
+                    <input type="number" style={s.inp} placeholder="0" value={tirageForm.qteJeroboam} onChange={e=>setTirageForm(f=>({...f,qteJeroboam:e.target.value}))}/>
+                    {tirageForm.qteJeroboam&&<div style={{fontSize:"11px",color:"#8B0000",marginTop:"3px",fontFamily:"monospace"}}>{((parseFloat(tirageForm.qteJeroboam)||0)*3.0).toFixed(1)} L</div>}</div>
+                </div>
+                {(tirageForm.qte75||tirageForm.qteMagnum||tirageForm.qteJeroboam)&&(
+                  <div style={{marginTop:"12px",padding:"10px",background:"#d0f0dc",borderRadius:"6px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                    <span style={{fontSize:"12px",color:"#1a7a40"}}>Total mis en bouteilles</span>
+                    <span style={{fontSize:"18px",fontWeight:500,color:"#1a7a40"}}>{calcVolBouteilles(tirageForm).toFixed(1)} L</span>
+                  </div>
+                )}
+              </div>
+              <div><span style={s.lbl}>Notes / Observations</span>
+                <textarea style={{...s.inp,height:"64px",resize:"vertical"}} placeholder="Conditions, observations..." value={tirageForm.notes} onChange={e=>setTirageForm(f=>({...f,notes:e.target.value}))}/></div>
+              <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
+                <button style={s.ghost} onClick={()=>{setShowTirageForm(false);setEditingTirage(null);setTirageForm(TIRAGE_EMPTY);}}>Annuler</button>
+                <button style={s.btn} onClick={submitTirage}>{editingTirage?"Sauvegarder":"Enregistrer le tirage"}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showReset && (
         <div style={{position:"fixed",inset:0,background:"rgba(30,20,5,0.78)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:2000}}>
           <div style={{background:"#fffdf7",border:"1px solid #e8a0a0",borderRadius:"10px",padding:"32px",width:"440px"}}>
