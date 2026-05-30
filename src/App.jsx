@@ -12,7 +12,7 @@ const firebaseConfig = {
   appId: "1:869476292374:web:469b1f38ddbc93bc24e237"
 };
 const firebaseApp = initializeApp(firebaseConfig);
-const db = getFirestore(firebaseApp);
+const db = getFirestore(firebaseApp);  // uses (default) database
 
 // Helper: save a document
 const fbSave = (col, id, data) => {
@@ -20,10 +20,17 @@ const fbSave = (col, id, data) => {
   return setDoc(doc(db, col, String(id)), {...clean, _ts: new Date().toISOString()});
 };
 const fbDelete = (col, id) => deleteDoc(doc(db, col, String(id)));
-const fbWatch = (col, setter) =>
-  onSnapshot(collection(db, col), snap => {
-    setter(snap.docs.map(d => ({...d.data(), id: d.id})));
-  });
+const fbWatch = (col, setter) => {
+  const unsub = onSnapshot(
+    collection(db, col),
+    { includeMetadataChanges: false },
+    snap => {
+      setter(snap.docs.map(d => ({...d.data(), id: d.id})));
+    },
+    err => console.error("fbWatch error", col, err)
+  );
+  return unsub;
+};
 
 const INIT_TONNEAUX = [
   // == VINS CLAIRS 2025 ======================================================
