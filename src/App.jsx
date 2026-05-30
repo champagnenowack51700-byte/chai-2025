@@ -358,6 +358,58 @@ const stars = (n,max=5) => { if(!n) return "-"; const f=Math.round(n); return "*
 // Firebase replaces localStorage - load() kept for migration only
 function load(key,def){ try{ const s=localStorage.getItem(key); return s?JSON.parse(s):def; }catch{return def;} }
 
+
+const HIST_TRAITEMENTS = [
+  // 2025
+  {campagne:"2025",numero:"1",date:"2025-04-04",surface:"2.90 ha",cuivreTotal:250,produits:[{nom:"Bouillie Bordelaise",dose:"0.7kg/ha",matiereActive:"Cuivre",cuivre:250},{nom:"Nordox",dose:"130g/ha",matiereActive:"Cuivre"},{nom:"Microthiol",dose:"5kg/ha",matiereActive:"Soufre"},{nom:"HelioSoufre",dose:"2l/ha",matiereActive:"Soufre"}]},
+  {campagne:"2025",numero:"2",date:"2025-04-15",surface:"8.68 ha",cuivreTotal:275,produits:[{nom:"Bouillie Bordelaise",dose:"1kg/ha",matiereActive:"Cuivre",cuivre:275},{nom:"Nordox",dose:"100g/ha",matiereActive:"Cuivre"},{nom:"Microthiol",dose:"8kg/ha",matiereActive:"Soufre"},{nom:"HelioSoufre",dose:"1.5l/ha",matiereActive:"Soufre"}]},
+  {campagne:"2025",numero:"3",date:"2025-04-25",surface:"8.68 ha",cuivreTotal:200,produits:[{nom:"Bouillie Bordelaise",dose:"1kg/ha",matiereActive:"Cuivre",cuivre:200},{nom:"Microthiol",dose:"8kg/ha",matiereActive:"Soufre"},{nom:"HelioSoufre",dose:"2l/ha",matiereActive:"Soufre"}]},
+  {campagne:"2025",numero:"4",date:"2025-04-30",surface:"3.50 ha",cuivreTotal:200,produits:[{nom:"Bouillie Bordelaise",dose:"1kg/ha",matiereActive:"Cuivre",cuivre:200},{nom:"Microthiol",dose:"8kg/ha",matiereActive:"Soufre"},{nom:"HelioSoufre",dose:"2.5l/ha",matiereActive:"Soufre"}]},
+  {campagne:"2025",numero:"5",date:"2025-05-08",surface:"7 ha",cuivreTotal:300,produits:[{nom:"Champ Flo",dose:"0.71l/ha",matiereActive:"Cuivre",cuivre:300},{nom:"Nordox",dose:"50g/ha",matiereActive:"Cuivre"},{nom:"Microthiol",dose:"8kg/ha",matiereActive:"Soufre"},{nom:"HelioSoufre",dose:"2.5l/ha",matiereActive:"Soufre"}]},
+  {campagne:"2025",numero:"6",date:"2025-05-16",surface:"7 ha",cuivreTotal:300,produits:[{nom:"Champ Flo",dose:"0.71l/ha",matiereActive:"Cuivre",cuivre:300},{nom:"Nordox",dose:"50g/ha",matiereActive:"Cuivre"},{nom:"Microthiol",dose:"8kg/ha",matiereActive:"Soufre"},{nom:"HelioSoufre",dose:"2.5l/ha",matiereActive:"Soufre"}]},
+  {campagne:"2025",numero:"7",date:"2025-05-21",surface:"8.68 ha",cuivreTotal:200,produits:[{nom:"Bouillie Bordelaise",dose:"1kg/ha",matiereActive:"Cuivre",cuivre:200},{nom:"Microthiol",dose:"8kg/ha",matiereActive:"Soufre"},{nom:"HelioSoufre",dose:"2.5l/ha",matiereActive:"Soufre"}]},
+  {campagne:"2025",numero:"8",date:"2025-05-28",surface:"7 ha",cuivreTotal:363,produits:[{nom:"Cham Flow",dose:"0.71l/ha",matiereActive:"Cuivre",cuivre:363},{nom:"Bouillie Bordelaise",dose:"230g/ha",matiereActive:"Cuivre"},{nom:"Nordox",dose:"86g/ha",matiereActive:"Cuivre"},{nom:"Microthiol",dose:"10kg/ha",matiereActive:"Soufre"}]},
+  {campagne:"2025",numero:"9",date:"2025-06-04",surface:"8.68 ha",cuivreTotal:115,produits:[{nom:"Bouillie Bordelaise",dose:"0.57kg/ha",matiereActive:"Cuivre",cuivre:115},{nom:"Microthiol",dose:"7.5kg/ha",matiereActive:"Soufre"}]},
+  {campagne:"2025",numero:"10",date:"2025-06-10",surface:"8.68 ha",cuivreTotal:100,produits:[{nom:"Bouillie Bordelaise",dose:"0.5kg/ha",matiereActive:"Cuivre",cuivre:100},{nom:"Microthiol",dose:"7.5kg/ha",matiereActive:"Soufre"}]},
+  {campagne:"2025",numero:"11",date:"2025-06-13",surface:"3.50 ha",cuivreTotal:100,produits:[{nom:"Bouillie Bordelaise",dose:"0.5kg/ha",matiereActive:"Cuivre",cuivre:100},{nom:"Microthiol",dose:"7kg/ha",matiereActive:"Soufre"}]},
+  {campagne:"2025",numero:"12",date:"2025-06-18",surface:"8.68 ha",cuivreTotal:200,produits:[{nom:"Bouillie Bordelaise",dose:"1kg",matiereActive:"Cuivre",cuivre:200},{nom:"Microthiol",dose:"5kg",matiereActive:"Soufre"}]},
+  {campagne:"2025",numero:"13",date:"2025-06-27",surface:"8.68 ha",cuivreTotal:200,produits:[{nom:"Bouillie Bordelaise",dose:"1kg",matiereActive:"Cuivre",cuivre:200},{nom:"Microthiol",dose:"7kg/ha",matiereActive:"Soufre"}]},
+  {campagne:"2025",numero:"14",date:"2025-07-03",surface:"8.68 ha",cuivreTotal:200,produits:[{nom:"Bouillie Bordelaise",dose:"0.5g/ha",matiereActive:"Cuivre",cuivre:200},{nom:"Nordox",dose:"143g/ha",matiereActive:"Cuivre"},{nom:"Microthiol",dose:"5kg/ha",matiereActive:"Soufre"}]},
+  {campagne:"2025",numero:"15",date:"2025-07-16",surface:"8.68 ha",cuivreTotal:200,produits:[{nom:"Bouillie Bordelaise",dose:"0.5g/ha",matiereActive:"Cuivre",cuivre:200},{nom:"Nordox",dose:"143g/ha",matiereActive:"Cuivre"},{nom:"Microthiol",dose:"4.5kg/ha",matiereActive:"Soufre"},{nom:"Armicarb",dose:"3kg/ha"}]},
+  // 2024
+  {campagne:"2024",numero:"1",date:"2024-03-28",surface:"2.60 ha",cuivreTotal:200,produits:[{nom:"Bouillie Bordelaise",dose:"1kg/ha",matiereActive:"Cuivre",cuivre:200},{nom:"HelioSoufre",dose:"3l/ha",matiereActive:"Soufre"},{nom:"Microthiol",dose:"3kg/ha",matiereActive:"Soufre"}]},
+  {campagne:"2024",numero:"2",date:"2024-03-31",surface:"8.20 ha",cuivreTotal:240,produits:[{nom:"Bouillie Bordelaise",dose:"800g/ha",matiereActive:"Cuivre",cuivre:240},{nom:"Nordox",dose:"60g/ha",matiereActive:"Cuivre"},{nom:"Microthiol",dose:"5kg/ha",matiereActive:"Soufre"},{nom:"HelioSoufre",dose:"2l/ha",matiereActive:"Soufre"}]},
+  {campagne:"2024",numero:"3",date:"2024-04-05",surface:"8.20 ha",cuivreTotal:350,produits:[{nom:"Champ Flo",dose:"0.7l/ha",matiereActive:"Cuivre",cuivre:350},{nom:"Nordox",dose:"70g/ha",matiereActive:"Cuivre"},{nom:"Microthiol",dose:"8kg/ha",matiereActive:"Soufre"},{nom:"HelioSoufre",dose:"2l/ha",matiereActive:"Soufre"}]},
+  {campagne:"2024",numero:"4",date:"2024-04-12",surface:"8.20 ha",cuivreTotal:280,produits:[{nom:"Bouillie Bordelaise",dose:"1kg/ha",matiereActive:"Cuivre",cuivre:280},{nom:"Nordox",dose:"60g",matiereActive:"Cuivre"},{nom:"Microthiol",dose:"8kg/ha",matiereActive:"Soufre"},{nom:"HelioSoufre",dose:"2l/ha",matiereActive:"Soufre"}]},
+  {campagne:"2024",numero:"5",date:"2024-04-15",surface:"8.20 ha",cuivreTotal:240,produits:[{nom:"Bouillie Bordelaise",dose:"1kg/ha",matiereActive:"Cuivre",cuivre:240},{nom:"Nordox",dose:"30g/ha",matiereActive:"Cuivre"},{nom:"Microthiol",dose:"8kg/ha",matiereActive:"Soufre"},{nom:"HelioSoufre",dose:"2l/ha",matiereActive:"Soufre"}]},
+  {campagne:"2024",numero:"6",date:"2024-04-17",surface:"8.20 ha",cuivreTotal:140,produits:[{nom:"Bouillie Bordelaise",dose:"0.5kg/ha",matiereActive:"Cuivre",cuivre:140},{nom:"Nordox",dose:"30g/ha",matiereActive:"Cuivre"},{nom:"Microthiol",dose:"6kg/ha",matiereActive:"Soufre"},{nom:"HelioSoufre",dose:"2l/ha",matiereActive:"Soufre"}]},
+  {campagne:"2024",numero:"7",date:"2024-04-22",surface:"8.20 ha",cuivreTotal:204,produits:[{nom:"Champ Flo",dose:"57cl/ha",matiereActive:"Cuivre",cuivre:204},{nom:"Microthiol",dose:"6kg/ha",matiereActive:"Soufre"},{nom:"HelioSoufre",dose:"2l/ha",matiereActive:"Soufre"}]},
+  {campagne:"2024",numero:"8",date:"2024-04-25",surface:"8.20 ha",cuivreTotal:100,produits:[{nom:"Bouillie Bordelaise",dose:"0.5kg/ha",matiereActive:"Cuivre",cuivre:100},{nom:"Microthiol",dose:"6kg/ha",matiereActive:"Soufre"},{nom:"HelioSoufre",dose:"2l/ha",matiereActive:"Soufre"}]},
+  {campagne:"2024",numero:"9",date:"2024-04-30",surface:"8.20 ha",cuivreTotal:280,produits:[{nom:"Champ Flo",dose:"55cl/ha",matiereActive:"Cuivre",cuivre:280},{nom:"Nordox",dose:"60g/ha",matiereActive:"Cuivre"},{nom:"Microthiol",dose:"6kg/ha",matiereActive:"Soufre"},{nom:"HelioSoufre",dose:"2l/ha",matiereActive:"Soufre"}]},
+  {campagne:"2024",numero:"10",date:"2024-05-02",surface:"8.20 ha",cuivreTotal:280,produits:[{nom:"Champ Flo",dose:"55cl/ha",matiereActive:"Cuivre",cuivre:280},{nom:"Nordox",dose:"60g/ha",matiereActive:"Cuivre"},{nom:"Microthiol",dose:"6kg/ha",matiereActive:"Soufre"},{nom:"HelioSoufre",dose:"2l/ha",matiereActive:"Soufre"}]},
+  {campagne:"2024",numero:"11",date:"2024-05-06",surface:"8.20 ha",cuivreTotal:200,produits:[{nom:"Bouillie Bordelaise",dose:"1kg/ha",matiereActive:"Cuivre",cuivre:200},{nom:"Essen-ciel",dose:"1l/ha",matiereActive:"Huile"},{nom:"Microthiol",dose:"6kg/ha",matiereActive:"Soufre"},{nom:"HelioSoufre",dose:"2l/ha",matiereActive:"Soufre"}]},
+  {campagne:"2024",numero:"12",date:"2024-05-15",surface:"8.60 ha",cuivreTotal:300,produits:[{nom:"Bouillie Bordelaise",dose:"1.5kg/ha",matiereActive:"Cuivre",cuivre:300},{nom:"Microthiol",dose:"10kg/ha",matiereActive:"Soufre"}]},
+  {campagne:"2024",numero:"13",date:"2024-05-21",surface:"8.20 ha",cuivreTotal:215,produits:[{nom:"Champ Flo",dose:"0.6l/ha",matiereActive:"Cuivre",cuivre:215},{nom:"Microthiol",dose:"10kg/ha",matiereActive:"Soufre"}]},
+  {campagne:"2024",numero:"14",date:"2024-05-23",surface:"8.20 ha",cuivreTotal:180,produits:[{nom:"Champ Flo",dose:"0.5l/ha",matiereActive:"Cuivre",cuivre:180},{nom:"Microthiol",dose:"10kg/ha",matiereActive:"Soufre"}]},
+  {campagne:"2024",numero:"15",date:"2024-05-29",surface:"8.20 ha",cuivreTotal:180,produits:[{nom:"Champ Flo",dose:"0.5l/ha",matiereActive:"Cuivre",cuivre:180},{nom:"Microthiol",dose:"10kg/ha",matiereActive:"Soufre"}]},
+  {campagne:"2024",numero:"16",date:"2024-06-01",surface:"8.20 ha",cuivreTotal:300,produits:[{nom:"Bouillie Bordelaise",dose:"500g/ha",matiereActive:"Cuivre",cuivre:300},{nom:"Nordox",dose:"250g/ha",matiereActive:"Cuivre"},{nom:"HelioSoufre",dose:"3l/ha",matiereActive:"Soufre"}]},
+  {campagne:"2024",numero:"17",date:"2024-06-03",surface:"8.20 ha",cuivreTotal:300,produits:[{nom:"Bouillie Bordelaise",dose:"1.5kg",matiereActive:"Cuivre",cuivre:300},{nom:"HelioSoufre",dose:"7l/ha",matiereActive:"Soufre"}]},
+  {campagne:"2024",numero:"18",date:"2024-06-07",surface:"8.20 ha",cuivreTotal:300,produits:[{nom:"Bouillie Bordelaise",dose:"1.5kg",matiereActive:"Cuivre",cuivre:300},{nom:"HelioSoufre",dose:"3l",matiereActive:"Soufre"},{nom:"Microthiol",dose:"7kg/ha",matiereActive:"Soufre"},{nom:"Essen-ciel",dose:"1l/ha",matiereActive:"Orange"}]},
+  {campagne:"2024",numero:"19",date:"2024-06-13",surface:"8.20 ha",cuivreTotal:230,produits:[{nom:"Champ Flo",dose:"0.5l/ha",matiereActive:"Cuivre",cuivre:230},{nom:"Nordox",dose:"60g/ha",matiereActive:"Cuivre"},{nom:"HelioSoufre",dose:"3l/ha",matiereActive:"Soufre"},{nom:"Microthiol",dose:"7kg/ha",matiereActive:"Soufre"}]},
+  {campagne:"2024",numero:"20",date:"2024-06-14",surface:"8.20 ha",cuivreTotal:180,produits:[{nom:"Champ Flo",dose:"0.5l/ha",matiereActive:"Cuivre",cuivre:180},{nom:"HelioSoufre",dose:"3l/ha",matiereActive:"Soufre"},{nom:"Microthiol",dose:"7kg/ha",matiereActive:"Soufre"}]},
+  {campagne:"2024",numero:"21",date:"2024-06-20",surface:"8.20 ha",cuivreTotal:300,produits:[{nom:"Champ Flo",dose:"0.8l/ha",matiereActive:"Cuivre",cuivre:300},{nom:"Microthiol",dose:"10kg/ha",matiereActive:"Soufre"},{nom:"Essen-ciel",dose:"1l/ha",matiereActive:"Orange"}]},
+  {campagne:"2024",numero:"22",date:"2024-06-27",surface:"8.20 ha",cuivreTotal:300,produits:[{nom:"Bouillie Bordelaise",dose:"1.5kg/ha",matiereActive:"Cuivre",cuivre:300},{nom:"Microthiol",dose:"9kg/ha",matiereActive:"Soufre"},{nom:"HelioSoufre",dose:"1l/ha",matiereActive:"Soufre"},{nom:"Essen-ciel",dose:"1l/ha",matiereActive:"Orange"}]},
+  {campagne:"2024",numero:"23",date:"2024-07-01",surface:"8.20 ha",cuivreTotal:412,produits:[{nom:"Bouillie Bordelaise",dose:"1.5kg/ha",matiereActive:"Cuivre",cuivre:412},{nom:"Nordox",dose:"150g/ha",matiereActive:"Cuivre"},{nom:"Microthiol",dose:"9kg/ha",matiereActive:"Soufre"}]},
+  {campagne:"2024",numero:"24",date:"2024-07-10",surface:"8.20 ha",cuivreTotal:400,produits:[{nom:"Bouillie Bordelaise",dose:"1kg/ha",matiereActive:"Cuivre",cuivre:400},{nom:"Nordox",dose:"270g/ha",matiereActive:"Cuivre"}]},
+  // 2026
+  {campagne:"2026",numero:"1",date:"2026-03-31",surface:"9.30 ha",cuivreTotal:250,produits:[{nom:"Bouillie Bordelaise",dose:"1.25kg/ha",matiereActive:"Cuivre",cuivre:250},{nom:"Microthiol",dose:"8kg/ha",matiereActive:"Soufre"},{nom:"Biofix",dose:"50ml/hl"}]},
+  {campagne:"2026",numero:"2",date:"2026-04-05",surface:"9.30 ha",cuivreTotal:200,produits:[{nom:"Bouillie Bordelaise",dose:"0.750kg/ha",matiereActive:"Cuivre",cuivre:200},{nom:"Nordox",dose:"70g/ha",matiereActive:"Cuivre"},{nom:"HelioSoufre",dose:"4l/ha",matiereActive:"Soufre"}]},
+  {campagne:"2026",numero:"3",date:"2026-04-08",surface:"9.30 ha",cuivreTotal:400,produits:[{nom:"Champ Flo",dose:"1l/ha",matiereActive:"Cuivre",cuivre:400},{nom:"Nordox",dose:"70g/ha",matiereActive:"Cuivre"},{nom:"HelioSoufre",dose:"5l/ha",matiereActive:"Soufre"}]},
+  {campagne:"2026",numero:"4",date:"2026-04-13",surface:"9.30 ha",cuivreTotal:350,produits:[{nom:"Bouillie Bordelaise",dose:"1.5kg/ha",matiereActive:"Cuivre",cuivre:350},{nom:"Nordox",dose:"70g/ha",matiereActive:"Cuivre"},{nom:"HelioSoufre",dose:"4l/ha",matiereActive:"Soufre"}]},
+  {campagne:"2026",numero:"5",date:"2026-04-22",surface:"9.30 ha",cuivreTotal:350,produits:[{nom:"Bouillie Bordelaise",dose:"1.5kg/ha",matiereActive:"Cuivre",cuivre:350},{nom:"Nordox",dose:"60g/ha",matiereActive:"Cuivre"},{nom:"Microthiol",dose:"8kg/ha",matiereActive:"Soufre"},{nom:"Biofix",dose:"50ml/hl"}]},
+  {campagne:"2026",numero:"6",date:"2026-05-03",surface:"9.30 ha",cuivreTotal:300,produits:[{nom:"Bouillie Bordelaise",dose:"1.5kg/ha",matiereActive:"Cuivre",cuivre:300},{nom:"Microthiol",dose:"10kg/ha",matiereActive:"Soufre"},{nom:"Pyrevert",dose:"1.5l/ha"},{nom:"Biofix",dose:"50ml/hl"}]},
+];
+
 export default function App() {
   const [appError, setAppError] = useState(null);
   const [tonneaux,      setTonneaux]      = useState(INIT_TONNEAUX);
@@ -387,6 +439,25 @@ export default function App() {
   const [showCampForm, setShowCampForm] = useState(false);
   const [showTirageForm,     setShowTirageForm]     = useState(false);
   const [showDegorgeForm,   setShowDegorgeForm]   = useState(false);
+  const [traitements,      setTraitements]       = useState([]);
+  const [amendements,      setAmendements]       = useState([]);
+  const [showTraitForm,    setShowTraitForm]     = useState(false);
+  const [editingTrait,     setEditingTrait]      = useState(null);
+  const [filterTraitAn,    setFilterTraitAn]     = useState(new Date().getFullYear().toString());
+  const TRAIT_EMPTY = {
+    campagne: new Date().getFullYear().toString(),
+    numero: "",
+    date: "",
+    surface: "",
+    operateur: "",
+    produits: [],
+    cuivreTotal: "",
+    observations: "",
+    type: "traitement",
+  };
+  const [traitForm, setTraitForm] = useState(TRAIT_EMPTY);
+  const [traitProduit, setTraitProduit] = useState({nom:"", dose:"", matiereActive:"", cuivre:""});
+  const [showTraitProduit, setShowTraitProduit] = useState(false);
   const [editingDegorge,    setEditingDegorge]    = useState(null);
   const [degorgements,      setDegorgements]      = useState([]);
   const [showStockMvtForm,  setShowStockMvtForm]  = useState(false);
@@ -567,6 +638,23 @@ export default function App() {
 
   const getStockActuel = () => getLots();
 
+  // Traitement
+  const submitTraitement = () => {
+    if(!traitForm.date) return alert("La date est requise.");
+    if(!traitForm.campagne) return alert("La campagne est requise.");
+    const t = { id:editingTrait?editingTrait.id:`trait_${Date.now()}`, ...traitForm, timestamp:new Date().toISOString() };
+    if(editingTrait){ setTraitements(prev=>prev.map(x=>x.id===t.id?t:x)); }
+    else { setTraitements(prev=>[t,...prev]); }
+    fbSave("traitements", t.id, t);
+    setTraitForm(TRAIT_EMPTY); setEditingTrait(null); setShowTraitForm(false);
+  };
+
+  const addTraitProduit = () => {
+    if(!traitProduit.nom.trim()) return;
+    setTraitForm(f=>({...f, produits:[...f.produits, {...traitProduit, id:`p_${Date.now()}`}]}));
+    setTraitProduit({nom:"", dose:"", matiereActive:"", cuivre:""}); setShowTraitProduit(false);
+  };
+
   const submitDegorgement = () => {
     if(!degorgeForm.lotId) return alert("Selectionnez un lot.");
     if(!degorgeForm.date) return alert("La date est requise.");
@@ -615,6 +703,10 @@ export default function App() {
     fbLoad("vendanges",    setVendanges);
     fbLoad("parcelles",    setParcelles);
     fbLoad("degorgements", setDegorgements);
+    fbLoad("traitements",  setTraitements);
+    fbLoad("amendements",  setAmendements);
+    fbLoad("traitements",  setTraitements);
+    fbLoad("amendements",  setAmendements);
     fbLoad("clotures",     setClotures);
     fbLoad("degustateurs", data => { if(data.length>0) setDegustateurs(data[0].liste||degustateurs); });
   };
@@ -1140,7 +1232,7 @@ export default function App() {
       {/* NAV */}
       <nav style={{...s.nav, flexWrap:"nowrap", overflowX:"auto", WebkitOverflowScrolling:"touch"}} className="nav-scroll">
         <div style={s.brand}> Chai 2025</div>
-        {[["vendanges","Vendange"],["dashboard","Vue d'ensemble"],["tonneaux","Tonneaux"],["degustations","Dégustations"],["mouvements","Mouvements"],["tirages","Tirage"],["stock","Stock"]].map(([v,l])=>(
+        {[["vigne","Vigne"],["vendanges","Vendange"],["dashboard","Vue d'ensemble"],["tonneaux","Tonneaux"],["degustations","Dégustations"],["mouvements","Mouvements"],["tirages","Tirage"],["stock","Stock"]].map(([v,l])=>(
           <button key={v} style={s.navBtn(view===v)} onClick={()=>setView(v)}>{l}</button>
         ))}
         <div style={{flex:1}}/>
@@ -1653,6 +1745,125 @@ export default function App() {
               </div>
             </div>
           )}
+
+        {/* -- VIGNE -- */}
+        {view==="vigne" && (()=>{
+          // Merge historical + user traitements
+          const allTraits = [...HIST_TRAITEMENTS, ...traitements].sort((a,b)=>new Date(b.date)-new Date(a.date));
+          const campagnes = [...new Set(allTraits.map(t=>t.campagne))].sort().reverse();
+          const traitsFiltres = filterTraitAn ? allTraits.filter(t=>t.campagne===filterTraitAn) : allTraits;
+          // Calcul cuivre total par campagne
+          const cuivreParCampagne = {};
+          campagnes.forEach(c=>{
+            const traits = allTraits.filter(t=>t.campagne===c && t.cuivreTotal);
+            cuivreParCampagne[c] = traits.reduce((s,t)=>s+(parseFloat(t.cuivreTotal)||0),0);
+          });
+          const limiteCuivre = 4000; // 4kg/ha sur 7 ans = limite BIO
+          return (
+            <div>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"16px"}}>
+                <div style={{fontSize:"13px",color:"#7a6840"}}>{allTraits.length} traitement(s) enregistres</div>
+                <button style={s.btn} onClick={()=>{setTraitForm(TRAIT_EMPTY);setEditingTrait(null);setShowTraitForm(true);}}>
+                  + Nouveau traitement
+                </button>
+              </div>
+
+              {/* Filtre campagne */}
+              <div style={{display:"flex",gap:"6px",marginBottom:"16px",flexWrap:"wrap",alignItems:"center"}}>
+                <span style={{fontSize:"10px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#9a8870",fontFamily:"monospace",marginRight:"4px"}}>Campagne :</span>
+                <button onClick={()=>setFilterTraitAn("")}
+                  style={{padding:"4px 12px",borderRadius:"4px",border:`0.5px solid ${!filterTraitAn?"#b8860b":"#d4c4a0"}`,background:!filterTraitAn?"#f5e8cc":"transparent",color:!filterTraitAn?"#7a5200":"#9a8870",fontSize:"11px",cursor:"pointer",fontFamily:"monospace"}}>
+                  Toutes
+                </button>
+                {campagnes.map(c=>(
+                  <button key={c} onClick={()=>setFilterTraitAn(c)}
+                    style={{padding:"4px 12px",borderRadius:"4px",border:`0.5px solid ${filterTraitAn===c?"#2d6a00":"#d4c4a0"}`,background:filterTraitAn===c?"#d4edc0":"transparent",color:filterTraitAn===c?"#2d6a00":"#9a8870",fontSize:"11px",cursor:"pointer",fontFamily:"monospace",display:"flex",alignItems:"center",gap:"4px"}}>
+                    {c}
+                    <span style={{background:cuivreParCampagne[c]>3000?"#fdd0d0":cuivreParCampagne[c]>2000?"#fde8b8":"#d4edc0",color:cuivreParCampagne[c]>3000?"#cc2222":cuivreParCampagne[c]>2000?"#c47800":"#2d6a00",borderRadius:"3px",padding:"0 4px",fontSize:"10px",fontWeight:500}}>
+                      {(cuivreParCampagne[c]/1000).toFixed(2)}kg Cu
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              {/* KPIs campagne selectionnee */}
+              {filterTraitAn && (()=>{
+                const cuivreCamp = cuivreParCampagne[filterTraitAn]||0;
+                const nbTraits = traitsFiltres.length;
+                const moisAvril = traitsFiltres.filter(t=>t.date&&t.date.slice(5,7)==="04").reduce((s,t)=>s+(parseFloat(t.cuivreTotal)||0),0);
+                const moisMai   = traitsFiltres.filter(t=>t.date&&t.date.slice(5,7)==="05").reduce((s,t)=>s+(parseFloat(t.cuivreTotal)||0),0);
+                const moisJuin  = traitsFiltres.filter(t=>t.date&&t.date.slice(5,7)==="06").reduce((s,t)=>s+(parseFloat(t.cuivreTotal)||0),0);
+                const moisJuil  = traitsFiltres.filter(t=>t.date&&t.date.slice(5,7)==="07").reduce((s,t)=>s+(parseFloat(t.cuivreTotal)||0),0);
+                return (
+                  <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))",gap:"10px",marginBottom:"16px"}}>
+                    {[
+                      {lbl:"Nb traitements",val:nbTraits,col:"#7a5200"},
+                      {lbl:"Cuivre total",val:`${(cuivreCamp/1000).toFixed(3)} kg/ha`,col:cuivreCamp>3000?"#cc2222":cuivreCamp>2000?"#c47800":"#1a7a40"},
+                      {lbl:"Avril",val:`${moisAvril}g`,col:"#185FA5"},
+                      {lbl:"Mai",val:`${moisMai}g`,col:"#185FA5"},
+                      {lbl:"Juin",val:`${moisJuin}g`,col:"#185FA5"},
+                      {lbl:"Juillet",val:`${moisJuil}g`,col:"#185FA5"},
+                    ].map((k,i)=>(
+                      <div key={i} style={{...s.card,padding:"12px 14px"}}>
+                        <div style={s.lbl}>{k.lbl}</div>
+                        <div style={{fontSize:"18px",fontWeight:500,color:k.col,lineHeight:1.2}}>{k.val}</div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+
+              {/* Liste des traitements */}
+              <div style={s.card}>
+                <div style={{overflowX:"auto"}}>
+                  <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
+                    <thead>
+                      <tr style={{borderBottom:"1px solid #d4c4a0",background:"#fff8ee"}}>
+                        {["N°","Date","Surface","Produits","Cu/ha",""].map(h=>(
+                          <th key={h} style={{textAlign:"left",padding:"7px 10px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#9a8870",fontWeight:500}}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {traitsFiltres.map((t,i)=>{
+                        const isHistorique = HIST_TRAITEMENTS.some(h=>h.campagne===t.campagne&&h.numero===t.numero);
+                        return (
+                          <tr key={t.id||i} style={{borderBottom:"1px solid #ede5d4",background:i%2===0?"transparent":"#fffbf3"}}>
+                            <td style={{padding:"8px 10px",fontFamily:"monospace",color:"#b8860b",fontWeight:500}}>N°{t.numero}</td>
+                            <td style={{padding:"8px 10px",color:"#6a5838"}}>{t.date}</td>
+                            <td style={{padding:"8px 10px",color:"#6a5838"}}>{t.surface}</td>
+                            <td style={{padding:"8px 10px"}}>
+                              <div style={{display:"flex",gap:"4px",flexWrap:"wrap"}}>
+                                {(t.produits||[]).map((p,j)=>(
+                                  <span key={j} style={{background:p.matiereActive==="Cuivre"?"#fde8b8":p.matiereActive==="Soufre"?"#e6f0fb":"#ede5d4",color:p.matiereActive==="Cuivre"?"#7a5200":p.matiereActive==="Soufre"?"#185FA5":"#5f5e5a",borderRadius:"3px",padding:"1px 6px",fontSize:"10px",fontFamily:"monospace"}}>
+                                    {p.nom} {p.dose}
+                                  </span>
+                                ))}
+                              </div>
+                            </td>
+                            <td style={{padding:"8px 10px",fontWeight:500,color:parseFloat(t.cuivreTotal)>400?"#cc2222":parseFloat(t.cuivreTotal)>200?"#c47800":"#1a7a40",fontFamily:"monospace"}}>
+                              {t.cuivreTotal?`${t.cuivreTotal}g`:"-"}
+                            </td>
+                            <td style={{padding:"8px 10px"}}>
+                              {!isHistorique && (
+                                <div style={{display:"flex",gap:"3px"}}>
+                                  <button style={{...s.ghostSm,fontSize:"10px"}} onClick={()=>{setTraitForm({...TRAIT_EMPTY,...t});setEditingTrait(t);setShowTraitForm(true);}}>Mod.</button>
+                                  <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
+                                    onClick={()=>{if(window.confirm("Supprimer ?")){ setTraitements(prev=>prev.filter(x=>x.id!==t.id)); fbDelete("traitements",t.id); }}}>Sup.</button>
+                                </div>
+                              )}
+                              {isHistorique && <span style={{fontSize:"10px",color:"#9a8870",fontStyle:"italic"}}>historique</span>}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* -- VENDANGES -- */}
         {view==="vendanges" && (
@@ -2625,6 +2836,92 @@ export default function App() {
               <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
                 <button style={s.ghost} onClick={()=>{setShowVendangeForm(false);setEditingVendange(null);}}>Annuler</button>
                 <button style={s.btn} onClick={submitVendange}>{editingVendange?"Sauvegarder":"Enregistrer l'apport"}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* == MODAL TRAITEMENT == */}
+      {showTraitForm && (
+        <div style={s.modal}>
+          <div style={{...s.modalBox,width:"620px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"18px",color:"#7a5200"}}>{editingTrait?"Modifier le traitement":"Nouveau traitement"}</div>
+              <button style={s.ghost} onClick={()=>{setShowTraitForm(false);setEditingTrait(null);}}>x</button>
+            </div>
+            <div style={{display:"grid",gap:"12px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))",gap:"12px"}}>
+                <div><span style={s.lbl}>Campagne *</span>
+                  <input type="number" style={s.inp} placeholder="2026" value={traitForm.campagne} onChange={e=>setTraitForm(f=>({...f,campagne:e.target.value}))}/></div>
+                <div><span style={s.lbl}>N° traitement</span>
+                  <input style={s.inp} placeholder="ex. 7" value={traitForm.numero} onChange={e=>setTraitForm(f=>({...f,numero:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Date *</span>
+                  <input type="date" style={s.inp} value={traitForm.date} onChange={e=>setTraitForm(f=>({...f,date:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Surface (ha)</span>
+                  <input style={s.inp} placeholder="ex. 8.68 ha" value={traitForm.surface} onChange={e=>setTraitForm(f=>({...f,surface:e.target.value}))}/></div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                <div><span style={s.lbl}>Cu total (g/ha)</span>
+                  <input type="number" style={s.inp} placeholder="ex. 300" value={traitForm.cuivreTotal} onChange={e=>setTraitForm(f=>({...f,cuivreTotal:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Operateur</span>
+                  <select style={s.sel} value={traitForm.operateur} onChange={e=>setTraitForm(f=>({...f,operateur:e.target.value}))}>
+                    <option value="">Selectionner...</option>
+                    {degustateurs.map(d=><option key={d.nom} value={d.nom}>{d.nom}</option>)}
+                  </select></div>
+              </div>
+
+              {/* Produits */}
+              <div style={{background:"#fff8ee",borderRadius:"8px",padding:"12px",border:"0.5px solid #d4c4a0"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"8px"}}>
+                  <span style={s.lbl}>Produits utilises</span>
+                  <button style={s.btnSm} onClick={()=>setShowTraitProduit(true)}>+ Ajouter</button>
+                </div>
+                {traitForm.produits.length===0&&<div style={{fontSize:"12px",color:"#9a8870",fontStyle:"italic"}}>Aucun produit.</div>}
+                {traitForm.produits.map((p,i)=>(
+                  <div key={p.id} style={{display:"flex",alignItems:"center",gap:"8px",padding:"4px 0",borderBottom:"0.5px solid #ede5d4",fontSize:"12px"}}>
+                    <span style={{background:p.matiereActive==="Cuivre"?"#fde8b8":p.matiereActive==="Soufre"?"#e6f0fb":"#ede5d4",color:p.matiereActive==="Cuivre"?"#7a5200":"#185FA5",borderRadius:"3px",padding:"1px 6px",fontSize:"10px",fontFamily:"monospace"}}>{p.matiereActive||"-"}</span>
+                    <span style={{fontWeight:500,color:"#1a1205",flex:1}}>{p.nom}</span>
+                    <span style={{color:"#9a8870"}}>{p.dose}</span>
+                    {p.cuivre&&<span style={{color:"#7a5200",fontFamily:"monospace",fontSize:"11px"}}>{p.cuivre}g Cu</span>}
+                    <button style={{...s.ghostSm,color:"#cc2222",borderColor:"#f0b4b4",padding:"2px 5px"}}
+                      onClick={()=>setTraitForm(f=>({...f,produits:f.produits.filter((_,j)=>j!==i)}))}>x</button>
+                  </div>
+                ))}
+                {showTraitProduit&&(
+                  <div style={{marginTop:"10px",padding:"10px",background:"#fffdf7",borderRadius:"6px",border:"0.5px solid #d4c4a0"}}>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr auto",gap:"8px",alignItems:"end"}}>
+                      <div><span style={s.lbl}>Produit *</span>
+                        <input style={s.inp} placeholder="Bouillie Bordelaise..." value={traitProduit.nom} onChange={e=>setTraitProduit(f=>({...f,nom:e.target.value}))}/></div>
+                      <div><span style={s.lbl}>Dose</span>
+                        <input style={s.inp} placeholder="1kg/ha" value={traitProduit.dose} onChange={e=>setTraitProduit(f=>({...f,dose:e.target.value}))}/></div>
+                      <div><span style={s.lbl}>Matiere active</span>
+                        <select style={s.sel} value={traitProduit.matiereActive} onChange={e=>setTraitProduit(f=>({...f,matiereActive:e.target.value}))}>
+                          <option value="">-</option>
+                          <option value="Cuivre">Cuivre</option>
+                          <option value="Soufre">Soufre</option>
+                          <option value="Bicarbonate">Bicarbonate</option>
+                          <option value="Huile">Huile essentielle</option>
+                          <option value="Biodynamie">Biodynamie</option>
+                          <option value="Autre">Autre</option>
+                        </select></div>
+                      <div><span style={s.lbl}>Cu (g/ha)</span>
+                        <input type="number" style={s.inp} placeholder="0" value={traitProduit.cuivre} onChange={e=>setTraitProduit(f=>({...f,cuivre:e.target.value}))}/></div>
+                      <div style={{display:"flex",gap:"4px"}}>
+                        <button style={s.btnSm} onClick={addTraitProduit}>OK</button>
+                        <button style={s.ghostSm} onClick={()=>setShowTraitProduit(false)}>x</button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div><span style={s.lbl}>Observations</span>
+                <textarea style={{...s.inp,height:"60px",resize:"vertical"}} placeholder="Conditions meteorologiques, evenements..." value={traitForm.observations} onChange={e=>setTraitForm(f=>({...f,observations:e.target.value}))}/></div>
+
+              <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
+                <button style={s.ghost} onClick={()=>{setShowTraitForm(false);setEditingTrait(null);}}>Annuler</button>
+                <button style={s.btn} onClick={submitTraitement}>{editingTrait?"Sauvegarder":"Enregistrer"}</button>
               </div>
             </div>
           </div>
