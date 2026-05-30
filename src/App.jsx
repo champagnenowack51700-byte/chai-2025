@@ -629,6 +629,7 @@ export default function App() {
         }];
       }
       setTonneaux(updatedTonneaux);
+      updatedTonneaux.forEach(t => saveTonneau(t));
     }
     saveTirage(updated);
     setTirageForm(TIRAGE_EMPTY); setEditingTirage(null); setShowTirageForm(false);
@@ -695,10 +696,9 @@ export default function App() {
           contenuActuel:vol, marc:vendangeForm.numeroMarc||"",
           commentaire:`Marc ${vendangeForm.numeroMarc||"-"} - Vendange ${vendangeForm.annee} - ${parcelles.find(p=>p.id===vendangeForm.parcelleId)?.nom||""}`,
         };
-        setTonneaux(prev=>[...prev,cuve]);
+        setTonneaux(prev=>[...prev,cuve]); saveTonneau(cuve);
       } else if(vendangeForm.cuveReception) {
-        setTonneaux(prev=>prev.map(t=>t.id===vendangeForm.cuveReception
-          ?{...t,contenuActuel:Math.min(t.volume,t.contenuActuel+vol)}:t));
+        setTonneaux(prev=>{ const upd=prev.map(t=>t.id===vendangeForm.cuveReception?{...t,contenuActuel:Math.min(t.volume,t.contenuActuel+vol)}:t); upd.filter(t=>t.id===vendangeForm.cuveReception).forEach(t=>saveTonneau(t)); return upd; });
       }
     }
     saveVendange(v);
@@ -764,12 +764,12 @@ export default function App() {
       upd=upd.map(t=>t.id===mvtForm.futDest?{...t,contenuActuel:Math.min(t.volume,t.contenuActuel+vol)}:t);
     }
     setTonneaux(upd);
+    upd.forEach(t => saveTonneau(t));
     if(mvtForm.type==="ajout_produit" && !mvtForm.numeroLot.trim()) return alert("Le numéro de lot est obligatoire pour un ajout de produit.");
     const newMvt = {id:Date.now().toString(),...mvtForm,timestamp:new Date().toISOString()};
     setMouvements(prev=>[newMvt,...prev]);
     saveMouvement(newMvt);
-    // Save updated tonneaux to Firebase
-    setTimeout(()=>{ tonneaux.forEach(t=>saveTonneau(t)); }, 100);
+
     setMvtForm({type:"ouillage",date:new Date().toISOString().slice(0,16),operateur:"",futSource:[],futDest:"",volume:"",notes:"",produit:"",dosage:"",numeroLot:""});
     setShowMvtForm(false);
   };
