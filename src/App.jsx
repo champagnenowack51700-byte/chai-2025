@@ -971,34 +971,43 @@ export default function App() {
     setClotureForm(f=>({...f, lignes:[...f.lignes,...lignes], importCsv:""}));
   };
 
-  const refreshFromFirebase = () => {
-    fbLoad("tonneaux",     setTonneaux);
-    fbLoad("mouvements",   setMouvements);
-    fbLoad("degustations", setDegustations);
-    fbLoad("campagnes",    setCampagnes);
-    fbLoad("tirages",      setTirages);
-    fbLoad("vendanges",    setVendanges);
-    fbLoad("parcelles",    setParcelles);
-    fbLoad("degorgements", setDegorgements);
-    // Seed historique si vide
-    getDocs(collection(db,"traitements")).then(snap=>{
-      if(snap.empty){
-        HIST_TRAITEMENTS.forEach(t=>{
-          const id = `hist_${t.campagne}_${t.numero}`;
-          fbSave("traitements", id, {...t, id});
-        });
-      }
-      fbLoad("traitements", setTraitements);
+  // Liste complete de toutes les collections
+  const ALL_COLS = [
+    ["tonneaux",     setTonneaux],
+    ["mouvements",   setMouvements],
+    ["degustations", setDegustations],
+    ["campagnes",    setCampagnes],
+    ["tirages",      setTirages],
+    ["vendanges",    setVendanges],
+    ["parcelles",    setParcelles],
+    ["degorgements", setDegorgements],
+    ["biodynamies",  setBiodynamies],
+    ["stockProduits",setStockProduits],
+    ["pdfDocs",      setPdfDocs],
+    ["pdfFactures",  setPdfFactures],
+    ["amendements",  setAmendements],
+    ["clotures",     setClotures],
+    ["traitements",  setTraitements],
+  ];
+
+  const refreshFromFirebase = async () => {
+    for(const [col, setter] of ALL_COLS) {
+      await fbLoad(col, setter);
+    }
+    await fbLoad("degustateurs", data => {
+      if(data.length>0 && data[0].liste) setDegustateurs(data[0].liste);
     });
-    fbLoad("biodynamies",  setBiodynamies);
-    fbLoad("stockProduits",setStockProduits);
-    fbLoad("pdfDocs",      setPdfDocs);
-    fbLoad("amendements",  setAmendements);
-    fbLoad("traitements",  setTraitements);
-    fbLoad("amendements",  setAmendements);
-    fbLoad("clotures",     setClotures);
-    fbLoad("degustateurs", data => { if(data.length>0) setDegustateurs(data[0].liste||degustateurs); });
   };
+
+  // Chargement initial + polling toutes les 10s
+  useEffect(()=>{
+    refreshFromFirebase();
+    getDocs(collection(db,"traitements")).then(s=>{
+      if(s.empty){ HIST_TRAITEMENTS.forEach(t=>{ const id=`hist_${t.campagne}_${t.numero}`; fbSave("traitements",id,{...t,id}); }); }
+    });
+    const interval = setInterval(()=>refreshFromFirebase(), 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   const getTonneau = (id) => tonneaux.find(t=>t.id===id);
   const degsActifs = degustateurs.filter(d=>d.actif).map(d=>d.nom);
