@@ -3207,41 +3207,36 @@ teneurCuivre = grammes de cuivre metal par kg ou par litre du produit (0 si pas 
                   <input style={s.inp} placeholder="ex. 9800474" value={produitForm.nAmm} onChange={e=>setProduitForm(f=>({...f,nAmm:e.target.value}))}/></div>
               </div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
-                <div><span style={s.lbl}>Famille</span>
-                  <select style={s.sel} value={produitForm.famille} onChange={e=>setProduitForm(f=>({...f,famille:e.target.value}))}>
-                    <option>Mildiou</option><option>Oidium</option><option>Insectes</option><option>Botrytis</option><option>Autre</option>
-                  </select></div>
-                <div><span style={s.lbl}>Matiere active</span>
-                  <select style={s.sel} value={produitForm.matiereActive} onChange={e=>setProduitForm(f=>({...f,matiereActive:e.target.value}))}>
-                    <option>Cuivre</option><option>Soufre</option><option>Pyrethrine</option><option>Bicarbonate</option><option>Autre</option>
+                <div><span style={s.lbl}>Substance active</span>
+                  <select style={s.sel} value={produitForm.substanceActive||"Cuivre"} onChange={e=>setProduitForm(f=>({...f,substanceActive:e.target.value}))}>
+                    <option value="Cuivre">Cuivre</option>
+                    <option value="Soufre">Soufre</option>
+                    <option value="Pyrethrine">Pyrethrine</option>
+                    <option value="Bicarbonate">Bicarbonate</option>
+                    <option value="Autre">Autre</option>
                   </select></div>
                 <div><span style={s.lbl}>Teneur Cu (g/kg ou g/L)</span>
-                  <input type="number" style={s.inp} placeholder="0" value={produitForm.teneurCuivre} onChange={e=>setProduitForm(f=>({...f,teneurCuivre:e.target.value}))}/></div>
+                  <input type="number" step="1" style={s.inp} placeholder="ex. 200" value={produitForm.teneurCuivre||""} onChange={e=>setProduitForm(f=>({...f,teneurCuivre:e.target.value}))}/>
+                  {produitForm.teneurCuivre&&<div style={{fontSize:"10px",color:"#c47800",marginTop:"2px"}}>= {Math.round(parseFloat(produitForm.teneurCuivre)/10)}% de cuivre</div>}
+                </div>
+                <div><span style={s.lbl}>Unite</span>
+                  <select style={s.sel} value={produitForm.unite||"kg"} onChange={e=>setProduitForm(f=>({...f,unite:e.target.value}))}>
+                    <option value="kg">kg</option><option value="L">L</option><option value="g">g</option>
+                  </select></div>
               </div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
-                <div><span style={s.lbl}>Unite</span>
-                  <select style={s.sel} value={produitForm.unite} onChange={e=>setProduitForm(f=>({...f,unite:e.target.value}))}>
-                    <option value="kg">kg</option><option value="L">L</option>
-                  </select></div>
-                <div><span style={s.lbl}>Dose max /ha</span>
-                  <input type="number" step="0.01" style={s.inp} placeholder="ex. 3.75" value={produitForm.doseMax} onChange={e=>setProduitForm(f=>({...f,doseMax:e.target.value}))}/></div>
-                <div><span style={s.lbl}>Stock initial ({produitForm.unite})</span>
-                  <input type="number" step="0.1" style={s.inp} placeholder="0" value={produitForm.stockInitial} onChange={e=>setProduitForm(f=>({...f,stockInitial:e.target.value}))}/></div>
-              </div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                <div><span style={s.lbl}>Stock actuel ({produitForm.unite||"kg"})</span>
+                  <input type="number" step="0.1" style={s.inp} placeholder="0" value={produitForm.stockActuel||""} onChange={e=>setProduitForm(f=>({...f,stockActuel:e.target.value}))}/></div>
                 <div><span style={s.lbl}>Fournisseur</span>
-                  <input style={s.inp} placeholder="ex. Nufarm, Valagro..." value={produitForm.fournisseur} onChange={e=>setProduitForm(f=>({...f,fournisseur:e.target.value}))}/></div>
+                  <input style={s.inp} placeholder="ex. Nufarm..." value={produitForm.fournisseur||""} onChange={e=>setProduitForm(f=>({...f,fournisseur:e.target.value}))}/></div>
                 <div><span style={s.lbl}>Observations</span>
-                  <input style={s.inp} placeholder="Notes..." value={produitForm.observations} onChange={e=>setProduitForm(f=>({...f,observations:e.target.value}))}/></div>
+                  <input style={s.inp} placeholder="Notes..." value={produitForm.observations||""} onChange={e=>setProduitForm(f=>({...f,observations:e.target.value}))}/></div>
               </div>
-              {/* Calcul cuivre */}
-              {parseFloat(produitForm.teneurCuivre)>0&&parseFloat(produitForm.doseMax)>0&&(
+              {parseFloat(produitForm.teneurCuivre)>0&&(
                 <div style={{background:"#fde8b8",borderRadius:"6px",padding:"10px 14px",fontSize:"12px",color:"#7a5200"}}>
-                  A dose max sur 9.30 ha : <strong>{Math.round(parseFloat(produitForm.doseMax)*parseFloat(produitForm.teneurCuivre)*9.30)}g</strong> de cuivre total
-                  - soit <strong>{Math.round(parseFloat(produitForm.doseMax)*parseFloat(produitForm.teneurCuivre))}g/ha</strong>
+                  <strong>Exemple :</strong> 500g/ha x 9ha = 4500g produit x {Math.round(parseFloat(produitForm.teneurCuivre)/10)}% = <strong>{Math.round(500*(parseFloat(produitForm.teneurCuivre)/1000)*9)}g de cuivre total</strong>
                 </div>
               )}
-              <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
                 <button style={s.ghost} onClick={()=>{setShowStockProdForm(false);setEditingStockProd(null);}}>Annuler</button>
                 <button style={s.btn} onClick={submitStockProduit}>{editingStockProd?"Sauvegarder":"Enregistrer"}</button>
               </div>
