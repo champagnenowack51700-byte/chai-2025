@@ -2132,43 +2132,6 @@ export default function App() {
                     </label>
                     <div style={{marginLeft:"auto",fontSize:"11px",color:"#9a8870"}}>{stockProduits.length} produit(s)</div>
                   </div>
-                  {pdfFactures.length>0&&(
-                    <div style={{...s.card,marginBottom:"14px"}}>
-                      <div style={{...s.lbl,marginBottom:"8px"}}>Factures / BL</div>
-                      <div style={{display:"grid",gap:"6px"}}>
-                        {pdfFactures.map(pdf=>(
-                          <div key={pdf.id} style={{display:"flex",alignItems:"center",gap:"10px",padding:"8px 12px",background:"#fff8ee",borderRadius:"6px",border:"0.5px solid #d4c4a0"}}>
-                            <div style={{width:"28px",height:"28px",background:"#fdd0d0",borderRadius:"4px",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                              <span style={{fontSize:"9px",fontWeight:500,color:"#cc2222",fontFamily:"monospace"}}>PDF</span>
-                            </div>
-                            <div style={{flex:1}}>
-                              <div style={{fontWeight:500,color:"#1a1205",fontSize:"12px"}}>{pdf.nom}</div>
-                              <div style={{fontSize:"10px",color:"#9a8870"}}>{pdf.dateUpload?.slice(0,10)}</div>
-                            </div>
-                            <button style={s.btnSm} onClick={()=>openPdfFacture(pdf)}>Ouvrir</button>
-                            <button style={{...s.ghostSm,color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>deleteFacture(pdf.id)}>Sup.</button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Catalogue rapide */}
-                  {stockProduits.length===0&&(
-                    <div style={{...s.card,marginBottom:"14px"}}>
-                      <div style={{...s.lbl,marginBottom:"10px"}}>Ajout rapide depuis le catalogue</div>
-                      <div style={{display:"flex",gap:"6px",flexWrap:"wrap"}}>
-                        {CATALOGUE_PRODUITS.filter(c=>!stockProduits.find(p=>p.nAmm===c.nAmm)).map((c,i)=>(
-                          <button key={i} onClick={()=>addFromCatalogue(c)}
-                            style={{background:"#fff8ee",border:"0.5px solid #d4c4a0",borderRadius:"5px",padding:"5px 10px",fontSize:"11px",cursor:"pointer",color:"#7a5200",fontFamily:"monospace"}}>
-                            + {c.nom}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Liste stock */}
                   {stockProduits.length>0&&(
                     <div style={s.card}>
                       <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
@@ -2230,6 +2193,42 @@ export default function App() {
                   )}
                 </div>
               )}
+                  {pdfFactures.length>0&&(
+                    <div style={{...s.card,marginBottom:"14px"}}>
+                      <div style={{...s.lbl,marginBottom:"8px"}}>Factures / BL</div>
+                      <div style={{display:"grid",gap:"6px"}}>
+                        {pdfFactures.map(pdf=>(
+                          <div key={pdf.id} style={{display:"flex",alignItems:"center",gap:"10px",padding:"8px 12px",background:"#fff8ee",borderRadius:"6px",border:"0.5px solid #d4c4a0"}}>
+                            <div style={{width:"28px",height:"28px",background:"#fdd0d0",borderRadius:"4px",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                              <span style={{fontSize:"9px",fontWeight:500,color:"#cc2222",fontFamily:"monospace"}}>PDF</span>
+                            </div>
+                            <div style={{flex:1}}>
+                              <div style={{fontWeight:500,color:"#1a1205",fontSize:"12px"}}>{pdf.nom}</div>
+                              <div style={{fontSize:"10px",color:"#9a8870"}}>{pdf.dateUpload?.slice(0,10)}</div>
+                            </div>
+                            <button style={s.btnSm} onClick={()=>openPdfFacture(pdf)}>Ouvrir</button>
+                            <button style={{...s.ghostSm,color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>deleteFacture(pdf.id)}>Sup.</button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Catalogue rapide */}
+                  {stockProduits.length===0&&(
+                    <div style={{...s.card,marginBottom:"14px"}}>
+                      <div style={{...s.lbl,marginBottom:"10px"}}>Ajout rapide depuis le catalogue</div>
+                      <div style={{display:"flex",gap:"6px",flexWrap:"wrap"}}>
+                        {CATALOGUE_PRODUITS.filter(c=>!stockProduits.find(p=>p.nAmm===c.nAmm)).map((c,i)=>(
+                          <button key={i} onClick={()=>addFromCatalogue(c)}
+                            style={{background:"#fff8ee",border:"0.5px solid #d4c4a0",borderRadius:"5px",padding:"5px 10px",fontSize:"11px",cursor:"pointer",color:"#7a5200",fontFamily:"monospace"}}>
+                            + {c.nom}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
 
               {/* === BIODYNAMIE === */}
               {vigneTab==="biodynamie" && (
