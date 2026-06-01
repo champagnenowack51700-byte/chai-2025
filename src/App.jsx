@@ -1954,8 +1954,8 @@ teneurCuivre = grammes de cuivre metal par kg ou par litre du produit (0 si pas 
                 </div>
               )}
 
-              {/* Documents PDF prestataires */}
-              {filterTraitAn && (
+              {/* Documents PDF prestataires - uniquement onglet traitements */}
+              {vigneTab==="traitements" && filterTraitAn && (
                 <div style={{...s.card,marginTop:"14px"}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
                     <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#7a5200"}}>Calendriers prestataires</div>
