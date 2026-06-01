@@ -465,6 +465,7 @@ export default function App() {
   const [campagnesClosees, setCampagnesClosees]  = useState(()=>{ try{ const s=localStorage.getItem("chai_campagnes_closees"); return s?JSON.parse(s):[]; }catch{return [];} });
   const [pdfDocs,          setPdfDocs]          = useState([]);
   const [uploadingPdf,     setUploadingPdf]     = useState(false);
+  const [pdfFactures,      setPdfFactures]      = useState([]);
   const [biodynamies,      setBiodynamies]       = useState([]);
   const [showBiodyForm,    setShowBiodyForm]     = useState(false);
   const [editingBiody,     setEditingBiody]      = useState(null);
@@ -698,6 +699,33 @@ export default function App() {
   };
 
   // Submit stock produit
+  // Upload facture PDF
+  const uploadFacture = (file, nom) => {
+    if(!file) return;
+    if(file.size > 900000) { alert("Le PDF est trop volumineux (max 900 KB)."); return; }
+    setUploadingPdf(true);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const base64 = e.target.result;
+      const doc = { id:`facture_${Date.now()}`, nom:nom||file.name, base64, dateUpload:new Date().toISOString() };
+      setPdfFactures(prev=>[...prev, doc]);
+      fbSave("pdfFactures", doc.id, doc);
+      setUploadingPdf(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const deleteFacture = (id) => {
+    if(!window.confirm("Supprimer ce document ?")) return;
+    setPdfFactures(prev=>prev.filter(p=>p.id!==id));
+    fbDelete("pdfFactures", id);
+  };
+
+  const openPdfFacture = (pdf) => {
+    const w = window.open();
+    w.document.write(`<iframe src="${pdf.base64}" style="width:100%;height:100vh;border:none;"/>`);
+  };
+
   const submitStockProduit = () => {
     if(!produitForm.nom.trim()) return alert("Le nom du produit est requis.");
     const p = {
