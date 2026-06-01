@@ -462,7 +462,7 @@ export default function App() {
   const [editingTrait,     setEditingTrait]      = useState(null);
   const [filterTraitAn,    setFilterTraitAn]     = useState(new Date().getFullYear().toString());
   const [vigneTab,         setVigneTab]          = useState("traitements");
-  const [campagnesClosees, setCampagnesClosees]  = useState(()=>load("chai_campagnes_closees",[]));
+  const [campagnesClosees, setCampagnesClosees]  = useState(()=>{ try{ const s=localStorage.getItem("chai_campagnes_closees"); return s?JSON.parse(s):[]; }catch{return [];} });
   const [pdfDocs,          setPdfDocs]          = useState([]);
   const [uploadingPdf,     setUploadingPdf]     = useState(false);
   const [biodynamies,      setBiodynamies]       = useState([]);
