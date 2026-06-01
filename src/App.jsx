@@ -2221,8 +2221,6 @@ export default function App() {
                       </div>
                     </div>
                   )}
-              )}
-
                   {/* Catalogue rapide */}
                   {stockProduits.length===0&&(
                     <div style={{...s.card,marginBottom:"14px"}}>
@@ -2230,17 +2228,17 @@ export default function App() {
                       <div style={{display:"flex",gap:"6px",flexWrap:"wrap"}}>
                         {CATALOGUE_PRODUITS.filter(c=>!stockProduits.find(p=>p.nAmm===c.nAmm)).map((c,i)=>(
                           <button key={i} onClick={()=>addFromCatalogue(c)}
-                            style={{background:"#fff8ee",border:"0.5px solid #d4c4a0",borderRadius:"5px",padding:"5px 10px",fontSize:"11px",cursor:"pointer",color:"#7a5200",fontFamily:"monospace"}}>
+                            style={{background:"#fff8ee",border:"0.5px solid #d4c4a0",borderRadius:"5px",padding:"6px 12px",fontSize:"11px",cursor:"pointer",color:"#7a5200",fontFamily:"monospace",display:"flex",alignItems:"center",gap:"5px"}}>
+                            <span style={{background:(c.substanceActive||c.matiereActive)==="Cuivre"?"#fde8b8":(c.substanceActive||c.matiereActive)==="Soufre"?"#e6f0fb":"#ede5d4",color:(c.substanceActive||c.matiereActive)==="Cuivre"?"#7a5200":"#185FA5",borderRadius:"3px",padding:"0 4px",fontSize:"9px"}}>{c.substanceActive||c.matiereActive}</span>
                             + {c.nom}
                           </button>
                         ))}
                       </div>
                     </div>
                   )}
+                </div>
+              )}
 
-
-
-              {/* === BIODYNAMIE === */}
               {vigneTab==="biodynamie" && (
                 <div style={s.card}>
                   {biodyFiltres.length===0&&<div style={{color:"#9a8870",fontSize:"13px",padding:"12px 0",fontStyle:"italic"}}>Aucun passage biodynamique pour cette campagne.</div>}
