@@ -1420,7 +1420,7 @@ teneurCuivre = grammes de cuivre metal par kg ou par litre du produit (0 si pas 
       <nav style={{...s.nav, flexWrap:"nowrap", overflowX:"auto", WebkitOverflowScrolling:"touch"}} className="nav-scroll">
         <div style={s.brand}> Chai 2025</div>
         {[["vigne","Vigne"],["vendanges","Vendange"],["dashboard","Vue d'ensemble"],["tonneaux","Tonneaux"],["degustations","Dégustations"],["mouvements","Mouvements"],["tirages","Tirage"],["stock","Stock"]].map(([v,l])=>(
-          <button key={v} style={s.navBtn(view===v)} onClick={()=>setView(v)}>{l}</button>
+          <button key={v} style={s.navBtn(view===v)} onClick={()=>{setView(v);refreshFromFirebase();}}>{l}</button>
         ))}
         <div style={{flex:1}}/>
         <div style={{display:"flex",gap:"8px",alignItems:"center"}}>
