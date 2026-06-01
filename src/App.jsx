@@ -402,13 +402,6 @@ const HIST_TRAITEMENTS = [
   {campagne:"2024",numero:"22",date:"2024-06-27",surface:"8.20 ha",cuivreTotal:300,produits:[{nom:"Bouillie Bordelaise",dose:"1.5kg/ha",matiereActive:"Cuivre",cuivre:300},{nom:"Microthiol",dose:"9kg/ha",matiereActive:"Soufre"},{nom:"HelioSoufre",dose:"1l/ha",matiereActive:"Soufre"},{nom:"Essen-ciel",dose:"1l/ha",matiereActive:"Orange"}]},
   {campagne:"2024",numero:"23",date:"2024-07-01",surface:"8.20 ha",cuivreTotal:412,produits:[{nom:"Bouillie Bordelaise",dose:"1.5kg/ha",matiereActive:"Cuivre",cuivre:412},{nom:"Nordox",dose:"150g/ha",matiereActive:"Cuivre"},{nom:"Microthiol",dose:"9kg/ha",matiereActive:"Soufre"}]},
   {campagne:"2024",numero:"24",date:"2024-07-10",surface:"8.20 ha",cuivreTotal:400,produits:[{nom:"Bouillie Bordelaise",dose:"1kg/ha",matiereActive:"Cuivre",cuivre:400},{nom:"Nordox",dose:"270g/ha",matiereActive:"Cuivre"}]},
-  // 2026
-  {campagne:"2026",numero:"1",date:"2026-03-31",surface:"9.30 ha",cuivreTotal:250,produits:[{nom:"Bouillie Bordelaise",dose:"1.25kg/ha",matiereActive:"Cuivre",cuivre:250},{nom:"Microthiol",dose:"8kg/ha",matiereActive:"Soufre"},{nom:"Biofix",dose:"50ml/hl"}]},
-  {campagne:"2026",numero:"2",date:"2026-04-05",surface:"9.30 ha",cuivreTotal:200,produits:[{nom:"Bouillie Bordelaise",dose:"0.750kg/ha",matiereActive:"Cuivre",cuivre:200},{nom:"Nordox",dose:"70g/ha",matiereActive:"Cuivre"},{nom:"HelioSoufre",dose:"4l/ha",matiereActive:"Soufre"}]},
-  {campagne:"2026",numero:"3",date:"2026-04-08",surface:"9.30 ha",cuivreTotal:400,produits:[{nom:"Champ Flo",dose:"1l/ha",matiereActive:"Cuivre",cuivre:400},{nom:"Nordox",dose:"70g/ha",matiereActive:"Cuivre"},{nom:"HelioSoufre",dose:"5l/ha",matiereActive:"Soufre"}]},
-  {campagne:"2026",numero:"4",date:"2026-04-13",surface:"9.30 ha",cuivreTotal:350,produits:[{nom:"Bouillie Bordelaise",dose:"1.5kg/ha",matiereActive:"Cuivre",cuivre:350},{nom:"Nordox",dose:"70g/ha",matiereActive:"Cuivre"},{nom:"HelioSoufre",dose:"4l/ha",matiereActive:"Soufre"}]},
-  {campagne:"2026",numero:"5",date:"2026-04-22",surface:"9.30 ha",cuivreTotal:350,produits:[{nom:"Bouillie Bordelaise",dose:"1.5kg/ha",matiereActive:"Cuivre",cuivre:350},{nom:"Nordox",dose:"60g/ha",matiereActive:"Cuivre"},{nom:"Microthiol",dose:"8kg/ha",matiereActive:"Soufre"},{nom:"Biofix",dose:"50ml/hl"}]},
-  {campagne:"2026",numero:"6",date:"2026-05-03",surface:"9.30 ha",cuivreTotal:300,produits:[{nom:"Bouillie Bordelaise",dose:"1.5kg/ha",matiereActive:"Cuivre",cuivre:300},{nom:"Microthiol",dose:"10kg/ha",matiereActive:"Soufre"},{nom:"Pyrevert",dose:"1.5l/ha"},{nom:"Biofix",dose:"50ml/hl"}]},
 ];
 
 export default function App() {
