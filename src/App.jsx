@@ -3202,9 +3202,9 @@ teneurCuivre = grammes de cuivre metal par kg ou par litre du produit (0 si pas 
             <div style={{display:"grid",gap:"12px"}}>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
                 <div><span style={s.lbl}>Nom commercial *</span>
-                  <input style={s.inp} placeholder="ex. Bouillie Bordelaise RSR..." value={produitForm.nom} onChange={e=>setProduitForm(f=>({...f,nom:e.target.value}))}/></div>
+                   <input style={s.inp} placeholder="ex. Bouillie Bordelaise RSR..." value={produitForm.nom} onChange={e=>setProduitForm(f=>({...f,nom:e.target.value}))}/></div>
                 <div><span style={s.lbl}>N° AMM</span>
-                  <input style={s.inp} placeholder="ex. 9800474" value={produitForm.nAmm} onChange={e=>setProduitForm(f=>({...f,nAmm:e.target.value}))}/></div>
+                   <input style={s.inp} placeholder="ex. 9800474" value={produitForm.nAmm||""} onChange={e=>setProduitForm(f=>({...f,nAmm:e.target.value}))}/></div>
               </div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
                 <div><span style={s.lbl}>Substance active</span>
@@ -3226,21 +3226,21 @@ teneurCuivre = grammes de cuivre metal par kg ou par litre du produit (0 si pas 
               </div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
                 <div><span style={s.lbl}>Stock actuel ({produitForm.unite||"kg"})</span>
-                  <input type="number" step="0.1" style={s.inp} placeholder="0" value={produitForm.stockActuel||""} onChange={e=>setProduitForm(f=>({...f,stockActuel:e.target.value}))}/></div>
+                   <input type="number" step="0.1" style={s.inp} placeholder="0" value={produitForm.stockActuel||""} onChange={e=>setProduitForm(f=>({...f,stockActuel:e.target.value}))}/></div>
                 <div><span style={s.lbl}>Fournisseur</span>
-                  <input style={s.inp} placeholder="ex. Nufarm..." value={produitForm.fournisseur||""} onChange={e=>setProduitForm(f=>({...f,fournisseur:e.target.value}))}/></div>
+                   <input style={s.inp} placeholder="ex. Nufarm..." value={produitForm.fournisseur||""} onChange={e=>setProduitForm(f=>({...f,fournisseur:e.target.value}))}/></div>
                 <div><span style={s.lbl}>Observations</span>
-                  <input style={s.inp} placeholder="Notes..." value={produitForm.observations||""} onChange={e=>setProduitForm(f=>({...f,observations:e.target.value}))}/></div>
+                   <input style={s.inp} placeholder="Notes..." value={produitForm.observations||""} onChange={e=>setProduitForm(f=>({...f,observations:e.target.value}))}/></div>
               </div>
               {parseFloat(produitForm.teneurCuivre)>0&&(
                 <div style={{background:"#fde8b8",borderRadius:"6px",padding:"10px 14px",fontSize:"12px",color:"#7a5200"}}>
                   <strong>Exemple :</strong> 500g/ha x 9ha = 4500g produit x {Math.round(parseFloat(produitForm.teneurCuivre)/10)}% = <strong>{Math.round(500*(parseFloat(produitForm.teneurCuivre)/1000)*9)}g de cuivre total</strong>
                 </div>
               )}
+              <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
                 <button style={s.ghost} onClick={()=>{setShowStockProdForm(false);setEditingStockProd(null);}}>Annuler</button>
                 <button style={s.btn} onClick={submitStockProduit}>{editingStockProd?"Sauvegarder":"Enregistrer"}</button>
               </div>
-            </div>
           </div>
         </div>
       )}
