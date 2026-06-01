@@ -757,9 +757,7 @@ export default function App() {
           max_tokens:1000,
           messages:[{role:"user",content:[
             {type:"document",source:{type:"base64",media_type:"application/pdf",data:base64}},
-            {type:"text",text:`Extrait les produits phytosanitaires de ce BL/conseil. Reponds UNIQUEMENT en JSON valide, sans backticks ni texte autour. Format exact:
-[{"nom":"nom commercial","nAmm":"numero AMM","famille":"Mildiou/Oidium/Insectes/Autre","matiereActive":"Cuivre/Soufre/Pyrethrine/Autre","teneurCuivre":200,"unite":"kg/L","doseMax":3.75,"fournisseur":""}]
-teneurCuivre = grammes de cuivre metal par kg ou par litre du produit (0 si pas de cuivre).`}
+            {type:"text",text:"Extrait les produits phytosanitaires de ce BL/conseil. Reponds UNIQUEMENT en JSON valide, sans backticks ni texte. Format: [{nom,nAmm,substanceActive,teneurCuivre,unite,fournisseur}] - teneurCuivre=g de cuivre/kg ou /L (0 si pas de cuivre)."}
           ]}]
         })
       });
