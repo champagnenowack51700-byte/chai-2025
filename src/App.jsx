@@ -434,6 +434,23 @@ export default function App() {
   const [showTirageForm,     setShowTirageForm]     = useState(false);
   const [showDegorgeForm,   setShowDegorgeForm]   = useState(false);
   const [traitements,      setTraitements]       = useState([]);
+  const [stockProduits,    setStockProduits]     = useState([]);
+  const [showStockProdForm,setShowStockProdForm] = useState(false);
+  const [editingStockProd, setEditingStockProd]  = useState(null);
+  const [showImportBL,     setShowImportBL]      = useState(false);
+  const [importBLResult,   setImportBLResult]    = useState([]);
+  const [importBLLoading,  setImportBLLoading]   = useState(false);
+  const PRODUIT_EMPTY = {nom:"",nAmm:"",famille:"Mildiou",matiereActive:"Cuivre",teneurCuivre:"",unite:"kg",doseMax:"",stockInitial:"",stockActuel:"",fournisseur:"",observations:""};
+  const [produitForm,      setProduitForm]       = useState(PRODUIT_EMPTY);
+  const [surfaceCalcul,    setSurfaceCalcul]     = useState("9.30");
+  const CATALOGUE_PRODUITS = [
+    {nom:"Bouillie Bordelaise RSR Disperss NC",nAmm:"9800474",famille:"Mildiou",matiereActive:"Cuivre",teneurCuivre:200,unite:"kg",doseMax:3.75,fournisseur:""},
+    {nom:"Nordox 75 WG",nAmm:"2010130",famille:"Mildiou",matiereActive:"Cuivre",teneurCuivre:750,unite:"kg",doseMax:2,fournisseur:""},
+    {nom:"Champ Flo Ampli",nAmm:"2000517",famille:"Mildiou",matiereActive:"Cuivre",teneurCuivre:300,unite:"L",doseMax:1.3,fournisseur:"Nufarm"},
+    {nom:"Microthiol Special Disperss",nAmm:"9800245",famille:"Oidium",matiereActive:"Soufre",teneurCuivre:0,unite:"kg",doseMax:12.5,fournisseur:""},
+    {nom:"Heliosoufre",nAmm:"9000222",famille:"Oidium",matiereActive:"Soufre",teneurCuivre:0,unite:"L",doseMax:7.5,fournisseur:""},
+    {nom:"Pyrevert",nAmm:"2080038",famille:"Insectes",matiereActive:"Pyrethrine",teneurCuivre:0,unite:"L",doseMax:1.5,fournisseur:"Valagro"},
+  ];
   const [amendements,      setAmendements]       = useState([]);
   const [showTraitForm,    setShowTraitForm]     = useState(false);
   const [editingTrait,     setEditingTrait]      = useState(null);
@@ -671,6 +688,94 @@ export default function App() {
     w.document.write(`<iframe src="${pdf.base64}" style="width:100%;height:100vh;border:none;"/>`);
   };
 
+  // Calcul g de cuivre = dose (kg ou L) * teneur (g/kg ou g/L) * surface
+  const calculCuivre = (dose, teneur, surface, unite) => {
+    const d = parseFloat(dose)||0;
+    const t = parseFloat(teneur)||0;
+    const s = parseFloat(surface)||0;
+    if(!d || !t || !s) return null;
+    // dose en kg/ha ou L/ha * teneur g/kg ou g/L = g/ha * surface ha = g total
+    return Math.round(d * t * s);
+  };
+
+  // Submit stock produit
+  const submitStockProduit = () => {
+    if(!produitForm.nom.trim()) return alert("Le nom du produit est requis.");
+    const p = {
+      id: editingStockProd ? editingStockProd.id : `prod_${Date.now()}`,
+      ...produitForm,
+      stockActuel: editingStockProd ? produitForm.stockActuel : produitForm.stockInitial,
+      timestamp: new Date().toISOString()
+    };
+    if(editingStockProd){
+      setStockProduits(prev=>prev.map(x=>x.id===p.id?p:x));
+    } else {
+      setStockProduits(prev=>[p,...prev]);
+    }
+    fbSave("stockProduits", p.id, p);
+    setProduitForm(PRODUIT_EMPTY); setEditingStockProd(null); setShowStockProdForm(false);
+  };
+
+  const addFromCatalogue = (cat) => {
+    const p = {
+      id:`prod_${Date.now()}`,
+      ...PRODUIT_EMPTY,
+      nom:cat.nom, nAmm:cat.nAmm, famille:cat.famille,
+      matiereActive:cat.matiereActive, teneurCuivre:String(cat.teneurCuivre),
+      unite:cat.unite, doseMax:String(cat.doseMax), fournisseur:cat.fournisseur||"",
+      stockInitial:"0", stockActuel:"0", timestamp:new Date().toISOString()
+    };
+    setStockProduits(prev=>[p,...prev]);
+    fbSave("stockProduits", p.id, p);
+  };
+
+  const updateStockProduit = (id, delta) => {
+    setStockProduits(prev=>prev.map(p=>{
+      if(p.id!==id) return p;
+      const newStock = Math.max(0, (parseFloat(p.stockActuel)||0) + delta);
+      const updated = {...p, stockActuel:String(newStock)};
+      fbSave("stockProduits", id, updated);
+      return updated;
+    }));
+  };
+
+  // Import BL via Claude API
+  const importerBL = async (file) => {
+    if(!file) return;
+    setImportBLLoading(true);
+    setImportBLResult([]);
+    try {
+      const base64 = await new Promise((res,rej)=>{ const r=new FileReader(); r.onload=e=>res(e.target.result.split(",")[1]); r.onerror=rej; r.readAsDataURL(file); });
+      const resp = await fetch("https://api.anthropic.com/v1/messages",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+          model:"claude-sonnet-4-20250514",
+          max_tokens:1000,
+          messages:[{role:"user",content:[
+            {type:"document",source:{type:"base64",media_type:"application/pdf",data:base64}},
+            {type:"text",text:`Extrait les produits phytosanitaires de ce BL/conseil. Reponds UNIQUEMENT en JSON valide, sans backticks ni texte autour. Format exact:
+[{"nom":"nom commercial","nAmm":"numero AMM","famille":"Mildiou/Oidium/Insectes/Autre","matiereActive":"Cuivre/Soufre/Pyrethrine/Autre","teneurCuivre":200,"unite":"kg/L","doseMax":3.75,"fournisseur":""}]
+teneurCuivre = grammes de cuivre metal par kg ou par litre du produit (0 si pas de cuivre).`}
+          ]}]
+        })
+      });
+      const data = await resp.json();
+      const text = data.content?.map(c=>c.text||"").join("");
+      const produits = JSON.parse(text.replace(/```json|```/g,"").trim());
+      setImportBLResult(produits);
+    } catch(e) { alert("Erreur import: "+e.message); }
+    setImportBLLoading(false);
+  };
+
+  const confirmerImportBL = () => {
+    importBLResult.forEach(cat => {
+      const existe = stockProduits.find(p=>p.nAmm===cat.nAmm||p.nom.toLowerCase()===cat.nom.toLowerCase());
+      if(!existe) addFromCatalogue(cat);
+    });
+    setImportBLResult([]); setShowImportBL(false);
+  };
+
   const isCampagneClosed = (campagne) => campagnesClosees.includes(String(campagne));
 
   const cloturerCampagne = (campagne) => {
@@ -778,6 +883,7 @@ export default function App() {
       fbLoad("traitements", setTraitements);
     });
     fbLoad("biodynamies",  setBiodynamies);
+    fbLoad("stockProduits",setStockProduits);
     fbLoad("pdfDocs",      setPdfDocs);
     fbLoad("amendements",  setAmendements);
     fbLoad("traitements",  setTraitements);
@@ -1789,7 +1895,7 @@ export default function App() {
 
               {/* Onglets */}
               <div style={{display:"flex",borderBottom:"0.5px solid #d4c4a0",marginBottom:"16px"}}>
-                {[["traitements","Traitements"],["biodynamie","Biodynamie"],["amendements","Amendements"]].map(([tab,lbl])=>(
+                {[["traitements","Traitements"],["biodynamie","Biodynamie"],["amendements","Amendements"],["stockprod","Stock Produits"]].map(([tab,lbl])=>(
                   <button key={tab} style={s.tabBtn(vigneTab===tab)} onClick={()=>setVigneTab(tab)}>{lbl}</button>
                 ))}
               </div>
@@ -1899,6 +2005,133 @@ export default function App() {
                       </div>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {/* === STOCK PRODUITS === */}
+              {vigneTab==="stockprod" && (
+                <div>
+                  {/* Actions */}
+                  <div style={{display:"flex",gap:"8px",marginBottom:"14px",flexWrap:"wrap",alignItems:"center"}}>
+                    <label style={{...s.btnSm,cursor:"pointer",background:"#fff8ee",color:"#7a5200",border:"0.5px solid #d4c4a0"}}>
+                      {importBLLoading?"Analyse en cours...":"Importer un BL (PDF)"}
+                      <input type="file" accept=".pdf" style={{display:"none"}} onChange={e=>{if(e.target.files[0]){importerBL(e.target.files[0]);setShowImportBL(true);} e.target.value="";}}/>
+                    </label>
+                    <button style={s.btnSm} onClick={()=>{setProduitForm(PRODUIT_EMPTY);setEditingStockProd(null);setShowStockProdForm(true);}}>+ Saisie manuelle</button>
+                    <div style={{marginLeft:"auto",fontSize:"11px",color:"#9a8870"}}>{stockProduits.length} produit(s) en stock</div>
+                  </div>
+
+                  {/* Resultat import BL */}
+                  {importBLResult.length>0&&(
+                    <div style={{...s.card,marginBottom:"14px",background:"#f0f8e8",border:"1px solid #7ab848"}}>
+                      <div style={{fontWeight:500,color:"#2d6a00",marginBottom:"10px"}}>Produits detectes dans le BL - confirmer l'ajout :</div>
+                      {importBLResult.map((p,i)=>(
+                        <div key={i} style={{display:"flex",alignItems:"center",gap:"10px",padding:"6px 0",borderBottom:"0.5px solid #c8e8a0",fontSize:"12px"}}>
+                          <span style={{fontWeight:500,color:"#1a1205",flex:1}}>{p.nom}</span>
+                          <span style={{color:"#9a8870",fontFamily:"monospace"}}>{p.nAmm}</span>
+                          <span style={{background:p.matiereActive==="Cuivre"?"#fde8b8":"#e6f0fb",color:p.matiereActive==="Cuivre"?"#7a5200":"#185FA5",borderRadius:"3px",padding:"1px 6px",fontSize:"10px"}}>{p.matiereActive}</span>
+                          {p.teneurCuivre>0&&<span style={{color:"#c47800",fontFamily:"monospace",fontSize:"11px"}}>{p.teneurCuivre}g Cu/kg</span>}
+                          {stockProduits.find(x=>x.nAmm===p.nAmm||x.nom.toLowerCase()===p.nom.toLowerCase())&&
+                            <span style={{fontSize:"10px",color:"#9a8870",fontStyle:"italic"}}>deja present</span>}
+                        </div>
+                      ))}
+                      <div style={{display:"flex",gap:"8px",marginTop:"12px"}}>
+                        <button style={s.btn} onClick={confirmerImportBL}>Confirmer l'ajout</button>
+                        <button style={s.ghost} onClick={()=>{setImportBLResult([]);setShowImportBL(false);}}>Annuler</button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Catalogue rapide */}
+                  {stockProduits.length===0&&(
+                    <div style={{...s.card,marginBottom:"14px"}}>
+                      <div style={{...s.lbl,marginBottom:"10px"}}>Ajout rapide depuis le catalogue</div>
+                      <div style={{display:"flex",gap:"6px",flexWrap:"wrap"}}>
+                        {CATALOGUE_PRODUITS.filter(c=>!stockProduits.find(p=>p.nAmm===c.nAmm)).map((c,i)=>(
+                          <button key={i} onClick={()=>addFromCatalogue(c)}
+                            style={{background:"#fff8ee",border:"0.5px solid #d4c4a0",borderRadius:"5px",padding:"5px 10px",fontSize:"11px",cursor:"pointer",color:"#7a5200",fontFamily:"monospace"}}>
+                            + {c.nom}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Liste stock */}
+                  {stockProduits.length>0&&(
+                    <div style={s.card}>
+                      <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
+                        <thead>
+                          <tr style={{borderBottom:"1px solid #d4c4a0",background:"#fff8ee"}}>
+                        {/* Calculateur rapide */}
+                        <div style={{display:"flex",alignItems:"center",gap:"10px",padding:"8px 10px",background:"#fff8ee",borderRadius:"6px",border:"0.5px solid #d4c4a0",marginBottom:"12px",flexWrap:"wrap",fontSize:"12px"}}>
+                          <span style={{color:"#7a5200",fontWeight:500}}>Calculateur :</span>
+                          <div style={{display:"flex",alignItems:"center",gap:"5px"}}>
+                            <span style={{color:"#9a8870"}}>Surface :</span>
+                            <input type="number" step="0.01" style={{...s.inp,width:"70px",padding:"3px 6px",fontSize:"11px",display:"inline-block"}}
+                              value={surfaceCalcul} onChange={e=>setSurfaceCalcul(e.target.value)}/>
+                            <span style={{color:"#9a8870"}}>ha</span>
+                          </div>
+                          <span style={{color:"#9a8870",fontSize:"11px"}}>Modifier la surface pour recalculer les doses</span>
+                        </div>
+                        {["Produit","N°AMM","Matiere active","Cu g/kg|L","Dose max","Cu/ha","Sur "+surfaceCalcul+"ha","Stock actuel","Actions"].map(h=>(
+                              <th key={h} style={{textAlign:"left",padding:"7px 10px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#9a8870",fontWeight:500}}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {stockProduits.map((p,i)=>{
+                            const stock = parseFloat(p.stockActuel)||0;
+                            const init  = parseFloat(p.stockInitial)||0;
+                            const pct   = init>0 ? Math.round(stock/init*100) : 100;
+                            return (
+                              <tr key={p.id} style={{borderBottom:"1px solid #ede5d4",background:i%2===0?"transparent":"#fffbf3"}}>
+                                <td style={{padding:"8px 10px"}}>
+                                  <div style={{fontWeight:500,color:"#1a1205"}}>{p.nom}</div>
+                                  {p.fournisseur&&<div style={{fontSize:"10px",color:"#9a8870"}}>{p.fournisseur}</div>}
+                                </td>
+                                <td style={{padding:"8px 10px",fontFamily:"monospace",fontSize:"11px",color:"#9a8870"}}>{p.nAmm}</td>
+                                <td style={{padding:"8px 10px"}}>
+                                  <span style={{background:p.matiereActive==="Cuivre"?"#fde8b8":p.matiereActive==="Soufre"?"#e6f0fb":"#ede5d4",color:p.matiereActive==="Cuivre"?"#7a5200":p.matiereActive==="Soufre"?"#185FA5":"#5f5e5a",borderRadius:"3px",padding:"1px 6px",fontSize:"10px",fontFamily:"monospace"}}>
+                                    {p.matiereActive}
+                                  </span>
+                                </td>
+                                <td style={{padding:"8px 10px",fontFamily:"monospace",color:parseFloat(p.teneurCuivre)>0?"#c47800":"#9a8870",fontWeight:parseFloat(p.teneurCuivre)>0?500:400}}>
+                                  {parseFloat(p.teneurCuivre)>0?`${p.teneurCuivre}g/kg`:"-"}
+                                </td>
+                                <td style={{padding:"8px 10px",color:"#6a5838",fontFamily:"monospace"}}>{p.doseMax} {p.unite}/ha</td>
+                                <td style={{padding:"8px 10px",fontFamily:"monospace",color:"#c47800",fontWeight:500}}>
+                                  {parseFloat(p.teneurCuivre)>0?`${Math.round(parseFloat(p.doseMax)*parseFloat(p.teneurCuivre))}g`:"-"}
+                                </td>
+                                <td style={{padding:"8px 10px",fontFamily:"monospace",color:"#7a5200",fontWeight:500}}>
+                                  {parseFloat(p.teneurCuivre)>0?`${Math.round(parseFloat(p.doseMax)*parseFloat(p.teneurCuivre)*(parseFloat(surfaceCalcul)||0))}g`:"-"}
+                                </td>
+                                <td style={{padding:"8px 10px"}}>
+                                  <div style={{display:"flex",alignItems:"center",gap:"6px"}}>
+                                    <button style={{background:"#f0f0f0",border:"none",borderRadius:"3px",width:"20px",height:"20px",cursor:"pointer",fontWeight:700,color:"#555"}} onClick={()=>updateStockProduit(p.id,-1)}>-</button>
+                                    <span style={{fontWeight:500,color:stock<=0?"#cc2222":pct<20?"#c47800":"#1a7a40",minWidth:"50px",textAlign:"center",fontFamily:"monospace"}}>
+                                      {stock} {p.unite}
+                                    </span>
+                                    <button style={{background:"#f0f0f0",border:"none",borderRadius:"3px",width:"20px",height:"20px",cursor:"pointer",fontWeight:700,color:"#555"}} onClick={()=>updateStockProduit(p.id,1)}>+</button>
+                                  </div>
+                                  <div style={{height:"3px",background:"#e8dcc6",borderRadius:"2px",marginTop:"4px",width:"80px"}}>
+                                    <div style={{height:"100%",borderRadius:"2px",background:pct<20?"#cc2222":pct<50?"#c47800":"#1a7a40",width:`${Math.min(100,pct)}%`}}/>
+                                  </div>
+                                </td>
+                                <td style={{padding:"8px 10px"}}>
+                                  <div style={{display:"flex",gap:"3px"}}>
+                                    <button style={{...s.ghostSm,fontSize:"10px"}} onClick={()=>{setProduitForm({...PRODUIT_EMPTY,...p});setEditingStockProd(p);setShowStockProdForm(true);}}>Mod.</button>
+                                    <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
+                                      onClick={()=>{if(window.confirm("Supprimer ?")){ setStockProduits(prev=>prev.filter(x=>x.id!==p.id)); fbDelete("stockProduits",p.id); }}}>Sup.</button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -2961,6 +3194,65 @@ export default function App() {
               <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
                 <button style={s.ghost} onClick={()=>{setShowVendangeForm(false);setEditingVendange(null);}}>Annuler</button>
                 <button style={s.btn} onClick={submitVendange}>{editingVendange?"Sauvegarder":"Enregistrer l'apport"}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* == MODAL STOCK PRODUIT == */}
+      {showStockProdForm && (
+        <div style={s.modal}>
+          <div style={{...s.modalBox,width:"580px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#7a5200"}}>{editingStockProd?"Modifier le produit":"Nouveau produit"}</div>
+              <button style={s.ghost} onClick={()=>{setShowStockProdForm(false);setEditingStockProd(null);}}>x</button>
+            </div>
+            <div style={{display:"grid",gap:"12px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                <div><span style={s.lbl}>Nom commercial *</span>
+                  <input style={s.inp} placeholder="ex. Bouillie Bordelaise RSR..." value={produitForm.nom} onChange={e=>setProduitForm(f=>({...f,nom:e.target.value}))}/></div>
+                <div><span style={s.lbl}>N° AMM</span>
+                  <input style={s.inp} placeholder="ex. 9800474" value={produitForm.nAmm} onChange={e=>setProduitForm(f=>({...f,nAmm:e.target.value}))}/></div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
+                <div><span style={s.lbl}>Famille</span>
+                  <select style={s.sel} value={produitForm.famille} onChange={e=>setProduitForm(f=>({...f,famille:e.target.value}))}>
+                    <option>Mildiou</option><option>Oidium</option><option>Insectes</option><option>Botrytis</option><option>Autre</option>
+                  </select></div>
+                <div><span style={s.lbl}>Matiere active</span>
+                  <select style={s.sel} value={produitForm.matiereActive} onChange={e=>setProduitForm(f=>({...f,matiereActive:e.target.value}))}>
+                    <option>Cuivre</option><option>Soufre</option><option>Pyrethrine</option><option>Bicarbonate</option><option>Autre</option>
+                  </select></div>
+                <div><span style={s.lbl}>Teneur Cu (g/kg ou g/L)</span>
+                  <input type="number" style={s.inp} placeholder="0" value={produitForm.teneurCuivre} onChange={e=>setProduitForm(f=>({...f,teneurCuivre:e.target.value}))}/></div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
+                <div><span style={s.lbl}>Unite</span>
+                  <select style={s.sel} value={produitForm.unite} onChange={e=>setProduitForm(f=>({...f,unite:e.target.value}))}>
+                    <option value="kg">kg</option><option value="L">L</option>
+                  </select></div>
+                <div><span style={s.lbl}>Dose max /ha</span>
+                  <input type="number" step="0.01" style={s.inp} placeholder="ex. 3.75" value={produitForm.doseMax} onChange={e=>setProduitForm(f=>({...f,doseMax:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Stock initial ({produitForm.unite})</span>
+                  <input type="number" step="0.1" style={s.inp} placeholder="0" value={produitForm.stockInitial} onChange={e=>setProduitForm(f=>({...f,stockInitial:e.target.value}))}/></div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                <div><span style={s.lbl}>Fournisseur</span>
+                  <input style={s.inp} placeholder="ex. Nufarm, Valagro..." value={produitForm.fournisseur} onChange={e=>setProduitForm(f=>({...f,fournisseur:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Observations</span>
+                  <input style={s.inp} placeholder="Notes..." value={produitForm.observations} onChange={e=>setProduitForm(f=>({...f,observations:e.target.value}))}/></div>
+              </div>
+              {/* Calcul cuivre */}
+              {parseFloat(produitForm.teneurCuivre)>0&&parseFloat(produitForm.doseMax)>0&&(
+                <div style={{background:"#fde8b8",borderRadius:"6px",padding:"10px 14px",fontSize:"12px",color:"#7a5200"}}>
+                  A dose max sur 9.30 ha : <strong>{Math.round(parseFloat(produitForm.doseMax)*parseFloat(produitForm.teneurCuivre)*9.30)}g</strong> de cuivre total
+                  - soit <strong>{Math.round(parseFloat(produitForm.doseMax)*parseFloat(produitForm.teneurCuivre))}g/ha</strong>
+                </div>
+              )}
+              <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
+                <button style={s.ghost} onClick={()=>{setShowStockProdForm(false);setEditingStockProd(null);}}>Annuler</button>
+                <button style={s.btn} onClick={submitStockProduit}>{editingStockProd?"Sauvegarder":"Enregistrer"}</button>
               </div>
             </div>
           </div>
