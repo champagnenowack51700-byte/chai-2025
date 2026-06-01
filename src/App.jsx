@@ -444,6 +444,13 @@ export default function App() {
   const [showTraitForm,    setShowTraitForm]     = useState(false);
   const [editingTrait,     setEditingTrait]      = useState(null);
   const [filterTraitAn,    setFilterTraitAn]     = useState(new Date().getFullYear().toString());
+  const [vigneTab,         setVigneTab]          = useState("traitements");
+  const [campagnesClosees, setCampagnesClosees]  = useState(()=>load("chai_campagnes_closees",[]));
+  const [biodynamies,      setBiodynamies]       = useState([]);
+  const [showBiodyForm,    setShowBiodyForm]     = useState(false);
+  const [biodyForm,        setBiodyForm]         = useState({campagne:new Date().getFullYear().toString(),date:"",surface:"",produit:"",observations:""});
+  const [showAmendForm,    setShowAmendForm]     = useState(false);
+  const [amendForm,        setAmendForm]         = useState({campagne:new Date().getFullYear().toString(),parcelle:"",surface:"",produit:"",quantite:"",nTotal:"",nParHa:"",observations:""});
   const TRAIT_EMPTY = {
     campagne: new Date().getFullYear().toString(),
     numero: "",
@@ -639,6 +646,36 @@ export default function App() {
   const getStockActuel = () => getLots();
 
   // Traitement
+  const isCampagneClosed = (campagne) => campagnesClosees.includes(String(campagne));
+
+  const cloturerCampagne = (campagne) => {
+    if(!window.confirm(`Cloture la campagne ${campagne} ? Les traitements ne pourront plus etre modifies.`)) return;
+    setCampagnesClosees(prev=>[...new Set([...prev, String(campagne)])]);
+  };
+
+  const rouvrirCampagne = (campagne) => {
+    if(!window.confirm(`Rouvrir la campagne ${campagne} ?`)) return;
+    setCampagnesClosees(prev=>prev.filter(c=>c!==String(campagne)));
+  };
+
+  const submitBiody = () => {
+    if(!biodyForm.date) return alert("La date est requise.");
+    const b = { id:`biody_${Date.now()}`, ...biodyForm, timestamp:new Date().toISOString() };
+    setBiodynamies(prev=>[b,...prev]);
+    fbSave("biodynamies", b.id, b);
+    setBiodyForm({campagne:new Date().getFullYear().toString(),date:"",surface:"",produit:"",observations:""});
+    setShowBiodyForm(false);
+  };
+
+  const submitAmend = () => {
+    if(!amendForm.parcelle.trim()) return alert("La parcelle est requise.");
+    const a = { id:`amend_${Date.now()}`, ...amendForm, timestamp:new Date().toISOString() };
+    setAmendements(prev=>[a,...prev]);
+    fbSave("amendements", a.id, a);
+    setAmendForm({campagne:new Date().getFullYear().toString(),parcelle:"",surface:"",produit:"",quantite:"",nTotal:"",nParHa:"",observations:""});
+    setShowAmendForm(false);
+  };
+
   const submitTraitement = () => {
     if(!traitForm.date) return alert("La date est requise.");
     if(!traitForm.campagne) return alert("La campagne est requise.");
@@ -704,6 +741,7 @@ export default function App() {
     fbLoad("parcelles",    setParcelles);
     fbLoad("degorgements", setDegorgements);
     fbLoad("traitements",  setTraitements);
+    fbLoad("biodynamies",  setBiodynamies);
     fbLoad("amendements",  setAmendements);
     fbLoad("traitements",  setTraitements);
     fbLoad("amendements",  setAmendements);
@@ -1748,37 +1786,59 @@ export default function App() {
 
         {/* -- VIGNE -- */}
         {view==="vigne" && (()=>{
-          // Merge historical + user traitements
           const allTraits = [...HIST_TRAITEMENTS, ...traitements].sort((a,b)=>new Date(b.date)-new Date(a.date));
           const campagnes = [...new Set(allTraits.map(t=>t.campagne))].sort().reverse();
           const traitsFiltres = filterTraitAn ? allTraits.filter(t=>t.campagne===filterTraitAn) : allTraits;
-          // Calcul cuivre total par campagne
+          const biodyFiltres  = filterTraitAn ? biodynamies.filter(b=>b.campagne===filterTraitAn) : biodynamies;
+          const amendFiltres  = filterTraitAn ? amendements.filter(a=>a.campagne===filterTraitAn) : amendements;
           const cuivreParCampagne = {};
           campagnes.forEach(c=>{
-            const traits = allTraits.filter(t=>t.campagne===c && t.cuivreTotal);
-            cuivreParCampagne[c] = traits.reduce((s,t)=>s+(parseFloat(t.cuivreTotal)||0),0);
+            cuivreParCampagne[c] = allTraits.filter(t=>t.campagne===c).reduce((s,t)=>s+(parseFloat(t.cuivreTotal)||0),0);
           });
-          const limiteCuivre = 4000; // 4kg/ha sur 7 ans = limite BIO
+          const closed = isCampagneClosed(filterTraitAn);
           return (
             <div>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"16px"}}>
-                <div style={{fontSize:"13px",color:"#7a6840"}}>{allTraits.length} traitement(s) enregistres</div>
-                <button style={s.btn} onClick={()=>{setTraitForm(TRAIT_EMPTY);setEditingTrait(null);setShowTraitForm(true);}}>
-                  + Nouveau traitement
-                </button>
+              {/* Header */}
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px",flexWrap:"wrap",gap:"8px"}}>
+                <div style={{fontSize:"13px",color:"#7a6840"}}>{allTraits.length} traitement(s)</div>
+                <div style={{display:"flex",gap:"8px",alignItems:"center"}}>
+                  {filterTraitAn && !closed && (
+                    <button style={{...s.ghost,fontSize:"11px",color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>cloturerCampagne(filterTraitAn)}>
+                      Cloture campagne {filterTraitAn}
+                    </button>
+                  )}
+                  {filterTraitAn && closed && (
+                    <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
+                      <span style={{background:"#fdd0d0",color:"#cc2222",borderRadius:"4px",padding:"3px 10px",fontSize:"11px",fontFamily:"monospace"}}>Campagne {filterTraitAn} cloturee</span>
+                      <button style={{...s.ghost,fontSize:"10px"}} onClick={()=>rouvrirCampagne(filterTraitAn)}>Rouvrir</button>
+                    </div>
+                  )}
+                  {!closed && vigneTab==="traitements" && (
+                    <button style={s.btn} onClick={()=>{setTraitForm({...TRAIT_EMPTY,campagne:filterTraitAn||new Date().getFullYear().toString()});setEditingTrait(null);setShowTraitForm(true);}}>
+                      + Traitement
+                    </button>
+                  )}
+                  {!closed && vigneTab==="biodynamie" && (
+                    <button style={s.btn} onClick={()=>{setBiodyForm(f=>({...f,campagne:filterTraitAn||new Date().getFullYear().toString()}));setShowBiodyForm(true);}}>
+                      + Biodynamie
+                    </button>
+                  )}
+                  {!closed && vigneTab==="amendements" && (
+                    <button style={s.btn} onClick={()=>{setAmendForm(f=>({...f,campagne:filterTraitAn||new Date().getFullYear().toString()}));setShowAmendForm(true);}}>
+                      + Amendement
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Filtre campagne */}
-              <div style={{display:"flex",gap:"6px",marginBottom:"16px",flexWrap:"wrap",alignItems:"center"}}>
+              <div style={{display:"flex",gap:"6px",marginBottom:"14px",flexWrap:"wrap",alignItems:"center"}}>
                 <span style={{fontSize:"10px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#9a8870",fontFamily:"monospace",marginRight:"4px"}}>Campagne :</span>
-                <button onClick={()=>setFilterTraitAn("")}
-                  style={{padding:"4px 12px",borderRadius:"4px",border:`0.5px solid ${!filterTraitAn?"#b8860b":"#d4c4a0"}`,background:!filterTraitAn?"#f5e8cc":"transparent",color:!filterTraitAn?"#7a5200":"#9a8870",fontSize:"11px",cursor:"pointer",fontFamily:"monospace"}}>
-                  Toutes
-                </button>
                 {campagnes.map(c=>(
                   <button key={c} onClick={()=>setFilterTraitAn(c)}
-                    style={{padding:"4px 12px",borderRadius:"4px",border:`0.5px solid ${filterTraitAn===c?"#2d6a00":"#d4c4a0"}`,background:filterTraitAn===c?"#d4edc0":"transparent",color:filterTraitAn===c?"#2d6a00":"#9a8870",fontSize:"11px",cursor:"pointer",fontFamily:"monospace",display:"flex",alignItems:"center",gap:"4px"}}>
+                    style={{padding:"4px 10px",borderRadius:"4px",border:`0.5px solid ${filterTraitAn===c?"#2d6a00":"#d4c4a0"}`,background:filterTraitAn===c?"#d4edc0":"transparent",color:filterTraitAn===c?"#2d6a00":"#9a8870",fontSize:"11px",cursor:"pointer",fontFamily:"monospace",display:"flex",alignItems:"center",gap:"4px"}}>
                     {c}
+                    {isCampagneClosed(c)&&<span style={{fontSize:"9px",color:"#cc2222"}}>cloturee</span>}
                     <span style={{background:cuivreParCampagne[c]>3000?"#fdd0d0":cuivreParCampagne[c]>2000?"#fde8b8":"#d4edc0",color:cuivreParCampagne[c]>3000?"#cc2222":cuivreParCampagne[c]>2000?"#c47800":"#2d6a00",borderRadius:"3px",padding:"0 4px",fontSize:"10px",fontWeight:500}}>
                       {(cuivreParCampagne[c]/1000).toFixed(2)}kg Cu
                     </span>
@@ -1786,81 +1846,165 @@ export default function App() {
                 ))}
               </div>
 
-              {/* KPIs campagne selectionnee */}
-              {filterTraitAn && (()=>{
-                const cuivreCamp = cuivreParCampagne[filterTraitAn]||0;
-                const nbTraits = traitsFiltres.length;
-                const moisAvril = traitsFiltres.filter(t=>t.date&&t.date.slice(5,7)==="04").reduce((s,t)=>s+(parseFloat(t.cuivreTotal)||0),0);
-                const moisMai   = traitsFiltres.filter(t=>t.date&&t.date.slice(5,7)==="05").reduce((s,t)=>s+(parseFloat(t.cuivreTotal)||0),0);
-                const moisJuin  = traitsFiltres.filter(t=>t.date&&t.date.slice(5,7)==="06").reduce((s,t)=>s+(parseFloat(t.cuivreTotal)||0),0);
-                const moisJuil  = traitsFiltres.filter(t=>t.date&&t.date.slice(5,7)==="07").reduce((s,t)=>s+(parseFloat(t.cuivreTotal)||0),0);
+              {/* KPIs */}
+              {filterTraitAn && vigneTab==="traitements" && (()=>{
+                const cu = cuivreParCampagne[filterTraitAn]||0;
                 return (
-                  <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))",gap:"10px",marginBottom:"16px"}}>
+                  <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(120px,1fr))",gap:"8px",marginBottom:"14px"}}>
                     {[
-                      {lbl:"Nb traitements",val:nbTraits,col:"#7a5200"},
-                      {lbl:"Cuivre total",val:`${(cuivreCamp/1000).toFixed(3)} kg/ha`,col:cuivreCamp>3000?"#cc2222":cuivreCamp>2000?"#c47800":"#1a7a40"},
-                      {lbl:"Avril",val:`${moisAvril}g`,col:"#185FA5"},
-                      {lbl:"Mai",val:`${moisMai}g`,col:"#185FA5"},
-                      {lbl:"Juin",val:`${moisJuin}g`,col:"#185FA5"},
-                      {lbl:"Juillet",val:`${moisJuil}g`,col:"#185FA5"},
+                      {lbl:"Traitements",val:traitsFiltres.length},
+                      {lbl:"Total Cuivre",val:`${(cu/1000).toFixed(3)}kg`,col:cu>3000?"#cc2222":cu>2000?"#c47800":"#1a7a40"},
+                      {lbl:"Avril",val:`${traitsFiltres.filter(t=>t.date?.slice(5,7)==="04").reduce((s,t)=>s+(parseFloat(t.cuivreTotal)||0),0)}g`,col:"#185FA5"},
+                      {lbl:"Mai",val:`${traitsFiltres.filter(t=>t.date?.slice(5,7)==="05").reduce((s,t)=>s+(parseFloat(t.cuivreTotal)||0),0)}g`,col:"#185FA5"},
+                      {lbl:"Juin",val:`${traitsFiltres.filter(t=>t.date?.slice(5,7)==="06").reduce((s,t)=>s+(parseFloat(t.cuivreTotal)||0),0)}g`,col:"#185FA5"},
+                      {lbl:"Juillet",val:`${traitsFiltres.filter(t=>t.date?.slice(5,7)==="07").reduce((s,t)=>s+(parseFloat(t.cuivreTotal)||0),0)}g`,col:"#185FA5"},
+                      {lbl:"Aout",val:`${traitsFiltres.filter(t=>t.date?.slice(5,7)==="08").reduce((s,t)=>s+(parseFloat(t.cuivreTotal)||0),0)}g`,col:"#185FA5"},
                     ].map((k,i)=>(
-                      <div key={i} style={{...s.card,padding:"12px 14px"}}>
+                      <div key={i} style={{...s.card,padding:"10px 12px"}}>
                         <div style={s.lbl}>{k.lbl}</div>
-                        <div style={{fontSize:"18px",fontWeight:500,color:k.col,lineHeight:1.2}}>{k.val}</div>
+                        <div style={{fontSize:"16px",fontWeight:500,color:k.col||"#b8860b",lineHeight:1.2}}>{k.val}</div>
                       </div>
                     ))}
                   </div>
                 );
               })()}
 
-              {/* Liste des traitements */}
-              <div style={s.card}>
-                <div style={{overflowX:"auto"}}>
-                  <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
-                    <thead>
-                      <tr style={{borderBottom:"1px solid #d4c4a0",background:"#fff8ee"}}>
-                        {["N°","Date","Surface","Produits","Cu/ha",""].map(h=>(
-                          <th key={h} style={{textAlign:"left",padding:"7px 10px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#9a8870",fontWeight:500}}>{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {traitsFiltres.map((t,i)=>{
-                        const isHistorique = HIST_TRAITEMENTS.some(h=>h.campagne===t.campagne&&h.numero===t.numero);
-                        return (
-                          <tr key={t.id||i} style={{borderBottom:"1px solid #ede5d4",background:i%2===0?"transparent":"#fffbf3"}}>
-                            <td style={{padding:"8px 10px",fontFamily:"monospace",color:"#b8860b",fontWeight:500}}>N°{t.numero}</td>
-                            <td style={{padding:"8px 10px",color:"#6a5838"}}>{t.date}</td>
-                            <td style={{padding:"8px 10px",color:"#6a5838"}}>{t.surface}</td>
-                            <td style={{padding:"8px 10px"}}>
-                              <div style={{display:"flex",gap:"4px",flexWrap:"wrap"}}>
-                                {(t.produits||[]).map((p,j)=>(
-                                  <span key={j} style={{background:p.matiereActive==="Cuivre"?"#fde8b8":p.matiereActive==="Soufre"?"#e6f0fb":"#ede5d4",color:p.matiereActive==="Cuivre"?"#7a5200":p.matiereActive==="Soufre"?"#185FA5":"#5f5e5a",borderRadius:"3px",padding:"1px 6px",fontSize:"10px",fontFamily:"monospace"}}>
-                                    {p.nom} {p.dose}
-                                  </span>
-                                ))}
-                              </div>
-                            </td>
-                            <td style={{padding:"8px 10px",fontWeight:500,color:parseFloat(t.cuivreTotal)>400?"#cc2222":parseFloat(t.cuivreTotal)>200?"#c47800":"#1a7a40",fontFamily:"monospace"}}>
-                              {t.cuivreTotal?`${t.cuivreTotal}g`:"-"}
-                            </td>
-                            <td style={{padding:"8px 10px"}}>
-                              {!isHistorique && (
-                                <div style={{display:"flex",gap:"3px"}}>
-                                  <button style={{...s.ghostSm,fontSize:"10px"}} onClick={()=>{setTraitForm({...TRAIT_EMPTY,...t});setEditingTrait(t);setShowTraitForm(true);}}>Mod.</button>
-                                  <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
-                                    onClick={()=>{if(window.confirm("Supprimer ?")){ setTraitements(prev=>prev.filter(x=>x.id!==t.id)); fbDelete("traitements",t.id); }}}>Sup.</button>
+              {/* Onglets */}
+              <div style={{display:"flex",borderBottom:"0.5px solid #d4c4a0",marginBottom:"16px"}}>
+                {[["traitements","Traitements"],["biodynamie","Biodynamie"],["amendements","Amendements"]].map(([tab,lbl])=>(
+                  <button key={tab} style={s.tabBtn(vigneTab===tab)} onClick={()=>setVigneTab(tab)}>{lbl}</button>
+                ))}
+              </div>
+
+              {/* === TRAITEMENTS === */}
+              {vigneTab==="traitements" && (
+                <div style={s.card}>
+                  <div style={{overflowX:"auto"}}>
+                    <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
+                      <thead>
+                        <tr style={{borderBottom:"1px solid #d4c4a0",background:"#fff8ee"}}>
+                          {["N°","Date","Surface","Produits","Cu/ha",""].map(h=>(
+                            <th key={h} style={{textAlign:"left",padding:"7px 10px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#9a8870",fontWeight:500}}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {traitsFiltres.map((t,i)=>{
+                          const isHist = HIST_TRAITEMENTS.some(h=>h.campagne===t.campagne&&h.numero===t.numero);
+                          const canEdit = !closed && !isHist;
+                          return (
+                            <tr key={t.id||i} style={{borderBottom:"1px solid #ede5d4",background:i%2===0?"transparent":"#fffbf3"}}>
+                              <td style={{padding:"8px 10px",fontFamily:"monospace",color:"#b8860b",fontWeight:500}}>N°{t.numero}</td>
+                              <td style={{padding:"8px 10px",color:"#6a5838"}}>{t.date}</td>
+                              <td style={{padding:"8px 10px",color:"#6a5838"}}>{t.surface}</td>
+                              <td style={{padding:"8px 10px",maxWidth:"320px"}}>
+                                <div style={{display:"flex",gap:"3px",flexWrap:"wrap"}}>
+                                  {(t.produits||[]).map((p,j)=>(
+                                    <span key={j} style={{background:p.matiereActive==="Cuivre"?"#fde8b8":p.matiereActive==="Soufre"?"#e6f0fb":"#ede5d4",color:p.matiereActive==="Cuivre"?"#7a5200":p.matiereActive==="Soufre"?"#185FA5":"#5f5e5a",borderRadius:"3px",padding:"1px 5px",fontSize:"10px",fontFamily:"monospace",whiteSpace:"nowrap"}}>
+                                      {p.nom} {p.dose}
+                                    </span>
+                                  ))}
                                 </div>
+                                {t.observations&&<div style={{fontSize:"11px",color:"#9a8870",fontStyle:"italic",marginTop:"2px"}}>{t.observations}</div>}
+                              </td>
+                              <td style={{padding:"8px 10px",fontWeight:500,color:parseFloat(t.cuivreTotal)>400?"#cc2222":parseFloat(t.cuivreTotal)>200?"#c47800":"#1a7a40",fontFamily:"monospace",whiteSpace:"nowrap"}}>
+                                {t.cuivreTotal?`${t.cuivreTotal}g`:"-"}
+                              </td>
+                              <td style={{padding:"8px 10px",whiteSpace:"nowrap"}}>
+                                {canEdit ? (
+                                  <div style={{display:"flex",gap:"3px"}}>
+                                    <button style={{...s.ghostSm,fontSize:"10px"}} onClick={()=>{setTraitForm({...TRAIT_EMPTY,...t});setEditingTrait(t);setShowTraitForm(true);}}>Mod.</button>
+                                    <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
+                                      onClick={()=>{if(window.confirm("Supprimer ?")){ setTraitements(prev=>prev.filter(x=>x.id!==t.id)); fbDelete("traitements",t.id||""); }}}>Sup.</button>
+                                  </div>
+                                ) : <span style={{fontSize:"10px",color:"#9a8870",fontStyle:"italic"}}>{isHist?"historique":"cloture"}</span>}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                        {traitsFiltres.length===0&&<tr><td colSpan={6} style={{padding:"20px",color:"#9a8870",textAlign:"center",fontStyle:"italic"}}>Aucun traitement pour cette campagne.</td></tr>}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* === BIODYNAMIE === */}
+              {vigneTab==="biodynamie" && (
+                <div style={s.card}>
+                  {biodyFiltres.length===0&&<div style={{color:"#9a8870",fontSize:"13px",padding:"12px 0",fontStyle:"italic"}}>Aucun passage biodynamique pour cette campagne.</div>}
+                  {biodyFiltres.length>0&&(
+                    <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
+                      <thead>
+                        <tr style={{borderBottom:"1px solid #d4c4a0",background:"#fff8ee"}}>
+                          {["Date","Surface","Produit","Observations",""].map(h=>(
+                            <th key={h} style={{textAlign:"left",padding:"7px 10px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#9a8870",fontWeight:500}}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {biodyFiltres.sort((a,b)=>new Date(a.date)-new Date(b.date)).map((b,i)=>(
+                          <tr key={b.id} style={{borderBottom:"1px solid #ede5d4",background:i%2===0?"transparent":"#fffbf3"}}>
+                            <td style={{padding:"8px 10px",color:"#6a5838"}}>{b.date}</td>
+                            <td style={{padding:"8px 10px",color:"#6a5838"}}>{b.surface}</td>
+                            <td style={{padding:"8px 10px"}}>
+                              <span style={{background:"#d4edc0",color:"#2d6a00",borderRadius:"3px",padding:"1px 8px",fontSize:"11px",fontFamily:"monospace",fontWeight:500}}>{b.produit}</span>
+                            </td>
+                            <td style={{padding:"8px 10px",color:"#7a6840",fontStyle:"italic",fontSize:"11px"}}>{b.observations}</td>
+                            <td style={{padding:"8px 10px"}}>
+                              {!closed&&(
+                                <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
+                                  onClick={()=>{if(window.confirm("Supprimer ?")){ setBiodynamies(prev=>prev.filter(x=>x.id!==b.id)); fbDelete("biodynamies",b.id); }}}>Sup.</button>
                               )}
-                              {isHistorique && <span style={{fontSize:"10px",color:"#9a8870",fontStyle:"italic"}}>historique</span>}
                             </td>
                           </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
                 </div>
-              </div>
+              )}
+
+              {/* === AMENDEMENTS === */}
+              {vigneTab==="amendements" && (
+                <div style={s.card}>
+                  {amendFiltres.length===0&&<div style={{color:"#9a8870",fontSize:"13px",padding:"12px 0",fontStyle:"italic"}}>Aucun amendement pour cette campagne.</div>}
+                  {amendFiltres.length>0&&(
+                    <div style={{overflowX:"auto"}}>
+                      <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
+                        <thead>
+                          <tr style={{borderBottom:"1px solid #d4c4a0",background:"#fff8ee"}}>
+                            {["Parcelle","Surface","Produit","Quantite","N total","N/ha","Observations",""].map(h=>(
+                              <th key={h} style={{textAlign:"left",padding:"7px 10px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#9a8870",fontWeight:500}}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {amendFiltres.sort((a,b)=>a.parcelle.localeCompare(b.parcelle)).map((a,i)=>(
+                            <tr key={a.id} style={{borderBottom:"1px solid #ede5d4",background:i%2===0?"transparent":"#fffbf3"}}>
+                              <td style={{padding:"8px 10px",fontWeight:500,color:"#1a1205"}}>{a.parcelle}</td>
+                              <td style={{padding:"8px 10px",color:"#6a5838",fontFamily:"monospace"}}>{a.surface} ha</td>
+                              <td style={{padding:"8px 10px"}}>
+                                <span style={{background:"#fde8b8",color:"#7a5200",borderRadius:"3px",padding:"1px 7px",fontSize:"11px",fontFamily:"monospace"}}>{a.produit}</span>
+                              </td>
+                              <td style={{padding:"8px 10px",color:"#6a5838",fontFamily:"monospace"}}>{a.quantite}</td>
+                              <td style={{padding:"8px 10px",color:"#6a5838",fontFamily:"monospace"}}>{a.nTotal}</td>
+                              <td style={{padding:"8px 10px",color:"#6a5838",fontFamily:"monospace"}}>{a.nParHa}</td>
+                              <td style={{padding:"8px 10px",color:"#7a6840",fontStyle:"italic",fontSize:"11px"}}>{a.observations}</td>
+                              <td style={{padding:"8px 10px"}}>
+                                {!closed&&(
+                                  <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
+                                    onClick={()=>{if(window.confirm("Supprimer ?")){ setAmendements(prev=>prev.filter(x=>x.id!==a.id)); fbDelete("amendements",a.id); }}}>Sup.</button>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           );
         })()}
@@ -2836,6 +2980,97 @@ export default function App() {
               <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
                 <button style={s.ghost} onClick={()=>{setShowVendangeForm(false);setEditingVendange(null);}}>Annuler</button>
                 <button style={s.btn} onClick={submitVendange}>{editingVendange?"Sauvegarder":"Enregistrer l'apport"}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* == MODAL BIODYNAMIE == */}
+      {showBiodyForm && (
+        <div style={s.modal}>
+          <div style={{...s.modalBox,width:"500px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#7a5200"}}>Nouveau passage biodynamique</div>
+              <button style={s.ghost} onClick={()=>setShowBiodyForm(false)}>x</button>
+            </div>
+            <div style={{display:"grid",gap:"12px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
+                <div><span style={s.lbl}>Campagne</span>
+                  <input type="number" style={s.inp} value={biodyForm.campagne} onChange={e=>setBiodyForm(f=>({...f,campagne:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Date *</span>
+                  <input type="date" style={s.inp} value={biodyForm.date} onChange={e=>setBiodyForm(f=>({...f,date:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Surface</span>
+                  <input style={s.inp} placeholder="ex. 9.90 ha" value={biodyForm.surface} onChange={e=>setBiodyForm(f=>({...f,surface:e.target.value}))}/></div>
+              </div>
+              <div><span style={s.lbl}>Produit *</span>
+                <select style={s.sel} value={biodyForm.produit} onChange={e=>setBiodyForm(f=>({...f,produit:e.target.value}))}>
+                  <option value="">Selectionner...</option>
+                  <option value="500 P">500 P (Bouse de corne)</option>
+                  <option value="501">501 (Silice de corne)</option>
+                  <option value="Prele de Paques">Prele de Paques</option>
+                  <option value="Silice">Silice</option>
+                  <option value="Autre">Autre</option>
+                </select></div>
+              <div><span style={s.lbl}>Observations</span>
+                <textarea style={{...s.inp,height:"60px",resize:"vertical"}} value={biodyForm.observations} onChange={e=>setBiodyForm(f=>({...f,observations:e.target.value}))}/></div>
+              <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
+                <button style={s.ghost} onClick={()=>setShowBiodyForm(false)}>Annuler</button>
+                <button style={s.btn} onClick={submitBiody}>Enregistrer</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* == MODAL AMENDEMENT == */}
+      {showAmendForm && (
+        <div style={s.modal}>
+          <div style={{...s.modalBox,width:"580px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#7a5200"}}>Nouvel amendement</div>
+              <button style={s.ghost} onClick={()=>setShowAmendForm(false)}>x</button>
+            </div>
+            <div style={{display:"grid",gap:"12px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                <div><span style={s.lbl}>Campagne</span>
+                  <input type="number" style={s.inp} value={amendForm.campagne} onChange={e=>setAmendForm(f=>({...f,campagne:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Parcelle *</span>
+                  <select style={s.sel} value={amendForm.parcelle} onChange={e=>setAmendForm(f=>({...f,parcelle:e.target.value}))}>
+                    <option value="">Selectionner...</option>
+                    {parcelles.length>0 ? parcelles.map(p=><option key={p.id} value={p.nom}>{p.nom}</option>) :
+                      ["La Fontinette","Bauchet Thomas PN","Les Garennes","La Tuilerie","Arpent Rouge","Les Maisons Brulees","Les Terres Bleues","Bellevue","Laurinette","Branscourt","Try","Festigny","Vincelles"].map(n=><option key={n} value={n}>{n}</option>)
+                    }
+                  </select></div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
+                <div><span style={s.lbl}>Surface (ha)</span>
+                  <input type="number" step="0.001" style={s.inp} placeholder="ex. 0.318" value={amendForm.surface} onChange={e=>setAmendForm(f=>({...f,surface:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Produit</span>
+                  <select style={s.sel} value={amendForm.produit} onChange={e=>setAmendForm(f=>({...f,produit:e.target.value}))}>
+                    <option value="">Selectionner...</option>
+                    <option value="Activor">Activor</option>
+                    <option value="Phenix">Phenix</option>
+                    <option value="Bio3G">Bio3G</option>
+                    <option value="Composte Biodynamique">Composte Biodynamique</option>
+                    <option value="Biofumur AB2F">Biofumur AB2F</option>
+                    <option value="ActiVert+">ActiVert+</option>
+                    <option value="Autre">Autre</option>
+                  </select></div>
+                <div><span style={s.lbl}>Quantite</span>
+                  <input style={s.inp} placeholder="ex. 324.5 kg" value={amendForm.quantite} onChange={e=>setAmendForm(f=>({...f,quantite:e.target.value}))}/></div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                <div><span style={s.lbl}>N total (kg)</span>
+                  <input type="number" step="0.01" style={s.inp} value={amendForm.nTotal} onChange={e=>setAmendForm(f=>({...f,nTotal:e.target.value}))}/></div>
+                <div><span style={s.lbl}>N / ha</span>
+                  <input type="number" step="0.01" style={s.inp} value={amendForm.nParHa} onChange={e=>setAmendForm(f=>({...f,nParHa:e.target.value}))}/></div>
+              </div>
+              <div><span style={s.lbl}>Observations</span>
+                <textarea style={{...s.inp,height:"58px",resize:"vertical"}} value={amendForm.observations} onChange={e=>setAmendForm(f=>({...f,observations:e.target.value}))}/></div>
+              <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
+                <button style={s.ghost} onClick={()=>setShowAmendForm(false)}>Annuler</button>
+                <button style={s.btn} onClick={submitAmend}>Enregistrer</button>
               </div>
             </div>
           </div>
