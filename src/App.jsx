@@ -440,16 +440,18 @@ export default function App() {
   const [showImportBL,     setShowImportBL]      = useState(false);
   const [importBLResult,   setImportBLResult]    = useState([]);
   const [importBLLoading,  setImportBLLoading]   = useState(false);
-  const PRODUIT_EMPTY = {nom:"",nAmm:"",famille:"Mildiou",matiereActive:"Cuivre",teneurCuivre:"",unite:"kg",doseMax:"",stockInitial:"",stockActuel:"",fournisseur:"",observations:""};
+  const PRODUIT_EMPTY = {nom:"",nAmm:"",substanceActive:"Cuivre",teneurCuivre:"",unite:"kg",stockActuel:"",fournisseur:"",observations:""};
   const [produitForm,      setProduitForm]       = useState(PRODUIT_EMPTY);
   const [surfaceCalcul,    setSurfaceCalcul]     = useState("9.30");
+  // teneurCuivre = g de cuivre metal par kg ou par L de produit
+  // Ex: Bouillie Bordelaise 20% cuivre = 200g/kg
   const CATALOGUE_PRODUITS = [
-    {nom:"Bouillie Bordelaise RSR Disperss NC",nAmm:"9800474",famille:"Mildiou",matiereActive:"Cuivre",teneurCuivre:200,unite:"kg",doseMax:3.75,fournisseur:""},
-    {nom:"Nordox 75 WG",nAmm:"2010130",famille:"Mildiou",matiereActive:"Cuivre",teneurCuivre:750,unite:"kg",doseMax:2,fournisseur:""},
-    {nom:"Champ Flo Ampli",nAmm:"2000517",famille:"Mildiou",matiereActive:"Cuivre",teneurCuivre:300,unite:"L",doseMax:1.3,fournisseur:"Nufarm"},
-    {nom:"Microthiol Special Disperss",nAmm:"9800245",famille:"Oidium",matiereActive:"Soufre",teneurCuivre:0,unite:"kg",doseMax:12.5,fournisseur:""},
-    {nom:"Heliosoufre",nAmm:"9000222",famille:"Oidium",matiereActive:"Soufre",teneurCuivre:0,unite:"L",doseMax:7.5,fournisseur:""},
-    {nom:"Pyrevert",nAmm:"2080038",famille:"Insectes",matiereActive:"Pyrethrine",teneurCuivre:0,unite:"L",doseMax:1.5,fournisseur:"Valagro"},
+    {nom:"Bouillie Bordelaise RSR Disperss NC",nAmm:"9800474",substanceActive:"Cuivre",teneurCuivre:200,unite:"kg",fournisseur:""},
+    {nom:"Nordox 75 WG",nAmm:"2010130",substanceActive:"Cuivre",teneurCuivre:750,unite:"kg",fournisseur:""},
+    {nom:"Champ Flo Ampli",nAmm:"2000517",substanceActive:"Cuivre",teneurCuivre:300,unite:"L",fournisseur:"Nufarm"},
+    {nom:"Microthiol Special Disperss",nAmm:"9800245",substanceActive:"Soufre",teneurCuivre:0,unite:"kg",fournisseur:""},
+    {nom:"Heliosoufre",nAmm:"9000222",substanceActive:"Soufre",teneurCuivre:0,unite:"L",fournisseur:""},
+    {nom:"Pyrevert",nAmm:"2080038",substanceActive:"Autre",teneurCuivre:0,unite:"L",fournisseur:"Valagro"},
   ];
   const [amendements,      setAmendements]       = useState([]);
   const [showTraitForm,    setShowTraitForm]     = useState(false);
@@ -478,7 +480,7 @@ export default function App() {
     type: "traitement",
   };
   const [traitForm, setTraitForm] = useState(TRAIT_EMPTY);
-  const [traitProduit, setTraitProduit] = useState({nom:"", dose:"", matiereActive:"", cuivre:""});
+  const [traitProduit, setTraitProduit] = useState({nom:"", dose:"", unite:"kg", matiereActive:"", teneurCuivre:"", cuivre:""});
   const [showTraitProduit, setShowTraitProduit] = useState(false);
   const [editingDegorge,    setEditingDegorge]    = useState(null);
   const [degorgements,      setDegorgements]      = useState([]);
@@ -719,11 +721,14 @@ export default function App() {
   const addFromCatalogue = (cat) => {
     const p = {
       id:`prod_${Date.now()}`,
-      ...PRODUIT_EMPTY,
-      nom:cat.nom, nAmm:cat.nAmm, famille:cat.famille,
-      matiereActive:cat.matiereActive, teneurCuivre:String(cat.teneurCuivre),
-      unite:cat.unite, doseMax:String(cat.doseMax), fournisseur:cat.fournisseur||"",
-      stockInitial:"0", stockActuel:"0", timestamp:new Date().toISOString()
+      nom:cat.nom, nAmm:cat.nAmm||"",
+      substanceActive:cat.substanceActive||cat.matiereActive||"Autre",
+      teneurCuivre:String(cat.teneurCuivre||0),
+      unite:cat.unite||"kg",
+      stockActuel:"0",
+      fournisseur:cat.fournisseur||"",
+      observations:"",
+      timestamp:new Date().toISOString()
     };
     setStockProduits(prev=>[p,...prev]);
     fbSave("stockProduits", p.id, p);
@@ -2066,18 +2071,8 @@ teneurCuivre = grammes de cuivre metal par kg ou par litre du produit (0 si pas 
                       <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
                         <thead>
                           <tr style={{borderBottom:"1px solid #d4c4a0",background:"#fff8ee"}}>
-                        {/* Calculateur rapide */}
-                        <div style={{display:"flex",alignItems:"center",gap:"10px",padding:"8px 10px",background:"#fff8ee",borderRadius:"6px",border:"0.5px solid #d4c4a0",marginBottom:"12px",flexWrap:"wrap",fontSize:"12px"}}>
-                          <span style={{color:"#7a5200",fontWeight:500}}>Calculateur :</span>
-                          <div style={{display:"flex",alignItems:"center",gap:"5px"}}>
-                            <span style={{color:"#9a8870"}}>Surface :</span>
-                            <input type="number" step="0.01" style={{...s.inp,width:"70px",padding:"3px 6px",fontSize:"11px",display:"inline-block"}}
-                              value={surfaceCalcul} onChange={e=>setSurfaceCalcul(e.target.value)}/>
-                            <span style={{color:"#9a8870"}}>ha</span>
-                          </div>
-                          <span style={{color:"#9a8870",fontSize:"11px"}}>Modifier la surface pour recalculer les doses</span>
-                        </div>
-                        {["Produit","N°AMM","Matiere active","Cu g/kg|L","Dose max","Cu/ha","Sur "+surfaceCalcul+"ha","Stock actuel","Actions"].map(h=>(
+
+                        {["Produit","N°AMM","Substance active","Teneur Cu g/kg|L","Stock actuel","Actions"].map(h=>(
                               <th key={h} style={{textAlign:"left",padding:"7px 10px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#9a8870",fontWeight:500}}>{h}</th>
                             ))}
                           </tr>
@@ -2093,21 +2088,16 @@ teneurCuivre = grammes de cuivre metal par kg ou par litre du produit (0 si pas 
                                   <div style={{fontWeight:500,color:"#1a1205"}}>{p.nom}</div>
                                   {p.fournisseur&&<div style={{fontSize:"10px",color:"#9a8870"}}>{p.fournisseur}</div>}
                                 </td>
-                                <td style={{padding:"8px 10px",fontFamily:"monospace",fontSize:"11px",color:"#9a8870"}}>{p.nAmm}</td>
+                                <td style={{padding:"8px 10px",fontFamily:"monospace",fontSize:"11px",color:"#9a8870"}}>{p.nAmm||"-"}</td>
                                 <td style={{padding:"8px 10px"}}>
-                                  <span style={{background:p.matiereActive==="Cuivre"?"#fde8b8":p.matiereActive==="Soufre"?"#e6f0fb":"#ede5d4",color:p.matiereActive==="Cuivre"?"#7a5200":p.matiereActive==="Soufre"?"#185FA5":"#5f5e5a",borderRadius:"3px",padding:"1px 6px",fontSize:"10px",fontFamily:"monospace"}}>
-                                    {p.matiereActive}
+                                  <span style={{background:(p.substanceActive||p.matiereActive)==="Cuivre"?"#fde8b8":(p.substanceActive||p.matiereActive)==="Soufre"?"#e6f0fb":"#ede5d4",color:(p.substanceActive||p.matiereActive)==="Cuivre"?"#7a5200":(p.substanceActive||p.matiereActive)==="Soufre"?"#185FA5":"#5f5e5a",borderRadius:"3px",padding:"1px 6px",fontSize:"10px",fontFamily:"monospace"}}>
+                                    {p.substanceActive||p.matiereActive||"-"}
                                   </span>
                                 </td>
-                                <td style={{padding:"8px 10px",fontFamily:"monospace",color:parseFloat(p.teneurCuivre)>0?"#c47800":"#9a8870",fontWeight:parseFloat(p.teneurCuivre)>0?500:400}}>
-                                  {parseFloat(p.teneurCuivre)>0?`${p.teneurCuivre}g/kg`:"-"}
-                                </td>
-                                <td style={{padding:"8px 10px",color:"#6a5838",fontFamily:"monospace"}}>{p.doseMax} {p.unite}/ha</td>
-                                <td style={{padding:"8px 10px",fontFamily:"monospace",color:"#c47800",fontWeight:500}}>
-                                  {parseFloat(p.teneurCuivre)>0?`${Math.round(parseFloat(p.doseMax)*parseFloat(p.teneurCuivre))}g`:"-"}
-                                </td>
-                                <td style={{padding:"8px 10px",fontFamily:"monospace",color:"#7a5200",fontWeight:500}}>
-                                  {parseFloat(p.teneurCuivre)>0?`${Math.round(parseFloat(p.doseMax)*parseFloat(p.teneurCuivre)*(parseFloat(surfaceCalcul)||0))}g`:"-"}
+                                <td style={{padding:"8px 10px",fontFamily:"monospace",fontWeight:500}}>
+                                  {parseFloat(p.teneurCuivre)>0
+                                    ?<span style={{color:"#c47800"}}>{p.teneurCuivre}g/{p.unite} <span style={{fontSize:"10px",color:"#9a8870",fontWeight:400}}>({Math.round(parseFloat(p.teneurCuivre)/10)}%)</span></span>
+                                    :<span style={{color:"#9a8870"}}>-</span>}
                                 </td>
                                 <td style={{padding:"8px 10px"}}>
                                   <div style={{display:"flex",alignItems:"center",gap:"6px"}}>
@@ -3423,36 +3413,48 @@ teneurCuivre = grammes de cuivre metal par kg ou par litre du produit (0 si pas 
                       <div style={{display:"flex",gap:"5px",flexWrap:"wrap",marginBottom:"10px"}}>
                         {stockProduits.map((sp,i)=>(
                           <button key={i} style={{background:"#fff8ee",border:"0.5px solid #d4c4a0",borderRadius:"4px",padding:"4px 8px",fontSize:"10px",cursor:"pointer",color:"#7a5200",fontFamily:"monospace"}}
-                            onClick={()=>setTraitProduit(f=>({...f,nom:sp.nom,matiereActive:sp.matiereActive,cuivre:String(parseFloat(sp.teneurCuivre)||0)}))}>
+                            onClick={()=>setTraitProduit(f=>({...f,
+                              nom:sp.nom,
+                              matiereActive:sp.substanceActive||sp.matiereActive||"Cuivre",
+                              teneurCuivre:String(parseFloat(sp.teneurCuivre)||0),
+                              unite:sp.unite||"kg",
+                              cuivre:"",  // sera calcule depuis dose*teneur
+                            }))}>
+                            <span style={{background:(sp.substanceActive||sp.matiereActive)==="Cuivre"?"#fde8b8":"#e6f0fb",color:(sp.substanceActive||sp.matiereActive)==="Cuivre"?"#7a5200":"#185FA5",borderRadius:"2px",padding:"0 3px",fontSize:"9px",marginRight:"3px"}}>{sp.substanceActive||sp.matiereActive}</span>
                             {sp.nom}
                           </button>
                         ))}
                       </div>
                     )}
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr auto",gap:"8px",alignItems:"end"}}>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 80px 80px 1fr auto",gap:"8px",alignItems:"end"}}>
                       <div><span style={s.lbl}>Produit *</span>
                         <input style={s.inp} placeholder="Bouillie Bordelaise..." value={traitProduit.nom} onChange={e=>setTraitProduit(f=>({...f,nom:e.target.value}))}/></div>
-                      <div><span style={s.lbl}>Dose (kg ou L/ha)</span>
-                        <input style={s.inp} placeholder="ex. 1" value={traitProduit.dose} onChange={e=>setTraitProduit(f=>({...f,dose:e.target.value}))}/></div>
-                      <div><span style={s.lbl}>Matiere active</span>
-                        <select style={s.sel} value={traitProduit.matiereActive} onChange={e=>setTraitProduit(f=>({...f,matiereActive:e.target.value}))}>
-                          <option value="">-</option>
-                          <option value="Cuivre">Cuivre</option>
-                          <option value="Soufre">Soufre</option>
-                          <option value="Bicarbonate">Bicarbonate</option>
-                          <option value="Huile">Huile essentielle</option>
-                          <option value="Biodynamie">Biodynamie</option>
-                          <option value="Autre">Autre</option>
+                      <div><span style={s.lbl}>Dose /ha</span>
+                        <input type="number" step="0.001" style={s.inp} placeholder="ex. 0.5" value={traitProduit.dose}
+                          onChange={e=>{
+                            const d=e.target.value;
+                            const t=parseFloat(traitProduit.teneurCuivre)||0;
+                            const cu = t>0 ? Math.round(parseFloat(d)*t) : parseFloat(traitProduit.cuivre)||0;
+                            setTraitProduit(f=>({...f,dose:d,cuivre:t>0?String(cu):f.cuivre}));
+                          }}/></div>
+                      <div><span style={s.lbl}>Unite</span>
+                        <select style={s.sel} value={traitProduit.unite||"kg"} onChange={e=>setTraitProduit(f=>({...f,unite:e.target.value}))}>
+                          <option value="kg">kg</option><option value="L">L</option><option value="g">g</option>
                         </select></div>
-                      <div><span style={s.lbl}>Cu (g/ha)</span>
-                        <input type="number" style={s.inp} placeholder="0" value={traitProduit.cuivre} onChange={e=>setTraitProduit(f=>({...f,cuivre:e.target.value}))}/>
-                        {traitProduit.cuivre&&traitProduit.dose&&traitForm.surface&&(
+                      <div>
+                        <span style={s.lbl}>Cu calcule (g/ha)</span>
+                        <input type="number" step="1" style={{...s.inp,background:parseFloat(traitProduit.teneurCuivre)>0?"#fff8ee":"white"}}
+                          placeholder="auto ou manuel"
+                          value={traitProduit.cuivre}
+                          onChange={e=>setTraitProduit(f=>({...f,cuivre:e.target.value}))}/>
+                        {traitProduit.dose&&traitProduit.teneurCuivre&&(
                           <div style={{fontSize:"10px",color:"#c47800",marginTop:"2px",fontFamily:"monospace"}}>
-                            = {Math.round((parseFloat(traitProduit.cuivre)||0)*(parseFloat(traitForm.surface)||0))}g total
+                            {traitProduit.dose}kg x {traitProduit.teneurCuivre}g/kg = {Math.round(parseFloat(traitProduit.dose)*parseFloat(traitProduit.teneurCuivre))}g Cu/ha
+                            {traitForm.surface&&` x ${traitForm.surface}ha = ${Math.round(parseFloat(traitProduit.dose)*parseFloat(traitProduit.teneurCuivre)*parseFloat(traitForm.surface))}g total`}
                           </div>
                         )}
                       </div>
-                      <div style={{display:"flex",gap:"4px"}}>
+                      <div style={{display:"flex",gap:"4px",alignItems:"flex-end",paddingBottom:"2px"}}>
                         <button style={s.btnSm} onClick={addTraitProduit}>OK</button>
                         <button style={s.ghostSm} onClick={()=>setShowTraitProduit(false)}>x</button>
                       </div>
