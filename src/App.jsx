@@ -704,7 +704,7 @@ export default function App() {
     const p = {
       id: editingStockProd ? editingStockProd.id : `prod_${Date.now()}`,
       ...produitForm,
-      stockActuel: editingStockProd ? produitForm.stockActuel : produitForm.stockInitial,
+      stockActuel: editingStockProd ? (produitForm.stockActuel!==undefined ? produitForm.stockActuel : editingStockProd.stockActuel) : (produitForm.stockInitial||"0"),
       timestamp: new Date().toISOString()
     };
     if(editingStockProd){
@@ -811,7 +811,10 @@ teneurCuivre = grammes de cuivre metal par kg ou par litre du produit (0 si pas 
   const submitTraitement = () => {
     if(!traitForm.date) return alert("La date est requise.");
     if(!traitForm.campagne) return alert("La campagne est requise.");
-    const t = { id:editingTrait?editingTrait.id:`trait_${Date.now()}`, ...traitForm, timestamp:new Date().toISOString() };
+    // Auto-calculer cuivreTotal si non saisi
+    const cuAuto = traitForm.produits.reduce((s,p)=>s+(parseFloat(p.cuivre)||0),0);
+    const cuivreTotal = traitForm.cuivreTotal || (cuAuto>0?String(cuAuto):"");
+    const t = { id:editingTrait?editingTrait.id:`trait_${Date.now()}`, ...traitForm, cuivreTotal, timestamp:new Date().toISOString() };
     if(editingTrait){ setTraitements(prev=>prev.map(x=>x.id===t.id?t:x)); }
     else { setTraitements(prev=>[t,...prev]); }
     fbSave("traitements", t.id, t);
@@ -3370,8 +3373,11 @@ teneurCuivre = grammes de cuivre metal par kg ou par litre du produit (0 si pas 
                   <input style={s.inp} placeholder="ex. 8.68 ha" value={traitForm.surface} onChange={e=>setTraitForm(f=>({...f,surface:e.target.value}))}/></div>
               </div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
-                <div><span style={s.lbl}>Cu total (g/ha)</span>
-                  <input type="number" style={s.inp} placeholder="ex. 300" value={traitForm.cuivreTotal} onChange={e=>setTraitForm(f=>({...f,cuivreTotal:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Cu total (g/ha) - auto si vide</span>
+                  <input type="number" style={s.inp}
+                    placeholder={String(traitForm.produits.reduce((s,p)=>s+(parseFloat(p.cuivre)||0),0)||"ex. 300")}
+                    value={traitForm.cuivreTotal}
+                    onChange={e=>setTraitForm(f=>({...f,cuivreTotal:e.target.value}))}/></div>
                 <div><span style={s.lbl}>Operateur</span>
                   <select style={s.sel} value={traitForm.operateur} onChange={e=>setTraitForm(f=>({...f,operateur:e.target.value}))}>
                     <option value="">Selectionner...</option>
@@ -3387,22 +3393,47 @@ teneurCuivre = grammes de cuivre metal par kg ou par litre du produit (0 si pas 
                 </div>
                 {traitForm.produits.length===0&&<div style={{fontSize:"12px",color:"#9a8870",fontStyle:"italic"}}>Aucun produit.</div>}
                 {traitForm.produits.map((p,i)=>(
-                  <div key={p.id} style={{display:"flex",alignItems:"center",gap:"8px",padding:"4px 0",borderBottom:"0.5px solid #ede5d4",fontSize:"12px"}}>
+                  <div key={p.id||i} style={{display:"flex",alignItems:"center",gap:"8px",padding:"5px 0",borderBottom:"0.5px solid #ede5d4",fontSize:"12px"}}>
                     <span style={{background:p.matiereActive==="Cuivre"?"#fde8b8":p.matiereActive==="Soufre"?"#e6f0fb":"#ede5d4",color:p.matiereActive==="Cuivre"?"#7a5200":"#185FA5",borderRadius:"3px",padding:"1px 6px",fontSize:"10px",fontFamily:"monospace"}}>{p.matiereActive||"-"}</span>
                     <span style={{fontWeight:500,color:"#1a1205",flex:1}}>{p.nom}</span>
-                    <span style={{color:"#9a8870"}}>{p.dose}</span>
-                    {p.cuivre&&<span style={{color:"#7a5200",fontFamily:"monospace",fontSize:"11px"}}>{p.cuivre}g Cu</span>}
+                    <span style={{color:"#9a8870",fontSize:"11px"}}>{p.dose}</span>
+                    {(parseFloat(p.cuivre)||0)>0&&<span style={{color:"#c47800",fontFamily:"monospace",fontSize:"11px",fontWeight:500}}>{p.cuivre}g Cu/ha</span>}
                     <button style={{...s.ghostSm,color:"#cc2222",borderColor:"#f0b4b4",padding:"2px 5px"}}
                       onClick={()=>setTraitForm(f=>({...f,produits:f.produits.filter((_,j)=>j!==i)}))}>x</button>
                   </div>
                 ))}
+                {/* Total cuivre calcule */}
+                {traitForm.produits.some(p=>(parseFloat(p.cuivre)||0)>0)&&(
+                  <div style={{marginTop:"8px",padding:"8px 10px",background:"#fde8b8",borderRadius:"5px",display:"flex",gap:"16px",flexWrap:"wrap",fontSize:"12px"}}>
+                    <span style={{color:"#7a5200",fontWeight:500}}>Total cuivre :</span>
+                    <span style={{color:"#c47800",fontFamily:"monospace",fontWeight:500}}>
+                      {traitForm.produits.reduce((s,p)=>s+(parseFloat(p.cuivre)||0),0)} g/ha
+                    </span>
+                    {traitForm.surface&&(
+                      <span style={{color:"#7a5200",fontFamily:"monospace"}}>
+                        sur {traitForm.surface} = {Math.round(traitForm.produits.reduce((s,p)=>s+(parseFloat(p.cuivre)||0),0)*(parseFloat(traitForm.surface)||0))} g total
+                      </span>
+                    )}
+                  </div>
+                )}
                 {showTraitProduit&&(
-                  <div style={{marginTop:"10px",padding:"10px",background:"#fffdf7",borderRadius:"6px",border:"0.5px solid #d4c4a0"}}>
+                  <div style={{marginTop:"10px",padding:"12px",background:"#fffdf7",borderRadius:"6px",border:"0.5px solid #d4c4a0"}}>
+                    <div style={{...s.lbl,marginBottom:"8px"}}>Depuis le stock produits :</div>
+                    {stockProduits.length>0&&(
+                      <div style={{display:"flex",gap:"5px",flexWrap:"wrap",marginBottom:"10px"}}>
+                        {stockProduits.map((sp,i)=>(
+                          <button key={i} style={{background:"#fff8ee",border:"0.5px solid #d4c4a0",borderRadius:"4px",padding:"4px 8px",fontSize:"10px",cursor:"pointer",color:"#7a5200",fontFamily:"monospace"}}
+                            onClick={()=>setTraitProduit(f=>({...f,nom:sp.nom,matiereActive:sp.matiereActive,cuivre:String(parseFloat(sp.teneurCuivre)||0)}))}>
+                            {sp.nom}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr auto",gap:"8px",alignItems:"end"}}>
                       <div><span style={s.lbl}>Produit *</span>
                         <input style={s.inp} placeholder="Bouillie Bordelaise..." value={traitProduit.nom} onChange={e=>setTraitProduit(f=>({...f,nom:e.target.value}))}/></div>
-                      <div><span style={s.lbl}>Dose</span>
-                        <input style={s.inp} placeholder="1kg/ha" value={traitProduit.dose} onChange={e=>setTraitProduit(f=>({...f,dose:e.target.value}))}/></div>
+                      <div><span style={s.lbl}>Dose (kg ou L/ha)</span>
+                        <input style={s.inp} placeholder="ex. 1" value={traitProduit.dose} onChange={e=>setTraitProduit(f=>({...f,dose:e.target.value}))}/></div>
                       <div><span style={s.lbl}>Matiere active</span>
                         <select style={s.sel} value={traitProduit.matiereActive} onChange={e=>setTraitProduit(f=>({...f,matiereActive:e.target.value}))}>
                           <option value="">-</option>
@@ -3414,7 +3445,13 @@ teneurCuivre = grammes de cuivre metal par kg ou par litre du produit (0 si pas 
                           <option value="Autre">Autre</option>
                         </select></div>
                       <div><span style={s.lbl}>Cu (g/ha)</span>
-                        <input type="number" style={s.inp} placeholder="0" value={traitProduit.cuivre} onChange={e=>setTraitProduit(f=>({...f,cuivre:e.target.value}))}/></div>
+                        <input type="number" style={s.inp} placeholder="0" value={traitProduit.cuivre} onChange={e=>setTraitProduit(f=>({...f,cuivre:e.target.value}))}/>
+                        {traitProduit.cuivre&&traitProduit.dose&&traitForm.surface&&(
+                          <div style={{fontSize:"10px",color:"#c47800",marginTop:"2px",fontFamily:"monospace"}}>
+                            = {Math.round((parseFloat(traitProduit.cuivre)||0)*(parseFloat(traitForm.surface)||0))}g total
+                          </div>
+                        )}
+                      </div>
                       <div style={{display:"flex",gap:"4px"}}>
                         <button style={s.btnSm} onClick={addTraitProduit}>OK</button>
                         <button style={s.ghostSm} onClick={()=>setShowTraitProduit(false)}>x</button>
