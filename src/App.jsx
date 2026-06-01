@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { initializeApp } from "firebase/app";
 import { getFirestore, collection, doc, setDoc, deleteDoc, getDocs, writeBatch } from "firebase/firestore";
 
+
 // Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyDRTi_7yt5u0Vnc396fCZVXGZAmgpIFsEs",
@@ -446,6 +447,8 @@ export default function App() {
   const [filterTraitAn,    setFilterTraitAn]     = useState(new Date().getFullYear().toString());
   const [vigneTab,         setVigneTab]          = useState("traitements");
   const [campagnesClosees, setCampagnesClosees]  = useState(()=>load("chai_campagnes_closees",[]));
+  const [pdfDocs,          setPdfDocs]          = useState([]);
+  const [uploadingPdf,     setUploadingPdf]     = useState(false);
   const [biodynamies,      setBiodynamies]       = useState([]);
   const [showBiodyForm,    setShowBiodyForm]     = useState(false);
   const [biodyForm,        setBiodyForm]         = useState({campagne:new Date().getFullYear().toString(),date:"",surface:"",produit:"",observations:""});
@@ -646,6 +649,33 @@ export default function App() {
   const getStockActuel = () => getLots();
 
   // Traitement
+  // Upload PDF en base64 dans Firestore
+  const uploadPdf = (file, campagne, nom) => {
+    if(!file) return;
+    if(file.size > 900000) { alert("Le PDF est trop volumineux (max 900 KB). Compressez-le d'abord."); return; }
+    setUploadingPdf(true);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const base64 = e.target.result;
+      const pdfDoc = { id:`pdf_${Date.now()}`, campagne:String(campagne), nom:nom||file.name, base64, dateUpload:new Date().toISOString() };
+      setPdfDocs(prev=>[...prev, pdfDoc]);
+      fbSave("pdfDocs", pdfDoc.id, pdfDoc);
+      setUploadingPdf(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const deletePdf = (pdf) => {
+    if(!window.confirm("Supprimer ce document ?")) return;
+    setPdfDocs(prev=>prev.filter(p=>p.id!==pdf.id));
+    fbDelete("pdfDocs", pdf.id);
+  };
+
+  const openPdf = (pdf) => {
+    const w = window.open();
+    w.document.write(`<iframe src="${pdf.base64}" style="width:100%;height:100vh;border:none;"/>`);
+  };
+
   const isCampagneClosed = (campagne) => campagnesClosees.includes(String(campagne));
 
   const cloturerCampagne = (campagne) => {
@@ -742,6 +772,7 @@ export default function App() {
     fbLoad("degorgements", setDegorgements);
     fbLoad("traitements",  setTraitements);
     fbLoad("biodynamies",  setBiodynamies);
+    fbLoad("pdfDocs",      setPdfDocs);
     fbLoad("amendements",  setAmendements);
     fbLoad("traitements",  setTraitements);
     fbLoad("amendements",  setAmendements);
@@ -1648,7 +1679,7 @@ export default function App() {
                 {/* Colonne droite - onglets */}
                 <div style={s.card}>
                   <div style={{display:"flex",borderBottom:"1px solid #cfc0a0",marginBottom:"16px",gap:"0"}}>
-                    {[["degustations",`Degustations (${notesForFut(selectedT.id).length})`],["mouvements",`Mouvements (${selectedMvts.length})`],["historique","Historique"]].map(([tab,lbl])=>(
+                    {[["degustations",`Degustations (${notesForFut(selectedT.id).length})`],["mouvements",`Mouvements (${selectedMvts.length})`]].map(([tab,lbl])=>(
                       <button key={tab} style={s.tabBtn(ficheTab===tab)} onClick={()=>setFicheTab(tab)}>{lbl}</button>
                     ))}
                   </div>
@@ -1660,125 +1691,6 @@ export default function App() {
                       {selectedMvts.map(m=><MvtRow key={m.id} m={m}/>)}
                     </div>
                   )}
-                  {ficheTab==="historique"&&(()=>{
-                    // Regroupe notes et mouvements par session/annee
-                    const notesF = notesForFut(selectedT.id);
-                    const sessions = [...new Set(notesF.map(d=>d.session))].sort().reverse();
-                    const allMvts  = selectedMvts.slice().sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp));
-                    // Grouper mouvements par annee
-                    const mvtsByYear = {};
-                    allMvts.forEach(m=>{
-                      const yr = new Date(m.timestamp).getFullYear();
-                      if(!mvtsByYear[yr]) mvtsByYear[yr]=[];
-                      mvtsByYear[yr].push(m);
-                    });
-                    const years = [...new Set([
-                      ...Object.keys(mvtsByYear),
-                      ...sessions.map(s=>s.split("/").pop()?.trim()||s.slice(-4))
-                    ])].sort().reverse();
-                    return (
-                      <div>
-                        {years.length===0&&sessions.length===0&&allMvts.length===0&&(
-                          <div style={{color:"#8a7248",fontSize:"13px",padding:"12px 0"}}>Aucun historique disponible pour ce fut.</div>
-                        )}
-                        {years.map(yr=>{
-                          const notesAn = notesF.filter(d=>{
-                            const s=d.session||""; return s.includes(yr)||s.endsWith(yr);
-                          });
-                          const sessionsAn=[...new Set(notesAn.map(d=>d.session))];
-                          const mvtsAn = mvtsByYear[yr]||[];
-                          if(notesAn.length===0 && mvtsAn.length===0) return null;
-                          return (
-                            <div key={yr} style={{marginBottom:"24px"}}>
-                              {/* Annee header */}
-                              {(()=>{
-                                const camp=campagnes.find(c=>c.futId===selectedT.id && c.annee===yr);
-                                return (
-                                  <div style={{display:"flex",alignItems:"center",gap:"10px",marginBottom:"12px"}}>
-                                    <div style={{fontFamily:"Georgia,serif",fontSize:"16px",fontWeight:700,color:"#7a5200"}}>{yr}</div>
-                                    {camp&&(
-                                      <div style={{display:"flex",alignItems:"center",gap:"6px"}}>
-                                        <span style={{background:"#f5e8cc",color:"#7a5200",border:"1px solid #e0c050",borderRadius:"4px",padding:"2px 10px",fontSize:"12px",fontWeight:600}}>{camp.denomination}</span>
-                                        {camp.millesime&&<span style={{fontSize:"11px",color:"#9a8870"}}>Mill. {camp.millesime}</span>}
-                                        {camp.notes&&<span style={{fontSize:"11px",color:"#7a6840",fontStyle:"italic"}}>{camp.notes}</span>}
-                                        <button style={{background:"none",border:"none",color:"#cc222288",cursor:"pointer",fontSize:"11px",padding:"0 2px"}}
-                                          onClick={()=>deleteCampagne(camp.id)}>x</button>
-                                      </div>
-                                    )}
-                                    {!camp&&(
-                                      <button style={{background:"none",border:"1px dashed #ccc",borderRadius:"4px",padding:"2px 8px",fontSize:"10px",color:"#9a8870",cursor:"pointer"}}
-                                        onClick={()=>{setCampFutId(selectedT.id);setCampForm({annee:yr,denomination:selectedT.denomination,millesime:"",notes:""});setShowCampForm(true);}}>
-                                        + Ajouter vin
-                                      </button>
-                                    )}
-                                    <div style={{flex:1,height:"1px",background:"#d4c4a0"}}/>
-                                    <div style={{fontSize:"11px",color:"#9a8870",fontFamily:"monospace"}}>
-                                      {mvtsAn.length>0&&`${mvtsAn.length} op.`}{notesAn.length>0&&` - ${notesAn.length} notes`}
-                                    </div>
-                                  </div>
-                                );
-                              })()}
-
-                              {/* Sections degustation par session */}
-                              {sessionsAn.map(sess=>{
-                                const notesSess=notesAn.filter(d=>d.session===sess);
-                                const avgG=notesSess.map(d=>d.noteG).filter(Boolean);
-                                const moy=avgG.length?+(avgG.reduce((a,b)=>a+b,0)/avgG.length).toFixed(1):null;
-                                return (
-                                  <div key={sess} style={{marginBottom:"14px",padding:"12px 14px",background:"#fff8ee",borderRadius:"8px",border:"1px solid #e2d9c5"}}>
-                                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"8px"}}>
-                                      <div style={{fontSize:"12px",fontWeight:600,color:"#1a1205"}}>Degustation {sess}</div>
-                                      {moy&&<div style={{display:"flex",alignItems:"center",gap:"6px"}}>
-                                        <div style={{width:"40px",height:"4px",background:"#e8dcc6",borderRadius:"2px",overflow:"hidden"}}>
-                                          <div style={{width:`${(moy/5)*100}%`,height:"100%",background:moy>=4?"#1a7a40":"#b8860b",borderRadius:"2px"}}/>
-                                        </div>
-                                        <span style={{fontSize:"12px",fontWeight:700,color:moy>=4?"#1a7a40":"#b8860b"}}>{moy}/5</span>
-                                      </div>}
-                                    </div>
-                                    <table style={{width:"100%",borderCollapse:"collapse",fontSize:"11px"}}>
-                                      <tbody>
-                                        {notesSess.map(d=>(
-                                          <tr key={d.id} style={{borderBottom:"1px solid #eee6d6"}}>
-                                            <td style={{padding:"4px 6px",color:"#b8860b",fontWeight:600,width:"90px"}}>{d.degustateur}</td>
-                                            <td style={{padding:"4px 6px",color:"#7a6840",width:"50px"}}>{d.boise!=null?`B:${d.boise}`:""}</td>
-                                            <td style={{padding:"4px 6px",color:"#7a6840",width:"50px"}}>{d.longueur!=null?`L:${d.longueur}`:""}</td>
-                                            <td style={{padding:"4px 6px",fontWeight:600,color:d.noteG>=4?"#1a7a40":d.noteG>=3?"#b8860b":"#7a6840",width:"40px"}}>{d.noteG!=null?`${d.noteG}/5`:""}</td>
-                                            <td style={{padding:"4px 6px",color:"#6a5838",fontStyle:"italic"}}>{d.commentaire}</td>
-                                          </tr>
-                                        ))}
-                                      </tbody>
-                                    </table>
-                                  </div>
-                                );
-                              })}
-
-                              {/* Mouvements de l annee */}
-                              {mvtsAn.length>0&&(
-                                <div style={{marginTop:"8px"}}>
-                                  <div style={{fontSize:"10px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#9a8870",marginBottom:"6px",fontFamily:"monospace"}}>Operations</div>
-                                  {mvtsAn.map(m=>{
-                                    const srcs=(m.futSource||[]).map(id=>getTonneau(id)?.id).filter(Boolean);
-                                    const dest=m.futDest?getTonneau(m.futDest)?.id:null;
-                                    return (
-                                      <div key={m.id} style={{display:"flex",alignItems:"center",gap:"8px",padding:"5px 0",borderBottom:"1px solid #ede5d4",fontSize:"11px"}}>
-                                        <span style={{...s.tag(typeColor(m.type))}}>{typeLabel(m.type)}</span>
-                                        <span style={{color:"#8a7248",fontSize:"10px"}}>{fmtDate(m.timestamp)}</span>
-                                        {srcs.length>0&&<span style={{color:"#6a5838"}}>De: {srcs.join(", ")}</span>}
-                                        {dest&&<span style={{color:"#6a5838"}}>Vers: {dest}</span>}
-                                        {m.volume&&<span style={{color:"#b8860b",fontWeight:600}}>{m.volume}L</span>}
-                                        {m.produit&&<span style={{color:"#7a5200"}}>{m.produit}{m.numeroLot&&` (Lot: ${m.numeroLot})`}</span>}
-                                        <span style={{marginLeft:"auto",color:"#9a8870"}}>{m.operateur}</span>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    );
-                  })()}
                 </div>
               </div>
             </div>
@@ -1925,6 +1837,50 @@ export default function App() {
                         {traitsFiltres.length===0&&<tr><td colSpan={6} style={{padding:"20px",color:"#9a8870",textAlign:"center",fontStyle:"italic"}}>Aucun traitement pour cette campagne.</td></tr>}
                       </tbody>
                     </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Documents PDF prestataires */}
+              {filterTraitAn && (
+                <div style={{...s.card,marginTop:"14px"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
+                    <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#7a5200"}}>Calendriers prestataires</div>
+                    {!closed && (
+                      <label style={{...s.btnSm,cursor:"pointer",display:"flex",alignItems:"center",gap:"5px"}}>
+                        {uploadingPdf?"Chargement...":"+ Ajouter PDF"}
+                        <input type="file" accept=".pdf" style={{display:"none"}} onChange={e=>{
+                          const file=e.target.files[0];
+                          if(file){
+                            const nom=window.prompt("Nom du document (ex: Calendrier Lorain 2026)", file.name.replace(".pdf",""));
+                            if(nom!==null) uploadPdf(file, filterTraitAn, nom||file.name);
+                          }
+                          e.target.value="";
+                        }}/>
+                      </label>
+                    )}
+                  </div>
+                  {pdfDocs.filter(p=>p.campagne===filterTraitAn).length===0&&(
+                    <div style={{fontSize:"12px",color:"#9a8870",fontStyle:"italic"}}>Aucun document pour cette campagne.</div>
+                  )}
+                  <div style={{display:"grid",gap:"8px"}}>
+                    {pdfDocs.filter(p=>p.campagne===filterTraitAn).map(pdf=>(
+                      <div key={pdf.id} style={{display:"flex",alignItems:"center",gap:"12px",padding:"10px 12px",background:"#fff8ee",borderRadius:"6px",border:"0.5px solid #d4c4a0"}}>
+                        <div style={{width:"32px",height:"32px",background:"#fdd0d0",borderRadius:"4px",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                          <span style={{fontSize:"10px",fontWeight:500,color:"#cc2222",fontFamily:"monospace"}}>PDF</span>
+                        </div>
+                        <div style={{flex:1}}>
+                          <div style={{fontWeight:500,color:"#1a1205",fontSize:"13px"}}>{pdf.nom}</div>
+                          <div style={{fontSize:"10px",color:"#9a8870",marginTop:"1px"}}>{pdf.dateUpload?.slice(0,10)}</div>
+                        </div>
+                        <button style={s.btnSm} onClick={()=>openPdf(pdf)}>
+                          Ouvrir
+                        </button>
+                        {!closed&&(
+                          <button style={{...s.ghostSm,color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>deletePdf(pdf)}>Sup.</button>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
