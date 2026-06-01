@@ -3239,6 +3239,7 @@ export default function App() {
                 <button style={s.ghost} onClick={()=>{setShowStockProdForm(false);setEditingStockProd(null);}}>Annuler</button>
                 <button style={s.btn} onClick={submitStockProduit}>{editingStockProd?"Sauvegarder":"Enregistrer"}</button>
               </div>
+            </div>
           </div>
         </div>
       )}
