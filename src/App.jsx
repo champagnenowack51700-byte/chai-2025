@@ -820,8 +820,18 @@ export default function App() {
   const submitBiody = () => {
     if(!biodyForm.date) return alert("La date est requise.");
     const b = { id:editingBiody?editingBiody.id:`biody_${Date.now()}`, ...biodyForm, timestamp:new Date().toISOString() };
-    if(editingBiody){ setBiodynamies(prev=>prev.map(x=>x.id===b.id?b:x)); }
-    else { setBiodynamies(prev=>[b,...prev]); }
+    if(editingBiody){
+      setBiodynamies(prev=>prev.map(x=>x.id===b.id?b:x));
+      if(biodyForm.produit && biodyForm.surface && biodyForm.dose) {
+        deduireStock([{nom:biodyForm.produit,dose:biodyForm.dose}], biodyForm.surface,
+          editingBiody.produit?[{nom:editingBiody.produit,dose:editingBiody.dose}]:[], editingBiody.surface);
+      }
+    } else {
+      setBiodynamies(prev=>[b,...prev]);
+      if(biodyForm.produit && biodyForm.surface && biodyForm.dose) {
+        deduireStock([{nom:biodyForm.produit, dose:biodyForm.dose}], biodyForm.surface);
+      }
+    }
     fbSave("biodynamies", b.id, b);
     setBiodyForm({campagne:new Date().getFullYear().toString(),date:"",surface:"",produit:"",observations:""});
     setEditingBiody(null); setShowBiodyForm(false);
@@ -831,21 +841,87 @@ export default function App() {
     if(!amendForm.parcelle.trim()) return alert("La parcelle est requise.");
     const a = { id:editingAmend?editingAmend.id:`amend_${Date.now()}`, ...amendForm, timestamp:new Date().toISOString() };
     if(editingAmend){ setAmendements(prev=>prev.map(x=>x.id===a.id?a:x)); }
-    else { setAmendements(prev=>[a,...prev]); }
+    else {
+      setAmendements(prev=>[a,...prev]);
+      // Deduire la quantite d'amendement du stock
+      if(amendForm.produit && amendForm.quantite) {
+        const stockProd = stockProduits.find(sp=>
+          sp.nom.toLowerCase().includes(amendForm.produit.toLowerCase().slice(0,5)) ||
+          amendForm.produit.toLowerCase().includes(sp.nom.toLowerCase().slice(0,5))
+        );
+        if(stockProd) {
+          const qte = parseFloat(amendForm.quantite.replace(/[^0-9.]/g,""))||0;
+          const newStock = Math.max(0, (parseFloat(stockProd.stockActuel)||0) - qte);
+          const updated = {...stockProd, stockActuel: String(Math.round(newStock*100)/100)};
+          setStockProduits(prev=>prev.map(sp=>sp.id===stockProd.id?updated:sp));
+          fbSave("stockProduits", stockProd.id, updated);
+        }
+      }
+    }
     fbSave("amendements", a.id, a);
     setAmendForm({campagne:new Date().getFullYear().toString(),parcelle:"",surface:"",produit:"",quantite:"",nTotal:"",nParHa:"",observations:""});
     setEditingAmend(null); setShowAmendForm(false);
   };
 
+  const findStockProd = (nom) => stockProduits.find(sp =>
+    sp.nom.toLowerCase().includes((nom||"").toLowerCase().slice(0,6)) ||
+    (nom||"").toLowerCase().includes(sp.nom.toLowerCase().slice(0,6))
+  );
+
+  const deduireStock = (produits, surface, produitsAnciensOpt, surfaceAncienneOpt) => {
+    const surf = parseFloat(surface)||0;
+    const surfAnc = parseFloat(surfaceAncienneOpt)||0;
+    // Groupe par produit pour faire le calcul net
+    const updates = {};
+    // Rembourser les anciennes doses si modification
+    if(produitsAnciensOpt) {
+      produitsAnciensOpt.forEach(p => {
+        if(!p.nom) return;
+        const sp = findStockProd(p.nom);
+        if(!sp) return;
+        const dose = parseFloat(p.dose)||0;
+        const qte = dose * surfAnc;
+        if(!updates[sp.id]) updates[sp.id] = {sp, delta:0};
+        updates[sp.id].delta += qte; // rembourse
+      });
+    }
+    // Deduire les nouvelles doses
+    produits.forEach(p => {
+      if(!p.nom) return;
+      const sp = findStockProd(p.nom);
+      if(!sp || surf <= 0) return;
+      const dose = parseFloat(p.dose)||0;
+      const qte = dose * surf;
+      if(!updates[sp.id]) updates[sp.id] = {sp, delta:0};
+      updates[sp.id].delta -= qte; // deduit
+    });
+    // Appliquer tous les updates
+    Object.values(updates).forEach(({sp, delta}) => {
+      const newStock = Math.max(0, Math.round(((parseFloat(sp.stockActuel)||0) + delta)*100)/100);
+      const updated = {...sp, stockActuel: String(newStock)};
+      setStockProduits(prev=>prev.map(x=>x.id===sp.id?updated:x));
+      fbSave("stockProduits", sp.id, updated);
+    });
+  };
+
   const submitTraitement = () => {
     if(!traitForm.date) return alert("La date est requise.");
     if(!traitForm.campagne) return alert("La campagne est requise.");
-    // Auto-calculer cuivreTotal si non saisi
     const cuAuto = traitForm.produits.reduce((s,p)=>s+(parseFloat(p.cuivre)||0),0);
     const cuivreTotal = traitForm.cuivreTotal || (cuAuto>0?String(cuAuto):"");
     const t = { id:editingTrait?editingTrait.id:`trait_${Date.now()}`, ...traitForm, cuivreTotal, timestamp:new Date().toISOString() };
-    if(editingTrait){ setTraitements(prev=>prev.map(x=>x.id===t.id?t:x)); }
-    else { setTraitements(prev=>[t,...prev]); }
+    if(editingTrait){
+      setTraitements(prev=>prev.map(x=>x.id===t.id?t:x));
+      // Rembourser ancienne dose + deduire nouvelle
+      if(traitForm.produits.length>0 && traitForm.surface) {
+        deduireStock(traitForm.produits, traitForm.surface, editingTrait.produits, editingTrait.surface);
+      }
+    } else {
+      setTraitements(prev=>[t,...prev]);
+      if(traitForm.produits.length>0 && traitForm.surface) {
+        deduireStock(traitForm.produits, traitForm.surface);
+      }
+    }
     fbSave("traitements", t.id, t);
     setTraitForm(TRAIT_EMPTY); setEditingTrait(null); setShowTraitForm(false);
   };
@@ -1972,7 +2048,7 @@ export default function App() {
                                   <div style={{display:"flex",gap:"3px"}}>
                                     <button style={{...s.ghostSm,fontSize:"10px"}} onClick={()=>{setTraitForm({...TRAIT_EMPTY,...t});setEditingTrait(t);setShowTraitForm(true);}}>Mod.</button>
                                     <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
-                                      onClick={()=>{if(window.confirm("Supprimer ?")){ setTraitements(prev=>prev.filter(x=>x.id!==t.id)); fbDelete("traitements",t.id||""); }}}>Sup.</button>
+                                      onClick={()=>{if(window.confirm("Supprimer ?")){ setTraitements(prev=>prev.filter(x=>x.id!==t.id)); fbDelete("traitements",t.id||""); if(t.produits?.length>0 && t.surface) deduireStock([], 0, t.produits, t.surface); }}}>Sup.</button>
                                   </div>
                                 ) : <span style={{fontSize:"10px",color:"#9a8870",fontStyle:"italic"}}>{closed?"cloture":""}</span>}
                               </td>
@@ -2183,7 +2259,7 @@ export default function App() {
                                   <button style={{...s.ghostSm,fontSize:"10px"}}
                                     onClick={()=>{setBiodyForm({campagne:b.campagne,date:b.date,surface:b.surface,produit:b.produit,observations:b.observations});setEditingBiody(b);setShowBiodyForm(true);}}>Mod.</button>
                                   <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
-                                    onClick={()=>{if(window.confirm("Supprimer ?")){ setBiodynamies(prev=>prev.filter(x=>x.id!==b.id)); fbDelete("biodynamies",b.id); }}}>Sup.</button>
+                                    onClick={()=>{if(window.confirm("Supprimer ?")){ setBiodynamies(prev=>prev.filter(x=>x.id!==b.id)); fbDelete("biodynamies",b.id); if(b.produit && b.surface && b.dose) deduireStock([], 0, [{nom:b.produit,dose:b.dose}], b.surface); }}}>Sup.</button>
                                 </div>
                               )}
                             </td>
@@ -2227,7 +2303,7 @@ export default function App() {
                                     <button style={{...s.ghostSm,fontSize:"10px"}}
                                       onClick={()=>{setAmendForm({campagne:a.campagne,parcelle:a.parcelle,surface:a.surface,produit:a.produit,quantite:a.quantite,nTotal:a.nTotal,nParHa:a.nParHa,observations:a.observations});setEditingAmend(a);setShowAmendForm(true);}}>Mod.</button>
                                     <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
-                                      onClick={()=>{if(window.confirm("Supprimer ?")){ setAmendements(prev=>prev.filter(x=>x.id!==a.id)); fbDelete("amendements",a.id); }}}>Sup.</button>
+                                      onClick={()=>{if(window.confirm("Supprimer ?")){ setAmendements(prev=>prev.filter(x=>x.id!==a.id)); fbDelete("amendements",a.id); if(a.produit && a.quantite){ const sp=findStockProd(a.produit); if(sp){ const q=parseFloat(a.quantite.replace(/[^0-9.]/g,""))||0; const updated={...sp,stockActuel:String(Math.round(((parseFloat(sp.stockActuel)||0)+q)*100)/100)}; setStockProduits(prev=>prev.map(x=>x.id===sp.id?updated:x)); fbSave("stockProduits",sp.id,updated); } } }}}>Sup.</button>
                                   </div>
                                 )}
                               </td>
