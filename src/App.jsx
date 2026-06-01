@@ -465,6 +465,7 @@ export default function App() {
   const [campagnesClosees, setCampagnesClosees]  = useState(()=>{ try{ const s=localStorage.getItem("chai_campagnes_closees"); return s?JSON.parse(s):[]; }catch{return [];} });
   const [pdfDocs,          setPdfDocs]          = useState([]);
   const [uploadingPdf,     setUploadingPdf]     = useState(false);
+  const [pdfFactures,      setPdfFactures]      = useState([]);
   const [biodynamies,      setBiodynamies]       = useState([]);
   const [showBiodyForm,    setShowBiodyForm]     = useState(false);
   const [editingBiody,     setEditingBiody]      = useState(null);
@@ -698,6 +699,33 @@ export default function App() {
   };
 
   // Submit stock produit
+  // Upload facture PDF
+  const uploadFacture = (file, nom) => {
+    if(!file) return;
+    if(file.size > 900000) { alert("Le PDF est trop volumineux (max 900 KB)."); return; }
+    setUploadingPdf(true);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const base64 = e.target.result;
+      const doc = { id:`facture_${Date.now()}`, nom:nom||file.name, base64, dateUpload:new Date().toISOString() };
+      setPdfFactures(prev=>[...prev, doc]);
+      fbSave("pdfFactures", doc.id, doc);
+      setUploadingPdf(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const deleteFacture = (id) => {
+    if(!window.confirm("Supprimer ce document ?")) return;
+    setPdfFactures(prev=>prev.filter(p=>p.id!==id));
+    fbDelete("pdfFactures", id);
+  };
+
+  const openPdfFacture = (pdf) => {
+    const w = window.open();
+    w.document.write(`<iframe src="${pdf.base64}" style="width:100%;height:100vh;border:none;"/>`);
+  };
+
   const submitStockProduit = () => {
     if(!produitForm.nom.trim()) return alert("Le nom du produit est requis.");
     const p = {
@@ -2017,31 +2045,34 @@ export default function App() {
                 <div>
                   {/* Actions */}
                   <div style={{display:"flex",gap:"8px",marginBottom:"14px",flexWrap:"wrap",alignItems:"center"}}>
+                    <button style={s.btnSm} onClick={()=>{setProduitForm(PRODUIT_EMPTY);setEditingStockProd(null);setShowStockProdForm(true);}}>+ Ajouter un produit</button>
                     <label style={{...s.btnSm,cursor:"pointer",background:"#fff8ee",color:"#7a5200",border:"0.5px solid #d4c4a0"}}>
-                      {importBLLoading?"Analyse en cours...":"Importer un BL (PDF)"}
-                      <input type="file" accept=".pdf" style={{display:"none"}} onChange={e=>{if(e.target.files[0]){importerBL(e.target.files[0]);setShowImportBL(true);} e.target.value="";}}/>
+                      {uploadingPdf?"Chargement...":"+ Ajouter une facture (PDF)"}
+                      <input type="file" accept=".pdf" style={{display:"none"}} onChange={e=>{
+                        const file=e.target.files[0];
+                        if(file){ const nom=window.prompt("Nom du document",file.name.replace(".pdf","")); if(nom!==null) uploadFacture(file,nom||file.name); }
+                        e.target.value="";
+                      }}/>
                     </label>
-                    <button style={s.btnSm} onClick={()=>{setProduitForm(PRODUIT_EMPTY);setEditingStockProd(null);setShowStockProdForm(true);}}>+ Saisie manuelle</button>
-                    <div style={{marginLeft:"auto",fontSize:"11px",color:"#9a8870"}}>{stockProduits.length} produit(s) en stock</div>
+                    <div style={{marginLeft:"auto",fontSize:"11px",color:"#9a8870"}}>{stockProduits.length} produit(s)</div>
                   </div>
-
-                  {/* Resultat import BL */}
-                  {importBLResult.length>0&&(
-                    <div style={{...s.card,marginBottom:"14px",background:"#f0f8e8",border:"1px solid #7ab848"}}>
-                      <div style={{fontWeight:500,color:"#2d6a00",marginBottom:"10px"}}>Produits detectes dans le BL - confirmer l'ajout :</div>
-                      {importBLResult.map((p,i)=>(
-                        <div key={i} style={{display:"flex",alignItems:"center",gap:"10px",padding:"6px 0",borderBottom:"0.5px solid #c8e8a0",fontSize:"12px"}}>
-                          <span style={{fontWeight:500,color:"#1a1205",flex:1}}>{p.nom}</span>
-                          <span style={{color:"#9a8870",fontFamily:"monospace"}}>{p.nAmm}</span>
-                          <span style={{background:p.matiereActive==="Cuivre"?"#fde8b8":"#e6f0fb",color:p.matiereActive==="Cuivre"?"#7a5200":"#185FA5",borderRadius:"3px",padding:"1px 6px",fontSize:"10px"}}>{p.matiereActive}</span>
-                          {p.teneurCuivre>0&&<span style={{color:"#c47800",fontFamily:"monospace",fontSize:"11px"}}>{p.teneurCuivre}g Cu/kg</span>}
-                          {stockProduits.find(x=>x.nAmm===p.nAmm||x.nom.toLowerCase()===p.nom.toLowerCase())&&
-                            <span style={{fontSize:"10px",color:"#9a8870",fontStyle:"italic"}}>deja present</span>}
-                        </div>
-                      ))}
-                      <div style={{display:"flex",gap:"8px",marginTop:"12px"}}>
-                        <button style={s.btn} onClick={confirmerImportBL}>Confirmer l'ajout</button>
-                        <button style={s.ghost} onClick={()=>{setImportBLResult([]);setShowImportBL(false);}}>Annuler</button>
+                  {pdfFactures.length>0&&(
+                    <div style={{...s.card,marginBottom:"14px"}}>
+                      <div style={{...s.lbl,marginBottom:"8px"}}>Factures / BL</div>
+                      <div style={{display:"grid",gap:"6px"}}>
+                        {pdfFactures.map(pdf=>(
+                          <div key={pdf.id} style={{display:"flex",alignItems:"center",gap:"10px",padding:"8px 12px",background:"#fff8ee",borderRadius:"6px",border:"0.5px solid #d4c4a0"}}>
+                            <div style={{width:"28px",height:"28px",background:"#fdd0d0",borderRadius:"4px",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                              <span style={{fontSize:"9px",fontWeight:500,color:"#cc2222",fontFamily:"monospace"}}>PDF</span>
+                            </div>
+                            <div style={{flex:1}}>
+                              <div style={{fontWeight:500,color:"#1a1205",fontSize:"12px"}}>{pdf.nom}</div>
+                              <div style={{fontSize:"10px",color:"#9a8870"}}>{pdf.dateUpload?.slice(0,10)}</div>
+                            </div>
+                            <button style={s.btnSm} onClick={()=>openPdfFacture(pdf)}>Ouvrir</button>
+                            <button style={{...s.ghostSm,color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>deleteFacture(pdf.id)}>Sup.</button>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )}
@@ -3239,6 +3270,7 @@ export default function App() {
                 <button style={s.ghost} onClick={()=>{setShowStockProdForm(false);setEditingStockProd(null);}}>Annuler</button>
                 <button style={s.btn} onClick={submitStockProduit}>{editingStockProd?"Sauvegarder":"Enregistrer"}</button>
               </div>
+            </div>
           </div>
         </div>
       )}
