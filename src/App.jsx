@@ -2201,7 +2201,6 @@ export default function App() {
                     </div>
                   )}
                 </div>
-              )}
                   {pdfFactures.length>0&&(
                     <div style={{...s.card,marginBottom:"14px"}}>
                       <div style={{...s.lbl,marginBottom:"8px"}}>Factures / BL</div>
@@ -2222,6 +2221,7 @@ export default function App() {
                       </div>
                     </div>
                   )}
+              )}
 
                   {/* Catalogue rapide */}
                   {stockProduits.length===0&&(
