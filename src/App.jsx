@@ -448,7 +448,6 @@ export default function App() {
   const [showAmendForm,    setShowAmendForm]     = useState(false);
   const [editingAmend,     setEditingAmend]      = useState(null);
   const [biodyForm,        setBiodyForm]         = useState({campagne:new Date().getFullYear().toString(),date:"",surface:"",produit:"",observations:""});
-  const [showAmendForm,    setShowAmendForm]     = useState(false);
   const [amendForm,        setAmendForm]         = useState({campagne:new Date().getFullYear().toString(),parcelle:"",surface:"",produit:"",quantite:"",nTotal:"",nParHa:"",observations:""});
   const TRAIT_EMPTY = {
     campagne: new Date().getFullYear().toString(),
