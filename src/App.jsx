@@ -451,6 +451,9 @@ export default function App() {
   const [uploadingPdf,     setUploadingPdf]     = useState(false);
   const [biodynamies,      setBiodynamies]       = useState([]);
   const [showBiodyForm,    setShowBiodyForm]     = useState(false);
+  const [editingBiody,     setEditingBiody]      = useState(null);
+  const [showAmendForm,    setShowAmendForm]     = useState(false);
+  const [editingAmend,     setEditingAmend]      = useState(null);
   const [biodyForm,        setBiodyForm]         = useState({campagne:new Date().getFullYear().toString(),date:"",surface:"",produit:"",observations:""});
   const [showAmendForm,    setShowAmendForm]     = useState(false);
   const [amendForm,        setAmendForm]         = useState({campagne:new Date().getFullYear().toString(),parcelle:"",surface:"",produit:"",quantite:"",nTotal:"",nParHa:"",observations:""});
@@ -690,20 +693,22 @@ export default function App() {
 
   const submitBiody = () => {
     if(!biodyForm.date) return alert("La date est requise.");
-    const b = { id:`biody_${Date.now()}`, ...biodyForm, timestamp:new Date().toISOString() };
-    setBiodynamies(prev=>[b,...prev]);
+    const b = { id:editingBiody?editingBiody.id:`biody_${Date.now()}`, ...biodyForm, timestamp:new Date().toISOString() };
+    if(editingBiody){ setBiodynamies(prev=>prev.map(x=>x.id===b.id?b:x)); }
+    else { setBiodynamies(prev=>[b,...prev]); }
     fbSave("biodynamies", b.id, b);
     setBiodyForm({campagne:new Date().getFullYear().toString(),date:"",surface:"",produit:"",observations:""});
-    setShowBiodyForm(false);
+    setEditingBiody(null); setShowBiodyForm(false);
   };
 
   const submitAmend = () => {
     if(!amendForm.parcelle.trim()) return alert("La parcelle est requise.");
-    const a = { id:`amend_${Date.now()}`, ...amendForm, timestamp:new Date().toISOString() };
-    setAmendements(prev=>[a,...prev]);
+    const a = { id:editingAmend?editingAmend.id:`amend_${Date.now()}`, ...amendForm, timestamp:new Date().toISOString() };
+    if(editingAmend){ setAmendements(prev=>prev.map(x=>x.id===a.id?a:x)); }
+    else { setAmendements(prev=>[a,...prev]); }
     fbSave("amendements", a.id, a);
     setAmendForm({campagne:new Date().getFullYear().toString(),parcelle:"",surface:"",produit:"",quantite:"",nTotal:"",nParHa:"",observations:""});
-    setShowAmendForm(false);
+    setEditingAmend(null); setShowAmendForm(false);
   };
 
   const submitTraitement = () => {
@@ -770,7 +775,16 @@ export default function App() {
     fbLoad("vendanges",    setVendanges);
     fbLoad("parcelles",    setParcelles);
     fbLoad("degorgements", setDegorgements);
-    fbLoad("traitements",  setTraitements);
+    // Seed historique si vide
+    getDocs(collection(db,"traitements")).then(snap=>{
+      if(snap.empty){
+        HIST_TRAITEMENTS.forEach(t=>{
+          const id = `hist_${t.campagne}_${t.numero}`;
+          fbSave("traitements", id, {...t, id});
+        });
+      }
+      fbLoad("traitements", setTraitements);
+    });
     fbLoad("biodynamies",  setBiodynamies);
     fbLoad("pdfDocs",      setPdfDocs);
     fbLoad("amendements",  setAmendements);
@@ -1698,7 +1712,7 @@ export default function App() {
 
         {/* -- VIGNE -- */}
         {view==="vigne" && (()=>{
-          const allTraits = [...HIST_TRAITEMENTS, ...traitements].sort((a,b)=>new Date(b.date)-new Date(a.date));
+          const allTraits = [...traitements].sort((a,b)=>new Date(b.date)-new Date(a.date));
           const campagnes = [...new Set(allTraits.map(t=>t.campagne))].sort().reverse();
           const traitsFiltres = filterTraitAn ? allTraits.filter(t=>t.campagne===filterTraitAn) : allTraits;
           const biodyFiltres  = filterTraitAn ? biodynamies.filter(b=>b.campagne===filterTraitAn) : biodynamies;
@@ -1802,7 +1816,8 @@ export default function App() {
                       </thead>
                       <tbody>
                         {traitsFiltres.map((t,i)=>{
-                          const isHist = HIST_TRAITEMENTS.some(h=>h.campagne===t.campagne&&h.numero===t.numero);
+                          const currentYear = new Date().getFullYear().toString();
+                          const isHist = t.campagne !== currentYear;
                           const canEdit = !closed && !isHist;
                           return (
                             <tr key={t.id||i} style={{borderBottom:"1px solid #ede5d4",background:i%2===0?"transparent":"#fffbf3"}}>
@@ -1829,7 +1844,7 @@ export default function App() {
                                     <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
                                       onClick={()=>{if(window.confirm("Supprimer ?")){ setTraitements(prev=>prev.filter(x=>x.id!==t.id)); fbDelete("traitements",t.id||""); }}}>Sup.</button>
                                   </div>
-                                ) : <span style={{fontSize:"10px",color:"#9a8870",fontStyle:"italic"}}>{isHist?"historique":"cloture"}</span>}
+                                ) : <span style={{fontSize:"10px",color:"#9a8870",fontStyle:"italic"}}>{closed?"cloture":""}</span>}
                               </td>
                             </tr>
                           );
@@ -1877,7 +1892,17 @@ export default function App() {
                           Ouvrir
                         </button>
                         {!closed&&(
-                          <button style={{...s.ghostSm,color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>deletePdf(pdf)}>Sup.</button>
+                          <div style={{display:"flex",gap:"4px"}}>
+                            <button style={s.ghostSm} onClick={()=>{
+                              const n=window.prompt("Nouveau nom :", pdf.nom);
+                              if(n&&n.trim()){
+                                const updated={...pdf,nom:n.trim()};
+                                setPdfDocs(prev=>prev.map(p=>p.id===pdf.id?updated:p));
+                                fbSave("pdfDocs",pdf.id,updated);
+                              }
+                            }}>Renommer</button>
+                            <button style={{...s.ghostSm,color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>deletePdf(pdf)}>Sup.</button>
+                          </div>
                         )}
                       </div>
                     ))}
@@ -1909,8 +1934,12 @@ export default function App() {
                             <td style={{padding:"8px 10px",color:"#7a6840",fontStyle:"italic",fontSize:"11px"}}>{b.observations}</td>
                             <td style={{padding:"8px 10px"}}>
                               {!closed&&(
-                                <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
-                                  onClick={()=>{if(window.confirm("Supprimer ?")){ setBiodynamies(prev=>prev.filter(x=>x.id!==b.id)); fbDelete("biodynamies",b.id); }}}>Sup.</button>
+                                <div style={{display:"flex",gap:"3px"}}>
+                                  <button style={{...s.ghostSm,fontSize:"10px"}}
+                                    onClick={()=>{setBiodyForm({campagne:b.campagne,date:b.date,surface:b.surface,produit:b.produit,observations:b.observations});setEditingBiody(b);setShowBiodyForm(true);}}>Mod.</button>
+                                  <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
+                                    onClick={()=>{if(window.confirm("Supprimer ?")){ setBiodynamies(prev=>prev.filter(x=>x.id!==b.id)); fbDelete("biodynamies",b.id); }}}>Sup.</button>
+                                </div>
                               )}
                             </td>
                           </tr>
@@ -1949,8 +1978,12 @@ export default function App() {
                               <td style={{padding:"8px 10px",color:"#7a6840",fontStyle:"italic",fontSize:"11px"}}>{a.observations}</td>
                               <td style={{padding:"8px 10px"}}>
                                 {!closed&&(
-                                  <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
-                                    onClick={()=>{if(window.confirm("Supprimer ?")){ setAmendements(prev=>prev.filter(x=>x.id!==a.id)); fbDelete("amendements",a.id); }}}>Sup.</button>
+                                  <div style={{display:"flex",gap:"3px"}}>
+                                    <button style={{...s.ghostSm,fontSize:"10px"}}
+                                      onClick={()=>{setAmendForm({campagne:a.campagne,parcelle:a.parcelle,surface:a.surface,produit:a.produit,quantite:a.quantite,nTotal:a.nTotal,nParHa:a.nParHa,observations:a.observations});setEditingAmend(a);setShowAmendForm(true);}}>Mod.</button>
+                                    <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
+                                      onClick={()=>{if(window.confirm("Supprimer ?")){ setAmendements(prev=>prev.filter(x=>x.id!==a.id)); fbDelete("amendements",a.id); }}}>Sup.</button>
+                                  </div>
                                 )}
                               </td>
                             </tr>
@@ -2947,8 +2980,8 @@ export default function App() {
         <div style={s.modal}>
           <div style={{...s.modalBox,width:"500px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
-              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#7a5200"}}>Nouveau passage biodynamique</div>
-              <button style={s.ghost} onClick={()=>setShowBiodyForm(false)}>x</button>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#7a5200"}}>{editingBiody?"Modifier le passage":"Nouveau passage biodynamique"}</div>
+              <button style={s.ghost} onClick={()=>{setShowBiodyForm(false);setEditingBiody(null);}}>x</button>
             </div>
             <div style={{display:"grid",gap:"12px"}}>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
@@ -2971,7 +3004,7 @@ export default function App() {
               <div><span style={s.lbl}>Observations</span>
                 <textarea style={{...s.inp,height:"60px",resize:"vertical"}} value={biodyForm.observations} onChange={e=>setBiodyForm(f=>({...f,observations:e.target.value}))}/></div>
               <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
-                <button style={s.ghost} onClick={()=>setShowBiodyForm(false)}>Annuler</button>
+                <button style={s.ghost} onClick={()=>{setShowBiodyForm(false);setEditingBiody(null);}}>Annuler</button>
                 <button style={s.btn} onClick={submitBiody}>Enregistrer</button>
               </div>
             </div>
@@ -2984,8 +3017,8 @@ export default function App() {
         <div style={s.modal}>
           <div style={{...s.modalBox,width:"580px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
-              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#7a5200"}}>Nouvel amendement</div>
-              <button style={s.ghost} onClick={()=>setShowAmendForm(false)}>x</button>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#7a5200"}}>{editingAmend?"Modifier l'amendement":"Nouvel amendement"}</div>
+              <button style={s.ghost} onClick={()=>{setShowAmendForm(false);setEditingAmend(null);}}>x</button>
             </div>
             <div style={{display:"grid",gap:"12px"}}>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
@@ -3025,7 +3058,7 @@ export default function App() {
               <div><span style={s.lbl}>Observations</span>
                 <textarea style={{...s.inp,height:"58px",resize:"vertical"}} value={amendForm.observations} onChange={e=>setAmendForm(f=>({...f,observations:e.target.value}))}/></div>
               <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
-                <button style={s.ghost} onClick={()=>setShowAmendForm(false)}>Annuler</button>
+                <button style={s.ghost} onClick={()=>{setShowAmendForm(false);setEditingAmend(null);}}>Annuler</button>
                 <button style={s.btn} onClick={submitAmend}>Enregistrer</button>
               </div>
             </div>
