@@ -1530,7 +1530,7 @@ export default function App() {
       {/* NAV */}
       <nav style={{...s.nav, flexWrap:"nowrap", overflowX:"auto", WebkitOverflowScrolling:"touch"}} className="nav-scroll">
         <div style={s.brand}> Chai 2025</div>
-        {[["vigne","Vigne"],["vendanges","Vendange"],["dashboard","Vue d'ensemble"],["tonneaux","Tonneaux"],["degustations","Dégustations"],["mouvements","Mouvements"],["tirages","Tirage"],["stock","Stock"]].map(([v,l])=>(
+        {[["dashboard","Vue d'ensemble"],["vigne","Vigne"],["vendanges","Vendange"],["tonneaux","Tonneaux"],["degustations","Dégustations"],["mouvements","Mouvements"],["tirages","Tirage"],["stock","Stock"]].map(([v,l])=>(
           <button key={v} style={s.navBtn(view===v)} onClick={()=>{setView(v);refreshFromFirebase();}}>{l}</button>
         ))}
         <div style={{flex:1}}/>
@@ -2200,6 +2200,7 @@ export default function App() {
                       </table>
                     </div>
                   )}
+                </div>
                   {pdfFactures.length>0&&(
                     <div style={{...s.card,marginBottom:"14px"}}>
                       <div style={{...s.lbl,marginBottom:"8px"}}>Factures / BL</div>
