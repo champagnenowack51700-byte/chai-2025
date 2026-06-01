@@ -2239,6 +2239,7 @@ export default function App() {
                   )}
 
 
+
               {/* === BIODYNAMIE === */}
               {vigneTab==="biodynamie" && (
                 <div style={s.card}>
