@@ -13,6 +13,11 @@ const firebaseConfig = {
   appId: "1:869476292374:web:469b1f38ddbc93bc24e237"
 };
 const firebaseApp = initializeApp(firebaseConfig);
+// Vider le localStorage au demarrage pour eviter conflits avec Firebase
+try { 
+  const keysToRemove = Object.keys(localStorage).filter(k=>k.startsWith("chai_"));
+  keysToRemove.forEach(k=>localStorage.removeItem(k));
+} catch(e) {}
 const db = getFirestore(firebaseApp);  // uses (default) database
 
 // Helper: save a document
@@ -356,8 +361,7 @@ const typeColor = (v) => TYPES_MOUVEMENT.find(t=>t.value===v)?.color||"#888";
 const avg = (arr) => arr.length ? +(arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(2) : null;
 const stars = (n,max=5) => { if(!n) return "-"; const f=Math.round(n); return "*".repeat(f)+"o".repeat(max-f); };
 
-// Firebase replaces localStorage - load() kept for migration only
-function load(key,def){ try{ const s=localStorage.getItem(key); return s?JSON.parse(s):def; }catch{return def;} }
+// localStorage supprime - Firebase uniquement
 
 
 const HIST_TRAITEMENTS = [
@@ -588,14 +592,7 @@ export default function App() {
     window.addEventListener('error', (e) => setAppError(e.message + ' at ' + e.filename + ':' + e.lineno));
     window.addEventListener('unhandledrejection', (e) => setAppError(String(e.reason)));
   }, []);
-  useEffect(()=>{ try{localStorage.setItem("chai_tonneaux",JSON.stringify(tonneaux));}catch{} },[tonneaux]);
-  useEffect(()=>{ try{localStorage.setItem("chai_mouvements",JSON.stringify(mouvements));}catch{} },[mouvements]);
-  useEffect(()=>{ try{localStorage.setItem("chai_degustations",JSON.stringify(degustations));}catch{} },[degustations]);
-  useEffect(()=>{ try{localStorage.setItem("chai_vendanges",JSON.stringify(vendanges));}catch{} },[vendanges]);
-  useEffect(()=>{ try{localStorage.setItem("chai_parcelles",JSON.stringify(parcelles));}catch{} },[parcelles]);
-  useEffect(()=>{ try{localStorage.setItem("chai_tirages",JSON.stringify(tirages));}catch{} },[tirages]);
-  useEffect(()=>{ try{localStorage.setItem("chai_campagnes",JSON.stringify(campagnes));}catch{} },[campagnes]);
-  useEffect(()=>{ try{localStorage.setItem("chai_degustateurs_v2",JSON.stringify(degustateurs));}catch{} },[degustateurs]);
+  // Toutes les donnees sont dans Firebase - pas de localStorage
 
   // Firebase save helpers
   const saveTonneau = (t) => fbSave("tonneaux", t.id, t);
@@ -706,6 +703,7 @@ export default function App() {
     const p = {
       id: editingStockProd ? editingStockProd.id : `prod_${Date.now()}`,
       ...produitForm,
+      substanceActive: produitForm.substanceActive || produitForm.matiereActive || "Cuivre",
       stockActuel: editingStockProd ? (produitForm.stockActuel!==undefined ? produitForm.stockActuel : editingStockProd.stockActuel) : (produitForm.stockInitial||"0"),
       timestamp: new Date().toISOString()
     };
