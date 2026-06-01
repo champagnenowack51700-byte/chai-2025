@@ -763,7 +763,7 @@ export default function App() {
   const updateStockProduit = (id, delta) => {
     setStockProduits(prev=>prev.map(p=>{
       if(p.id!==id) return p;
-      const newStock = Math.max(0, (parseFloat(p.stockActuel)||0) + delta);
+      const newStock = Math.round(((parseFloat(p.stockActuel)||0) + delta)*100)/100;
       const updated = {...p, stockActuel:String(newStock)};
       fbSave("stockProduits", id, updated);
       return updated;
@@ -897,7 +897,7 @@ export default function App() {
     });
     // Appliquer tous les updates
     Object.values(updates).forEach(({sp, delta}) => {
-      const newStock = Math.max(0, Math.round(((parseFloat(sp.stockActuel)||0) + delta)*100)/100);
+      const newStock = Math.round(((parseFloat(sp.stockActuel)||0) + delta)*100)/100;
       const updated = {...sp, stockActuel: String(newStock)};
       setStockProduits(prev=>prev.map(x=>x.id===sp.id?updated:x));
       fbSave("stockProduits", sp.id, updated);
@@ -2205,7 +2205,7 @@ export default function App() {
                                 <td style={{padding:"8px 10px"}}>
                                   <div style={{display:"flex",alignItems:"center",gap:"6px"}}>
                                     <button style={{background:"#f0f0f0",border:"none",borderRadius:"3px",width:"20px",height:"20px",cursor:"pointer",fontWeight:700,color:"#555"}} onClick={()=>updateStockProduit(p.id,-1)}>-</button>
-                                    <span style={{fontWeight:500,color:stock<=0?"#cc2222":pct<20?"#c47800":"#1a7a40",minWidth:"50px",textAlign:"center",fontFamily:"monospace"}}>
+                                    <span style={{fontWeight:500,color:stock<0?"#cc2222":stock===0?"#c47800":pct<20?"#c47800":"#1a7a40",minWidth:"50px",textAlign:"center",fontFamily:"monospace"}}>
                                       {stock} {p.unite}
                                     </span>
                                     <button style={{background:"#f0f0f0",border:"none",borderRadius:"3px",width:"20px",height:"20px",cursor:"pointer",fontWeight:700,color:"#555"}} onClick={()=>updateStockProduit(p.id,1)}>+</button>
