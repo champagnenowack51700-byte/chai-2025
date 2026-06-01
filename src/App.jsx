@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, doc, setDoc, deleteDoc, getDocs, writeBatch } from "firebase/firestore";
+import { getFirestore, collection, doc, setDoc, deleteDoc, getDocs, onSnapshot, writeBatch } from "firebase/firestore";
 
 
 // Firebase config
@@ -2088,9 +2088,9 @@ teneurCuivre = grammes de cuivre metal par kg ou par litre du produit (0 si pas 
                                 </td>
                                 <td style={{padding:"8px 10px",fontFamily:"monospace",fontSize:"11px",color:"#9a8870"}}>{p.nAmm||"-"}</td>
                                 <td style={{padding:"8px 10px"}}>
-                                  <span style={{background:(p.substanceActive||p.matiereActive)==="Cuivre"?"#fde8b8":(p.substanceActive||p.matiereActive)==="Soufre"?"#e6f0fb":"#ede5d4",color:(p.substanceActive||p.matiereActive)==="Cuivre"?"#7a5200":(p.substanceActive||p.matiereActive)==="Soufre"?"#185FA5":"#5f5e5a",borderRadius:"3px",padding:"1px 6px",fontSize:"10px",fontFamily:"monospace"}}>
-                                    {p.substanceActive||p.matiereActive||"-"}
-                                  </span>
+                                  {(()=>{ const sa=p.substanceActive||p.matiereActive||"-";
+                                    return <span style={{background:sa==="Cuivre"?"#fde8b8":sa==="Soufre"?"#e6f0fb":"#ede5d4",color:sa==="Cuivre"?"#7a5200":sa==="Soufre"?"#185FA5":"#5f5e5a",borderRadius:"3px",padding:"1px 6px",fontSize:"10px",fontFamily:"monospace"}}>{sa}</span>;
+                                  })()}
                                 </td>
                                 <td style={{padding:"8px 10px",fontFamily:"monospace",fontWeight:500}}>
                                   {parseFloat(p.teneurCuivre)>0
