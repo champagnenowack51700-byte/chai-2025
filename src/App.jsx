@@ -1919,7 +1919,7 @@ export default function App() {
                       {selectedMvts.length===0&&<div style={{color:"#8a7248",fontSize:"13px"}}>Aucun mouvement enregistré.</div>}
                       {selectedMvts.map(m=><MvtRow key={m.id} m={m}/>)}
                     </div>
-                  )
+                  )}
 
                   {ficheTab==="historique"&&(()=>{
                     const mvtsParAn = {};
