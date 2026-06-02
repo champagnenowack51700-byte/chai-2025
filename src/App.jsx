@@ -589,8 +589,7 @@ export default function App() {
   };
 
   const importCsvCloture = () => {
-    const lines = clotureForm.importCsv.trim().split("
-").filter(l=>l.trim());
+    const lines = clotureForm.importCsv.trim().split("\n").filter(l=>l.trim());
     if(lines.length<2){ alert("Format invalide. Ligne 1: en-tetes, suite: donnees"); return; }
     const headers = lines[0].split(";").map(h=>h.trim().toLowerCase());
     const lignes = [];
