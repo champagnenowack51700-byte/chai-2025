@@ -2730,8 +2730,7 @@ export default function App() {
               {/* Import CSV */}
               <div style={{background:"#fff8ee",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
                 <div style={{...s.lbl,marginBottom:"8px"}}>Import CSV (format: cuvee;millesime;format;lieu;qte)</div>
-                <textarea style={{...s.inp,height:"80px",resize:"vertical",fontSize:"12px"}} placeholder={"cuvee;millesime;format;lieu;qte
-FONTINETTE;2025;75;Epernay;120"} value={clotureForm.importCsv} onChange={e=>setClotureForm(f=>({...f,importCsv:e.target.value}))}/>
+                <textarea style={{...s.inp,height:"80px",resize:"vertical",fontSize:"12px"}} placeholder="cuvee;millesime;format;lieu;qte" value={clotureForm.importCsv} onChange={e=>setClotureForm(f=>({...f,importCsv:e.target.value}))}/>
                 <button style={{...s.ghostSm,marginTop:"6px"}} onClick={importCsvCloture}>Importer les lignes</button>
               </div>
 
