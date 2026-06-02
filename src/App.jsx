@@ -1908,7 +1908,7 @@ export default function App() {
                 {/* Colonne droite - onglets */}
                 <div style={s.card}>
                   <div style={{display:"flex",borderBottom:"1px solid #cfc0a0",marginBottom:"16px",gap:"0"}}>
-                    {[["degustations",`Degustations (${notesForFut(selectedT.id).length})`],["mouvements",`Mouvements (${selectedMvts.length})`]].map(([tab,lbl])=>(
+                    {[["degustations",`Degustations (${notesForFut(selectedT.id).length})`],["mouvements",`Mouvements (${selectedMvts.length})`],["historique","Historique"]].map(([tab,lbl])=>(
                       <button key={tab} style={s.tabBtn(ficheTab===tab)} onClick={()=>setFicheTab(tab)}>{lbl}</button>
                     ))}
                   </div>
@@ -1919,7 +1919,109 @@ export default function App() {
                       {selectedMvts.length===0&&<div style={{color:"#8a7248",fontSize:"13px"}}>Aucun mouvement enregistré.</div>}
                       {selectedMvts.map(m=><MvtRow key={m.id} m={m}/>)}
                     </div>
-                  )}
+                  )
+
+                  {ficheTab==="historique"&&(()=>{
+                    const mvtsParAn = {};
+                    selectedMvts.forEach(m=>{ const y=m.date?m.date.slice(0,4):"?"; if(!mvtsParAn[y]) mvtsParAn[y]=[]; mvtsParAn[y].push(m); });
+                    const notesParAn = {};
+                    notesForFut(selectedT.id).forEach(n=>{ const y=n.date?n.date.slice(0,4):"?"; if(!notesParAn[y]) notesParAn[y]=[]; notesParAn[y].push(n); });
+                    const allYears=[...new Set([...Object.keys(mvtsParAn),...Object.keys(notesParAn)])].sort().reverse();
+                    return (
+                      <div>
+                        {allYears.length===0&&<div style={{color:"#9a8870",fontStyle:"italic",padding:"12px 0"}}>Aucun historique.</div>}
+                        {allYears.map(year=>(
+                          <div key={year} style={{marginBottom:"16px"}}>
+                            <div style={{fontFamily:"Georgia,serif",fontSize:"15px",color:"#b8860b",borderBottom:"0.5px solid #d4c4a0",paddingBottom:"6px",marginBottom:"8px"}}>
+                              Campagne {year}
+                              {mvtsParAn[year]&&<span style={{fontSize:"11px",color:"#9a8870",fontWeight:400,marginLeft:"8px"}}>{mvtsParAn[year].length} mvt(s)</span>}
+                              {notesParAn[year]&&<span style={{fontSize:"11px",color:"#9a8870",fontWeight:400,marginLeft:"8px"}}>{notesParAn[year].length} deg.</span>}
+                            </div>
+                            {(mvtsParAn[year]||[]).map((m,i)=>(
+                              <div key={i} style={{display:"flex",gap:"8px",padding:"5px 0",borderBottom:"0.5px solid #ede5d4",fontSize:"12px"}}>
+                                <div style={{width:"80px",color:"#9a8870",flexShrink:0}}>{m.date}</div>
+                                <div style={{flex:1}}>
+                                  <span style={{background:"#e8f0e8",color:"#2d6a00",borderRadius:"3px",padding:"1px 6px",fontSize:"10px",marginRight:"6px"}}>{m.type}</span>
+                                  {m.lieuDepart&&<span style={{color:"#6a5838"}}>{m.lieuDepart}</span>}
+                                  {m.lieuArrivee&&<span style={{color:"#9a8870"}}> -> {m.lieuArrivee}</span>}
+                                  {m.volume&&<span style={{color:"#b8860b",fontFamily:"monospace",marginLeft:"6px",fontWeight:500}}>{m.volume}L</span>}
+                                  {m.notes&&<div style={{color:"#9a8870",fontStyle:"italic",fontSize:"11px"}}>{m.notes}</div>}
+                                </div>
+                              </div>
+                            ))}
+                            {(notesParAn[year]||[]).map((n,i)=>(
+                              <div key={i} style={{display:"flex",gap:"8px",padding:"5px 0",borderBottom:"0.5px solid #ede5d4",fontSize:"12px"}}>
+                                <div style={{width:"80px",color:"#9a8870",flexShrink:0}}>{n.date}</div>
+                                <div style={{flex:1}}>
+                                  <span style={{background:"#f0e8f8",color:"#6a2d6a",borderRadius:"3px",padding:"1px 6px",fontSize:"10px",marginRight:"6px"}}>Degustation</span>
+                                  <span style={{color:"#6a5838"}}>{n.degustateur}</span>
+                                  {n.noteG&&<span style={{background:"#fde8b8",color:"#7a5200",borderRadius:"3px",padding:"1px 6px",fontSize:"10px",marginLeft:"6px"}}>{n.noteG}/5</span>}
+                                  {n.commentaire&&<div style={{color:"#9a8870",fontStyle:"italic",fontSize:"11px"}}>{n.commentaire}</div>}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
+
+                  {ficheTab==="historique"&&(()=>{
+                    // Toutes les campagnes du fût
+                    const mvtsParCampagne = {};
+                    selectedMvts.forEach(m=>{
+                      const year = m.date ? m.date.slice(0,4) : "Inconnu";
+                      if(!mvtsParCampagne[year]) mvtsParCampagne[year] = [];
+                      mvtsParCampagne[year].push(m);
+                    });
+                    const notesParCampagne = {};
+                    notesForFut(selectedT.id).forEach(n=>{
+                      const year = n.date ? n.date.slice(0,4) : "Inconnu";
+                      if(!notesParCampagne[year]) notesParCampagne[year] = [];
+                      notesParCampagne[year].push(n);
+                    });
+                    const allYears = [...new Set([...Object.keys(mvtsParCampagne),...Object.keys(notesParCampagne)])].sort().reverse();
+                    return (
+                      <div>
+                        {allYears.length===0&&<div style={{color:"#9a8870",fontStyle:"italic",fontSize:"13px",padding:"12px 0"}}>Aucun historique pour ce fût.</div>}
+                        {allYears.map(year=>(
+                          <div key={year} style={{marginBottom:"16px"}}>
+                            <div style={{fontFamily:"Georgia,serif",fontSize:"15px",color:"#b8860b",borderBottom:"0.5px solid #d4c4a0",paddingBottom:"6px",marginBottom:"10px",display:"flex",alignItems:"center",gap:"8px"}}>
+                              <span>Campagne {year}</span>
+                              {mvtsParCampagne[year]&&<span style={{fontSize:"11px",color:"#9a8870",fontWeight:400}}>{mvtsParCampagne[year].length} mouvement(s)</span>}
+                              {notesParCampagne[year]&&<span style={{fontSize:"11px",color:"#9a8870",fontWeight:400}}>{notesParCampagne[year].length} degustation(s)</span>}
+                            </div>
+                            {/* Mouvements de l'annee */}
+                            {mvtsParCampagne[year]&&mvtsParCampagne[year].map((m,i)=>(
+                              <div key={i} style={{display:"flex",gap:"10px",alignItems:"flex-start",padding:"6px 0",borderBottom:"0.5px solid #ede5d4",fontSize:"12px"}}>
+                                <div style={{width:"80px",color:"#9a8870",flexShrink:0}}>{m.date}</div>
+                                <div style={{flex:1}}>
+                                  <span style={{background:"#e8f0e8",color:"#2d6a00",borderRadius:"3px",padding:"1px 6px",fontSize:"10px",fontFamily:"monospace",marginRight:"6px"}}>{m.type}</span>
+                                  {m.lieuDepart&&<span style={{color:"#6a5838"}}>{m.lieuDepart}</span>}
+                                  {m.lieuArrivee&&<span style={{color:"#9a8870"}}> - {m.lieuArrivee}</span>}
+                                  {m.volume&&<span style={{color:"#b8860b",fontFamily:"monospace",marginLeft:"6px",fontWeight:500}}>{m.volume}L</span>}
+                                  {m.operateur&&<span style={{color:"#9a8870",marginLeft:"6px",fontSize:"11px"}}>{m.operateur}</span>}
+                                  {m.notes&&<div style={{color:"#9a8870",fontStyle:"italic",marginTop:"2px",fontSize:"11px"}}>{m.notes}</div>}
+                                </div>
+                              </div>
+                            ))}
+                            {/* Degustations de l'annee */}
+                            {notesParCampagne[year]&&notesParCampagne[year].map((n,i)=>(
+                              <div key={i} style={{display:"flex",gap:"10px",alignItems:"flex-start",padding:"6px 0",borderBottom:"0.5px solid #ede5d4",fontSize:"12px"}}>
+                                <div style={{width:"80px",color:"#9a8870",flexShrink:0}}>{n.date}</div>
+                                <div style={{flex:1}}>
+                                  <span style={{background:"#f0e8f8",color:"#6a2d6a",borderRadius:"3px",padding:"1px 6px",fontSize:"10px",fontFamily:"monospace",marginRight:"6px"}}>Degustation</span>
+                                  <span style={{color:"#6a5838"}}>{n.degustateur}</span>
+                                  {n.noteG&&<span style={{background:"#fde8b8",color:"#7a5200",borderRadius:"3px",padding:"1px 6px",fontSize:"10px",fontFamily:"monospace",marginLeft:"6px"}}>{n.noteG}/5</span>}
+                                  {n.commentaire&&<div style={{color:"#9a8870",fontStyle:"italic",marginTop:"2px",fontSize:"11px"}}>{n.commentaire}</div>}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}}
                 </div>
               </div>
             </div>
@@ -2200,6 +2302,7 @@ export default function App() {
                       </table>
                     </div>
                   )}
+
                   {pdfFactures.length>0&&(
                     <div style={{...s.card,marginBottom:"14px"}}>
                       <div style={{...s.lbl,marginBottom:"8px"}}>Factures / BL</div>
@@ -2869,7 +2972,7 @@ export default function App() {
                   <div style={{display:"grid",gridTemplateColumns:"120px 80px 80px 80px 1fr",gap:"0",background:"#fffbf3",padding:"7px 10px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#8a7248"}}>
                     <div>Dégustateur</div><div>Boisé /3</div><div>Longueur /3</div><div>Note G /5</div><div>Commentaire</div>
                   </div>
-                  {degForm.lignes.map((l,i)=>(
+                  {degForm.lignes.map((l,i)=>(<div key={i} style={{display:"contents"}}>
                     <div key={l.degustateur} style={{display:"grid",gridTemplateColumns:"120px 80px 80px 80px 1fr",gap:"0",borderTop:"1px solid #d0c4a0",padding:"5px 8px",alignItems:"center"}}>
                       <div style={{fontSize:"12px",color:"#b8860b",padding:"0 2px"}}>{l.degustateur}</div>
                       <div style={{padding:"0 4px"}}><input type="number" min="0" max="3" step="0.5" style={{...s.inp,padding:"4px 6px",fontSize:"12px"}} placeholder="-" value={l.boise} onChange={e=>{const lg=[...degForm.lignes];lg[i]={...lg[i],boise:e.target.value};setDegForm(f=>({...f,lignes:lg}));}}/></div>
@@ -2877,7 +2980,7 @@ export default function App() {
                       <div style={{padding:"0 4px"}}><input type="number" min="0" max="5" step="0.5" style={{...s.inp,padding:"4px 6px",fontSize:"12px"}} placeholder="-" value={l.noteG} onChange={e=>{const lg=[...degForm.lignes];lg[i]={...lg[i],noteG:e.target.value};setDegForm(f=>({...f,lignes:lg}));}}/></div>
                       <div style={{padding:"0 4px"}}><input style={{...s.inp,padding:"4px 6px",fontSize:"12px"}} placeholder="Commentaire libre..." value={l.commentaire} onChange={e=>{const lg=[...degForm.lignes];lg[i]={...lg[i],commentaire:e.target.value};setDegForm(f=>({...f,lignes:lg}));}}/></div>
                     </div>
-                  ))}
+                  </div>))}
                 </div>
               </div>
               <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"1px solid #cfc0a0",paddingTop:"14px"}}>
