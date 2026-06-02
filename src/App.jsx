@@ -2199,6 +2199,7 @@ export default function App() {
                     <div>Dégustateur</div><div>Boisé /3</div><div>Longueur /3</div><div>Note G /5</div><div>Commentaire</div>
                   </div>
                   {degForm.lignes.map((l,i)=>(
+                    <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr",gap:"4px",padding:"3px 0",borderBottom:"0.5px solid #ede5d4",alignItems:"center"}}>
                       <div style={{fontSize:"12px",color:"#b8860b",padding:"0 2px"}}>{l.degustateur}</div>
                       <div style={{padding:"0 4px"}}><input type="number" min="0" max="3" step="0.5" style={{...s.inp,padding:"4px 6px",fontSize:"12px"}} placeholder="-" value={l.boise} onChange={e=>{const lg=[...degForm.lignes];lg[i]={...lg[i],boise:e.target.value};setDegForm(f=>({...f,lignes:lg}));}}/></div>
                       <div style={{padding:"0 4px"}}><input type="number" min="0" max="3" step="0.5" style={{...s.inp,padding:"4px 6px",fontSize:"12px"}} placeholder="-" value={l.longueur} onChange={e=>{const lg=[...degForm.lignes];lg[i]={...lg[i],longueur:e.target.value};setDegForm(f=>({...f,lignes:lg}));}}/></div>
