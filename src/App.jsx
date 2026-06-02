@@ -589,7 +589,8 @@ export default function App() {
   };
 
   const importCsvCloture = () => {
-    const lines = clotureForm.importCsv.trim().split("\n").filter(l=>l.trim());
+    const lines = clotureForm.importCsv.trim().split("
+").filter(l=>l.trim());
     if(lines.length<2){ alert("Format invalide. Ligne 1: en-tetes, suite: donnees"); return; }
     const headers = lines[0].split(";").map(h=>h.trim().toLowerCase());
     const lignes = [];
@@ -2199,7 +2200,6 @@ export default function App() {
                     <div>Dégustateur</div><div>Boisé /3</div><div>Longueur /3</div><div>Note G /5</div><div>Commentaire</div>
                   </div>
                   {degForm.lignes.map((l,i)=>(
-                    <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr",gap:"4px",padding:"3px 0",borderBottom:"0.5px solid #ede5d4",alignItems:"center"}}>
                       <div style={{fontSize:"12px",color:"#b8860b",padding:"0 2px"}}>{l.degustateur}</div>
                       <div style={{padding:"0 4px"}}><input type="number" min="0" max="3" step="0.5" style={{...s.inp,padding:"4px 6px",fontSize:"12px"}} placeholder="-" value={l.boise} onChange={e=>{const lg=[...degForm.lignes];lg[i]={...lg[i],boise:e.target.value};setDegForm(f=>({...f,lignes:lg}));}}/></div>
                       <div style={{padding:"0 4px"}}><input type="number" min="0" max="3" step="0.5" style={{...s.inp,padding:"4px 6px",fontSize:"12px"}} placeholder="-" value={l.longueur} onChange={e=>{const lg=[...degForm.lignes];lg[i]={...lg[i],longueur:e.target.value};setDegForm(f=>({...f,lignes:lg}));}}/></div>
@@ -2730,7 +2730,8 @@ export default function App() {
               {/* Import CSV */}
               <div style={{background:"#fff8ee",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
                 <div style={{...s.lbl,marginBottom:"8px"}}>Import CSV (format: cuvee;millesime;format;lieu;qte)</div>
-                <textarea style={{...s.inp,height:"80px",resize:"vertical",fontSize:"12px"}} placeholder="cuvee;millesime;format;lieu;qte" value={clotureForm.importCsv} onChange={e=>setClotureForm(f=>({...f,importCsv:e.target.value}))}/>
+                <textarea style={{...s.inp,height:"80px",resize:"vertical",fontSize:"12px"}} placeholder={"cuvee;millesime;format;lieu;qte
+FONTINETTE;2025;75;Epernay;120"} value={clotureForm.importCsv} onChange={e=>setClotureForm(f=>({...f,importCsv:e.target.value}))}/>
                 <button style={{...s.ghostSm,marginTop:"6px"}} onClick={importCsvCloture}>Importer les lignes</button>
               </div>
 
