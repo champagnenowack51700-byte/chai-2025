@@ -2198,14 +2198,14 @@ export default function App() {
                   <div style={{display:"grid",gridTemplateColumns:"120px 80px 80px 80px 1fr",gap:"0",background:"#fffbf3",padding:"7px 10px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#8a7248"}}>
                     <div>Dégustateur</div><div>Boisé /3</div><div>Longueur /3</div><div>Note G /5</div><div>Commentaire</div>
                   </div>
-                  {degForm.lignes.map((l,i)=>(
+                  {degForm.lignes.map((l,i)=>(<div key={i} style={{display:"contents"}}>
                       <div style={{fontSize:"12px",color:"#b8860b",padding:"0 2px"}}>{l.degustateur}</div>
                       <div style={{padding:"0 4px"}}><input type="number" min="0" max="3" step="0.5" style={{...s.inp,padding:"4px 6px",fontSize:"12px"}} placeholder="-" value={l.boise} onChange={e=>{const lg=[...degForm.lignes];lg[i]={...lg[i],boise:e.target.value};setDegForm(f=>({...f,lignes:lg}));}}/></div>
                       <div style={{padding:"0 4px"}}><input type="number" min="0" max="3" step="0.5" style={{...s.inp,padding:"4px 6px",fontSize:"12px"}} placeholder="-" value={l.longueur} onChange={e=>{const lg=[...degForm.lignes];lg[i]={...lg[i],longueur:e.target.value};setDegForm(f=>({...f,lignes:lg}));}}/></div>
                       <div style={{padding:"0 4px"}}><input type="number" min="0" max="5" step="0.5" style={{...s.inp,padding:"4px 6px",fontSize:"12px"}} placeholder="-" value={l.noteG} onChange={e=>{const lg=[...degForm.lignes];lg[i]={...lg[i],noteG:e.target.value};setDegForm(f=>({...f,lignes:lg}));}}/></div>
                       <div style={{padding:"0 4px"}}><input style={{...s.inp,padding:"4px 6px",fontSize:"12px"}} placeholder="Commentaire libre..." value={l.commentaire} onChange={e=>{const lg=[...degForm.lignes];lg[i]={...lg[i],commentaire:e.target.value};setDegForm(f=>({...f,lignes:lg}));}}/></div>
                     </div>
-                  ))}
+                  </div>))}
                 </div>
               </div>
               <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"1px solid #cfc0a0",paddingTop:"14px"}}>
