@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, doc, setDoc, deleteDoc, getDocs, writeBatch } from "firebase/firestore";
+import { getFirestore, collection, doc, setDoc, deleteDoc, getDocs, onSnapshot, writeBatch } from "firebase/firestore";
+
 
 // Firebase config
 const firebaseConfig = {
@@ -12,6 +13,11 @@ const firebaseConfig = {
   appId: "1:869476292374:web:469b1f38ddbc93bc24e237"
 };
 const firebaseApp = initializeApp(firebaseConfig);
+// Vider le localStorage au demarrage pour eviter conflits avec Firebase
+try { 
+  const keysToRemove = Object.keys(localStorage).filter(k=>k.startsWith("chai_"));
+  keysToRemove.forEach(k=>localStorage.removeItem(k));
+} catch(e) {}
 const db = getFirestore(firebaseApp);  // uses (default) database
 
 // Helper: save a document
@@ -355,8 +361,52 @@ const typeColor = (v) => TYPES_MOUVEMENT.find(t=>t.value===v)?.color||"#888";
 const avg = (arr) => arr.length ? +(arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(2) : null;
 const stars = (n,max=5) => { if(!n) return "-"; const f=Math.round(n); return "*".repeat(f)+"o".repeat(max-f); };
 
-// Firebase replaces localStorage - load() kept for migration only
-function load(key,def){ try{ const s=localStorage.getItem(key); return s?JSON.parse(s):def; }catch{return def;} }
+// localStorage supprime - Firebase uniquement
+
+
+const HIST_TRAITEMENTS = [
+  // 2025
+  {campagne:"2025",numero:"1",date:"2025-04-04",surface:"2.90 ha",cuivreTotal:250,produits:[{nom:"Bouillie Bordelaise",dose:"0.7kg/ha",matiereActive:"Cuivre",cuivre:250},{nom:"Nordox",dose:"130g/ha",matiereActive:"Cuivre"},{nom:"Microthiol",dose:"5kg/ha",matiereActive:"Soufre"},{nom:"HelioSoufre",dose:"2l/ha",matiereActive:"Soufre"}]},
+  {campagne:"2025",numero:"2",date:"2025-04-15",surface:"8.68 ha",cuivreTotal:275,produits:[{nom:"Bouillie Bordelaise",dose:"1kg/ha",matiereActive:"Cuivre",cuivre:275},{nom:"Nordox",dose:"100g/ha",matiereActive:"Cuivre"},{nom:"Microthiol",dose:"8kg/ha",matiereActive:"Soufre"},{nom:"HelioSoufre",dose:"1.5l/ha",matiereActive:"Soufre"}]},
+  {campagne:"2025",numero:"3",date:"2025-04-25",surface:"8.68 ha",cuivreTotal:200,produits:[{nom:"Bouillie Bordelaise",dose:"1kg/ha",matiereActive:"Cuivre",cuivre:200},{nom:"Microthiol",dose:"8kg/ha",matiereActive:"Soufre"},{nom:"HelioSoufre",dose:"2l/ha",matiereActive:"Soufre"}]},
+  {campagne:"2025",numero:"4",date:"2025-04-30",surface:"3.50 ha",cuivreTotal:200,produits:[{nom:"Bouillie Bordelaise",dose:"1kg/ha",matiereActive:"Cuivre",cuivre:200},{nom:"Microthiol",dose:"8kg/ha",matiereActive:"Soufre"},{nom:"HelioSoufre",dose:"2.5l/ha",matiereActive:"Soufre"}]},
+  {campagne:"2025",numero:"5",date:"2025-05-08",surface:"7 ha",cuivreTotal:300,produits:[{nom:"Champ Flo",dose:"0.71l/ha",matiereActive:"Cuivre",cuivre:300},{nom:"Nordox",dose:"50g/ha",matiereActive:"Cuivre"},{nom:"Microthiol",dose:"8kg/ha",matiereActive:"Soufre"},{nom:"HelioSoufre",dose:"2.5l/ha",matiereActive:"Soufre"}]},
+  {campagne:"2025",numero:"6",date:"2025-05-16",surface:"7 ha",cuivreTotal:300,produits:[{nom:"Champ Flo",dose:"0.71l/ha",matiereActive:"Cuivre",cuivre:300},{nom:"Nordox",dose:"50g/ha",matiereActive:"Cuivre"},{nom:"Microthiol",dose:"8kg/ha",matiereActive:"Soufre"},{nom:"HelioSoufre",dose:"2.5l/ha",matiereActive:"Soufre"}]},
+  {campagne:"2025",numero:"7",date:"2025-05-21",surface:"8.68 ha",cuivreTotal:200,produits:[{nom:"Bouillie Bordelaise",dose:"1kg/ha",matiereActive:"Cuivre",cuivre:200},{nom:"Microthiol",dose:"8kg/ha",matiereActive:"Soufre"},{nom:"HelioSoufre",dose:"2.5l/ha",matiereActive:"Soufre"}]},
+  {campagne:"2025",numero:"8",date:"2025-05-28",surface:"7 ha",cuivreTotal:363,produits:[{nom:"Cham Flow",dose:"0.71l/ha",matiereActive:"Cuivre",cuivre:363},{nom:"Bouillie Bordelaise",dose:"230g/ha",matiereActive:"Cuivre"},{nom:"Nordox",dose:"86g/ha",matiereActive:"Cuivre"},{nom:"Microthiol",dose:"10kg/ha",matiereActive:"Soufre"}]},
+  {campagne:"2025",numero:"9",date:"2025-06-04",surface:"8.68 ha",cuivreTotal:115,produits:[{nom:"Bouillie Bordelaise",dose:"0.57kg/ha",matiereActive:"Cuivre",cuivre:115},{nom:"Microthiol",dose:"7.5kg/ha",matiereActive:"Soufre"}]},
+  {campagne:"2025",numero:"10",date:"2025-06-10",surface:"8.68 ha",cuivreTotal:100,produits:[{nom:"Bouillie Bordelaise",dose:"0.5kg/ha",matiereActive:"Cuivre",cuivre:100},{nom:"Microthiol",dose:"7.5kg/ha",matiereActive:"Soufre"}]},
+  {campagne:"2025",numero:"11",date:"2025-06-13",surface:"3.50 ha",cuivreTotal:100,produits:[{nom:"Bouillie Bordelaise",dose:"0.5kg/ha",matiereActive:"Cuivre",cuivre:100},{nom:"Microthiol",dose:"7kg/ha",matiereActive:"Soufre"}]},
+  {campagne:"2025",numero:"12",date:"2025-06-18",surface:"8.68 ha",cuivreTotal:200,produits:[{nom:"Bouillie Bordelaise",dose:"1kg",matiereActive:"Cuivre",cuivre:200},{nom:"Microthiol",dose:"5kg",matiereActive:"Soufre"}]},
+  {campagne:"2025",numero:"13",date:"2025-06-27",surface:"8.68 ha",cuivreTotal:200,produits:[{nom:"Bouillie Bordelaise",dose:"1kg",matiereActive:"Cuivre",cuivre:200},{nom:"Microthiol",dose:"7kg/ha",matiereActive:"Soufre"}]},
+  {campagne:"2025",numero:"14",date:"2025-07-03",surface:"8.68 ha",cuivreTotal:200,produits:[{nom:"Bouillie Bordelaise",dose:"0.5g/ha",matiereActive:"Cuivre",cuivre:200},{nom:"Nordox",dose:"143g/ha",matiereActive:"Cuivre"},{nom:"Microthiol",dose:"5kg/ha",matiereActive:"Soufre"}]},
+  {campagne:"2025",numero:"15",date:"2025-07-16",surface:"8.68 ha",cuivreTotal:200,produits:[{nom:"Bouillie Bordelaise",dose:"0.5g/ha",matiereActive:"Cuivre",cuivre:200},{nom:"Nordox",dose:"143g/ha",matiereActive:"Cuivre"},{nom:"Microthiol",dose:"4.5kg/ha",matiereActive:"Soufre"},{nom:"Armicarb",dose:"3kg/ha"}]},
+  // 2024
+  {campagne:"2024",numero:"1",date:"2024-03-28",surface:"2.60 ha",cuivreTotal:200,produits:[{nom:"Bouillie Bordelaise",dose:"1kg/ha",matiereActive:"Cuivre",cuivre:200},{nom:"HelioSoufre",dose:"3l/ha",matiereActive:"Soufre"},{nom:"Microthiol",dose:"3kg/ha",matiereActive:"Soufre"}]},
+  {campagne:"2024",numero:"2",date:"2024-03-31",surface:"8.20 ha",cuivreTotal:240,produits:[{nom:"Bouillie Bordelaise",dose:"800g/ha",matiereActive:"Cuivre",cuivre:240},{nom:"Nordox",dose:"60g/ha",matiereActive:"Cuivre"},{nom:"Microthiol",dose:"5kg/ha",matiereActive:"Soufre"},{nom:"HelioSoufre",dose:"2l/ha",matiereActive:"Soufre"}]},
+  {campagne:"2024",numero:"3",date:"2024-04-05",surface:"8.20 ha",cuivreTotal:350,produits:[{nom:"Champ Flo",dose:"0.7l/ha",matiereActive:"Cuivre",cuivre:350},{nom:"Nordox",dose:"70g/ha",matiereActive:"Cuivre"},{nom:"Microthiol",dose:"8kg/ha",matiereActive:"Soufre"},{nom:"HelioSoufre",dose:"2l/ha",matiereActive:"Soufre"}]},
+  {campagne:"2024",numero:"4",date:"2024-04-12",surface:"8.20 ha",cuivreTotal:280,produits:[{nom:"Bouillie Bordelaise",dose:"1kg/ha",matiereActive:"Cuivre",cuivre:280},{nom:"Nordox",dose:"60g",matiereActive:"Cuivre"},{nom:"Microthiol",dose:"8kg/ha",matiereActive:"Soufre"},{nom:"HelioSoufre",dose:"2l/ha",matiereActive:"Soufre"}]},
+  {campagne:"2024",numero:"5",date:"2024-04-15",surface:"8.20 ha",cuivreTotal:240,produits:[{nom:"Bouillie Bordelaise",dose:"1kg/ha",matiereActive:"Cuivre",cuivre:240},{nom:"Nordox",dose:"30g/ha",matiereActive:"Cuivre"},{nom:"Microthiol",dose:"8kg/ha",matiereActive:"Soufre"},{nom:"HelioSoufre",dose:"2l/ha",matiereActive:"Soufre"}]},
+  {campagne:"2024",numero:"6",date:"2024-04-17",surface:"8.20 ha",cuivreTotal:140,produits:[{nom:"Bouillie Bordelaise",dose:"0.5kg/ha",matiereActive:"Cuivre",cuivre:140},{nom:"Nordox",dose:"30g/ha",matiereActive:"Cuivre"},{nom:"Microthiol",dose:"6kg/ha",matiereActive:"Soufre"},{nom:"HelioSoufre",dose:"2l/ha",matiereActive:"Soufre"}]},
+  {campagne:"2024",numero:"7",date:"2024-04-22",surface:"8.20 ha",cuivreTotal:204,produits:[{nom:"Champ Flo",dose:"57cl/ha",matiereActive:"Cuivre",cuivre:204},{nom:"Microthiol",dose:"6kg/ha",matiereActive:"Soufre"},{nom:"HelioSoufre",dose:"2l/ha",matiereActive:"Soufre"}]},
+  {campagne:"2024",numero:"8",date:"2024-04-25",surface:"8.20 ha",cuivreTotal:100,produits:[{nom:"Bouillie Bordelaise",dose:"0.5kg/ha",matiereActive:"Cuivre",cuivre:100},{nom:"Microthiol",dose:"6kg/ha",matiereActive:"Soufre"},{nom:"HelioSoufre",dose:"2l/ha",matiereActive:"Soufre"}]},
+  {campagne:"2024",numero:"9",date:"2024-04-30",surface:"8.20 ha",cuivreTotal:280,produits:[{nom:"Champ Flo",dose:"55cl/ha",matiereActive:"Cuivre",cuivre:280},{nom:"Nordox",dose:"60g/ha",matiereActive:"Cuivre"},{nom:"Microthiol",dose:"6kg/ha",matiereActive:"Soufre"},{nom:"HelioSoufre",dose:"2l/ha",matiereActive:"Soufre"}]},
+  {campagne:"2024",numero:"10",date:"2024-05-02",surface:"8.20 ha",cuivreTotal:280,produits:[{nom:"Champ Flo",dose:"55cl/ha",matiereActive:"Cuivre",cuivre:280},{nom:"Nordox",dose:"60g/ha",matiereActive:"Cuivre"},{nom:"Microthiol",dose:"6kg/ha",matiereActive:"Soufre"},{nom:"HelioSoufre",dose:"2l/ha",matiereActive:"Soufre"}]},
+  {campagne:"2024",numero:"11",date:"2024-05-06",surface:"8.20 ha",cuivreTotal:200,produits:[{nom:"Bouillie Bordelaise",dose:"1kg/ha",matiereActive:"Cuivre",cuivre:200},{nom:"Essen-ciel",dose:"1l/ha",matiereActive:"Huile"},{nom:"Microthiol",dose:"6kg/ha",matiereActive:"Soufre"},{nom:"HelioSoufre",dose:"2l/ha",matiereActive:"Soufre"}]},
+  {campagne:"2024",numero:"12",date:"2024-05-15",surface:"8.60 ha",cuivreTotal:300,produits:[{nom:"Bouillie Bordelaise",dose:"1.5kg/ha",matiereActive:"Cuivre",cuivre:300},{nom:"Microthiol",dose:"10kg/ha",matiereActive:"Soufre"}]},
+  {campagne:"2024",numero:"13",date:"2024-05-21",surface:"8.20 ha",cuivreTotal:215,produits:[{nom:"Champ Flo",dose:"0.6l/ha",matiereActive:"Cuivre",cuivre:215},{nom:"Microthiol",dose:"10kg/ha",matiereActive:"Soufre"}]},
+  {campagne:"2024",numero:"14",date:"2024-05-23",surface:"8.20 ha",cuivreTotal:180,produits:[{nom:"Champ Flo",dose:"0.5l/ha",matiereActive:"Cuivre",cuivre:180},{nom:"Microthiol",dose:"10kg/ha",matiereActive:"Soufre"}]},
+  {campagne:"2024",numero:"15",date:"2024-05-29",surface:"8.20 ha",cuivreTotal:180,produits:[{nom:"Champ Flo",dose:"0.5l/ha",matiereActive:"Cuivre",cuivre:180},{nom:"Microthiol",dose:"10kg/ha",matiereActive:"Soufre"}]},
+  {campagne:"2024",numero:"16",date:"2024-06-01",surface:"8.20 ha",cuivreTotal:300,produits:[{nom:"Bouillie Bordelaise",dose:"500g/ha",matiereActive:"Cuivre",cuivre:300},{nom:"Nordox",dose:"250g/ha",matiereActive:"Cuivre"},{nom:"HelioSoufre",dose:"3l/ha",matiereActive:"Soufre"}]},
+  {campagne:"2024",numero:"17",date:"2024-06-03",surface:"8.20 ha",cuivreTotal:300,produits:[{nom:"Bouillie Bordelaise",dose:"1.5kg",matiereActive:"Cuivre",cuivre:300},{nom:"HelioSoufre",dose:"7l/ha",matiereActive:"Soufre"}]},
+  {campagne:"2024",numero:"18",date:"2024-06-07",surface:"8.20 ha",cuivreTotal:300,produits:[{nom:"Bouillie Bordelaise",dose:"1.5kg",matiereActive:"Cuivre",cuivre:300},{nom:"HelioSoufre",dose:"3l",matiereActive:"Soufre"},{nom:"Microthiol",dose:"7kg/ha",matiereActive:"Soufre"},{nom:"Essen-ciel",dose:"1l/ha",matiereActive:"Orange"}]},
+  {campagne:"2024",numero:"19",date:"2024-06-13",surface:"8.20 ha",cuivreTotal:230,produits:[{nom:"Champ Flo",dose:"0.5l/ha",matiereActive:"Cuivre",cuivre:230},{nom:"Nordox",dose:"60g/ha",matiereActive:"Cuivre"},{nom:"HelioSoufre",dose:"3l/ha",matiereActive:"Soufre"},{nom:"Microthiol",dose:"7kg/ha",matiereActive:"Soufre"}]},
+  {campagne:"2024",numero:"20",date:"2024-06-14",surface:"8.20 ha",cuivreTotal:180,produits:[{nom:"Champ Flo",dose:"0.5l/ha",matiereActive:"Cuivre",cuivre:180},{nom:"HelioSoufre",dose:"3l/ha",matiereActive:"Soufre"},{nom:"Microthiol",dose:"7kg/ha",matiereActive:"Soufre"}]},
+  {campagne:"2024",numero:"21",date:"2024-06-20",surface:"8.20 ha",cuivreTotal:300,produits:[{nom:"Champ Flo",dose:"0.8l/ha",matiereActive:"Cuivre",cuivre:300},{nom:"Microthiol",dose:"10kg/ha",matiereActive:"Soufre"},{nom:"Essen-ciel",dose:"1l/ha",matiereActive:"Orange"}]},
+  {campagne:"2024",numero:"22",date:"2024-06-27",surface:"8.20 ha",cuivreTotal:300,produits:[{nom:"Bouillie Bordelaise",dose:"1.5kg/ha",matiereActive:"Cuivre",cuivre:300},{nom:"Microthiol",dose:"9kg/ha",matiereActive:"Soufre"},{nom:"HelioSoufre",dose:"1l/ha",matiereActive:"Soufre"},{nom:"Essen-ciel",dose:"1l/ha",matiereActive:"Orange"}]},
+  {campagne:"2024",numero:"23",date:"2024-07-01",surface:"8.20 ha",cuivreTotal:412,produits:[{nom:"Bouillie Bordelaise",dose:"1.5kg/ha",matiereActive:"Cuivre",cuivre:412},{nom:"Nordox",dose:"150g/ha",matiereActive:"Cuivre"},{nom:"Microthiol",dose:"9kg/ha",matiereActive:"Soufre"}]},
+  {campagne:"2024",numero:"24",date:"2024-07-10",surface:"8.20 ha",cuivreTotal:400,produits:[{nom:"Bouillie Bordelaise",dose:"1kg/ha",matiereActive:"Cuivre",cuivre:400},{nom:"Nordox",dose:"270g/ha",matiereActive:"Cuivre"}]},
+];
 
 export default function App() {
   const [appError, setAppError] = useState(null);
@@ -387,6 +437,56 @@ export default function App() {
   const [showCampForm, setShowCampForm] = useState(false);
   const [showTirageForm,     setShowTirageForm]     = useState(false);
   const [showDegorgeForm,   setShowDegorgeForm]   = useState(false);
+  const [traitements,      setTraitements]       = useState([]);
+  const [stockProduits,    setStockProduits]     = useState([]);
+  const [showStockProdForm,setShowStockProdForm] = useState(false);
+  const [editingStockProd, setEditingStockProd]  = useState(null);
+  const [showImportBL,     setShowImportBL]      = useState(false);
+  const [importBLResult,   setImportBLResult]    = useState([]);
+  const [importBLLoading,  setImportBLLoading]   = useState(false);
+  const PRODUIT_EMPTY = {nom:"",nAmm:"",substanceActive:"Cuivre",teneurCuivre:"",unite:"kg",stockActuel:"",fournisseur:"",observations:""};
+  const [produitForm,      setProduitForm]       = useState(PRODUIT_EMPTY);
+  const [surfaceCalcul,    setSurfaceCalcul]     = useState("9.30");
+  // teneurCuivre = g de cuivre metal par kg ou par L de produit
+  // Ex: Bouillie Bordelaise 20% cuivre = 200g/kg
+  const CATALOGUE_PRODUITS = [
+    {nom:"Bouillie Bordelaise RSR Disperss NC",nAmm:"9800474",substanceActive:"Cuivre",teneurCuivre:200,unite:"kg",fournisseur:""},
+    {nom:"Nordox 75 WG",nAmm:"2010130",substanceActive:"Cuivre",teneurCuivre:750,unite:"kg",fournisseur:""},
+    {nom:"Champ Flo Ampli",nAmm:"2000517",substanceActive:"Cuivre",teneurCuivre:300,unite:"L",fournisseur:"Nufarm"},
+    {nom:"Microthiol Special Disperss",nAmm:"9800245",substanceActive:"Soufre",teneurCuivre:0,unite:"kg",fournisseur:""},
+    {nom:"Heliosoufre",nAmm:"9000222",substanceActive:"Soufre",teneurCuivre:0,unite:"L",fournisseur:""},
+    {nom:"Pyrevert",nAmm:"2080038",substanceActive:"Autre",teneurCuivre:0,unite:"L",fournisseur:"Valagro"},
+  ];
+  const [amendements,      setAmendements]       = useState([]);
+  const [showTraitForm,    setShowTraitForm]     = useState(false);
+  const [editingTrait,     setEditingTrait]      = useState(null);
+  const [filterTraitAn,    setFilterTraitAn]     = useState(new Date().getFullYear().toString());
+  const [vigneTab,         setVigneTab]          = useState("traitements");
+  const [campagnesClosees, setCampagnesClosees]  = useState(()=>{ try{ const s=localStorage.getItem("chai_campagnes_closees"); return s?JSON.parse(s):[]; }catch{return [];} });
+  const [pdfDocs,          setPdfDocs]          = useState([]);
+  const [uploadingPdf,     setUploadingPdf]     = useState(false);
+  const [pdfFactures,      setPdfFactures]      = useState([]);
+  const [biodynamies,      setBiodynamies]       = useState([]);
+  const [showBiodyForm,    setShowBiodyForm]     = useState(false);
+  const [editingBiody,     setEditingBiody]      = useState(null);
+  const [showAmendForm,    setShowAmendForm]     = useState(false);
+  const [editingAmend,     setEditingAmend]      = useState(null);
+  const [biodyForm,        setBiodyForm]         = useState({campagne:new Date().getFullYear().toString(),date:"",surface:"",produit:"",observations:""});
+  const [amendForm,        setAmendForm]         = useState({campagne:new Date().getFullYear().toString(),parcelle:"",surface:"",produit:"",quantite:"",nTotal:"",nParHa:"",observations:""});
+  const TRAIT_EMPTY = {
+    campagne: new Date().getFullYear().toString(),
+    numero: "",
+    date: "",
+    surface: "",
+    operateur: "",
+    produits: [],
+    cuivreTotal: "",
+    observations: "",
+    type: "traitement",
+  };
+  const [traitForm, setTraitForm] = useState(TRAIT_EMPTY);
+  const [traitProduit, setTraitProduit] = useState({nom:"", dose:"", unite:"kg", matiereActive:"", teneurCuivre:"", cuivre:""});
+  const [showTraitProduit, setShowTraitProduit] = useState(false);
   const [editingDegorge,    setEditingDegorge]    = useState(null);
   const [degorgements,      setDegorgements]      = useState([]);
   const [showStockMvtForm,  setShowStockMvtForm]  = useState(false);
@@ -493,14 +593,7 @@ export default function App() {
     window.addEventListener('error', (e) => setAppError(e.message + ' at ' + e.filename + ':' + e.lineno));
     window.addEventListener('unhandledrejection', (e) => setAppError(String(e.reason)));
   }, []);
-  useEffect(()=>{ try{localStorage.setItem("chai_tonneaux",JSON.stringify(tonneaux));}catch{} },[tonneaux]);
-  useEffect(()=>{ try{localStorage.setItem("chai_mouvements",JSON.stringify(mouvements));}catch{} },[mouvements]);
-  useEffect(()=>{ try{localStorage.setItem("chai_degustations",JSON.stringify(degustations));}catch{} },[degustations]);
-  useEffect(()=>{ try{localStorage.setItem("chai_vendanges",JSON.stringify(vendanges));}catch{} },[vendanges]);
-  useEffect(()=>{ try{localStorage.setItem("chai_parcelles",JSON.stringify(parcelles));}catch{} },[parcelles]);
-  useEffect(()=>{ try{localStorage.setItem("chai_tirages",JSON.stringify(tirages));}catch{} },[tirages]);
-  useEffect(()=>{ try{localStorage.setItem("chai_campagnes",JSON.stringify(campagnes));}catch{} },[campagnes]);
-  useEffect(()=>{ try{localStorage.setItem("chai_degustateurs_v2",JSON.stringify(degustateurs));}catch{} },[degustateurs]);
+  // Toutes les donnees sont dans Firebase - pas de localStorage
 
   // Firebase save helpers
   const saveTonneau = (t) => fbSave("tonneaux", t.id, t);
@@ -567,6 +660,278 @@ export default function App() {
 
   const getStockActuel = () => getLots();
 
+  // Traitement
+  // Upload PDF en base64 dans Firestore
+  const uploadPdf = (file, campagne, nom) => {
+    if(!file) return;
+    if(file.size > 900000) { alert("Le PDF est trop volumineux (max 900 KB). Compressez-le d'abord."); return; }
+    setUploadingPdf(true);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const base64 = e.target.result;
+      const pdfDoc = { id:`pdf_${Date.now()}`, campagne:String(campagne), nom:nom||file.name, base64, dateUpload:new Date().toISOString() };
+      setPdfDocs(prev=>[...prev, pdfDoc]);
+      fbSave("pdfDocs", pdfDoc.id, pdfDoc);
+      setUploadingPdf(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const deletePdf = (pdf) => {
+    if(!window.confirm("Supprimer ce document ?")) return;
+    setPdfDocs(prev=>prev.filter(p=>p.id!==pdf.id));
+    fbDelete("pdfDocs", pdf.id);
+  };
+
+  const openPdf = (pdf) => {
+    const w = window.open();
+    w.document.write(`<iframe src="${pdf.base64}" style="width:100%;height:100vh;border:none;"/>`);
+  };
+
+  // Calcul g de cuivre = dose (kg ou L) * teneur (g/kg ou g/L) * surface
+  const calculCuivre = (dose, teneur, surface, unite) => {
+    const d = parseFloat(dose)||0;
+    const t = parseFloat(teneur)||0;
+    const s = parseFloat(surface)||0;
+    if(!d || !t || !s) return null;
+    // dose en kg/ha ou L/ha * teneur g/kg ou g/L = g/ha * surface ha = g total
+    return Math.round(d * t * s);
+  };
+
+  // Submit stock produit
+  // Upload facture PDF
+  const uploadFacture = (file, nom) => {
+    if(!file) return;
+    if(file.size > 900000) { alert("Le PDF est trop volumineux (max 900 KB)."); return; }
+    setUploadingPdf(true);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const base64 = e.target.result;
+      const doc = { id:`facture_${Date.now()}`, nom:nom||file.name, base64, dateUpload:new Date().toISOString() };
+      setPdfFactures(prev=>[...prev, doc]);
+      fbSave("pdfFactures", doc.id, doc);
+      setUploadingPdf(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const deleteFacture = (id) => {
+    if(!window.confirm("Supprimer ce document ?")) return;
+    setPdfFactures(prev=>prev.filter(p=>p.id!==id));
+    fbDelete("pdfFactures", id);
+  };
+
+  const openPdfFacture = (pdf) => {
+    const w = window.open();
+    w.document.write(`<iframe src="${pdf.base64}" style="width:100%;height:100vh;border:none;"/>`);
+  };
+
+  const submitStockProduit = () => {
+    if(!produitForm.nom.trim()) return alert("Le nom du produit est requis.");
+    const p = {
+      id: editingStockProd ? editingStockProd.id : `prod_${Date.now()}`,
+      ...produitForm,
+      substanceActive: produitForm.substanceActive || produitForm.matiereActive || "Cuivre",
+      stockActuel: editingStockProd ? (produitForm.stockActuel!==undefined ? produitForm.stockActuel : editingStockProd.stockActuel) : (produitForm.stockInitial||"0"),
+      timestamp: new Date().toISOString()
+    };
+    if(editingStockProd){
+      setStockProduits(prev=>prev.map(x=>x.id===p.id?p:x));
+    } else {
+      setStockProduits(prev=>[p,...prev]);
+    }
+    fbSave("stockProduits", p.id, p);
+    setProduitForm(PRODUIT_EMPTY); setEditingStockProd(null); setShowStockProdForm(false);
+  };
+
+  const addFromCatalogue = (cat) => {
+    const p = {
+      id:`prod_${Date.now()}`,
+      nom:cat.nom, nAmm:cat.nAmm||"",
+      substanceActive:cat.substanceActive||cat.matiereActive||"Autre",
+      teneurCuivre:String(cat.teneurCuivre||0),
+      unite:cat.unite||"kg",
+      stockActuel:"0",
+      fournisseur:cat.fournisseur||"",
+      observations:"",
+      timestamp:new Date().toISOString()
+    };
+    setStockProduits(prev=>[p,...prev]);
+    fbSave("stockProduits", p.id, p);
+  };
+
+  const updateStockProduit = (id, delta) => {
+    setStockProduits(prev=>prev.map(p=>{
+      if(p.id!==id) return p;
+      const newStock = Math.round(((parseFloat(p.stockActuel)||0) + delta)*100)/100;
+      const updated = {...p, stockActuel:String(newStock)};
+      fbSave("stockProduits", id, updated);
+      return updated;
+    }));
+  };
+
+  // Import BL via Claude API
+  const importerBL = async (file) => {
+    if(!file) return;
+    setImportBLLoading(true);
+    setImportBLResult([]);
+    try {
+      const base64 = await new Promise((res,rej)=>{ const r=new FileReader(); r.onload=e=>res(e.target.result.split(",")[1]); r.onerror=rej; r.readAsDataURL(file); });
+      const resp = await fetch("https://api.anthropic.com/v1/messages",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+          model:"claude-sonnet-4-20250514",
+          max_tokens:1000,
+          messages:[{role:"user",content:[
+            {type:"document",source:{type:"base64",media_type:"application/pdf",data:base64}},
+            {type:"text",text:"Extrait les produits phytosanitaires de ce BL/conseil. Reponds UNIQUEMENT en JSON valide, sans backticks ni texte. Format: [{nom,nAmm,substanceActive,teneurCuivre,unite,fournisseur}] - teneurCuivre=g de cuivre/kg ou /L (0 si pas de cuivre)."}
+          ]}]
+        })
+      });
+      const data = await resp.json();
+      const text = data.content?.map(c=>c.text||"").join("");
+      const produits = JSON.parse(text.replace(/```json|```/g,"").trim());
+      setImportBLResult(produits);
+    } catch(e) { alert("Erreur import: "+e.message); }
+    setImportBLLoading(false);
+  };
+
+  const confirmerImportBL = () => {
+    importBLResult.forEach(cat => {
+      const existe = stockProduits.find(p=>p.nAmm===cat.nAmm||p.nom.toLowerCase()===cat.nom.toLowerCase());
+      if(!existe) addFromCatalogue(cat);
+    });
+    setImportBLResult([]); setShowImportBL(false);
+  };
+
+  const isCampagneClosed = (campagne) => campagnesClosees.includes(String(campagne));
+
+  const cloturerCampagne = (campagne) => {
+    if(!window.confirm(`Cloture la campagne ${campagne} ? Les traitements ne pourront plus etre modifies.`)) return;
+    setCampagnesClosees(prev=>[...new Set([...prev, String(campagne)])]);
+  };
+
+  const rouvrirCampagne = (campagne) => {
+    if(!window.confirm(`Rouvrir la campagne ${campagne} ?`)) return;
+    setCampagnesClosees(prev=>prev.filter(c=>c!==String(campagne)));
+  };
+
+  const submitBiody = () => {
+    if(!biodyForm.date) return alert("La date est requise.");
+    const b = { id:editingBiody?editingBiody.id:`biody_${Date.now()}`, ...biodyForm, timestamp:new Date().toISOString() };
+    if(editingBiody){
+      setBiodynamies(prev=>prev.map(x=>x.id===b.id?b:x));
+      if(biodyForm.produit && biodyForm.surface && biodyForm.dose) {
+        deduireStock([{nom:biodyForm.produit,dose:biodyForm.dose}], biodyForm.surface,
+          editingBiody.produit?[{nom:editingBiody.produit,dose:editingBiody.dose}]:[], editingBiody.surface);
+      }
+    } else {
+      setBiodynamies(prev=>[b,...prev]);
+      if(biodyForm.produit && biodyForm.surface && biodyForm.dose) {
+        deduireStock([{nom:biodyForm.produit, dose:biodyForm.dose}], biodyForm.surface);
+      }
+    }
+    fbSave("biodynamies", b.id, b);
+    setBiodyForm({campagne:new Date().getFullYear().toString(),date:"",surface:"",produit:"",observations:""});
+    setEditingBiody(null); setShowBiodyForm(false);
+  };
+
+  const submitAmend = () => {
+    if(!amendForm.parcelle.trim()) return alert("La parcelle est requise.");
+    const a = { id:editingAmend?editingAmend.id:`amend_${Date.now()}`, ...amendForm, timestamp:new Date().toISOString() };
+    if(editingAmend){ setAmendements(prev=>prev.map(x=>x.id===a.id?a:x)); }
+    else {
+      setAmendements(prev=>[a,...prev]);
+      // Deduire la quantite d'amendement du stock
+      if(amendForm.produit && amendForm.quantite) {
+        const stockProd = stockProduits.find(sp=>
+          sp.nom.toLowerCase().includes(amendForm.produit.toLowerCase().slice(0,5)) ||
+          amendForm.produit.toLowerCase().includes(sp.nom.toLowerCase().slice(0,5))
+        );
+        if(stockProd) {
+          const qte = parseFloat(amendForm.quantite.replace(/[^0-9.]/g,""))||0;
+          const newStock = Math.max(0, (parseFloat(stockProd.stockActuel)||0) - qte);
+          const updated = {...stockProd, stockActuel: String(Math.round(newStock*100)/100)};
+          setStockProduits(prev=>prev.map(sp=>sp.id===stockProd.id?updated:sp));
+          fbSave("stockProduits", stockProd.id, updated);
+        }
+      }
+    }
+    fbSave("amendements", a.id, a);
+    setAmendForm({campagne:new Date().getFullYear().toString(),parcelle:"",surface:"",produit:"",quantite:"",nTotal:"",nParHa:"",observations:""});
+    setEditingAmend(null); setShowAmendForm(false);
+  };
+
+  const findStockProd = (nom) => stockProduits.find(sp =>
+    sp.nom.toLowerCase().includes((nom||"").toLowerCase().slice(0,6)) ||
+    (nom||"").toLowerCase().includes(sp.nom.toLowerCase().slice(0,6))
+  );
+
+  const deduireStock = (produits, surface, produitsAnciensOpt, surfaceAncienneOpt) => {
+    const surf = parseFloat(surface)||0;
+    const surfAnc = parseFloat(surfaceAncienneOpt)||0;
+    // Groupe par produit pour faire le calcul net
+    const updates = {};
+    // Rembourser les anciennes doses si modification
+    if(produitsAnciensOpt) {
+      produitsAnciensOpt.forEach(p => {
+        if(!p.nom) return;
+        const sp = findStockProd(p.nom);
+        if(!sp) return;
+        const dose = parseFloat(p.dose)||0;
+        const qte = dose * surfAnc;
+        if(!updates[sp.id]) updates[sp.id] = {sp, delta:0};
+        updates[sp.id].delta += qte; // rembourse
+      });
+    }
+    // Deduire les nouvelles doses
+    produits.forEach(p => {
+      if(!p.nom) return;
+      const sp = findStockProd(p.nom);
+      if(!sp || surf <= 0) return;
+      const dose = parseFloat(p.dose)||0;
+      const qte = dose * surf;
+      if(!updates[sp.id]) updates[sp.id] = {sp, delta:0};
+      updates[sp.id].delta -= qte; // deduit
+    });
+    // Appliquer tous les updates
+    Object.values(updates).forEach(({sp, delta}) => {
+      const newStock = Math.round(((parseFloat(sp.stockActuel)||0) + delta)*100)/100;
+      const updated = {...sp, stockActuel: String(newStock)};
+      setStockProduits(prev=>prev.map(x=>x.id===sp.id?updated:x));
+      fbSave("stockProduits", sp.id, updated);
+    });
+  };
+
+  const submitTraitement = () => {
+    if(!traitForm.date) return alert("La date est requise.");
+    if(!traitForm.campagne) return alert("La campagne est requise.");
+    const cuAuto = traitForm.produits.reduce((s,p)=>s+(parseFloat(p.cuivre)||0),0);
+    const cuivreTotal = traitForm.cuivreTotal || (cuAuto>0?String(cuAuto):"");
+    const t = { id:editingTrait?editingTrait.id:`trait_${Date.now()}`, ...traitForm, cuivreTotal, timestamp:new Date().toISOString() };
+    if(editingTrait){
+      setTraitements(prev=>prev.map(x=>x.id===t.id?t:x));
+      // Rembourser ancienne dose + deduire nouvelle
+      if(traitForm.produits.length>0 && traitForm.surface) {
+        deduireStock(traitForm.produits, traitForm.surface, editingTrait.produits, editingTrait.surface);
+      }
+    } else {
+      setTraitements(prev=>[t,...prev]);
+      if(traitForm.produits.length>0 && traitForm.surface) {
+        deduireStock(traitForm.produits, traitForm.surface);
+      }
+    }
+    fbSave("traitements", t.id, t);
+    setTraitForm(TRAIT_EMPTY); setEditingTrait(null); setShowTraitForm(false);
+  };
+
+  const addTraitProduit = () => {
+    if(!traitProduit.nom.trim()) return;
+    setTraitForm(f=>({...f, produits:[...f.produits, {...traitProduit, id:`p_${Date.now()}`}]}));
+    setTraitProduit({nom:"", dose:"", matiereActive:"", cuivre:""}); setShowTraitProduit(false);
+  };
+
   const submitDegorgement = () => {
     if(!degorgeForm.lotId) return alert("Selectionnez un lot.");
     if(!degorgeForm.date) return alert("La date est requise.");
@@ -606,18 +971,43 @@ export default function App() {
     setClotureForm(f=>({...f, lignes:[...f.lignes,...lignes], importCsv:""}));
   };
 
-  const refreshFromFirebase = () => {
-    fbLoad("tonneaux",     setTonneaux);
-    fbLoad("mouvements",   setMouvements);
-    fbLoad("degustations", setDegustations);
-    fbLoad("campagnes",    setCampagnes);
-    fbLoad("tirages",      setTirages);
-    fbLoad("vendanges",    setVendanges);
-    fbLoad("parcelles",    setParcelles);
-    fbLoad("degorgements", setDegorgements);
-    fbLoad("clotures",     setClotures);
-    fbLoad("degustateurs", data => { if(data.length>0) setDegustateurs(data[0].liste||degustateurs); });
+  // Liste complete de toutes les collections
+  const ALL_COLS = [
+    ["tonneaux",     setTonneaux],
+    ["mouvements",   setMouvements],
+    ["degustations", setDegustations],
+    ["campagnes",    setCampagnes],
+    ["tirages",      setTirages],
+    ["vendanges",    setVendanges],
+    ["parcelles",    setParcelles],
+    ["degorgements", setDegorgements],
+    ["biodynamies",  setBiodynamies],
+    ["stockProduits",setStockProduits],
+    ["pdfDocs",      setPdfDocs],
+    ["pdfFactures",  setPdfFactures],
+    ["amendements",  setAmendements],
+    ["clotures",     setClotures],
+    ["traitements",  setTraitements],
+  ];
+
+  const refreshFromFirebase = async () => {
+    for(const [col, setter] of ALL_COLS) {
+      await fbLoad(col, setter);
+    }
+    await fbLoad("degustateurs", data => {
+      if(data.length>0 && data[0].liste) setDegustateurs(data[0].liste);
+    });
   };
+
+  // Chargement initial + polling toutes les 10s
+  useEffect(()=>{
+    refreshFromFirebase();
+    getDocs(collection(db,"traitements")).then(s=>{
+      if(s.empty){ HIST_TRAITEMENTS.forEach(t=>{ const id=`hist_${t.campagne}_${t.numero}`; fbSave("traitements",id,{...t,id}); }); }
+    });
+    const interval = setInterval(()=>refreshFromFirebase(), 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   const getTonneau = (id) => tonneaux.find(t=>t.id===id);
   const degsActifs = degustateurs.filter(d=>d.actif).map(d=>d.nom);
@@ -963,9 +1353,9 @@ export default function App() {
   const s = {
     app:      { fontFamily:"'Lora','Georgia',serif", minHeight:"100vh", background:"#f0e9d6", color:"#1a1205" },
     nav:      { display:"flex", alignItems:"center", borderBottom:"2px solid #c8a850", padding:"0 28px", background:"#fffdf7", boxShadow:"0 1px 0 #d4c4a0" },
-    brand:    { fontFamily:"'Playfair Display',Georgia,serif", fontSize:"19px", fontWeight:700, color:"#7a5200", padding:"14px 24px 14px 0", marginRight:"24px", borderRight:"1px solid #d4c4a0", letterSpacing:"0.01em" },
-    navBtn:   (a)=>({ padding:"15px 15px", fontSize:"11px", letterSpacing:"0.09em", textTransform:"uppercase", cursor:"pointer", color:a?"#7a5200":"#9a8c78", background:"none", border:"none", borderBottom:a?"2px solid #b8860b":"2px solid transparent", fontFamily:"'IBM Plex Mono',monospace", fontWeight:a?600:400, transition:"color 0.15s" }),
-    main:     { padding:"28px 32px" },
+    brand:    { fontFamily:"'Playfair Display',Georgia,serif", fontSize:"clamp(14px,2vw,19px)", fontWeight:700, color:"#7a5200", padding:"12px 16px 12px 0", marginRight:"12px", borderRight:"1px solid #d4c4a0", letterSpacing:"0.01em", whiteSpace:"nowrap" },
+    navBtn:   (a)=>({ padding:"13px 14px", fontSize:"12px", letterSpacing:"0.09em", textTransform:"uppercase", cursor:"pointer", color:a?"#7a5200":"#9a8c78", background:"none", border:"none", borderBottom:a?"2px solid #b8860b":"2px solid transparent", fontFamily:"'IBM Plex Mono',monospace", fontWeight:a?600:400, transition:"color 0.15s" }),
+    main:     { padding:"clamp(12px, 3vw, 28px) clamp(12px, 3vw, 32px)" },
     card:     { background:"#fffdf7", border:"1px solid #d4c4a0", borderRadius:"10px", padding:"18px 22px", boxShadow:"0 1px 3px rgba(139,105,20,0.06)" },
     cardSm:   { background:"#fffdf7", border:"1px solid #cfc0a0", borderRadius:"8px", padding:"12px 14px", boxShadow:"0 1px 2px rgba(139,105,20,0.05)" },
     btn:      { background:"#b8860b", color:"#1a1208", border:"none", borderRadius:"6px", padding:"8px 18px", fontSize:"12px", fontWeight:700, letterSpacing:"0.06em", textTransform:"uppercase", cursor:"pointer", fontFamily:"'IBM Plex Mono',monospace", boxShadow:"0 1px 3px rgba(139,105,20,0.25)", transition:"background 0.15s" },
@@ -1138,10 +1528,10 @@ export default function App() {
 `}</style>
 
       {/* NAV */}
-      <nav style={s.nav}>
+      <nav style={{...s.nav, flexWrap:"nowrap", overflowX:"auto", WebkitOverflowScrolling:"touch"}} className="nav-scroll">
         <div style={s.brand}>Nowack</div>
-        {[["vendanges","Vendange"],["dashboard","Vue d'ensemble"],["tonneaux","Tonneaux"],["degustations","Dégustations"],["mouvements","Mouvements"],["tirages","Tirage"],["stock","Stock"]].map(([v,l])=>(
-          <button key={v} style={s.navBtn(view===v)} onClick={()=>setView(v)}>{l}</button>
+        {[["dashboard","Vue d'ensemble"],["vigne","Vigne"],["vendanges","Vendange"],["tonneaux","Tonneaux"],["degustations","Dégustations"],["mouvements","Mouvements"],["tirages","Tirage"],["stock","Stock"]].map(([v,l])=>(
+          <button key={v} style={s.navBtn(view===v)} onClick={()=>{setView(v);refreshFromFirebase();}}>{l}</button>
         ))}
         <div style={{flex:1}}/>
         <div style={{display:"flex",gap:"8px",alignItems:"center"}}>
@@ -1192,7 +1582,7 @@ export default function App() {
                 );
               })}
             </div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"20px"}}>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:"16px"}}>
               <div style={s.card}>
                 <div style={{...s.lbl,marginBottom:"12px"}}>Derniers mouvements</div>
                 {mouvements.length===0&&<div style={{color:"#8a7248",fontSize:"13px"}}>Aucun mouvement enregistré.</div>}
@@ -1233,7 +1623,7 @@ export default function App() {
         {view==="tonneaux" && (
           <div>
             {/* Onglets appellation */}
-            <div style={{display:"flex",gap:"6px",marginBottom:"16px",flexWrap:"wrap"}}>
+            <div style={{display:"flex",gap:"6px",marginBottom:"16px",flexWrap:"wrap",overflowX:"auto"}}>
               <button onClick={()=>setFilterAppellation("")}
                 style={{padding:"5px 14px",borderRadius:"4px",border:`1px solid ${!filterAppellation?"#b8860b":"#2a2a2c"}`,background:!filterAppellation?"#fce8a8":"transparent",color:!filterAppellation?"#7a5200":"#7a6840",fontSize:"12px",cursor:"pointer",fontFamily:"inherit"}}>
                 Tous ({tonneaux.length})
@@ -1263,7 +1653,7 @@ export default function App() {
                 <i className="ti ti-plus" style={{marginRight:"3px"}}/>Ajouter
               </button>
             </div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(170px,1fr))",gap:"9px"}}>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))",gap:"8px"}}>
               {filteredTonneaux.map(t=><FutCard key={t.id} t={t}/>)}
             </div>
           </div>
@@ -1441,7 +1831,7 @@ export default function App() {
         {view==="fiche" && selectedT && (
             <div>
               <button style={{...s.ghost,marginBottom:"16px"}} onClick={()=>setView("tonneaux")}>Retour Tonneaux</button>
-              <div style={{display:"grid",gridTemplateColumns:"300px 1fr",gap:"20px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"clamp(240px,30vw,300px) 1fr",gap:"20px"}}>
                 {/* Colonne gauche */}
                 <div>
                   <div style={s.card}>
@@ -1518,7 +1908,7 @@ export default function App() {
                 {/* Colonne droite - onglets */}
                 <div style={s.card}>
                   <div style={{display:"flex",borderBottom:"1px solid #cfc0a0",marginBottom:"16px",gap:"0"}}>
-                    {[["degustations",`Degustations (${notesForFut(selectedT.id).length})`],["mouvements",`Mouvements (${selectedMvts.length})`],["historique","Historique"]].map(([tab,lbl])=>(
+                    {[["degustations",`Degustations (${notesForFut(selectedT.id).length})`],["mouvements",`Mouvements (${selectedMvts.length})`]].map(([tab,lbl])=>(
                       <button key={tab} style={s.tabBtn(ficheTab===tab)} onClick={()=>setFicheTab(tab)}>{lbl}</button>
                     ))}
                   </div>
@@ -1530,133 +1920,415 @@ export default function App() {
                       {selectedMvts.map(m=><MvtRow key={m.id} m={m}/>)}
                     </div>
                   )}
-                  {ficheTab==="historique"&&(()=>{
-                    // Regroupe notes et mouvements par session/annee
-                    const notesF = notesForFut(selectedT.id);
-                    const sessions = [...new Set(notesF.map(d=>d.session))].sort().reverse();
-                    const allMvts  = selectedMvts.slice().sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp));
-                    // Grouper mouvements par annee
-                    const mvtsByYear = {};
-                    allMvts.forEach(m=>{
-                      const yr = new Date(m.timestamp).getFullYear();
-                      if(!mvtsByYear[yr]) mvtsByYear[yr]=[];
-                      mvtsByYear[yr].push(m);
-                    });
-                    const years = [...new Set([
-                      ...Object.keys(mvtsByYear),
-                      ...sessions.map(s=>s.split("/").pop()?.trim()||s.slice(-4))
-                    ])].sort().reverse();
-                    return (
-                      <div>
-                        {years.length===0&&sessions.length===0&&allMvts.length===0&&(
-                          <div style={{color:"#8a7248",fontSize:"13px",padding:"12px 0"}}>Aucun historique disponible pour ce fut.</div>
-                        )}
-                        {years.map(yr=>{
-                          const notesAn = notesF.filter(d=>{
-                            const s=d.session||""; return s.includes(yr)||s.endsWith(yr);
-                          });
-                          const sessionsAn=[...new Set(notesAn.map(d=>d.session))];
-                          const mvtsAn = mvtsByYear[yr]||[];
-                          if(notesAn.length===0 && mvtsAn.length===0) return null;
-                          return (
-                            <div key={yr} style={{marginBottom:"24px"}}>
-                              {/* Annee header */}
-                              {(()=>{
-                                const camp=campagnes.find(c=>c.futId===selectedT.id && c.annee===yr);
-                                return (
-                                  <div style={{display:"flex",alignItems:"center",gap:"10px",marginBottom:"12px"}}>
-                                    <div style={{fontFamily:"Georgia,serif",fontSize:"16px",fontWeight:700,color:"#7a5200"}}>{yr}</div>
-                                    {camp&&(
-                                      <div style={{display:"flex",alignItems:"center",gap:"6px"}}>
-                                        <span style={{background:"#f5e8cc",color:"#7a5200",border:"1px solid #e0c050",borderRadius:"4px",padding:"2px 10px",fontSize:"12px",fontWeight:600}}>{camp.denomination}</span>
-                                        {camp.millesime&&<span style={{fontSize:"11px",color:"#9a8870"}}>Mill. {camp.millesime}</span>}
-                                        {camp.notes&&<span style={{fontSize:"11px",color:"#7a6840",fontStyle:"italic"}}>{camp.notes}</span>}
-                                        <button style={{background:"none",border:"none",color:"#cc222288",cursor:"pointer",fontSize:"11px",padding:"0 2px"}}
-                                          onClick={()=>deleteCampagne(camp.id)}>x</button>
-                                      </div>
-                                    )}
-                                    {!camp&&(
-                                      <button style={{background:"none",border:"1px dashed #ccc",borderRadius:"4px",padding:"2px 8px",fontSize:"10px",color:"#9a8870",cursor:"pointer"}}
-                                        onClick={()=>{setCampFutId(selectedT.id);setCampForm({annee:yr,denomination:selectedT.denomination,millesime:"",notes:""});setShowCampForm(true);}}>
-                                        + Ajouter vin
-                                      </button>
-                                    )}
-                                    <div style={{flex:1,height:"1px",background:"#d4c4a0"}}/>
-                                    <div style={{fontSize:"11px",color:"#9a8870",fontFamily:"monospace"}}>
-                                      {mvtsAn.length>0&&`${mvtsAn.length} op.`}{notesAn.length>0&&` - ${notesAn.length} notes`}
-                                    </div>
-                                  </div>
-                                );
-                              })()}
-
-                              {/* Sections degustation par session */}
-                              {sessionsAn.map(sess=>{
-                                const notesSess=notesAn.filter(d=>d.session===sess);
-                                const avgG=notesSess.map(d=>d.noteG).filter(Boolean);
-                                const moy=avgG.length?+(avgG.reduce((a,b)=>a+b,0)/avgG.length).toFixed(1):null;
-                                return (
-                                  <div key={sess} style={{marginBottom:"14px",padding:"12px 14px",background:"#fff8ee",borderRadius:"8px",border:"1px solid #e2d9c5"}}>
-                                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"8px"}}>
-                                      <div style={{fontSize:"12px",fontWeight:600,color:"#1a1205"}}>Degustation {sess}</div>
-                                      {moy&&<div style={{display:"flex",alignItems:"center",gap:"6px"}}>
-                                        <div style={{width:"40px",height:"4px",background:"#e8dcc6",borderRadius:"2px",overflow:"hidden"}}>
-                                          <div style={{width:`${(moy/5)*100}%`,height:"100%",background:moy>=4?"#1a7a40":"#b8860b",borderRadius:"2px"}}/>
-                                        </div>
-                                        <span style={{fontSize:"12px",fontWeight:700,color:moy>=4?"#1a7a40":"#b8860b"}}>{moy}/5</span>
-                                      </div>}
-                                    </div>
-                                    <table style={{width:"100%",borderCollapse:"collapse",fontSize:"11px"}}>
-                                      <tbody>
-                                        {notesSess.map(d=>(
-                                          <tr key={d.id} style={{borderBottom:"1px solid #eee6d6"}}>
-                                            <td style={{padding:"4px 6px",color:"#b8860b",fontWeight:600,width:"90px"}}>{d.degustateur}</td>
-                                            <td style={{padding:"4px 6px",color:"#7a6840",width:"50px"}}>{d.boise!=null?`B:${d.boise}`:""}</td>
-                                            <td style={{padding:"4px 6px",color:"#7a6840",width:"50px"}}>{d.longueur!=null?`L:${d.longueur}`:""}</td>
-                                            <td style={{padding:"4px 6px",fontWeight:600,color:d.noteG>=4?"#1a7a40":d.noteG>=3?"#b8860b":"#7a6840",width:"40px"}}>{d.noteG!=null?`${d.noteG}/5`:""}</td>
-                                            <td style={{padding:"4px 6px",color:"#6a5838",fontStyle:"italic"}}>{d.commentaire}</td>
-                                          </tr>
-                                        ))}
-                                      </tbody>
-                                    </table>
-                                  </div>
-                                );
-                              })}
-
-                              {/* Mouvements de l annee */}
-                              {mvtsAn.length>0&&(
-                                <div style={{marginTop:"8px"}}>
-                                  <div style={{fontSize:"10px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#9a8870",marginBottom:"6px",fontFamily:"monospace"}}>Operations</div>
-                                  {mvtsAn.map(m=>{
-                                    const srcs=(m.futSource||[]).map(id=>getTonneau(id)?.id).filter(Boolean);
-                                    const dest=m.futDest?getTonneau(m.futDest)?.id:null;
-                                    return (
-                                      <div key={m.id} style={{display:"flex",alignItems:"center",gap:"8px",padding:"5px 0",borderBottom:"1px solid #ede5d4",fontSize:"11px"}}>
-                                        <span style={{...s.tag(typeColor(m.type))}}>{typeLabel(m.type)}</span>
-                                        <span style={{color:"#8a7248",fontSize:"10px"}}>{fmtDate(m.timestamp)}</span>
-                                        {srcs.length>0&&<span style={{color:"#6a5838"}}>De: {srcs.join(", ")}</span>}
-                                        {dest&&<span style={{color:"#6a5838"}}>Vers: {dest}</span>}
-                                        {m.volume&&<span style={{color:"#b8860b",fontWeight:600}}>{m.volume}L</span>}
-                                        {m.produit&&<span style={{color:"#7a5200"}}>{m.produit}{m.numeroLot&&` (Lot: ${m.numeroLot})`}</span>}
-                                        <span style={{marginLeft:"auto",color:"#9a8870"}}>{m.operateur}</span>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    );
-                  })()}
                 </div>
               </div>
             </div>
           )}
 
+        {/* -- VIGNE -- */}
+        {view==="vigne" && (()=>{
+          const allTraits = [...traitements].sort((a,b)=>new Date(b.date)-new Date(a.date));
+          const campagnes = [...new Set(allTraits.map(t=>t.campagne))].sort().reverse();
+          const traitsFiltres = filterTraitAn ? allTraits.filter(t=>t.campagne===filterTraitAn) : allTraits;
+          const biodyFiltres  = filterTraitAn ? biodynamies.filter(b=>b.campagne===filterTraitAn) : biodynamies;
+          const amendFiltres  = filterTraitAn ? amendements.filter(a=>a.campagne===filterTraitAn) : amendements;
+          const cuivreParCampagne = {};
+          campagnes.forEach(c=>{
+            cuivreParCampagne[c] = allTraits.filter(t=>t.campagne===c).reduce((s,t)=>s+(parseFloat(t.cuivreTotal)||0),0);
+          });
+          const closed = isCampagneClosed(filterTraitAn);
+          return (
+            <div>
+              {/* Header */}
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px",flexWrap:"wrap",gap:"8px"}}>
+                <div style={{fontSize:"13px",color:"#7a6840"}}>{allTraits.length} traitement(s)</div>
+                <div style={{display:"flex",gap:"8px",alignItems:"center"}}>
+                  {filterTraitAn && !closed && (
+                    <button style={{...s.ghost,fontSize:"11px",color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>cloturerCampagne(filterTraitAn)}>
+                      Cloture campagne {filterTraitAn}
+                    </button>
+                  )}
+                  {filterTraitAn && closed && (
+                    <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
+                      <span style={{background:"#fdd0d0",color:"#cc2222",borderRadius:"4px",padding:"3px 10px",fontSize:"11px",fontFamily:"monospace"}}>Campagne {filterTraitAn} cloturee</span>
+                      <button style={{...s.ghost,fontSize:"10px"}} onClick={()=>rouvrirCampagne(filterTraitAn)}>Rouvrir</button>
+                    </div>
+                  )}
+                  {!closed && vigneTab==="traitements" && (
+                    <button style={s.btn} onClick={()=>{setTraitForm({...TRAIT_EMPTY,campagne:filterTraitAn||new Date().getFullYear().toString()});setEditingTrait(null);setShowTraitForm(true);}}>
+                      + Traitement
+                    </button>
+                  )}
+                  {!closed && vigneTab==="biodynamie" && (
+                    <button style={s.btn} onClick={()=>{setBiodyForm(f=>({...f,campagne:filterTraitAn||new Date().getFullYear().toString()}));setShowBiodyForm(true);}}>
+                      + Biodynamie
+                    </button>
+                  )}
+                  {!closed && vigneTab==="amendements" && (
+                    <button style={s.btn} onClick={()=>{setAmendForm(f=>({...f,campagne:filterTraitAn||new Date().getFullYear().toString()}));setShowAmendForm(true);}}>
+                      + Amendement
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Filtre campagne */}
+              <div style={{display:"flex",gap:"6px",marginBottom:"14px",flexWrap:"wrap",alignItems:"center"}}>
+                <span style={{fontSize:"10px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#9a8870",fontFamily:"monospace",marginRight:"4px"}}>Campagne :</span>
+                {campagnes.map(c=>(
+                  <button key={c} onClick={()=>setFilterTraitAn(c)}
+                    style={{padding:"4px 10px",borderRadius:"4px",border:`0.5px solid ${filterTraitAn===c?"#2d6a00":"#d4c4a0"}`,background:filterTraitAn===c?"#d4edc0":"transparent",color:filterTraitAn===c?"#2d6a00":"#9a8870",fontSize:"11px",cursor:"pointer",fontFamily:"monospace",display:"flex",alignItems:"center",gap:"4px"}}>
+                    {c}
+                    {isCampagneClosed(c)&&<span style={{fontSize:"9px",color:"#cc2222"}}>cloturee</span>}
+                    <span style={{background:cuivreParCampagne[c]>3000?"#fdd0d0":cuivreParCampagne[c]>2000?"#fde8b8":"#d4edc0",color:cuivreParCampagne[c]>3000?"#cc2222":cuivreParCampagne[c]>2000?"#c47800":"#2d6a00",borderRadius:"3px",padding:"0 4px",fontSize:"10px",fontWeight:500}}>
+                      {(cuivreParCampagne[c]/1000).toFixed(2)}kg Cu
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              {/* KPIs */}
+              {filterTraitAn && vigneTab==="traitements" && (()=>{
+                const cu = cuivreParCampagne[filterTraitAn]||0;
+                return (
+                  <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(120px,1fr))",gap:"8px",marginBottom:"14px"}}>
+                    {[
+                      {lbl:"Traitements",val:traitsFiltres.length},
+                      {lbl:"Total Cuivre",val:`${(cu/1000).toFixed(3)}kg`,col:cu>3000?"#cc2222":cu>2000?"#c47800":"#1a7a40"},
+                      {lbl:"Avril",val:`${traitsFiltres.filter(t=>t.date?.slice(5,7)==="04").reduce((s,t)=>s+(parseFloat(t.cuivreTotal)||0),0)}g`,col:"#185FA5"},
+                      {lbl:"Mai",val:`${traitsFiltres.filter(t=>t.date?.slice(5,7)==="05").reduce((s,t)=>s+(parseFloat(t.cuivreTotal)||0),0)}g`,col:"#185FA5"},
+                      {lbl:"Juin",val:`${traitsFiltres.filter(t=>t.date?.slice(5,7)==="06").reduce((s,t)=>s+(parseFloat(t.cuivreTotal)||0),0)}g`,col:"#185FA5"},
+                      {lbl:"Juillet",val:`${traitsFiltres.filter(t=>t.date?.slice(5,7)==="07").reduce((s,t)=>s+(parseFloat(t.cuivreTotal)||0),0)}g`,col:"#185FA5"},
+                      {lbl:"Aout",val:`${traitsFiltres.filter(t=>t.date?.slice(5,7)==="08").reduce((s,t)=>s+(parseFloat(t.cuivreTotal)||0),0)}g`,col:"#185FA5"},
+                    ].map((k,i)=>(
+                      <div key={i} style={{...s.card,padding:"10px 12px"}}>
+                        <div style={s.lbl}>{k.lbl}</div>
+                        <div style={{fontSize:"16px",fontWeight:500,color:k.col||"#b8860b",lineHeight:1.2}}>{k.val}</div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+
+              {/* Onglets */}
+              <div style={{display:"flex",borderBottom:"0.5px solid #d4c4a0",marginBottom:"16px"}}>
+                {[["traitements","Traitements"],["biodynamie","Biodynamie"],["amendements","Amendements"],["stockprod","Stock Produits"]].map(([tab,lbl])=>(
+                  <button key={tab} style={s.tabBtn(vigneTab===tab)} onClick={()=>setVigneTab(tab)}>{lbl}</button>
+                ))}
+              </div>
+
+              {/* === TRAITEMENTS === */}
+              {vigneTab==="traitements" && (
+                <div style={s.card}>
+                  <div style={{overflowX:"auto"}}>
+                    <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
+                      <thead>
+                        <tr style={{borderBottom:"1px solid #d4c4a0",background:"#fff8ee"}}>
+                          {["N°","Date","Surface","Produits","Cu/ha",""].map(h=>(
+                            <th key={h} style={{textAlign:"left",padding:"7px 10px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#9a8870",fontWeight:500}}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {traitsFiltres.map((t,i)=>{
+                          const currentYear = new Date().getFullYear().toString();
+                          const isHist = t.campagne !== currentYear;
+                          const canEdit = !closed && !isHist;
+                          return (
+                            <tr key={t.id||i} style={{borderBottom:"1px solid #ede5d4",background:i%2===0?"transparent":"#fffbf3"}}>
+                              <td style={{padding:"8px 10px",fontFamily:"monospace",color:"#b8860b",fontWeight:500}}>N°{t.numero}</td>
+                              <td style={{padding:"8px 10px",color:"#6a5838"}}>{t.date}</td>
+                              <td style={{padding:"8px 10px",color:"#6a5838"}}>{t.surface}</td>
+                              <td style={{padding:"8px 10px",maxWidth:"320px"}}>
+                                <div style={{display:"flex",gap:"3px",flexWrap:"wrap"}}>
+                                  {(t.produits||[]).map((p,j)=>(
+                                    <span key={j} style={{background:p.matiereActive==="Cuivre"?"#fde8b8":p.matiereActive==="Soufre"?"#e6f0fb":"#ede5d4",color:p.matiereActive==="Cuivre"?"#7a5200":p.matiereActive==="Soufre"?"#185FA5":"#5f5e5a",borderRadius:"3px",padding:"1px 5px",fontSize:"10px",fontFamily:"monospace",whiteSpace:"nowrap"}}>
+                                      {p.nom} {p.dose}
+                                    </span>
+                                  ))}
+                                </div>
+                                {t.observations&&<div style={{fontSize:"11px",color:"#9a8870",fontStyle:"italic",marginTop:"2px"}}>{t.observations}</div>}
+                              </td>
+                              <td style={{padding:"8px 10px",fontWeight:500,color:parseFloat(t.cuivreTotal)>400?"#cc2222":parseFloat(t.cuivreTotal)>200?"#c47800":"#1a7a40",fontFamily:"monospace",whiteSpace:"nowrap"}}>
+                                {t.cuivreTotal?`${t.cuivreTotal}g`:"-"}
+                              </td>
+                              <td style={{padding:"8px 10px",whiteSpace:"nowrap"}}>
+                                {canEdit ? (
+                                  <div style={{display:"flex",gap:"3px"}}>
+                                    <button style={{...s.ghostSm,fontSize:"10px"}} onClick={()=>{setTraitForm({...TRAIT_EMPTY,...t});setEditingTrait(t);setShowTraitForm(true);}}>Mod.</button>
+                                    <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
+                                      onClick={()=>{if(window.confirm("Supprimer ?")){ setTraitements(prev=>prev.filter(x=>x.id!==t.id)); fbDelete("traitements",t.id||""); if(t.produits?.length>0 && t.surface) deduireStock([], 0, t.produits, t.surface); }}}>Sup.</button>
+                                  </div>
+                                ) : <span style={{fontSize:"10px",color:"#9a8870",fontStyle:"italic"}}>{closed?"cloture":""}</span>}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                        {traitsFiltres.length===0&&<tr><td colSpan={6} style={{padding:"20px",color:"#9a8870",textAlign:"center",fontStyle:"italic"}}>Aucun traitement pour cette campagne.</td></tr>}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Documents PDF prestataires - uniquement onglet traitements */}
+              {vigneTab==="traitements" && filterTraitAn && (
+                <div style={{...s.card,marginTop:"14px"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
+                    <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#7a5200"}}>Calendriers prestataires</div>
+                    {!closed && (
+                      <label style={{...s.btnSm,cursor:"pointer",display:"flex",alignItems:"center",gap:"5px"}}>
+                        {uploadingPdf?"Chargement...":"+ Ajouter PDF"}
+                        <input type="file" accept=".pdf" style={{display:"none"}} onChange={e=>{
+                          const file=e.target.files[0];
+                          if(file){
+                            const nom=window.prompt("Nom du document (ex: Calendrier Lorain 2026)", file.name.replace(".pdf",""));
+                            if(nom!==null) uploadPdf(file, filterTraitAn, nom||file.name);
+                          }
+                          e.target.value="";
+                        }}/>
+                      </label>
+                    )}
+                  </div>
+                  {pdfDocs.filter(p=>p.campagne===filterTraitAn).length===0&&(
+                    <div style={{fontSize:"12px",color:"#9a8870",fontStyle:"italic"}}>Aucun document pour cette campagne.</div>
+                  )}
+                  <div style={{display:"grid",gap:"8px"}}>
+                    {pdfDocs.filter(p=>p.campagne===filterTraitAn).map(pdf=>(
+                      <div key={pdf.id} style={{display:"flex",alignItems:"center",gap:"12px",padding:"10px 12px",background:"#fff8ee",borderRadius:"6px",border:"0.5px solid #d4c4a0"}}>
+                        <div style={{width:"32px",height:"32px",background:"#fdd0d0",borderRadius:"4px",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                          <span style={{fontSize:"10px",fontWeight:500,color:"#cc2222",fontFamily:"monospace"}}>PDF</span>
+                        </div>
+                        <div style={{flex:1}}>
+                          <div style={{fontWeight:500,color:"#1a1205",fontSize:"13px"}}>{pdf.nom}</div>
+                          <div style={{fontSize:"10px",color:"#9a8870",marginTop:"1px"}}>{pdf.dateUpload?.slice(0,10)}</div>
+                        </div>
+                        <button style={s.btnSm} onClick={()=>openPdf(pdf)}>
+                          Ouvrir
+                        </button>
+                        {!closed&&(
+                          <div style={{display:"flex",gap:"4px"}}>
+                            <button style={s.ghostSm} onClick={()=>{
+                              const n=window.prompt("Nouveau nom :", pdf.nom);
+                              if(n&&n.trim()){
+                                const updated={...pdf,nom:n.trim()};
+                                setPdfDocs(prev=>prev.map(p=>p.id===pdf.id?updated:p));
+                                fbSave("pdfDocs",pdf.id,updated);
+                              }
+                            }}>Renommer</button>
+                            <button style={{...s.ghostSm,color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>deletePdf(pdf)}>Sup.</button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* === STOCK PRODUITS === */}
+              {vigneTab==="stockprod" && (
+                <div>
+                  {/* Actions */}
+                  <div style={{display:"flex",gap:"8px",marginBottom:"14px",flexWrap:"wrap",alignItems:"center"}}>
+                    <button style={s.btnSm} onClick={()=>{setProduitForm(PRODUIT_EMPTY);setEditingStockProd(null);setShowStockProdForm(true);}}>+ Ajouter un produit</button>
+                    <label style={{...s.btnSm,cursor:"pointer",background:"#fff8ee",color:"#7a5200",border:"0.5px solid #d4c4a0"}}>
+                      {uploadingPdf?"Chargement...":"+ Ajouter une facture (PDF)"}
+                      <input type="file" accept=".pdf" style={{display:"none"}} onChange={e=>{
+                        const file=e.target.files[0];
+                        if(file){ const nom=window.prompt("Nom du document",file.name.replace(".pdf","")); if(nom!==null) uploadFacture(file,nom||file.name); }
+                        e.target.value="";
+                      }}/>
+                    </label>
+                    <div style={{marginLeft:"auto",fontSize:"11px",color:"#9a8870"}}>{stockProduits.length} produit(s)</div>
+                  </div>
+                  {stockProduits.length>0&&(
+                    <div style={s.card}>
+                      <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
+                        <thead>
+                          <tr style={{borderBottom:"1px solid #d4c4a0",background:"#fff8ee"}}>
+
+                        {["Produit","N°AMM","Substance active","Teneur Cu g/kg|L","Stock actuel","Actions"].map(h=>(
+                              <th key={h} style={{textAlign:"left",padding:"7px 10px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#9a8870",fontWeight:500}}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {stockProduits.map((p,i)=>{
+                            const stock = parseFloat(p.stockActuel)||0;
+                            const init  = parseFloat(p.stockInitial)||0;
+                            const pct   = init>0 ? Math.round(stock/init*100) : 100;
+                            return (
+                              <tr key={p.id} style={{borderBottom:"1px solid #ede5d4",background:i%2===0?"transparent":"#fffbf3"}}>
+                                <td style={{padding:"8px 10px"}}>
+                                  <div style={{fontWeight:500,color:"#1a1205"}}>{p.nom}</div>
+                                  {p.fournisseur&&<div style={{fontSize:"10px",color:"#9a8870"}}>{p.fournisseur}</div>}
+                                </td>
+                                <td style={{padding:"8px 10px",fontFamily:"monospace",fontSize:"11px",color:"#9a8870"}}>{p.nAmm||"-"}</td>
+                                <td style={{padding:"8px 10px"}}>
+                                  {(()=>{ const sa=p.substanceActive||p.matiereActive||"-";
+                                    return <span style={{background:sa==="Cuivre"?"#fde8b8":sa==="Soufre"?"#e6f0fb":"#ede5d4",color:sa==="Cuivre"?"#7a5200":sa==="Soufre"?"#185FA5":"#5f5e5a",borderRadius:"3px",padding:"1px 6px",fontSize:"10px",fontFamily:"monospace"}}>{sa}</span>;
+                                  })()}
+                                </td>
+                                <td style={{padding:"8px 10px",fontFamily:"monospace",fontWeight:500}}>
+                                  {parseFloat(p.teneurCuivre)>0
+                                    ?<span style={{color:"#c47800"}}>{p.teneurCuivre}g/{p.unite} <span style={{fontSize:"10px",color:"#9a8870",fontWeight:400}}>({Math.round(parseFloat(p.teneurCuivre)/10)}%)</span></span>
+                                    :<span style={{color:"#9a8870"}}>-</span>}
+                                </td>
+                                <td style={{padding:"8px 10px"}}>
+                                  <div style={{display:"flex",alignItems:"center",gap:"6px"}}>
+                                    <button style={{background:"#f0f0f0",border:"none",borderRadius:"3px",width:"20px",height:"20px",cursor:"pointer",fontWeight:700,color:"#555"}} onClick={()=>updateStockProduit(p.id,-1)}>-</button>
+                                    <span style={{fontWeight:500,color:stock<0?"#cc2222":stock===0?"#c47800":pct<20?"#c47800":"#1a7a40",minWidth:"50px",textAlign:"center",fontFamily:"monospace"}}>
+                                      {stock} {p.unite}
+                                    </span>
+                                    <button style={{background:"#f0f0f0",border:"none",borderRadius:"3px",width:"20px",height:"20px",cursor:"pointer",fontWeight:700,color:"#555"}} onClick={()=>updateStockProduit(p.id,1)}>+</button>
+                                  </div>
+                                  <div style={{height:"3px",background:"#e8dcc6",borderRadius:"2px",marginTop:"4px",width:"80px"}}>
+                                    <div style={{height:"100%",borderRadius:"2px",background:pct<20?"#cc2222":pct<50?"#c47800":"#1a7a40",width:`${Math.min(100,pct)}%`}}/>
+                                  </div>
+                                </td>
+                                <td style={{padding:"8px 10px"}}>
+                                  <div style={{display:"flex",gap:"3px"}}>
+                                    <button style={{...s.ghostSm,fontSize:"10px"}} onClick={()=>{setProduitForm({...PRODUIT_EMPTY,...p});setEditingStockProd(p);setShowStockProdForm(true);}}>Mod.</button>
+                                    <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
+                                      onClick={()=>{if(window.confirm("Supprimer ?")){ setStockProduits(prev=>prev.filter(x=>x.id!==p.id)); fbDelete("stockProduits",p.id); }}}>Sup.</button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+                  {pdfFactures.length>0&&(
+                    <div style={{...s.card,marginBottom:"14px"}}>
+                      <div style={{...s.lbl,marginBottom:"8px"}}>Factures / BL</div>
+                      <div style={{display:"grid",gap:"6px"}}>
+                        {pdfFactures.map(pdf=>(
+                          <div key={pdf.id} style={{display:"flex",alignItems:"center",gap:"10px",padding:"8px 12px",background:"#fff8ee",borderRadius:"6px",border:"0.5px solid #d4c4a0"}}>
+                            <div style={{width:"28px",height:"28px",background:"#fdd0d0",borderRadius:"4px",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                              <span style={{fontSize:"9px",fontWeight:500,color:"#cc2222",fontFamily:"monospace"}}>PDF</span>
+                            </div>
+                            <div style={{flex:1}}>
+                              <div style={{fontWeight:500,color:"#1a1205",fontSize:"12px"}}>{pdf.nom}</div>
+                              <div style={{fontSize:"10px",color:"#9a8870"}}>{pdf.dateUpload?.slice(0,10)}</div>
+                            </div>
+                            <button style={s.btnSm} onClick={()=>openPdfFacture(pdf)}>Ouvrir</button>
+                            <button style={{...s.ghostSm,color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>deleteFacture(pdf.id)}>Sup.</button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {/* Catalogue rapide */}
+                  {stockProduits.length===0&&(
+                    <div style={{...s.card,marginBottom:"14px"}}>
+                      <div style={{...s.lbl,marginBottom:"10px"}}>Ajout rapide depuis le catalogue</div>
+                      <div style={{display:"flex",gap:"6px",flexWrap:"wrap"}}>
+                        {CATALOGUE_PRODUITS.filter(c=>!stockProduits.find(p=>p.nAmm===c.nAmm)).map((c,i)=>(
+                          <button key={i} onClick={()=>addFromCatalogue(c)}
+                            style={{background:"#fff8ee",border:"0.5px solid #d4c4a0",borderRadius:"5px",padding:"6px 12px",fontSize:"11px",cursor:"pointer",color:"#7a5200",fontFamily:"monospace",display:"flex",alignItems:"center",gap:"5px"}}>
+                            <span style={{background:(c.substanceActive||c.matiereActive)==="Cuivre"?"#fde8b8":(c.substanceActive||c.matiereActive)==="Soufre"?"#e6f0fb":"#ede5d4",color:(c.substanceActive||c.matiereActive)==="Cuivre"?"#7a5200":"#185FA5",borderRadius:"3px",padding:"0 4px",fontSize:"9px"}}>{c.substanceActive||c.matiereActive}</span>
+                            + {c.nom}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {vigneTab==="biodynamie" && (
+                <div style={s.card}>
+                  {biodyFiltres.length===0&&<div style={{color:"#9a8870",fontSize:"13px",padding:"12px 0",fontStyle:"italic"}}>Aucun passage biodynamique pour cette campagne.</div>}
+                  {biodyFiltres.length>0&&(
+                    <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
+                      <thead>
+                        <tr style={{borderBottom:"1px solid #d4c4a0",background:"#fff8ee"}}>
+                          {["Date","Surface","Produit","Observations",""].map(h=>(
+                            <th key={h} style={{textAlign:"left",padding:"7px 10px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#9a8870",fontWeight:500}}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {biodyFiltres.sort((a,b)=>new Date(a.date)-new Date(b.date)).map((b,i)=>(
+                          <tr key={b.id} style={{borderBottom:"1px solid #ede5d4",background:i%2===0?"transparent":"#fffbf3"}}>
+                            <td style={{padding:"8px 10px",color:"#6a5838"}}>{b.date}</td>
+                            <td style={{padding:"8px 10px",color:"#6a5838"}}>{b.surface}</td>
+                            <td style={{padding:"8px 10px"}}>
+                              <span style={{background:"#d4edc0",color:"#2d6a00",borderRadius:"3px",padding:"1px 8px",fontSize:"11px",fontFamily:"monospace",fontWeight:500}}>{b.produit}</span>
+                            </td>
+                            <td style={{padding:"8px 10px",color:"#7a6840",fontStyle:"italic",fontSize:"11px"}}>{b.observations}</td>
+                            <td style={{padding:"8px 10px"}}>
+                              {!closed&&(
+                                <div style={{display:"flex",gap:"3px"}}>
+                                  <button style={{...s.ghostSm,fontSize:"10px"}}
+                                    onClick={()=>{setBiodyForm({campagne:b.campagne,date:b.date,surface:b.surface,produit:b.produit,observations:b.observations});setEditingBiody(b);setShowBiodyForm(true);}}>Mod.</button>
+                                  <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
+                                    onClick={()=>{if(window.confirm("Supprimer ?")){ setBiodynamies(prev=>prev.filter(x=>x.id!==b.id)); fbDelete("biodynamies",b.id); if(b.produit && b.surface && b.dose) deduireStock([], 0, [{nom:b.produit,dose:b.dose}], b.surface); }}}>Sup.</button>
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              )}
+
+              {/* === AMENDEMENTS === */}
+              {vigneTab==="amendements" && (
+                <div style={s.card}>
+                  {amendFiltres.length===0&&<div style={{color:"#9a8870",fontSize:"13px",padding:"12px 0",fontStyle:"italic"}}>Aucun amendement pour cette campagne.</div>}
+                  {amendFiltres.length>0&&(
+                    <div style={{overflowX:"auto"}}>
+                      <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
+                        <thead>
+                          <tr style={{borderBottom:"1px solid #d4c4a0",background:"#fff8ee"}}>
+                            {["Parcelle","Surface","Produit","Quantite","N total","N/ha","Observations",""].map(h=>(
+                              <th key={h} style={{textAlign:"left",padding:"7px 10px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#9a8870",fontWeight:500}}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {amendFiltres.sort((a,b)=>a.parcelle.localeCompare(b.parcelle)).map((a,i)=>(
+                            <tr key={a.id} style={{borderBottom:"1px solid #ede5d4",background:i%2===0?"transparent":"#fffbf3"}}>
+                              <td style={{padding:"8px 10px",fontWeight:500,color:"#1a1205"}}>{a.parcelle}</td>
+                              <td style={{padding:"8px 10px",color:"#6a5838",fontFamily:"monospace"}}>{a.surface} ha</td>
+                              <td style={{padding:"8px 10px"}}>
+                                <span style={{background:"#fde8b8",color:"#7a5200",borderRadius:"3px",padding:"1px 7px",fontSize:"11px",fontFamily:"monospace"}}>{a.produit}</span>
+                              </td>
+                              <td style={{padding:"8px 10px",color:"#6a5838",fontFamily:"monospace"}}>{a.quantite}</td>
+                              <td style={{padding:"8px 10px",color:"#6a5838",fontFamily:"monospace"}}>{a.nTotal}</td>
+                              <td style={{padding:"8px 10px",color:"#6a5838",fontFamily:"monospace"}}>{a.nParHa}</td>
+                              <td style={{padding:"8px 10px",color:"#7a6840",fontStyle:"italic",fontSize:"11px"}}>{a.observations}</td>
+                              <td style={{padding:"8px 10px"}}>
+                                {!closed&&(
+                                  <div style={{display:"flex",gap:"3px"}}>
+                                    <button style={{...s.ghostSm,fontSize:"10px"}}
+                                      onClick={()=>{setAmendForm({campagne:a.campagne,parcelle:a.parcelle,surface:a.surface,produit:a.produit,quantite:a.quantite,nTotal:a.nTotal,nParHa:a.nParHa,observations:a.observations});setEditingAmend(a);setShowAmendForm(true);}}>Mod.</button>
+                                    <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
+                                      onClick={()=>{if(window.confirm("Supprimer ?")){ setAmendements(prev=>prev.filter(x=>x.id!==a.id)); fbDelete("amendements",a.id); if(a.produit && a.quantite){ const sp=findStockProd(a.produit); if(sp){ const q=parseFloat(a.quantite.replace(/[^0-9.]/g,""))||0; const updated={...sp,stockActuel:String(Math.round(((parseFloat(sp.stockActuel)||0)+q)*100)/100)}; setStockProduits(prev=>prev.map(x=>x.id===sp.id?updated:x)); fbSave("stockProduits",sp.id,updated); } } }}}>Sup.</button>
+                                  </div>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
         {/* -- VENDANGES -- */}
         {view==="vendanges" && (
-          <div style={{display:"grid",gridTemplateColumns:"1fr 260px",gap:"20px",alignItems:"start"}}>
+          <div style={{display:"grid",gridTemplateColumns:"clamp(200px,1fr,1fr) clamp(200px,260px,30vw)",gap:"16px",alignItems:"start"}}>
 
             {/* Colonne principale */}
             <div>
@@ -1828,7 +2500,7 @@ export default function App() {
           return (
             <div>
               {/* KPIs */}
-              <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:"12px",marginBottom:"20px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:"12px",marginBottom:"20px"}}>
                 {[
                   {lbl:"Total en stock",val:stock.reduce((s,x)=>s+x.qte,0)+" btl",sub:"tous formats confondus"},
                   {lbl:"< 15 mois (non comm.)",val:stockMoins15.reduce((s,x)=>s+x.qte,0)+" btl",col:"#cc2222",sub:"non commercialisables"},
@@ -2180,7 +2852,7 @@ export default function App() {
               <button style={s.ghost} onClick={()=>setShowDegForm(false)}>x</button>
             </div>
             <div style={{display:"grid",gap:"14px"}}>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:"12px"}}>
                 <div><span style={s.lbl}>Fût *</span>
                   <select style={s.sel} value={degForm.futId} onChange={e=>setDegForm(f=>({...f,futId:e.target.value}))}>
                     <option value="">Sélectionner...</option>
@@ -2341,7 +3013,7 @@ export default function App() {
               </div>
 
               {/* Tonnelier + grain + chauffe */}
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:"12px"}}>
                 <div>
                   <span style={s.lbl}>Tonnelier</span>
                   <input style={s.inp} value={futForm.tonnelier}
@@ -2430,7 +3102,7 @@ export default function App() {
               Fut <strong style={{color:"#b8860b"}}>{editingNote.futId}</strong> - Session <strong>{editingNote.session}</strong>
             </div>
             <div style={{display:"grid",gap:"12px"}}>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:"12px"}}>
                 <div><span style={s.lbl}>Boise /3</span>
                   <input type="number" min="0" max="3" step="0.5" style={s.inp} value={editNoteForm.boise} onChange={e=>setEditNoteForm(f=>({...f,boise:e.target.value}))}/></div>
                 <div><span style={s.lbl}>Longueur /3</span>
@@ -2498,7 +3170,7 @@ export default function App() {
                     <option value="C3">C3 (3eme annee conversion)</option>
                   </select></div>
               </div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:"12px"}}>
                 <div><span style={s.lbl}>Cepage</span>
                   <input style={s.inp} placeholder="ex. Chardonnay..." value={parcelleForm.cepage} onChange={e=>setParcelleForm(f=>({...f,cepage:e.target.value}))}/></div>
                 <div><span style={s.lbl}>Surface (ha)</span>
@@ -2528,7 +3200,7 @@ export default function App() {
             <div style={{display:"grid",gap:"14px"}}>
               <div style={{background:"#fff8ee",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
                 <div style={{...s.lbl,marginBottom:"10px"}}>Identification</div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:"12px"}}>
                   <div><span style={s.lbl}>Annee *</span>
                     <input type="number" style={s.inp} value={vendangeForm.annee} onChange={e=>setVendangeForm(f=>({...f,annee:e.target.value}))}/></div>
                   <div><span style={s.lbl}>Date *</span>
@@ -2631,6 +3303,284 @@ export default function App() {
         </div>
       )}
 
+      {/* == MODAL STOCK PRODUIT == */}
+      {showStockProdForm && (
+        <div style={s.modal}>
+          <div style={{...s.modalBox,width:"580px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#7a5200"}}>{editingStockProd?"Modifier le produit":"Nouveau produit"}</div>
+              <button style={s.ghost} onClick={()=>{setShowStockProdForm(false);setEditingStockProd(null);}}>x</button>
+            </div>
+            <div style={{display:"grid",gap:"12px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                <div><span style={s.lbl}>Nom commercial *</span>
+                   <input style={s.inp} placeholder="ex. Bouillie Bordelaise RSR..." value={produitForm.nom} onChange={e=>setProduitForm(f=>({...f,nom:e.target.value}))}/></div>
+                <div><span style={s.lbl}>N° AMM</span>
+                   <input style={s.inp} placeholder="ex. 9800474" value={produitForm.nAmm||""} onChange={e=>setProduitForm(f=>({...f,nAmm:e.target.value}))}/></div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
+                <div><span style={s.lbl}>Substance active</span>
+                  <select style={s.sel} value={produitForm.substanceActive||"Cuivre"} onChange={e=>setProduitForm(f=>({...f,substanceActive:e.target.value}))}>
+                    <option value="Cuivre">Cuivre</option>
+                    <option value="Soufre">Soufre</option>
+                    <option value="Pyrethrine">Pyrethrine</option>
+                    <option value="Bicarbonate">Bicarbonate</option>
+                    <option value="Autre">Autre</option>
+                  </select></div>
+                <div><span style={s.lbl}>Teneur Cu (g/kg ou g/L)</span>
+                  <input type="number" step="1" style={s.inp} placeholder="ex. 200" value={produitForm.teneurCuivre||""} onChange={e=>setProduitForm(f=>({...f,teneurCuivre:e.target.value}))}/>
+                  {produitForm.teneurCuivre&&<div style={{fontSize:"10px",color:"#c47800",marginTop:"2px"}}>= {Math.round(parseFloat(produitForm.teneurCuivre)/10)}% de cuivre</div>}
+                </div>
+                <div><span style={s.lbl}>Unite</span>
+                  <select style={s.sel} value={produitForm.unite||"kg"} onChange={e=>setProduitForm(f=>({...f,unite:e.target.value}))}>
+                    <option value="kg">kg</option><option value="L">L</option><option value="g">g</option>
+                  </select></div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
+                <div><span style={s.lbl}>Stock actuel ({produitForm.unite||"kg"})</span>
+                   <input type="number" step="0.1" style={s.inp} placeholder="0" value={produitForm.stockActuel||""} onChange={e=>setProduitForm(f=>({...f,stockActuel:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Fournisseur</span>
+                   <input style={s.inp} placeholder="ex. Nufarm..." value={produitForm.fournisseur||""} onChange={e=>setProduitForm(f=>({...f,fournisseur:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Observations</span>
+                   <input style={s.inp} placeholder="Notes..." value={produitForm.observations||""} onChange={e=>setProduitForm(f=>({...f,observations:e.target.value}))}/></div>
+              </div>
+              {parseFloat(produitForm.teneurCuivre)>0&&(
+                <div style={{background:"#fde8b8",borderRadius:"6px",padding:"10px 14px",fontSize:"12px",color:"#7a5200"}}>
+                  <strong>Exemple :</strong> 500g/ha x 9ha = 4500g produit x {Math.round(parseFloat(produitForm.teneurCuivre)/10)}% = <strong>{Math.round(500*(parseFloat(produitForm.teneurCuivre)/1000)*9)}g de cuivre total</strong>
+                </div>
+              )}
+              <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
+                <button style={s.ghost} onClick={()=>{setShowStockProdForm(false);setEditingStockProd(null);}}>Annuler</button>
+                <button style={s.btn} onClick={submitStockProduit}>{editingStockProd?"Sauvegarder":"Enregistrer"}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* == MODAL BIODYNAMIE == */}
+      {showBiodyForm && (
+        <div style={s.modal}>
+          <div style={{...s.modalBox,width:"500px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#7a5200"}}>{editingBiody?"Modifier le passage":"Nouveau passage biodynamique"}</div>
+              <button style={s.ghost} onClick={()=>{setShowBiodyForm(false);setEditingBiody(null);}}>x</button>
+            </div>
+            <div style={{display:"grid",gap:"12px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
+                <div><span style={s.lbl}>Campagne</span>
+                  <input type="number" style={s.inp} value={biodyForm.campagne} onChange={e=>setBiodyForm(f=>({...f,campagne:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Date *</span>
+                  <input type="date" style={s.inp} value={biodyForm.date} onChange={e=>setBiodyForm(f=>({...f,date:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Surface</span>
+                  <input style={s.inp} placeholder="ex. 9.90 ha" value={biodyForm.surface} onChange={e=>setBiodyForm(f=>({...f,surface:e.target.value}))}/></div>
+              </div>
+              <div><span style={s.lbl}>Produit *</span>
+                <select style={s.sel} value={biodyForm.produit} onChange={e=>setBiodyForm(f=>({...f,produit:e.target.value}))}>
+                  <option value="">Selectionner...</option>
+                  <option value="500 P">500 P (Bouse de corne)</option>
+                  <option value="501">501 (Silice de corne)</option>
+                  <option value="Prele de Paques">Prele de Paques</option>
+                  <option value="Silice">Silice</option>
+                  <option value="Autre">Autre</option>
+                </select></div>
+              <div><span style={s.lbl}>Observations</span>
+                <textarea style={{...s.inp,height:"60px",resize:"vertical"}} value={biodyForm.observations} onChange={e=>setBiodyForm(f=>({...f,observations:e.target.value}))}/></div>
+              <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
+                <button style={s.ghost} onClick={()=>{setShowBiodyForm(false);setEditingBiody(null);}}>Annuler</button>
+                <button style={s.btn} onClick={submitBiody}>Enregistrer</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* == MODAL AMENDEMENT == */}
+      {showAmendForm && (
+        <div style={s.modal}>
+          <div style={{...s.modalBox,width:"580px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#7a5200"}}>{editingAmend?"Modifier l'amendement":"Nouvel amendement"}</div>
+              <button style={s.ghost} onClick={()=>{setShowAmendForm(false);setEditingAmend(null);}}>x</button>
+            </div>
+            <div style={{display:"grid",gap:"12px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                <div><span style={s.lbl}>Campagne</span>
+                  <input type="number" style={s.inp} value={amendForm.campagne} onChange={e=>setAmendForm(f=>({...f,campagne:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Parcelle *</span>
+                  <select style={s.sel} value={amendForm.parcelle} onChange={e=>setAmendForm(f=>({...f,parcelle:e.target.value}))}>
+                    <option value="">Selectionner...</option>
+                    {parcelles.length>0 ? parcelles.map(p=><option key={p.id} value={p.nom}>{p.nom}</option>) :
+                      ["La Fontinette","Bauchet Thomas PN","Les Garennes","La Tuilerie","Arpent Rouge","Les Maisons Brulees","Les Terres Bleues","Bellevue","Laurinette","Branscourt","Try","Festigny","Vincelles"].map(n=><option key={n} value={n}>{n}</option>)
+                    }
+                  </select></div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
+                <div><span style={s.lbl}>Surface (ha)</span>
+                  <input type="number" step="0.001" style={s.inp} placeholder="ex. 0.318" value={amendForm.surface} onChange={e=>setAmendForm(f=>({...f,surface:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Produit</span>
+                  <select style={s.sel} value={amendForm.produit} onChange={e=>setAmendForm(f=>({...f,produit:e.target.value}))}>
+                    <option value="">Selectionner...</option>
+                    <option value="Activor">Activor</option>
+                    <option value="Phenix">Phenix</option>
+                    <option value="Bio3G">Bio3G</option>
+                    <option value="Composte Biodynamique">Composte Biodynamique</option>
+                    <option value="Biofumur AB2F">Biofumur AB2F</option>
+                    <option value="ActiVert+">ActiVert+</option>
+                    <option value="Autre">Autre</option>
+                  </select></div>
+                <div><span style={s.lbl}>Quantite</span>
+                  <input style={s.inp} placeholder="ex. 324.5 kg" value={amendForm.quantite} onChange={e=>setAmendForm(f=>({...f,quantite:e.target.value}))}/></div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                <div><span style={s.lbl}>N total (kg)</span>
+                  <input type="number" step="0.01" style={s.inp} value={amendForm.nTotal} onChange={e=>setAmendForm(f=>({...f,nTotal:e.target.value}))}/></div>
+                <div><span style={s.lbl}>N / ha</span>
+                  <input type="number" step="0.01" style={s.inp} value={amendForm.nParHa} onChange={e=>setAmendForm(f=>({...f,nParHa:e.target.value}))}/></div>
+              </div>
+              <div><span style={s.lbl}>Observations</span>
+                <textarea style={{...s.inp,height:"58px",resize:"vertical"}} value={amendForm.observations} onChange={e=>setAmendForm(f=>({...f,observations:e.target.value}))}/></div>
+              <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
+                <button style={s.ghost} onClick={()=>{setShowAmendForm(false);setEditingAmend(null);}}>Annuler</button>
+                <button style={s.btn} onClick={submitAmend}>Enregistrer</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* == MODAL TRAITEMENT == */}
+      {showTraitForm && (
+        <div style={s.modal}>
+          <div style={{...s.modalBox,width:"620px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"18px",color:"#7a5200"}}>{editingTrait?"Modifier le traitement":"Nouveau traitement"}</div>
+              <button style={s.ghost} onClick={()=>{setShowTraitForm(false);setEditingTrait(null);}}>x</button>
+            </div>
+            <div style={{display:"grid",gap:"12px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))",gap:"12px"}}>
+                <div><span style={s.lbl}>Campagne *</span>
+                  <input type="number" style={s.inp} placeholder="2026" value={traitForm.campagne} onChange={e=>setTraitForm(f=>({...f,campagne:e.target.value}))}/></div>
+                <div><span style={s.lbl}>N° traitement</span>
+                  <input style={s.inp} placeholder="ex. 7" value={traitForm.numero} onChange={e=>setTraitForm(f=>({...f,numero:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Date *</span>
+                  <input type="date" style={s.inp} value={traitForm.date} onChange={e=>setTraitForm(f=>({...f,date:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Surface (ha)</span>
+                  <input style={s.inp} placeholder="ex. 8.68 ha" value={traitForm.surface} onChange={e=>setTraitForm(f=>({...f,surface:e.target.value}))}/></div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                <div><span style={s.lbl}>Cu total (g/ha) - auto si vide</span>
+                  <input type="number" style={s.inp}
+                    placeholder={String(traitForm.produits.reduce((s,p)=>s+(parseFloat(p.cuivre)||0),0)||"ex. 300")}
+                    value={traitForm.cuivreTotal}
+                    onChange={e=>setTraitForm(f=>({...f,cuivreTotal:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Operateur</span>
+                  <select style={s.sel} value={traitForm.operateur} onChange={e=>setTraitForm(f=>({...f,operateur:e.target.value}))}>
+                    <option value="">Selectionner...</option>
+                    {degustateurs.map(d=><option key={d.nom} value={d.nom}>{d.nom}</option>)}
+                  </select></div>
+              </div>
+
+              {/* Produits */}
+              <div style={{background:"#fff8ee",borderRadius:"8px",padding:"12px",border:"0.5px solid #d4c4a0"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"8px"}}>
+                  <span style={s.lbl}>Produits utilises</span>
+                  <button style={s.btnSm} onClick={()=>setShowTraitProduit(true)}>+ Ajouter</button>
+                </div>
+                {traitForm.produits.length===0&&<div style={{fontSize:"12px",color:"#9a8870",fontStyle:"italic"}}>Aucun produit.</div>}
+                {traitForm.produits.map((p,i)=>(
+                  <div key={p.id||i} style={{display:"flex",alignItems:"center",gap:"8px",padding:"5px 0",borderBottom:"0.5px solid #ede5d4",fontSize:"12px"}}>
+                    <span style={{background:p.matiereActive==="Cuivre"?"#fde8b8":p.matiereActive==="Soufre"?"#e6f0fb":"#ede5d4",color:p.matiereActive==="Cuivre"?"#7a5200":"#185FA5",borderRadius:"3px",padding:"1px 6px",fontSize:"10px",fontFamily:"monospace"}}>{p.matiereActive||"-"}</span>
+                    <span style={{fontWeight:500,color:"#1a1205",flex:1}}>{p.nom}</span>
+                    <span style={{color:"#9a8870",fontSize:"11px"}}>{p.dose}</span>
+                    {(parseFloat(p.cuivre)||0)>0&&<span style={{color:"#c47800",fontFamily:"monospace",fontSize:"11px",fontWeight:500}}>{p.cuivre}g Cu/ha</span>}
+                    <button style={{...s.ghostSm,color:"#cc2222",borderColor:"#f0b4b4",padding:"2px 5px"}}
+                      onClick={()=>setTraitForm(f=>({...f,produits:f.produits.filter((_,j)=>j!==i)}))}>x</button>
+                  </div>
+                ))}
+                {/* Total cuivre calcule */}
+                {traitForm.produits.some(p=>(parseFloat(p.cuivre)||0)>0)&&(
+                  <div style={{marginTop:"8px",padding:"8px 10px",background:"#fde8b8",borderRadius:"5px",display:"flex",gap:"16px",flexWrap:"wrap",fontSize:"12px"}}>
+                    <span style={{color:"#7a5200",fontWeight:500}}>Total cuivre :</span>
+                    <span style={{color:"#c47800",fontFamily:"monospace",fontWeight:500}}>
+                      {traitForm.produits.reduce((s,p)=>s+(parseFloat(p.cuivre)||0),0)} g/ha
+                    </span>
+                    {traitForm.surface&&(
+                      <span style={{color:"#7a5200",fontFamily:"monospace"}}>
+                        sur {traitForm.surface} = {Math.round(traitForm.produits.reduce((s,p)=>s+(parseFloat(p.cuivre)||0),0)*(parseFloat(traitForm.surface)||0))} g total
+                      </span>
+                    )}
+                  </div>
+                )}
+                {showTraitProduit&&(
+                  <div style={{marginTop:"10px",padding:"12px",background:"#fffdf7",borderRadius:"6px",border:"0.5px solid #d4c4a0"}}>
+                    <div style={{...s.lbl,marginBottom:"8px"}}>Depuis le stock produits :</div>
+                    {stockProduits.length>0&&(
+                      <div style={{display:"flex",gap:"5px",flexWrap:"wrap",marginBottom:"10px"}}>
+                        {stockProduits.map((sp,i)=>(
+                          <button key={i} style={{background:"#fff8ee",border:"0.5px solid #d4c4a0",borderRadius:"4px",padding:"4px 8px",fontSize:"10px",cursor:"pointer",color:"#7a5200",fontFamily:"monospace"}}
+                            onClick={()=>setTraitProduit(f=>({...f,
+                              nom:sp.nom,
+                              matiereActive:sp.substanceActive||sp.matiereActive||"Cuivre",
+                              teneurCuivre:String(parseFloat(sp.teneurCuivre)||0),
+                              unite:sp.unite||"kg",
+                              cuivre:"",  // sera calcule depuis dose*teneur
+                            }))}>
+                            <span style={{background:(sp.substanceActive||sp.matiereActive)==="Cuivre"?"#fde8b8":"#e6f0fb",color:(sp.substanceActive||sp.matiereActive)==="Cuivre"?"#7a5200":"#185FA5",borderRadius:"2px",padding:"0 3px",fontSize:"9px",marginRight:"3px"}}>{sp.substanceActive||sp.matiereActive}</span>
+                            {sp.nom}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 80px 80px 1fr auto",gap:"8px",alignItems:"end"}}>
+                      <div><span style={s.lbl}>Produit *</span>
+                        <input style={s.inp} placeholder="Bouillie Bordelaise..." value={traitProduit.nom} onChange={e=>setTraitProduit(f=>({...f,nom:e.target.value}))}/></div>
+                      <div><span style={s.lbl}>Dose /ha</span>
+                        <input type="number" step="0.001" style={s.inp} placeholder="ex. 0.5" value={traitProduit.dose}
+                          onChange={e=>{
+                            const d=e.target.value;
+                            const t=parseFloat(traitProduit.teneurCuivre)||0;
+                            const cu = t>0 ? Math.round(parseFloat(d)*t) : parseFloat(traitProduit.cuivre)||0;
+                            setTraitProduit(f=>({...f,dose:d,cuivre:t>0?String(cu):f.cuivre}));
+                          }}/></div>
+                      <div><span style={s.lbl}>Unite</span>
+                        <select style={s.sel} value={traitProduit.unite||"kg"} onChange={e=>setTraitProduit(f=>({...f,unite:e.target.value}))}>
+                          <option value="kg">kg</option><option value="L">L</option><option value="g">g</option>
+                        </select></div>
+                      <div>
+                        <span style={s.lbl}>Cu calcule (g/ha)</span>
+                        <input type="number" step="1" style={{...s.inp,background:parseFloat(traitProduit.teneurCuivre)>0?"#fff8ee":"white"}}
+                          placeholder="auto ou manuel"
+                          value={traitProduit.cuivre}
+                          onChange={e=>setTraitProduit(f=>({...f,cuivre:e.target.value}))}/>
+                        {traitProduit.dose&&traitProduit.teneurCuivre&&(
+                          <div style={{fontSize:"10px",color:"#c47800",marginTop:"2px",fontFamily:"monospace"}}>
+                            {traitProduit.dose}kg x {traitProduit.teneurCuivre}g/kg = {Math.round(parseFloat(traitProduit.dose)*parseFloat(traitProduit.teneurCuivre))}g Cu/ha
+                            {traitForm.surface&&` x ${traitForm.surface}ha = ${Math.round(parseFloat(traitProduit.dose)*parseFloat(traitProduit.teneurCuivre)*parseFloat(traitForm.surface))}g total`}
+                          </div>
+                        )}
+                      </div>
+                      <div style={{display:"flex",gap:"4px",alignItems:"flex-end",paddingBottom:"2px"}}>
+                        <button style={s.btnSm} onClick={addTraitProduit}>OK</button>
+                        <button style={s.ghostSm} onClick={()=>setShowTraitProduit(false)}>x</button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div><span style={s.lbl}>Observations</span>
+                <textarea style={{...s.inp,height:"60px",resize:"vertical"}} placeholder="Conditions meteorologiques, evenements..." value={traitForm.observations} onChange={e=>setTraitForm(f=>({...f,observations:e.target.value}))}/></div>
+
+              <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
+                <button style={s.ghost} onClick={()=>{setShowTraitForm(false);setEditingTrait(null);}}>Annuler</button>
+                <button style={s.btn} onClick={submitTraitement}>{editingTrait?"Sauvegarder":"Enregistrer"}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* == MODAL DEGORGEMENT == */}
       {showDegorgeForm && (
         <div style={s.modal}>
@@ -2640,7 +3590,7 @@ export default function App() {
               <button style={s.ghost} onClick={()=>{setShowDegorgeForm(false);setEditingDegorge(null);}}>x</button>
             </div>
             <div style={{display:"grid",gap:"14px"}}>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:"12px"}}>
                 <div><span style={s.lbl}>Lot *</span>
                   <select style={s.sel} value={degorgeForm.lotId} onChange={e=>setDegorgeForm(f=>({...f,lotId:e.target.value}))}>
                     <option value="">Selectionner un lot...</option>
@@ -2666,7 +3616,7 @@ export default function App() {
                     {LIEUX_STOCK.map(l=><option key={l} value={l}>{l}</option>)}
                   </select></div>
               </div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:"12px"}}>
                 <div><span style={s.lbl}>Dosage (g/L)</span>
                   <input type="number" step="0.1" style={s.inp} placeholder="ex. 8.5" value={degorgeForm.dosageLiqueur} onChange={e=>setDegorgeForm(f=>({...f,dosageLiqueur:e.target.value}))}/></div>
                 <div><span style={s.lbl}>Description liqueur</span>
@@ -2763,7 +3713,7 @@ export default function App() {
             <div style={{display:"grid",gap:"16px"}}>
               <div style={{background:"#fff8ee",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
                 <div style={{...s.lbl,marginBottom:"10px",fontSize:"11px"}}>Identification du tirage</div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:"12px"}}>
                   <div><span style={s.lbl}>Date *</span>
                     <input type="date" style={s.inp} value={tirageForm.date} onChange={e=>setTirageForm(f=>({...f,date:e.target.value}))}/></div>
                   <div><span style={s.lbl}>Operateur *</span>
