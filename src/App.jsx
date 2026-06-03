@@ -503,7 +503,7 @@ export default function App() {
     lieuDepart:"Domaine", lieuArrivee:"Lorain Champagnisation",
     statut:"En cours de degorgement",
     dosageLiqueur:"", descriptionDosage:"",
-    pertes:"0", notes:"",
+    pertes:"0", notes:"", qte:"",
   };
   const [degorgeForm, setDegorgeForm] = useState(DEGORGE_EMPTY);
   const CLOTURE_EMPTY = {
@@ -3698,6 +3698,8 @@ export default function App() {
                   <input type="number" step="0.1" style={s.inp} placeholder="ex. 8.5" value={degorgeForm.dosageLiqueur} onChange={e=>setDegorgeForm(f=>({...f,dosageLiqueur:e.target.value}))}/></div>
                 <div><span style={s.lbl}>Description liqueur</span>
                   <input style={s.inp} placeholder="ex. Brut, Demi-sec..." value={degorgeForm.descriptionDosage} onChange={e=>setDegorgeForm(f=>({...f,descriptionDosage:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Quantite a deplacer</span>
+                  <input type="number" style={s.inp} placeholder="Tout le lot" value={degorgeForm.qte} onChange={e=>setDegorgeForm(f=>({...f,qte:e.target.value}))}/></div>
                 <div><span style={s.lbl}>Pertes (bouteilles)</span>
                   <input type="number" style={s.inp} placeholder="0" value={degorgeForm.pertes} onChange={e=>setDegorgeForm(f=>({...f,pertes:e.target.value}))}/></div>
               </div>
