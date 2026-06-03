@@ -423,6 +423,9 @@ export default function App() {
   const [searchFut,   setSearchFut]   = useState("");
   const [filterDenom,      setFilterDenom]      = useState("");
   const [filterStatut,     setFilterStatut]     = useState("actif");
+  const [filterStockLieu,  setFilterStockLieu]  = useState("");
+  const [filterStockStatut,setFilterStockStatut]= useState("");
+  const [filterStock15,    setFilterStock15]    = useState("");
   const [filterAppellation, setFilterAppellation] = useState("");
   const [filterOp,         setFilterOp]         = useState("");
   const [filterDegFut,     setFilterDegFut]     = useState("");
@@ -2543,6 +2546,13 @@ export default function App() {
           const stockMoins15 = stock.filter(s=>s.moisDepuisTirage<15);
           const stockPlus15  = stock.filter(s=>s.moisDepuisTirage>=15);
           const alertes = stock.filter(s=>s.moisDepuisTirage>=14 && s.moisDepuisTirage<16);
+          const stockFiltre = stock.filter(s=>{
+            if(filterStockLieu && s.lieu!==filterStockLieu) return false;
+            if(filterStockStatut && s.statut!==filterStockStatut) return false;
+            if(filterStock15==="moins15" && s.moisDepuisTirage>=15) return false;
+            if(filterStock15==="plus15" && s.moisDepuisTirage<15) return false;
+            return true;
+          });
           return (
             <div>
               {/* KPIs */}
@@ -2585,9 +2595,30 @@ export default function App() {
                 </div>
               </div>
 
+              {/* Filtres stock */}
+              <div style={{display:"flex",gap:"8px",marginBottom:"14px",flexWrap:"wrap",alignItems:"center"}}>
+                <select style={{...s.sel,maxWidth:"180px"}} value={filterStockLieu} onChange={e=>setFilterStockLieu(e.target.value)}>
+                  <option value="">Tous les lieux</option>
+                  {LIEUX_STOCK.map(l=><option key={l} value={l}>{l}</option>)}
+                </select>
+                <select style={{...s.sel,maxWidth:"200px"}} value={filterStockStatut} onChange={e=>setFilterStockStatut(e.target.value)}>
+                  <option value="">Tous les statuts</option>
+                  {STATUTS_BOUTEILLES.map(s=><option key={s} value={s}>{s}</option>)}
+                </select>
+                <select style={{...s.sel,maxWidth:"160px"}} value={filterStock15} onChange={e=>setFilterStock15(e.target.value)}>
+                  <option value="">Tous ages</option>
+                  <option value="moins15">Moins de 15 mois</option>
+                  <option value="plus15">Plus de 15 mois</option>
+                </select>
+                {(filterStockLieu||filterStockStatut||filterStock15)&&(
+                  <button style={s.ghostSm} onClick={()=>{setFilterStockLieu("");setFilterStockStatut("");setFilterStock15("");}}>Reinitialiser</button>
+                )}
+                <span style={{marginLeft:"auto",fontSize:"11px",color:"#9a8870"}}>{stockFiltre.length} lot(s)</span>
+              </div>
+
               {/* Tableau lots par lieu */}
               {LIEUX_STOCK.map(lieu=>{
-                const lotsLieu = stock.filter(x=>x.lieu===lieu);
+                const lotsLieu = stockFiltre.filter(x=>x.lieu===lieu);
                 if(lotsLieu.length===0) return null;
                 return (
                   <div key={lieu} style={{...s.card,marginBottom:"14px"}}>
