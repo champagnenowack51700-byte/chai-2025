@@ -937,6 +937,7 @@ export default function App() {
 
   const submitDegorgement = () => {
     if(!degorgeForm.lotId) return alert("Selectionnez un lot.");
+    const lotObj = getLots().find(l=>l.id===degorgeForm.lotId);
     if(!degorgeForm.date) return alert("La date est requise.");
     if(!degorgeForm.operateur) return alert("L'operateur est requis.");
     const d = { id:editingDegorge?editingDegorge.id:`deg_${Date.now()}`, ...degorgeForm, timestamp:new Date().toISOString() };
@@ -3672,7 +3673,7 @@ export default function App() {
                   <select style={s.sel} value={degorgeForm.lotId} onChange={e=>setDegorgeForm(f=>({...f,lotId:e.target.value}))}>
                     <option value="">Selectionner un lot...</option>
                     {getLots().map(l=>(
-                      <option key={l.id} value={l.lot}>{l.lot} - {l.cuvee} {l.formatLabel} ({l.qteActuelle} btl)</option>
+                      <option key={l.id} value={l.id}>{l.cuvee} {l.millesime} - {l.formatLabel} ({l.qteActuelle} btl) {l.lot?`[${l.lot}]`:""}</option>
                     ))}
                   </select></div>
                 <div><span style={s.lbl}>Date *</span>
