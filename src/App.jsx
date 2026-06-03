@@ -623,7 +623,7 @@ export default function App() {
        ["magnum", t.qteMagnum, t.lotMagnum, "Magnum 1.5L"],
        ["jeroboam", t.qteJeroboam, t.lotJeroboam, "Jeroboam 3L"]
       ].forEach(([fmt, qte, lot, label]) => {
-        if((parseInt(qte)||0) > 0 && lot) {
+        if((parseInt(qte)||0) > 0) {
           // Trouver le dernier mouvement de ce lot
           const mouvLot = degorgements.filter(d=>d.lotId===lot).sort((a,b)=>new Date(b.date)-new Date(a.date));
           const dernierMvt = mouvLot[0];
