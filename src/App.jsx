@@ -2548,9 +2548,9 @@ export default function App() {
               {/* KPIs */}
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:"12px",marginBottom:"20px"}}>
                 {[
-                  {lbl:"Total en stock",val:stock.reduce((s,x)=>s+x.qte,0)+" btl",sub:"tous formats confondus"},
-                  {lbl:"< 15 mois (non comm.)",val:stockMoins15.reduce((s,x)=>s+x.qte,0)+" btl",col:"#cc2222",sub:"non commercialisables"},
-                  {lbl:"> 15 mois (comm.)",val:stockPlus15.reduce((s,x)=>s+x.qte,0)+" btl",col:"#1a7a40",sub:"commercialisables"},
+                  {lbl:"Total en stock",val:stock.reduce((s,x)=>s+(x.qteActuelle||0),0)+" btl",sub:"tous formats confondus"},
+                  {lbl:"< 15 mois (non comm.)",val:stockMoins15.reduce((s,x)=>s+(x.qteActuelle||0),0)+" btl",col:"#cc2222",sub:"non commercialisables"},
+                  {lbl:"> 15 mois (comm.)",val:stockPlus15.reduce((s,x)=>s+(x.qteActuelle||0),0)+" btl",col:"#1a7a40",sub:"commercialisables"},
                   {lbl:"Alertes 15 mois",val:alertes.length+" ref.",col:"#c47800",sub:"passent le cap ce mois"},
                 ].map((k,i)=>(
                   <div key={i} style={s.card}>
