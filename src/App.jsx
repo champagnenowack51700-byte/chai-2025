@@ -1159,6 +1159,28 @@ export default function App() {
     }
     saveTirage(updated);
     // Creer/mettre a jour les lots dans stockBouteilles
+    if(editingTirage) {
+      // Mise a jour des lots existants (date, cuvee, millesime, quantites)
+      const fmts = [{fmt:"75cl",qk:"qte75"},{fmt:"Magnum",qk:"qteMagnum"},{fmt:"Jeroboam",qk:"qteJeroboam"}];
+      fmts.forEach(({fmt,qk})=>{
+        const lotId = updated.id+"_"+fmt;
+        const existingLot = stockBouteilles.find(l=>l.id===lotId);
+        if(existingLot) {
+          const newQte = parseInt(tirageForm[qk])||0;
+          const diff = newQte - (existingLot.qteInitiale||0);
+          const updatedLot = {
+            ...existingLot,
+            cuvee: tirageForm.cuvee,
+            millesime: tirageForm.millesime||"",
+            dateTirage: tirageForm.date,
+            qteInitiale: newQte,
+            qteActuelle: Math.max(0, (existingLot.qteActuelle||0) + diff),
+          };
+          setStockBouteilles(prev=>prev.map(x=>x.id===lotId?updatedLot:x));
+          fbSave("stockBouteilles", lotId, updatedLot);
+        }
+      });
+    }
     if(!editingTirage) {
       const ts = Date.now();
       const lots = [
