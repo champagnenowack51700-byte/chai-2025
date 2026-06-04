@@ -442,6 +442,7 @@ export default function App() {
   const [showDegorgeForm,   setShowDegorgeForm]   = useState(false);
   const [traitements,      setTraitements]       = useState([]);
   const [stockProduits,    setStockProduits]     = useState([]);
+  const [stockBouteilles,  setStockBouteilles]  = useState([]);
   const [showStockProdForm,setShowStockProdForm] = useState(false);
   const [editingStockProd, setEditingStockProd]  = useState(null);
   const [showImportBL,     setShowImportBL]      = useState(false);
@@ -987,6 +988,7 @@ export default function App() {
     ["degorgements", setDegorgements],
     ["biodynamies",  setBiodynamies],
     ["stockProduits",setStockProduits],
+      ["stockBouteilles",setStockBouteilles],
     ["pdfDocs",      setPdfDocs],
     ["pdfFactures",  setPdfFactures],
     ["amendements",  setAmendements],
@@ -1155,6 +1157,34 @@ export default function App() {
       updatedTonneaux.forEach(t => saveTonneau(t));
     }
     saveTirage(updated);
+    // Creer/mettre a jour les lots dans stockBouteilles
+    if(!editingTirage) {
+      const ts = Date.now();
+      const lots = [
+        {fmt:"75cl",   qte:parseInt(tirageForm.qte75)||0,       lot:tirageForm.lot75||updated.id+"_75"},
+        {fmt:"Magnum", qte:parseInt(tirageForm.qteMagnum)||0,   lot:tirageForm.lotMagnum||updated.id+"_mag"},
+        {fmt:"Jeroboam",qte:parseInt(tirageForm.qteJeroboam)||0,lot:tirageForm.lotJeroboam||updated.id+"_jer"},
+      ].filter(l=>l.qte>0);
+      lots.forEach((l,i)=>{
+        const lot = {
+          id: updated.id+"_"+l.fmt,
+          tirageId: updated.id,
+          cuvee: tirageForm.cuvee,
+          millesime: tirageForm.millesime||"",
+          dateTirage: tirageForm.date,
+          format: l.fmt,
+          lot: l.lot,
+          qteInitiale: l.qte,
+          qteActuelle: l.qte,
+          statut: "Sur latte / Sur pointe",
+          lieu: "Domaine",
+          mouvements: [],
+          timestamp: new Date().toISOString(),
+        };
+        setStockBouteilles(prev=>[lot,...prev.filter(x=>x.id!==lot.id)]);
+        fbSave("stockBouteilles", lot.id, lot);
+      });
+    }
     setTirageForm(TIRAGE_EMPTY); setEditingTirage(null); setShowTirageForm(false);
   };
 
