@@ -424,6 +424,7 @@ export default function App() {
   const [filterDenom,      setFilterDenom]      = useState("");
   const [filterStatut,     setFilterStatut]     = useState("actif");
   const [filterStockLieu,  setFilterStockLieu]  = useState("");
+  const [lotAction,        setLotAction]        = useState(null);
   const [filterStockStatut,setFilterStockStatut]= useState("");
   const [filterStock15,    setFilterStock15]    = useState("");
   const [filterAppellation, setFilterAppellation] = useState("");
@@ -2571,9 +2572,134 @@ export default function App() {
         )}
 
         {/* -- STOCK -- */}
-        {view==="stock" && (
-          <div style={{padding:"20px",color:"#9a8870"}}>Stock en cours de reconstruction...</div>
-        )}
+        {view==="stock" && (()=>{
+          const now = new Date();
+          const lots = stockBouteilles.map(l=>({...l,
+            mois: l.dateTirage ? Math.floor((now-new Date(l.dateTirage))/(1000*60*60*24*30.5)) : 0
+          }));
+          const lotsFiltre = lots.filter(l=>{
+            if(filterStockLieu && l.lieu!==filterStockLieu) return false;
+            if(filterStockStatut && l.statut!==filterStockStatut) return false;
+            if(filterStock15==="moins15" && l.mois>=15) return false;
+            if(filterStock15==="plus15" && l.mois<15) return false;
+            return true;
+          });
+          const total = lots.reduce((s,l)=>s+(parseInt(l.qteActuelle)||0),0);
+          const moins15 = lots.filter(l=>l.mois<15).reduce((s,l)=>s+(parseInt(l.qteActuelle)||0),0);
+          const plus15 = lots.filter(l=>l.mois>=15).reduce((s,l)=>s+(parseInt(l.qteActuelle)||0),0);
+          const alertes = lots.filter(l=>l.mois>=14&&l.mois<16).length;
+          return (
+            <div>
+              {/* 1. KPIs */}
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:"12px",marginBottom:"20px"}}>
+                {[
+                  {lbl:"Total en stock",val:total+" btl",sub:"tous formats",col:"#b8860b"},
+                  {lbl:"< 15 mois",val:moins15+" btl",sub:"non commercialisables",col:"#cc2222"},
+                  {lbl:"> 15 mois",val:plus15+" btl",sub:"commercialisables",col:"#1a7a40"},
+                  {lbl:"Alertes 15 mois",val:alertes+" lot(s)",sub:"passent le cap ce mois",col:"#c47800"},
+                ].map((k,i)=>(
+                  <div key={i} style={s.card}>
+                    <div style={s.lbl}>{k.lbl}</div>
+                    <div style={{fontSize:"24px",fontWeight:500,color:k.col}}>{k.val}</div>
+                    <div style={{fontSize:"11px",color:"#9a8870",marginTop:"3px"}}>{k.sub}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* 2. Filtres */}
+              <div style={{display:"flex",gap:"8px",marginBottom:"16px",flexWrap:"wrap",alignItems:"center"}}>
+                <select style={{...s.sel,maxWidth:"180px"}} value={filterStockLieu} onChange={e=>setFilterStockLieu(e.target.value)}>
+                  <option value="">Tous les lieux</option>
+                  {LIEUX_STOCK.map(l=><option key={l} value={l}>{l}</option>)}
+                </select>
+                <select style={{...s.sel,maxWidth:"220px"}} value={filterStockStatut} onChange={e=>setFilterStockStatut(e.target.value)}>
+                  <option value="">Tous les statuts</option>
+                  {STATUTS_BOUTEILLES.map(st=><option key={st} value={st}>{st}</option>)}
+                </select>
+                <select style={{...s.sel,maxWidth:"160px"}} value={filterStock15} onChange={e=>setFilterStock15(e.target.value)}>
+                  <option value="">Tous ages</option>
+                  <option value="moins15">Moins de 15 mois</option>
+                  <option value="plus15">Plus de 15 mois</option>
+                </select>
+                {(filterStockLieu||filterStockStatut||filterStock15)&&(
+                  <button style={s.ghostSm} onClick={()=>{setFilterStockLieu("");setFilterStockStatut("");setFilterStock15("");}}>Reinitialiser</button>
+                )}
+                <span style={{marginLeft:"auto",fontSize:"11px",color:"#9a8870"}}>{lotsFiltre.length} lot(s)</span>
+              </div>
+
+              {/* 3. Tableau */}
+              {lotsFiltre.length===0&&(
+                <div style={{...s.card,textAlign:"center",padding:"40px",color:"#9a8870"}}>
+                  <div style={{fontSize:"32px",marginBottom:"12px"}}>Aucun lot en stock</div>
+                  <div style={{fontSize:"13px"}}>Creez un tirage pour alimenter automatiquement le stock.</div>
+                </div>
+              )}
+              {lotsFiltre.length>0&&(
+                <div style={{...s.card,padding:0,overflow:"hidden",marginBottom:"24px"}}>
+                  <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
+                    <thead>
+                      <tr style={{background:"#fff8ee",borderBottom:"1px solid #d4c4a0"}}>
+                        {["Cuvee","Millesime","Format","Date tirage","Age","Statut","Lieu","Qte actuelle","Actions"].map(h=>(
+                          <th key={h} style={{textAlign:"left",padding:"10px 12px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#9a8870",fontWeight:500}}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {lotsFiltre.map((l,i)=>(
+                        <tr key={l.id} style={{borderBottom:"1px solid #ede5d4",background:i%2===0?"#ffffff":"#fffbf5"}}>
+                          <td style={{padding:"10px 12px",fontWeight:500,color:"#1a1205"}}>{l.cuvee}</td>
+                          <td style={{padding:"10px 12px",color:"#6a5838",fontFamily:"monospace"}}>{l.millesime||"-"}</td>
+                          <td style={{padding:"10px 12px",color:"#6a5838"}}>{l.format}</td>
+                          <td style={{padding:"10px 12px",color:"#9a8870"}}>{l.dateTirage||"-"}</td>
+                          <td style={{padding:"10px 12px"}}>
+                            <span style={{background:l.mois>=15?"#d4f0dd":"#fde8e8",color:l.mois>=15?"#1a7a40":"#cc2222",borderRadius:"12px",padding:"2px 8px",fontSize:"11px",fontWeight:500}}>{l.mois}m</span>
+                          </td>
+                          <td style={{padding:"10px 12px"}}>
+                            <span style={{background:"#e8f0e8",color:"#2d6a00",borderRadius:"4px",padding:"2px 8px",fontSize:"10px"}}>{l.statut}</span>
+                          </td>
+                          <td style={{padding:"10px 12px",color:"#6a5838"}}>{l.lieu}</td>
+                          <td style={{padding:"10px 12px",fontWeight:600,color:"#b8860b",fontFamily:"monospace",fontSize:"14px"}}>{l.qteActuelle}</td>
+                          <td style={{padding:"10px 12px"}}>
+                            <div style={{display:"flex",gap:"4px"}}>
+                              <button style={{...s.ghostSm,fontSize:"10px",color:"#185FA5",borderColor:"#b4d0f0"}}
+                                onClick={()=>setLotAction({lot:l,action:"mouvement"})}>Mouvement</button>
+                              <button style={{...s.ghostSm,fontSize:"10px",color:"#7a5200",borderColor:"#d4c4a0"}}
+                                onClick={()=>setLotAction({lot:l,action:"diviser"})}>Diviser</button>
+                              <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
+                                onClick={()=>{if(window.confirm("Supprimer ce lot ?")){setStockBouteilles(prev=>prev.filter(x=>x.id!==l.id));fbDelete("stockBouteilles",l.id);}}}>Sup.</button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* 5. Cloture mensuelle */}
+              <div style={{...s.card,padding:"16px 20px"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
+                  <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#7a5200"}}>Cloture mensuelle</div>
+                  <button style={s.btnSm} onClick={()=>setShowClotureForm(true)}>+ Nouvelle cloture</button>
+                </div>
+                {clotures.length===0&&<div style={{color:"#9a8870",fontStyle:"italic",fontSize:"12px"}}>Aucune cloture enregistree.</div>}
+                {clotures.length>0&&clotures.sort((a,b)=>b.date.localeCompare(a.date)).map(c=>(
+                  <div key={c.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:"0.5px solid #ede5d4",fontSize:"12px"}}>
+                    <div>
+                      <span style={{fontWeight:500,color:"#1a1205"}}>{c.date}</span>
+                      <span style={{color:"#9a8870",marginLeft:"8px"}}>{c.operateur}</span>
+                      <span style={{color:"#6a5838",marginLeft:"8px"}}>{(c.lignes||[]).reduce((s,l)=>s+(parseInt(l.qte)||0),0)} btl vendues</span>
+                    </div>
+                    <div style={{display:"flex",gap:"6px"}}>
+                      <button style={{...s.ghostSm,fontSize:"10px"}} onClick={()=>{setClotureForm({...c});setShowClotureForm(true);}}>Mod.</button>
+                      <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>{if(window.confirm("Supprimer ?")){setClotures(prev=>prev.filter(x=>x.id!==c.id));fbDelete("clotures",c.id);}}}>Sup.</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* -- TIRAGES -- */}
         {view==="tirages" && (
@@ -3578,6 +3704,112 @@ export default function App() {
                 <button style={s.btn} onClick={submitDegorgement}>{editingDegorge?"Sauvegarder":"Enregistrer"}</button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* == MODAL ACTION LOT == */}
+      {lotAction&&(
+        <div style={s.modal}>
+          <div style={{...s.modalBox,width:"500px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#7a5200"}}>
+                {lotAction.action==="diviser"?"Diviser le lot":"Mouvement de lot"}
+              </div>
+              <button style={s.ghost} onClick={()=>setLotAction(null)}>x</button>
+            </div>
+            <div style={{...s.card,marginBottom:"16px",padding:"12px",background:"#fff8ee"}}>
+              <div style={{fontWeight:500,color:"#1a1205"}}>{lotAction.lot.cuvee} {lotAction.lot.millesime}</div>
+              <div style={{fontSize:"12px",color:"#9a8870"}}>{lotAction.lot.format} - {lotAction.lot.qteActuelle} btl - {lotAction.lot.lieu} - {lotAction.lot.statut}</div>
+            </div>
+            {lotAction.action==="mouvement"&&(
+              <div style={{display:"grid",gap:"12px"}}>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                  <div><span style={s.lbl}>Nouveau statut</span>
+                    <select style={s.sel} id="mvt_statut" defaultValue={lotAction.lot.statut}>
+                      {STATUTS_BOUTEILLES.map(st=><option key={st} value={st}>{st}</option>)}
+                    </select>
+                  </div>
+                  <div><span style={s.lbl}>Nouveau lieu</span>
+                    <select style={s.sel} id="mvt_lieu" defaultValue={lotAction.lot.lieu}>
+                      {LIEUX_STOCK.map(l=><option key={l} value={l}>{l}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                  <div><span style={s.lbl}>Quantite concernee</span>
+                    <input type="number" style={s.inp} id="mvt_qte" placeholder={"Tout le lot ("+lotAction.lot.qteActuelle+")"}/>
+                  </div>
+                  <div><span style={s.lbl}>Date</span>
+                    <input type="date" style={s.inp} id="mvt_date" defaultValue={new Date().toISOString().slice(0,10)}/>
+                  </div>
+                </div>
+                <div><span style={s.lbl}>Notes</span>
+                  <input style={s.inp} id="mvt_notes" placeholder="ex. Degorgement campagne 2026"/>
+                </div>
+                <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
+                  <button style={s.ghost} onClick={()=>setLotAction(null)}>Annuler</button>
+                  <button style={s.btn} onClick={()=>{
+                    const newStatut = document.getElementById("mvt_statut").value;
+                    const newLieu = document.getElementById("mvt_lieu").value;
+                    const qte = parseInt(document.getElementById("mvt_qte").value)||lotAction.lot.qteActuelle;
+                    const date = document.getElementById("mvt_date").value;
+                    const notes = document.getElementById("mvt_notes").value;
+                    const qteRestante = lotAction.lot.qteActuelle - qte;
+                    if(qte <= 0) return alert("Quantite invalide.");
+                    if(qte < lotAction.lot.qteActuelle) {
+                      // Mouvement partiel - creer nouveau lot
+                      const newLot = {...lotAction.lot, id:"lot_"+Date.now(), qteInitiale:qte, qteActuelle:qte, statut:newStatut, lieu:newLieu, dateMvt:date, notes};
+                      const updatedLot = {...lotAction.lot, qteActuelle:qteRestante};
+                      setStockBouteilles(prev=>[newLot,...prev.map(x=>x.id===lotAction.lot.id?updatedLot:x)]);
+                      fbSave("stockBouteilles", newLot.id, newLot);
+                      fbSave("stockBouteilles", updatedLot.id, updatedLot);
+                    } else {
+                      // Mouvement total
+                      const updatedLot = {...lotAction.lot, statut:newStatut, lieu:newLieu, dateMvt:date, notes};
+                      setStockBouteilles(prev=>prev.map(x=>x.id===lotAction.lot.id?updatedLot:x));
+                      fbSave("stockBouteilles", updatedLot.id, updatedLot);
+                    }
+                    setLotAction(null);
+                  }}>Enregistrer</button>
+                </div>
+              </div>
+            )}
+            {lotAction.action==="diviser"&&(
+              <div style={{display:"grid",gap:"12px"}}>
+                <div style={{fontSize:"13px",color:"#6a5838"}}>Indiquez la quantite a separer du lot original.</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                  <div><span style={s.lbl}>Quantite a separer</span>
+                    <input type="number" style={s.inp} id="div_qte" placeholder="ex. 300" max={lotAction.lot.qteActuelle-1}/>
+                  </div>
+                  <div><span style={s.lbl}>Lieu du nouveau lot</span>
+                    <select style={s.sel} id="div_lieu" defaultValue={lotAction.lot.lieu}>
+                      {LIEUX_STOCK.map(l=><option key={l} value={l}>{l}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div><span style={s.lbl}>Statut du nouveau lot</span>
+                  <select style={s.sel} id="div_statut" defaultValue={lotAction.lot.statut}>
+                    {STATUTS_BOUTEILLES.map(st=><option key={st} value={st}>{st}</option>)}
+                  </select>
+                </div>
+                <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
+                  <button style={s.ghost} onClick={()=>setLotAction(null)}>Annuler</button>
+                  <button style={s.btn} onClick={()=>{
+                    const qte = parseInt(document.getElementById("div_qte").value)||0;
+                    const lieu = document.getElementById("div_lieu").value;
+                    const statut = document.getElementById("div_statut").value;
+                    if(qte<=0||qte>=lotAction.lot.qteActuelle) return alert("Quantite invalide - doit etre entre 1 et "+(lotAction.lot.qteActuelle-1));
+                    const newLot = {...lotAction.lot, id:"lot_"+Date.now(), qteInitiale:qte, qteActuelle:qte, statut, lieu};
+                    const updatedLot = {...lotAction.lot, qteActuelle:lotAction.lot.qteActuelle-qte};
+                    setStockBouteilles(prev=>[newLot,...prev.map(x=>x.id===lotAction.lot.id?updatedLot:x)]);
+                    fbSave("stockBouteilles", newLot.id, newLot);
+                    fbSave("stockBouteilles", updatedLot.id, updatedLot);
+                    setLotAction(null);
+                  }}>Diviser</button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
