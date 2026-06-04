@@ -559,8 +559,11 @@ export default function App() {
     levainLevureNom: "",
     levainLot: "",
     qte75: "",
+    lot75: "",
     qteMagnum: "",
+    lotMagnum: "",
     qteJeroboam: "",
+    lotJeroboam: "",
     // Cuve de stockage apres assemblage
     cuveDestMode: "existante",  // "existante" ou "nouvelle"
     cuveDestId: "",             // id cuve existante
