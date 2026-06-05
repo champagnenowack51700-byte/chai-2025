@@ -2764,7 +2764,7 @@ export default function App() {
                               <button style={{...s.ghostSm,fontSize:"10px",color:"#185FA5",borderColor:"#b4d0f0"}}
                                 onClick={()=>setLotAction({lot:l,action:"mouvement"})}>Mouvement</button>
                               <button style={{...s.ghostSm,fontSize:"10px",color:"#1a7a40",borderColor:"#b4d0b4"}}
-                                onClick={()=>{setSortieForm({lotId:l._ids?l._ids[0]:l.id,_ids:l._ids||[l.id],qteMax:l.qteActuelle,date:new Date().toISOString().slice(0,10),qte:"",notes:""});setShowSortieForm(true);}}>Sortie</button>
+                                onClick={()=>{setSortieForm({lotId:l._ids?l._ids[0]:l.id,_ids:l._ids||[l.id],qteMax:parseInt(l.qteActuelle)||0,cuvee:l.cuvee,millesime:l.millesime,format:l.format,date:new Date().toISOString().slice(0,10),qte:"",notes:""});setShowSortieForm(true);}}>Sortie</button>
                               <button style={{...s.ghostSm,fontSize:"10px",color:"#7a5200",borderColor:"#d4c4a0"}}
                                 onClick={()=>setLotAction({lot:l,action:"diviser"})}>Diviser</button>
                               {l.mois>=14&&!l.passage15&&(
@@ -3904,16 +3904,16 @@ export default function App() {
                 <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#7a5200"}}>Sortie de stock / Vente</div>
                 <button style={s.ghost} onClick={()=>setShowSortieForm(false)}>x</button>
               </div>
-              {lotSortie&&<div style={{...s.card,marginBottom:"16px",padding:"12px",background:"#fff8ee"}}>
-                <div style={{fontWeight:500,color:"#1a1205"}}>{lotSortie.cuvee} {lotSortie.millesime}</div>
-                <div style={{fontSize:"12px",color:"#9a8870"}}>{lotSortie.format} - Stock actuel: {lotSortie.qteActuelle} btl</div>
-              </div>}
+              <div style={{...s.card,marginBottom:"16px",padding:"12px",background:"#fff8ee"}}>
+                <div style={{fontWeight:500,color:"#1a1205"}}>{sortieForm.cuvee} {sortieForm.millesime}</div>
+                <div style={{fontSize:"12px",color:"#9a8870"}}>{sortieForm.format} - Stock actuel: <strong>{sortieForm.qteMax}</strong> btl</div>
+              </div>
               <div style={{display:"grid",gap:"12px"}}>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
                   <div><span style={s.lbl}>Date *</span>
                     <input type="date" style={s.inp} value={sortieForm.date} onChange={e=>setSortieForm(f=>({...f,date:e.target.value}))}/></div>
                   <div><span style={s.lbl}>Quantite sortie *</span>
-                    <input type="number" style={s.inp} placeholder={"max "+(sortieForm.qteMax||lotSortie?.qteActuelle||0)} value={sortieForm.qte} onChange={e=>setSortieForm(f=>({...f,qte:e.target.value}))}/></div>
+                    <input type="number" style={s.inp} placeholder={"max "+sortieForm.qteMax} value={sortieForm.qte} onChange={e=>setSortieForm(f=>({...f,qte:e.target.value}))}/></div>
                 </div>
                 <div><span style={s.lbl}>Notes</span>
                   <input style={s.inp} placeholder="ex. Vente directe, Restaurant..." value={sortieForm.notes} onChange={e=>setSortieForm(f=>({...f,notes:e.target.value}))}/></div>
@@ -3923,7 +3923,7 @@ export default function App() {
                     const qte = parseInt(sortieForm.qte)||0;
                     if(!sortieForm.date) return alert("Date requise.");
                     if(qte<=0) return alert("Quantite invalide.");
-                    if(qte>(lotSortie?.qteActuelle||0)) return alert("Quantite superieure au stock disponible.");
+                    if(qte>sortieForm.qteMax) return alert("Quantite superieure au stock disponible ("+sortieForm.qteMax+" btl).");
                     // Deduire des lots fusionnes proportionnellement
                     const ids = sortieForm._ids||[sortieForm.lotId];
                     let remaining = qte;
