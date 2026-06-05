@@ -2629,7 +2629,7 @@ export default function App() {
           const total = lots.reduce((s,l)=>s+(parseInt(l.qteActuelle)||0),0);
           const moins15 = lots.filter(l=>l.mois<15).reduce((s,l)=>s+(parseInt(l.qteActuelle)||0),0);
           const plus15 = lots.filter(l=>l.mois>=15).reduce((s,l)=>s+(parseInt(l.qteActuelle)||0),0);
-          const alertes = lots.filter(l=>l.mois>=14&&l.mois<16).length;
+          const alertes = lots.filter(l=>l.mois>=14&&!l.passage15).length;
           return (
             <div>
               {/* 1. KPIs */}
