@@ -2752,6 +2752,36 @@ export default function App() {
                       ))}
                     </div>
                   </div>
+                  {(()=>{
+                    const sorties = clotures.filter(c=>c.type==="sortie");
+                    const tots = {};
+                    sorties.forEach(c=>{
+                      const k = (c.statut||"Vente")+"|"+(c.format||"75cl");
+                      tots[k] = (tots[k]||0) + (parseInt(c.qte)||0);
+                    });
+                    const totCRD75 = sorties.filter(c=>c.statut==="Habille CRD"&&c.format==="75cl").reduce((s,c)=>s+(parseInt(c.qte)||0),0);
+                    const totCRDMag = sorties.filter(c=>c.statut==="Habille CRD"&&c.format==="Magnum").reduce((s,c)=>s+(parseInt(c.qte)||0),0);
+                    const totCRDJer = sorties.filter(c=>c.statut==="Habille CRD"&&c.format==="Jeroboam").reduce((s,c)=>s+(parseInt(c.qte)||0),0);
+                    const totExp75 = sorties.filter(c=>c.statut==="Habille Export"&&c.format==="75cl").reduce((s,c)=>s+(parseInt(c.qte)||0),0);
+                    const totExpMag = sorties.filter(c=>c.statut==="Habille Export"&&c.format==="Magnum").reduce((s,c)=>s+(parseInt(c.qte)||0),0);
+                    const totExpJer = sorties.filter(c=>c.statut==="Habille Export"&&c.format==="Jeroboam").reduce((s,c)=>s+(parseInt(c.qte)||0),0);
+                    return (
+                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px",marginBottom:"14px",padding:"10px",background:"#fff8ee",borderRadius:"6px"}}>
+                        {totCRD75+totCRDMag+totCRDJer>0&&<div>
+                          <div style={{fontSize:"11px",fontWeight:500,color:"#6a2d8a",marginBottom:"4px"}}>CRD</div>
+                          {totCRD75>0&&<div style={{fontSize:"11px",color:"#6a5838"}}>75cl : <strong>{totCRD75}</strong> btl</div>}
+                          {totCRDMag>0&&<div style={{fontSize:"11px",color:"#6a5838"}}>Magnum : <strong>{totCRDMag}</strong></div>}
+                          {totCRDJer>0&&<div style={{fontSize:"11px",color:"#6a5838"}}>Jeroboam : <strong>{totCRDJer}</strong></div>}
+                        </div>}
+                        {totExp75+totExpMag+totExpJer>0&&<div>
+                          <div style={{fontSize:"11px",fontWeight:500,color:"#8a2d6a",marginBottom:"4px"}}>Export</div>
+                          {totExp75>0&&<div style={{fontSize:"11px",color:"#6a5838"}}>75cl : <strong>{totExp75}</strong> btl</div>}
+                          {totExpMag>0&&<div style={{fontSize:"11px",color:"#6a5838"}}>Magnum : <strong>{totExpMag}</strong></div>}
+                          {totExpJer>0&&<div style={{fontSize:"11px",color:"#6a5838"}}>Jeroboam : <strong>{totExpJer}</strong></div>}
+                        </div>}
+                      </div>
+                    );
+                  })()}
                   {clotures.filter(c=>c.type==="sortie").sort((a,b)=>b.date.localeCompare(a.date)).map(c=>(
                     <div key={c.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:"0.5px solid #ede5d4",fontSize:"12px"}}>
                       <div>
