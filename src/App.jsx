@@ -431,6 +431,7 @@ export default function App() {
   const [filterDenom,      setFilterDenom]      = useState("");
   const [filterStatut,     setFilterStatut]     = useState("actif");
   const [filterStockLieu,  setFilterStockLieu]  = useState("");
+  const [filterStockCuvee, setFilterStockCuvee] = useState("");
   const [lotAction,        setLotAction]        = useState(null);
   const [showSortieForm,   setShowSortieForm]   = useState(false);
   const [coiffesStock,     setCoiffesStock]     = useState([]);
@@ -2624,6 +2625,7 @@ export default function App() {
             mois: l.dateTirage ? Math.floor((now-new Date(l.dateTirage))/(1000*60*60*24*30.5)) : 0
           }));
           const lotsFiltre = lots.filter(l=>{
+            if(filterStockCuvee && !l.cuvee.toLowerCase().includes(filterStockCuvee.toLowerCase())) return false;
             if(filterStockLieu && l.lieu!==filterStockLieu) return false;
             if(filterStockStatut && l.statut!==filterStockStatut) return false;
             if(filterStock15==="moins15" && l.mois>=15) return false;
@@ -2706,6 +2708,7 @@ export default function App() {
 
               {/* 2. Filtres */}
               <div style={{display:"flex",gap:"8px",marginBottom:"16px",flexWrap:"wrap",alignItems:"center"}}>
+                <input style={{...s.inp,maxWidth:"180px"}} placeholder="Recherche cuvee..." value={filterStockCuvee} onChange={e=>setFilterStockCuvee(e.target.value)}/>
                 <select style={{...s.sel,maxWidth:"180px"}} value={filterStockLieu} onChange={e=>setFilterStockLieu(e.target.value)}>
                   <option value="">Tous les lieux</option>
                   {LIEUX_STOCK.map(l=><option key={l} value={l}>{l}</option>)}
@@ -2719,8 +2722,8 @@ export default function App() {
                   <option value="moins15">Moins de 15 mois</option>
                   <option value="plus15">Plus de 15 mois</option>
                 </select>
-                {(filterStockLieu||filterStockStatut||filterStock15)&&(
-                  <button style={s.ghostSm} onClick={()=>{setFilterStockLieu("");setFilterStockStatut("");setFilterStock15("");}}>Reinitialiser</button>
+                {(filterStockLieu||filterStockStatut||filterStock15||filterStockCuvee)&&(
+                  <button style={s.ghostSm} onClick={()=>{setFilterStockLieu("");setFilterStockStatut("");setFilterStock15("");setFilterStockCuvee("");}}>Reinitialiser</button>
                 )}
                 <span style={{marginLeft:"auto",fontSize:"11px",color:"#9a8870"}}>{lotsFusionnes.length} ligne(s) ({lotsFiltre.length} lots)</span>
               </div>
