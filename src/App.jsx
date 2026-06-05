@@ -1288,7 +1288,6 @@ export default function App() {
   const submitVendange = () => {
     if(!vendangeForm.parcelleId) return alert("Selectionner une parcelle.");
     if(!vendangeForm.date) return alert("La date est requise.");
-    if(!vendangeForm.volumeRecolte) return alert("Le volume recolte est requis.");
     const v = { id:editingVendange?editingVendange.id:`vend_${Date.now()}`, ...vendangeForm, timestamp:new Date().toISOString() };
     if(editingVendange) {
       setVendanges(prev=>prev.map(x=>x.id===editingVendange.id?v:x));
