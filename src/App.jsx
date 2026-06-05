@@ -1621,9 +1621,6 @@ export default function App() {
           <button style={{...s.ghost,fontSize:"11px",color:"#2d6a00",borderColor:"#7ab84880"}} onClick={refreshFromFirebase} title="Synchroniser avec Firebase">
             <i className="ti ti-refresh" style={{marginRight:"4px"}}/>Sync
           </button>
-          <button style={{...s.ghost,fontSize:"11px"}} onClick={()=>{setFutForm(EMPTY_FUT);setEditingFut(null);setShowFutForm(true);}}>
-            <i className="ti ti-barrel" style={{marginRight:"4px"}}/>Fût / Cuve
-          </button>
         </div>
       </nav>
       <div style={s.main}>
