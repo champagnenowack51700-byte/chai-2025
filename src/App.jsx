@@ -2495,7 +2495,7 @@ export default function App() {
               {/* Grouper par annee */}
               {[...new Set(vendanges.map(v=>v.annee))].sort().reverse().filter(an=>!filterVendangeAn||an===filterVendangeAn).map(annee=>{
                 const vAnnee = vendanges.filter(v=>v.annee===annee);
-                const volTotal = vAnnee.reduce((s,v)=>s+(parseFloat(v.volumeRecolte)||0),0);
+                const volTotal = vAnnee.reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0);
                 return (
                   <div key={annee} style={{marginBottom:"20px"}}>
                     <div style={{display:"flex",alignItems:"center",gap:"10px",marginBottom:"10px"}}>
@@ -2503,7 +2503,7 @@ export default function App() {
                       <div style={{flex:1,height:"0.5px",background:"#d4c4a0"}}/>
                       <div style={{display:"flex",gap:"12px",fontSize:"11px",color:"#9a8870",fontFamily:"monospace"}}>
                         <span>{vAnnee.length} apport(s)</span>
-                        <span style={{color:"#2d6a00",fontWeight:500}}>{volTotal.toFixed(0)} L</span>
+                        <span style={{color:"#2d6a00",fontWeight:500}}>{volTotal.toLocaleString()} kg</span>
                         {vAnnee.filter(v=>v.numeroMarc).length>0&&(
                           <span>{[...new Set(vAnnee.map(v=>v.numeroMarc).filter(Boolean))].sort().length} Marc(s)</span>
                         )}
@@ -2515,6 +2515,7 @@ export default function App() {
                         <div key={v.id} style={{...s.card,marginBottom:"10px",borderLeft:`3px solid #2d6a00`}}>
                           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:"12px",marginBottom:"8px"}}>
                             <div>
+                              {v.cuveeCreee&&<div style={{fontWeight:600,color:"#7a5200",fontSize:"14px",marginBottom:"2px"}}>{v.cuveeCreee}</div>}
                               <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"2px"}}>
                                 <div style={{fontWeight:500,color:"#1a1205",fontSize:"13px"}}>{parc?.nom||"Parcelle inconnue"}</div>
                                 {v.numeroMarc&&(
@@ -2531,14 +2532,13 @@ export default function App() {
                                 )}
                                 <span style={{fontSize:"11px",color:"#9a8870"}}>{parc?.cepage||""}{parc?.commune?` - ${parc.commune}`:""}</span>
                               </div>
-                              <div style={{fontSize:"11px",color:"#7a6840",marginTop:"3px"}}>{v.date} - {v.operateur}</div>
+                              <div style={{fontSize:"11px",color:"#7a6840",marginTop:"3px"}}>{v.date}{v.heure?" - "+v.heure:""} - {v.operateur}</div>
                             </div>
                             <div>
                               <div style={s.lbl}>Volume recolte</div>
-                              <div style={{fontSize:"18px",fontWeight:500,color:"#2d6a00"}}>{v.volumeRecolte} L</div>
-                      {v.volumeHL&&<div style={{fontSize:"13px",color:"#2d6a00"}}>{v.volumeHL} HL</div>}
-                      {v.poidsMarcKg&&<div style={{fontSize:"12px",color:"#9a8870"}}>{parseInt(v.poidsMarcKg).toLocaleString()} kg marc</div>}
-                              {v.rendement&&<div style={{fontSize:"11px",color:"#9a8870"}}>{v.rendement} kg/ha</div>}
+                              {v.poidsMarcKg&&<div style={{fontSize:"18px",fontWeight:500,color:"#2d6a00"}}>{parseInt(v.poidsMarcKg).toLocaleString()} kg</div>}
+                              {v.volumeHL&&<div style={{fontSize:"13px",color:"#2d6a00"}}>{v.volumeHL} HL</div>}
+                              {v.destinationMarc&&v.destinationMarc!=="maison"&&<div style={{fontSize:"11px",color:"#c47800",marginTop:"3px"}}>Negoce{v.kgVendusNegoce?" - "+parseInt(v.kgVendusNegoce).toLocaleString()+" kg":""}{v.numeroDAE?" - DAE: "+v.numeroDAE:""}</div>}
                             </div>
                             <div>
                               <div style={s.lbl}>Analyses</div>
@@ -2583,6 +2583,62 @@ export default function App() {
               })}
             </div>
 
+            {/* Colonne droite */}
+            <div style={{display:"grid",gap:"16px"}}>
+
+            {/* Tableau de bord rendement */}
+            <div style={s.card}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
+                <span style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#7a5200"}}>Rendement</span>
+                <button style={s.btnSm} onClick={()=>setShowRendementForm(true)}>+ Saisir</button>
+              </div>
+              {[...new Set(vendanges.map(v=>v.annee))].sort().reverse().map(annee=>{
+                const vAnnee = vendanges.filter(v=>v.annee===annee);
+                const kgRecoltes = vAnnee.reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0);
+                const kgMaison = vAnnee.filter(v=>!v.destinationMarc||v.destinationMarc==="maison").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0)
+                  + vAnnee.filter(v=>v.destinationMarc==="negoce_partiel").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0)-(parseFloat(v.kgVendusNegoce)||0),0);
+                const kgNegoce = vAnnee.filter(v=>v.destinationMarc==="negoce_total").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0)
+                  + vAnnee.filter(v=>v.destinationMarc==="negoce_partiel").reduce((s,v)=>s+(parseFloat(v.kgVendusNegoce)||0),0);
+                const rendAnnee = rendementsAnnuels.find(r=>r.annee===annee);
+                const surfTotale = parcelles.reduce((s,p)=>s+(parseFloat(p.surface)||0),0);
+                const kgHaReel = surfTotale>0 ? Math.round(kgRecoltes/surfTotale) : 0;
+                const kgHaAutorise = rendAnnee ? parseFloat(rendAnnee.rendementAutorise)||0 : 0;
+                const enRI = kgHaAutorise>0 && kgHaReel>kgHaAutorise;
+                return (
+                  <div key={annee} style={{borderBottom:"0.5px solid #ede5d4",paddingBottom:"10px",marginBottom:"10px"}}>
+                    <div style={{fontWeight:500,color:"#7a5200",fontSize:"13px",marginBottom:"6px"}}>Campagne {annee}</div>
+                    <div style={{display:"grid",gap:"4px",fontSize:"12px"}}>
+                      <div style={{display:"flex",justifyContent:"space-between"}}>
+                        <span style={{color:"#9a8870"}}>Total recolte</span>
+                        <span style={{fontWeight:500,color:"#1a1205"}}>{kgRecoltes.toLocaleString()} kg</span>
+                      </div>
+                      <div style={{display:"flex",justifyContent:"space-between"}}>
+                        <span style={{color:"#9a8870"}}>Conserve maison</span>
+                        <span style={{fontWeight:500,color:"#2d6a00"}}>{Math.round(kgMaison).toLocaleString()} kg</span>
+                      </div>
+                      <div style={{display:"flex",justifyContent:"space-between"}}>
+                        <span style={{color:"#9a8870"}}>Vendu negoce</span>
+                        <span style={{fontWeight:500,color:"#c47800"}}>{Math.round(kgNegoce).toLocaleString()} kg</span>
+                      </div>
+                      {surfTotale>0&&<div style={{display:"flex",justifyContent:"space-between"}}>
+                        <span style={{color:"#9a8870"}}>kg/ha reel</span>
+                        <span style={{fontWeight:500,color:enRI?"#cc2222":"#1a1205"}}>{kgHaReel.toLocaleString()} kg/ha</span>
+                      </div>}
+                      {kgHaAutorise>0&&<div style={{display:"flex",justifyContent:"space-between"}}>
+                        <span style={{color:"#9a8870"}}>Rendement autorise</span>
+                        <span style={{fontWeight:500,color:"#6a5838"}}>{kgHaAutorise.toLocaleString()} kg/ha</span>
+                      </div>}
+                      {enRI&&<div style={{marginTop:"6px",padding:"6px 10px",background:"#fde8e8",borderRadius:"4px",border:"1px solid #f0b4b4"}}>
+                        <div style={{fontSize:"11px",fontWeight:500,color:"#cc2222"}}>Depassement - Section RI</div>
+                        <div style={{fontSize:"11px",color:"#cc2222"}}>+{(kgHaReel-kgHaAutorise).toLocaleString()} kg/ha au-dela du rendement</div>
+                      </div>}
+                    </div>
+                  </div>
+                );
+              })}
+              {rendementsAnnuels.length===0&&vendanges.length===0&&<div style={{fontSize:"12px",color:"#9a8870",fontStyle:"italic"}}>Aucune donnee.</div>}
+            </div>
+
             {/* Colonne droite - Parcelles */}
             <div style={s.card}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
@@ -2617,6 +2673,7 @@ export default function App() {
                   </div>
                 </div>
               ))}
+            </div>
             </div>
           </div>
         )}
@@ -3447,6 +3504,43 @@ export default function App() {
               <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
                 <button style={s.ghost} onClick={()=>setShowParcelleForm(false)}>Annuler</button>
                 <button style={s.btn} onClick={submitParcelle}>Enregistrer</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* == MODAL RENDEMENT == */}
+      {showRendementForm&&(
+        <div style={s.modal}>
+          <div style={{...s.modalBox,width:"380px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#7a5200"}}>Rendement autorise</div>
+              <button style={s.ghost} onClick={()=>setShowRendementForm(false)}>x</button>
+            </div>
+            <div style={{display:"grid",gap:"12px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                <div><span style={s.lbl}>Campagne</span>
+                  <input type="number" style={s.inp} placeholder="2025" value={rendementForm.annee} onChange={e=>setRendementForm(f=>({...f,annee:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Rendement (kg/ha)</span>
+                  <input type="number" style={s.inp} placeholder="10000" value={rendementForm.rendementAutorise} onChange={e=>setRendementForm(f=>({...f,rendementAutorise:e.target.value}))}/></div>
+              </div>
+              <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
+                <button style={s.ghost} onClick={()=>setShowRendementForm(false)}>Annuler</button>
+                <button style={s.btn} onClick={()=>{
+                  if(!rendementForm.annee||!rendementForm.rendementAutorise) return alert("Tous les champs sont requis.");
+                  const existing = rendementsAnnuels.find(r=>r.annee===rendementForm.annee);
+                  if(existing) {
+                    const updated = {...existing,...rendementForm};
+                    setRendementsAnnuels(prev=>prev.map(r=>r.annee===rendementForm.annee?updated:r));
+                    fbSave("rendements",updated.id,updated);
+                  } else {
+                    const r = {id:"rend_"+Date.now(),...rendementForm,timestamp:new Date().toISOString()};
+                    setRendementsAnnuels(prev=>[r,...prev]);
+                    fbSave("rendements",r.id,r);
+                  }
+                  setShowRendementForm(false);
+                }}>Enregistrer</button>
               </div>
             </div>
           </div>
