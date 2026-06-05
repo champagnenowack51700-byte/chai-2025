@@ -433,6 +433,7 @@ export default function App() {
   const [filterStockLieu,  setFilterStockLieu]  = useState("");
   const [lotAction,        setLotAction]        = useState(null);
   const [showSortieForm,   setShowSortieForm]   = useState(false);
+  const [coiffesStock,     setCoiffesStock]     = useState([]);
   const [coiffesCRD,       setCoiffesCRD]       = useState(0);
   const [coiffesExport,    setCoiffesExport]     = useState(0);
   const [showCoiffesForm,  setShowCoiffesForm]   = useState(false);
@@ -2736,6 +2737,45 @@ export default function App() {
                 </div>
               )}
 
+              {/* Encart coiffes */}
+              {(()=>{
+                const stockCRD = coiffesStock.filter(c=>c.type==="CRD").reduce((s,c)=>s+(c.operation==="achat"?parseInt(c.qte)||0:-(parseInt(c.qte)||0)),0);
+                const stockExport = coiffesStock.filter(c=>c.type==="Export").reduce((s,c)=>s+(c.operation==="achat"?parseInt(c.qte)||0:-(parseInt(c.qte)||0)),0);
+                return (
+                  <div style={{...s.card,padding:"16px 20px",marginTop:"16px",marginBottom:"16px"}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
+                      <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#7a5200"}}>Stock coiffes</div>
+                      <button style={s.btnSm} onClick={()=>setShowCoiffesForm(true)}>+ Achat coiffes</button>
+                    </div>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                      <div style={{padding:"10px",background:stockCRD<100?"#fde8e8":"#f0fff4",borderRadius:"6px",textAlign:"center"}}>
+                        <div style={{fontSize:"11px",color:"#6a2d8a",fontWeight:500,marginBottom:"4px"}}>CRD</div>
+                        <div style={{fontSize:"22px",fontWeight:600,color:stockCRD<100?"#cc2222":"#1a7a40"}}>{stockCRD}</div>
+                        <div style={{fontSize:"10px",color:"#9a8870"}}>coiffes disponibles</div>
+                      </div>
+                      <div style={{padding:"10px",background:stockExport<100?"#fde8e8":"#f0fff4",borderRadius:"6px",textAlign:"center"}}>
+                        <div style={{fontSize:"11px",color:"#8a2d6a",fontWeight:500,marginBottom:"4px"}}>Export</div>
+                        <div style={{fontSize:"22px",fontWeight:600,color:stockExport<100?"#cc2222":"#1a7a40"}}>{stockExport}</div>
+                        <div style={{fontSize:"10px",color:"#9a8870"}}>coiffes disponibles</div>
+                      </div>
+                    </div>
+                    {coiffesStock.length>0&&(
+                      <div style={{marginTop:"12px",borderTop:"0.5px solid #ede5d4",paddingTop:"10px"}}>
+                        <div style={{fontSize:"11px",color:"#9a8870",marginBottom:"6px"}}>Dernieres operations</div>
+                        {[...coiffesStock].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5).map(c=>(
+                          <div key={c.id} style={{display:"flex",justifyContent:"space-between",fontSize:"11px",padding:"3px 0",borderBottom:"0.5px solid #f5f0e8"}}>
+                            <span style={{color:"#9a8870"}}>{fmt(c.date)}</span>
+                            <span style={{color:c.type==="CRD"?"#6a2d8a":"#8a2d6a",fontWeight:500}}>{c.type}</span>
+                            <span style={{color:c.operation==="achat"?"#1a7a40":"#cc2222"}}>{c.operation==="achat"?"+":"-"}{c.qte}</span>
+                            <button style={{...s.ghostSm,fontSize:"9px",color:"#cc2222",borderColor:"#f0b4b4",padding:"1px 4px"}} onClick={()=>{if(window.confirm("Supprimer ?")){setCoiffesStock(prev=>prev.filter(x=>x.id!==c.id));fbDelete("coiffes",c.id);}}}>x</button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
               {/* Historique sorties */}
               {clotures.filter(c=>c.type==="sortie").length>0&&(
                 <div style={{...s.card,padding:"16px 20px",marginTop:"16px"}}>
@@ -3863,6 +3903,42 @@ export default function App() {
         );
       })()}
 
+      {/* == MODAL COIFFES == */}
+      {showCoiffesForm&&(
+        <div style={s.modal}>
+          <div style={{...s.modalBox,width:"400px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#7a5200"}}>Achat coiffes</div>
+              <button style={s.ghost} onClick={()=>setShowCoiffesForm(false)}>x</button>
+            </div>
+            <div style={{display:"grid",gap:"12px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                <div><span style={s.lbl}>Type</span>
+                  <select style={s.sel} value={coiffesForm.type} onChange={e=>setCoiffesForm(f=>({...f,type:e.target.value}))}>
+                    <option value="CRD">CRD</option>
+                    <option value="Export">Export</option>
+                  </select></div>
+                <div><span style={s.lbl}>Date</span>
+                  <input type="date" style={s.inp} value={coiffesForm.date||new Date().toISOString().slice(0,10)} onChange={e=>setCoiffesForm(f=>({...f,date:e.target.value}))}/></div>
+              </div>
+              <div><span style={s.lbl}>Quantite</span>
+                <input type="number" style={s.inp} placeholder="ex. 5000" value={coiffesForm.qte} onChange={e=>setCoiffesForm(f=>({...f,qte:e.target.value}))}/></div>
+              <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
+                <button style={s.ghost} onClick={()=>setShowCoiffesForm(false)}>Annuler</button>
+                <button style={s.btn} onClick={()=>{
+                  if(!coiffesForm.qte) return alert("Quantite requise.");
+                  const c={id:"coiffe_"+Date.now(),...coiffesForm,operation:"achat",date:coiffesForm.date||new Date().toISOString().slice(0,10),timestamp:new Date().toISOString()};
+                  setCoiffesStock(prev=>[c,...prev]);
+                  fbSave("coiffes",c.id,c);
+                  setCoiffesForm({type:"CRD",qte:"",date:new Date().toISOString().slice(0,10)});
+                  setShowCoiffesForm(false);
+                }}>Enregistrer</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* == MODAL ACTION LOT == */}
       {lotAction&&(
         <div style={s.modal}>
@@ -3912,15 +3988,20 @@ export default function App() {
                     const notes = document.getElementById("mvt_notes").value;
                     const qteRestante = lotAction.lot.qteActuelle - qte;
                     if(qte <= 0) return alert("Quantite invalide.");
+                    // Deduire coiffes si habillage
+                    if(newStatut==="Habille CRD"||newStatut==="Habille Export") {
+                      const typeCoiffe = newStatut==="Habille CRD"?"CRD":"Export";
+                      const deduction = {id:"coiffe_"+Date.now(),type:typeCoiffe,operation:"utilisation",qte:String(qte),date,notes:"Habillage "+lotAction.lot.cuvee,timestamp:new Date().toISOString()};
+                      setCoiffesStock(prev=>[deduction,...prev]);
+                      fbSave("coiffes",deduction.id,deduction);
+                    }
                     if(qte < lotAction.lot.qteActuelle) {
-                      // Mouvement partiel - creer nouveau lot
                       const newLot = {...lotAction.lot, id:"lot_"+Date.now(), qteInitiale:qte, qteActuelle:qte, statut:newStatut, lieu:newLieu, dateMvt:date, notes};
                       const updatedLot = {...lotAction.lot, qteActuelle:qteRestante};
                       setStockBouteilles(prev=>[newLot,...prev.map(x=>x.id===lotAction.lot.id?updatedLot:x)]);
                       fbSave("stockBouteilles", newLot.id, newLot);
                       fbSave("stockBouteilles", updatedLot.id, updatedLot);
                     } else {
-                      // Mouvement total
                       const updatedLot = {...lotAction.lot, statut:newStatut, lieu:newLieu, dateMvt:date, notes};
                       setStockBouteilles(prev=>prev.map(x=>x.id===lotAction.lot.id?updatedLot:x));
                       fbSave("stockBouteilles", updatedLot.id, updatedLot);
