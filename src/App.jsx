@@ -546,21 +546,30 @@ export default function App() {
   const VENDANGE_EMPTY = {
     annee: new Date().getFullYear().toString(),
     date: new Date().toISOString().slice(0,10),
+    heure: "",
     parcelleId: "",
+    cuveeCreee: "",
     operateur: "",
     numeroMarc: "",
     volumeRecolte: "",
+    volumeHL: "",
+    poidsMarcKg: "",
     degreePotentiel: "",
     acidite: "",
     so2: "",
-    rendement: "",
     observations: "",
     cuveReception: "",
     nouvelleCuveNom: "",
     nouvelleCuveVolume: "",
     produitsAjoutes: [],
+    destinationMarc: "maison",
+    kgVendusNegoce: "",
+    numeroDAE: "",
   };
   const [vendangeForm, setVendangeForm] = useState(VENDANGE_EMPTY);
+  const [rendementsAnnuels, setRendementsAnnuels] = useState([]);
+  const [showRendementForm, setShowRendementForm] = useState(false);
+  const [rendementForm, setRendementForm] = useState({annee:new Date().getFullYear().toString(),rendementAutorise:"",surface:""});
   const [showProduitVendange, setShowProduitVendange] = useState(false);
   const [produitVendangeForm, setProduitVendangeForm] = useState({nom:"",dose:"",lot:"",date:""});
   const [editingTirage,  setEditingTirage]  = useState(null);
@@ -3461,6 +3470,10 @@ export default function App() {
                     <input type="number" style={s.inp} value={vendangeForm.annee} onChange={e=>setVendangeForm(f=>({...f,annee:e.target.value}))}/></div>
                   <div><span style={s.lbl}>Date *</span>
                     <input type="date" style={s.inp} value={vendangeForm.date} onChange={e=>setVendangeForm(f=>({...f,date:e.target.value}))}/></div>
+                  <div><span style={s.lbl}>Heure *</span>
+                    <input type="time" style={s.inp} value={vendangeForm.heure||""} onChange={e=>setVendangeForm(f=>({...f,heure:e.target.value}))}/></div>
+                  <div><span style={s.lbl}>Nom de la cuvee creee</span>
+                    <input style={s.inp} placeholder="ex. Blanc de Blancs 2025" value={vendangeForm.cuveeCreee||""} onChange={e=>setVendangeForm(f=>({...f,cuveeCreee:e.target.value}))}/></div>
                   <div><span style={s.lbl}>Operateur</span>
                     <select style={s.sel} value={vendangeForm.operateur} onChange={e=>setVendangeForm(f=>({...f,operateur:e.target.value}))}>
                       <option value="">Selectionner...</option>
@@ -3496,6 +3509,26 @@ export default function App() {
                     <input type="number" step="0.1" style={s.inp} placeholder="0.0" value={vendangeForm.acidite} onChange={e=>setVendangeForm(f=>({...f,acidite:e.target.value}))}/></div>
                   <div><span style={s.lbl}>SO2 (mg/L)</span>
                     <input type="number" style={s.inp} placeholder="0" value={vendangeForm.so2} onChange={e=>setVendangeForm(f=>({...f,so2:e.target.value}))}/></div>
+                </div>
+              </div>
+              <div style={{background:"#fff8ee",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
+                <div style={{...s.lbl,marginBottom:"10px"}}>Destination du marc</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                  <div><span style={s.lbl}>Destination</span>
+                    <select style={s.sel} value={vendangeForm.destinationMarc||"maison"} onChange={e=>setVendangeForm(f=>({...f,destinationMarc:e.target.value}))}>
+                      <option value="maison">Vinification maison (totalite)</option>
+                      <option value="negoce_total">Vente negoce (totalite)</option>
+                      <option value="negoce_partiel">Vente negoce (partielle)</option>
+                    </select>
+                  </div>
+                  {(vendangeForm.destinationMarc==="negoce_total"||vendangeForm.destinationMarc==="negoce_partiel")&&(
+                    <div><span style={s.lbl}>N° DAE</span>
+                      <input style={s.inp} placeholder="ex. DAE-2025-001" value={vendangeForm.numeroDAE||""} onChange={e=>setVendangeForm(f=>({...f,numeroDAE:e.target.value}))}/></div>
+                  )}
+                  {vendangeForm.destinationMarc==="negoce_partiel"&&(
+                    <div><span style={s.lbl}>Kg vendus negoce</span>
+                      <input type="number" style={s.inp} placeholder="ex. 2000" value={vendangeForm.kgVendusNegoce||""} onChange={e=>setVendangeForm(f=>({...f,kgVendusNegoce:e.target.value}))}/></div>
+                  )}
                 </div>
               </div>
               <div style={{background:"#fff8ee",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
