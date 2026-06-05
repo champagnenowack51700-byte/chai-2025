@@ -1624,9 +1624,6 @@ export default function App() {
           <button style={{...s.ghost,fontSize:"11px"}} onClick={()=>{setFutForm(EMPTY_FUT);setEditingFut(null);setShowFutForm(true);}}>
             <i className="ti ti-barrel" style={{marginRight:"4px"}}/>Fût / Cuve
           </button>
-          <button style={s.btn} onClick={()=>setShowMvtForm(true)}>
-            <i className="ti ti-plus" style={{marginRight:"4px"}}/>Mouvement
-          </button>
         </div>
       </nav>
 
