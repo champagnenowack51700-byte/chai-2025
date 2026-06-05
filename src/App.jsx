@@ -3002,6 +3002,7 @@ export default function App() {
         {view==="mouvements"&&(
           <div>
             <div style={{display:"flex",gap:"10px",marginBottom:"18px",alignItems:"center"}}>
+              <button style={s.btn} onClick={()=>setShowMvtForm(true)}>+ Ajouter un mouvement</button>
               <input style={{...s.inp,maxWidth:"180px"}} placeholder="N° fût..." value={filterFut} onChange={e=>setFilterFut(e.target.value)}/>
               <select style={{...s.sel,maxWidth:"160px"}} value={filterOp} onChange={e=>setFilterOp(e.target.value)}>
                 <option value="">Tous opérateurs</option>
