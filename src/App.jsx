@@ -2509,6 +2509,41 @@ export default function App() {
                         )}
                       </div>
                     </div>
+                    {/* Recap rendement campagne */}
+                    {(()=>{
+                      const kgRecoltes = vAnnee.reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0);
+                      const kgMaison = vAnnee.filter(v=>!v.destinationMarc||v.destinationMarc==="maison").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0)
+                        + vAnnee.filter(v=>v.destinationMarc==="negoce_partiel").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0)-(parseFloat(v.kgVendusNegoce)||0),0);
+                      const kgNegoce = vAnnee.filter(v=>v.destinationMarc==="negoce_total").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0)
+                        + vAnnee.filter(v=>v.destinationMarc==="negoce_partiel").reduce((s,v)=>s+(parseFloat(v.kgVendusNegoce)||0),0);
+                      const rendAnnee = rendementsAnnuels.find(r=>r.annee===annee);
+                      const surfTotale = parcelles.reduce((s,p)=>s+(parseFloat(p.surface)||0),0);
+                      const kgHaReel = surfTotale>0 ? Math.round(kgRecoltes/surfTotale) : 0;
+                      const kgHaAutorise = rendAnnee ? parseFloat(rendAnnee.rendementAutorise)||0 : 0;
+                      const enRI = kgHaAutorise>0 && kgHaReel>kgHaAutorise;
+                      return (
+                        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))",gap:"8px",marginBottom:"12px"}}>
+                          <div style={{...s.card,padding:"10px"}}>
+                            <div style={s.lbl}>Total recolte</div>
+                            <div style={{fontSize:"16px",fontWeight:500,color:"#1a1205"}}>{kgRecoltes.toLocaleString()} kg</div>
+                          </div>
+                          <div style={{...s.card,padding:"10px"}}>
+                            <div style={s.lbl}>Conserve maison</div>
+                            <div style={{fontSize:"16px",fontWeight:500,color:"#2d6a00"}}>{Math.round(kgMaison).toLocaleString()} kg</div>
+                          </div>
+                          <div style={{...s.card,padding:"10px"}}>
+                            <div style={s.lbl}>Vendu negoce</div>
+                            <div style={{fontSize:"16px",fontWeight:500,color:"#c47800"}}>{Math.round(kgNegoce).toLocaleString()} kg</div>
+                          </div>
+                          {surfTotale>0&&<div style={{...s.card,padding:"10px",background:enRI?"#fde8e8":"transparent"}}>
+                            <div style={s.lbl}>kg/ha {kgHaAutorise>0?"vs "+kgHaAutorise+" autorise":""}</div>
+                            <div style={{fontSize:"16px",fontWeight:500,color:enRI?"#cc2222":"#1a1205"}}>{kgHaReel.toLocaleString()} kg/ha</div>
+                            {enRI&&<div style={{fontSize:"10px",color:"#cc2222",fontWeight:500}}>Section RI +{(kgHaReel-kgHaAutorise).toLocaleString()} kg/ha</div>}
+                          </div>}
+                        </div>
+                      );
+                    })()}
+
                     {vAnnee.map(v=>{
                       const parc = parcelles.find(p=>p.id===v.parcelleId);
                       return (
