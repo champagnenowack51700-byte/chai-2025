@@ -3839,7 +3839,7 @@ export default function App() {
                     const updatedLot = {...lotSortie, qteActuelle:(lotSortie.qteActuelle||0)-qte};
                     setStockBouteilles(prev=>prev.map(x=>x.id===sortieForm.lotId?updatedLot:x));
                     fbSave("stockBouteilles", sortieForm.lotId, updatedLot);
-                    const sortie = {id:"sortie_"+Date.now(), type:"sortie", lotId:sortieForm.lotId, cuvee:lotSortie.cuvee+" "+lotSortie.millesime, date:sortieForm.date, qte, notes:sortieForm.notes, timestamp:new Date().toISOString()};
+                    const sortie = {id:"sortie_"+Date.now(), type:"sortie", lotId:sortieForm.lotId, cuvee:lotSortie.cuvee+" "+lotSortie.millesime, statut:lotSortie.statut, format:lotSortie.format, date:sortieForm.date, qte, notes:sortieForm.notes, timestamp:new Date().toISOString()};
                     setClotures(prev=>[sortie,...prev]);
                     fbSave("clotures", sortie.id, sortie);
                     setShowSortieForm(false);
