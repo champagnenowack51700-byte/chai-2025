@@ -437,7 +437,7 @@ export default function App() {
   const [coiffesCRD,       setCoiffesCRD]       = useState(0);
   const [coiffesExport,    setCoiffesExport]     = useState(0);
   const [showCoiffesForm,  setShowCoiffesForm]   = useState(false);
-  const [showHistSorties,  setShowHistSorties]   = useState(true);
+  const [showHistSorties,  setShowHistSorties]   = useState(false);
   const [showHistCoiffes,  setShowHistCoiffes]   = useState(true);
   const [coiffesForm,      setCoiffesForm]       = useState({type:"CRD",qte:"",operation:"achat"});
   const [sortieForm,       setSortieForm]       = useState({lotId:"",date:new Date().toISOString().slice(0,10),qte:"",notes:""});
@@ -2797,7 +2797,7 @@ export default function App() {
                       ))}
                     </div>
                   </div>
-                  {showHistSorties&&(()=>{
+                  {(()=>{
                     const sorties = clotures.filter(c=>c.type==="sortie");
                     const tots = {};
                     sorties.forEach(c=>{
@@ -2827,7 +2827,7 @@ export default function App() {
                       </div>
                     );
                   })()}
-                  {clotures.filter(c=>c.type==="sortie").sort((a,b)=>b.date.localeCompare(a.date)).map(c=>(
+                  {showHistSorties&&clotures.filter(c=>c.type==="sortie").sort((a,b)=>b.date.localeCompare(a.date)).map(c=>(
                     <div key={c.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:"0.5px solid #ede5d4",fontSize:"12px"}}>
                       <div>
                         <span style={{fontWeight:500,color:"#1a1205"}}>{fmt(c.date)}</span>
