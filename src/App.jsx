@@ -2626,6 +2626,16 @@ export default function App() {
             if(filterStock15==="plus15" && l.mois<15) return false;
             return true;
           });
+          // Fusion pour Habille CRD et Habille Export uniquement
+          const fusionMap = {};
+          lotsFiltre.forEach(l=>{
+            const shouldFuse = l.statut==="Habille CRD" || l.statut==="Habille Export";
+            const k = shouldFuse ? l.cuvee+"|"+l.lot+"|"+l.statut : l.id;
+            if(!fusionMap[k]) fusionMap[k] = {...l, _ids:[l.id], qteActuelle:parseInt(l.qteActuelle)||0};
+            else { fusionMap[k].qteActuelle += parseInt(l.qteActuelle)||0; fusionMap[k]._ids.push(l.id); }
+          });
+          const lotsFusionnes = Object.values(fusionMap);
+
           const total = lots.reduce((s,l)=>s+(parseInt(l.qteActuelle)||0),0);
           const moins15 = lots.filter(l=>l.mois<15).reduce((s,l)=>s+(parseInt(l.qteActuelle)||0),0);
           const plus15 = lots.filter(l=>l.mois>=15).reduce((s,l)=>s+(parseInt(l.qteActuelle)||0),0);
@@ -2666,7 +2676,7 @@ export default function App() {
                 {(filterStockLieu||filterStockStatut||filterStock15)&&(
                   <button style={s.ghostSm} onClick={()=>{setFilterStockLieu("");setFilterStockStatut("");setFilterStock15("");}}>Reinitialiser</button>
                 )}
-                <span style={{marginLeft:"auto",fontSize:"11px",color:"#9a8870"}}>{lotsFiltre.length} lot(s)</span>
+                <span style={{marginLeft:"auto",fontSize:"11px",color:"#9a8870"}}>{lotsFusionnes.length} ligne(s) ({lotsFiltre.length} lots)</span>
               </div>
 
               {/* 3. Tableau */}
@@ -2687,11 +2697,11 @@ export default function App() {
                       </tr>
                     </thead>
                     <tbody>
-                      {lotsFiltre.map((l,i)=>(
+                      {lotsFusionnes.map((l,i)=>(
                         <tr key={l.id} style={{borderBottom:"1px solid #ede5d4",background:l.mois>=14&&!l.passage15?"#fff8e8":i%2===0?"#ffffff":"#fffbf5"}}>
                           <td style={{padding:"10px 12px",fontWeight:500,color:"#1a1205"}}>{l.cuvee}</td>
                           <td style={{padding:"10px 12px",color:"#6a5838",fontFamily:"monospace"}}>{l.millesime||"-"}</td>
-                          <td style={{padding:"10px 12px",color:"#9a8870",fontFamily:"monospace",fontSize:"11px"}}>{l.lot||"-"}</td>
+                          <td style={{padding:"10px 12px",color:"#9a8870",fontFamily:"monospace",fontSize:"11px"}}>{l._ids&&l._ids.length>1?"["+l._ids.length+" lots fusionnes]":l.lot||"-"}</td>
                           <td style={{padding:"10px 12px",color:"#6a5838"}}>{l.format}</td>
                           <td style={{padding:"10px 12px",color:"#9a8870"}}>{fmt(l.dateTirage)}</td>
                           <td style={{padding:"10px 12px"}}>
