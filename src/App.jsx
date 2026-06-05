@@ -425,6 +425,8 @@ export default function App() {
   const [filterStatut,     setFilterStatut]     = useState("actif");
   const [filterStockLieu,  setFilterStockLieu]  = useState("");
   const [lotAction,        setLotAction]        = useState(null);
+  const [showSortieForm,   setShowSortieForm]   = useState(false);
+  const [sortieForm,       setSortieForm]       = useState({lotId:"",date:new Date().toISOString().slice(0,10),qte:"",notes:""});
   const [filterStockStatut,setFilterStockStatut]= useState("");
   const [filterStock15,    setFilterStock15]    = useState("");
   const [filterAppellation, setFilterAppellation] = useState("");
@@ -500,6 +502,8 @@ export default function App() {
   const LIEUX_STOCK = ["Domaine", "Lorain Champagnisation", "Epernay"];
   const FORMATS = [{key:"75", label:"Bouteille 75cl", vol:0.75}, {key:"magnum", label:"Magnum 1.5L", vol:1.5}, {key:"jeroboam", label:"Jeroboam 3L", vol:3.0}];
   const STATUTS_BOUTEILLES = ["Sur latte / Sur pointe", "En cours de degorgement", "Degorge", "Habille"];
+  const LIEU_COLORS = {"Domaine":{bg:"#d4edda",color:"#1a7a40"},"Lorain Champagnisation":{bg:"#d4e8f8",color:"#185FA5"},"Epernay":{bg:"#fde8b8",color:"#c47800"}};
+  const STATUT_COLORS = {"Sur latte / Sur pointe":{bg:"#e8f0fb",color:"#185FA5"},"En cours de degorgement":{bg:"#fff3cd",color:"#c47800"},"Degorge":{bg:"#d4f0dd",color:"#1a7a40"},"Habille":{bg:"#e8d4f8",color:"#6a2d8a"}};
   const DEGORGE_EMPTY = {
     lotId: "", date:"", operateur:"",
     lieuDepart:"Domaine", lieuArrivee:"Lorain Champagnisation",
@@ -2641,7 +2645,7 @@ export default function App() {
                 </select>
                 <select style={{...s.sel,maxWidth:"220px"}} value={filterStockStatut} onChange={e=>setFilterStockStatut(e.target.value)}>
                   <option value="">Tous les statuts</option>
-                  {STATUTS_BOUTEILLES.map(st=><option key={st} value={st}>{st}</option>)}
+                  {[...STATUTS_BOUTEILLES,"Passage 15 mois (commercialisable)"].map(st=><option key={st} value={st}>{st}</option>)}
                 </select>
                 <select style={{...s.sel,maxWidth:"160px"}} value={filterStock15} onChange={e=>setFilterStock15(e.target.value)}>
                   <option value="">Tous ages</option>
@@ -2673,23 +2677,26 @@ export default function App() {
                     </thead>
                     <tbody>
                       {lotsFiltre.map((l,i)=>(
-                        <tr key={l.id} style={{borderBottom:"1px solid #ede5d4",background:i%2===0?"#ffffff":"#fffbf5"}}>
+                        <tr key={l.id} style={{borderBottom:"1px solid #ede5d4",background:l.mois>=14&&l.mois<16?"#fff8e8":l.mois>=15?"#f0fff4":i%2===0?"#ffffff":"#fffbf5"}}>
                           <td style={{padding:"10px 12px",fontWeight:500,color:"#1a1205"}}>{l.cuvee}</td>
                           <td style={{padding:"10px 12px",color:"#6a5838",fontFamily:"monospace"}}>{l.millesime||"-"}</td>
                           <td style={{padding:"10px 12px",color:"#6a5838"}}>{l.format}</td>
                           <td style={{padding:"10px 12px",color:"#9a8870"}}>{l.dateTirage||"-"}</td>
                           <td style={{padding:"10px 12px"}}>
-                            <span style={{background:l.mois>=15?"#d4f0dd":"#fde8e8",color:l.mois>=15?"#1a7a40":"#cc2222",borderRadius:"12px",padding:"2px 8px",fontSize:"11px",fontWeight:500}}>{l.mois}m</span>
+                            <span style={{background:l.mois>=15?"#d4f0dd":l.mois>=14?"#fff3cd":"#fde8e8",color:l.mois>=15?"#1a7a40":l.mois>=14?"#c47800":"#cc2222",borderRadius:"12px",padding:"2px 8px",fontSize:"11px",fontWeight:500}}>{l.mois}m</span>
+                            {l.mois>=14&&l.mois<16&&<span style={{marginLeft:"4px",fontSize:"10px"}}>!</span>}
                           </td>
                           <td style={{padding:"10px 12px"}}>
-                            <span style={{background:"#e8f0e8",color:"#2d6a00",borderRadius:"4px",padding:"2px 8px",fontSize:"10px"}}>{l.statut}</span>
+                            <span style={{background:(STATUT_COLORS[l.statut]||{bg:"#e8f0e8"}).bg,color:(STATUT_COLORS[l.statut]||{color:"#2d6a00"}).color,borderRadius:"4px",padding:"2px 8px",fontSize:"10px"}}>{l.statut}</span>
                           </td>
-                          <td style={{padding:"10px 12px",color:"#6a5838"}}>{l.lieu}</td>
+                          <td style={{padding:"10px 12px"}}><span style={{background:(LIEU_COLORS[l.lieu]||{bg:"#ede5d4"}).bg,color:(LIEU_COLORS[l.lieu]||{color:"#6a5838"}).color,borderRadius:"4px",padding:"2px 8px",fontSize:"10px"}}>{l.lieu}</span></td>
                           <td style={{padding:"10px 12px",fontWeight:600,color:"#b8860b",fontFamily:"monospace",fontSize:"14px"}}>{l.qteActuelle}</td>
                           <td style={{padding:"10px 12px"}}>
                             <div style={{display:"flex",gap:"4px"}}>
                               <button style={{...s.ghostSm,fontSize:"10px",color:"#185FA5",borderColor:"#b4d0f0"}}
                                 onClick={()=>setLotAction({lot:l,action:"mouvement"})}>Mouvement</button>
+                              <button style={{...s.ghostSm,fontSize:"10px",color:"#1a7a40",borderColor:"#b4d0b4"}}
+                                onClick={()=>{setSortieForm({lotId:l.id,date:new Date().toISOString().slice(0,10),qte:"",notes:""});setShowSortieForm(true);}}>Sortie</button>
                               <button style={{...s.ghostSm,fontSize:"10px",color:"#7a5200",borderColor:"#d4c4a0"}}
                                 onClick={()=>setLotAction({lot:l,action:"diviser"})}>Diviser</button>
                               <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
@@ -2703,27 +2710,23 @@ export default function App() {
                 </div>
               )}
 
-              {/* 5. Cloture mensuelle */}
-              <div style={{...s.card,padding:"16px 20px"}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
-                  <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#7a5200"}}>Cloture mensuelle</div>
-                  <button style={s.btnSm} onClick={()=>setShowClotureForm(true)}>+ Nouvelle cloture</button>
+              {/* Historique sorties */}
+              {clotures.filter(c=>c.type==="sortie").length>0&&(
+                <div style={{...s.card,padding:"16px 20px",marginTop:"16px"}}>
+                  <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#7a5200",marginBottom:"12px"}}>Historique des sorties</div>
+                  {clotures.filter(c=>c.type==="sortie").sort((a,b)=>b.date.localeCompare(a.date)).map(c=>(
+                    <div key={c.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:"0.5px solid #ede5d4",fontSize:"12px"}}>
+                      <div>
+                        <span style={{fontWeight:500,color:"#1a1205"}}>{c.date}</span>
+                        <span style={{color:"#6a5838",marginLeft:"8px"}}>{c.cuvee}</span>
+                        <span style={{color:"#b8860b",fontFamily:"monospace",marginLeft:"8px",fontWeight:500}}>{c.qte} btl sorties</span>
+                        {c.notes&&<span style={{color:"#9a8870",marginLeft:"8px",fontStyle:"italic"}}>{c.notes}</span>}
+                      </div>
+                      <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>{if(window.confirm("Annuler cette sortie ?")){const lot=stockBouteilles.find(l=>l.id===c.lotId);if(lot){const updated={...lot,qteActuelle:(lot.qteActuelle||0)+(parseInt(c.qte)||0)};setStockBouteilles(prev=>prev.map(x=>x.id===lot.id?updated:x));fbSave("stockBouteilles",lot.id,updated);}setClotures(prev=>prev.filter(x=>x.id!==c.id));fbDelete("clotures",c.id);}}>Annuler</button>
+                    </div>
+                  ))}
                 </div>
-                {clotures.length===0&&<div style={{color:"#9a8870",fontStyle:"italic",fontSize:"12px"}}>Aucune cloture enregistree.</div>}
-                {clotures.length>0&&clotures.sort((a,b)=>b.date.localeCompare(a.date)).map(c=>(
-                  <div key={c.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:"0.5px solid #ede5d4",fontSize:"12px"}}>
-                    <div>
-                      <span style={{fontWeight:500,color:"#1a1205"}}>{c.date}</span>
-                      <span style={{color:"#9a8870",marginLeft:"8px"}}>{c.operateur}</span>
-                      <span style={{color:"#6a5838",marginLeft:"8px"}}>{(c.lignes||[]).reduce((s,l)=>s+(parseInt(l.qte)||0),0)} btl vendues</span>
-                    </div>
-                    <div style={{display:"flex",gap:"6px"}}>
-                      <button style={{...s.ghostSm,fontSize:"10px"}} onClick={()=>{setClotureForm({...c});setShowClotureForm(true);}}>Mod.</button>
-                      <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>{if(window.confirm("Supprimer ?")){setClotures(prev=>prev.filter(x=>x.id!==c.id));fbDelete("clotures",c.id);}}}>Sup.</button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              )}
             </div>
           );
         })()}
@@ -3734,6 +3737,52 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* == MODAL SORTIE STOCK == */}
+      {showSortieForm&&(()=>{
+        const lotSortie = stockBouteilles.find(l=>l.id===sortieForm.lotId);
+        return (
+          <div style={s.modal}>
+            <div style={{...s.modalBox,width:"440px"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
+                <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#7a5200"}}>Sortie de stock / Vente</div>
+                <button style={s.ghost} onClick={()=>setShowSortieForm(false)}>x</button>
+              </div>
+              {lotSortie&&<div style={{...s.card,marginBottom:"16px",padding:"12px",background:"#fff8ee"}}>
+                <div style={{fontWeight:500,color:"#1a1205"}}>{lotSortie.cuvee} {lotSortie.millesime}</div>
+                <div style={{fontSize:"12px",color:"#9a8870"}}>{lotSortie.format} - Stock actuel: {lotSortie.qteActuelle} btl</div>
+              </div>}
+              <div style={{display:"grid",gap:"12px"}}>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                  <div><span style={s.lbl}>Date *</span>
+                    <input type="date" style={s.inp} value={sortieForm.date} onChange={e=>setSortieForm(f=>({...f,date:e.target.value}))}/></div>
+                  <div><span style={s.lbl}>Quantite sortie *</span>
+                    <input type="number" style={s.inp} placeholder={"max "+(lotSortie?.qteActuelle||0)} value={sortieForm.qte} onChange={e=>setSortieForm(f=>({...f,qte:e.target.value}))}/></div>
+                </div>
+                <div><span style={s.lbl}>Notes</span>
+                  <input style={s.inp} placeholder="ex. Vente directe, Restaurant..." value={sortieForm.notes} onChange={e=>setSortieForm(f=>({...f,notes:e.target.value}))}/></div>
+                <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
+                  <button style={s.ghost} onClick={()=>setShowSortieForm(false)}>Annuler</button>
+                  <button style={s.btn} onClick={()=>{
+                    const qte = parseInt(sortieForm.qte)||0;
+                    if(!sortieForm.date) return alert("Date requise.");
+                    if(qte<=0) return alert("Quantite invalide.");
+                    if(qte>(lotSortie?.qteActuelle||0)) return alert("Quantite superieure au stock disponible.");
+                    const updatedLot = {...lotSortie, qteActuelle:(lotSortie.qteActuelle||0)-qte};
+                    setStockBouteilles(prev=>prev.map(x=>x.id===sortieForm.lotId?updatedLot:x));
+                    fbSave("stockBouteilles", sortieForm.lotId, updatedLot);
+                    const sortie = {id:"sortie_"+Date.now(), type:"sortie", lotId:sortieForm.lotId, cuvee:lotSortie.cuvee+" "+lotSortie.millesime, date:sortieForm.date, qte, notes:sortieForm.notes, timestamp:new Date().toISOString()};
+                    setClotures(prev=>[sortie,...prev]);
+                    fbSave("clotures", sortie.id, sortie);
+                    setShowSortieForm(false);
+                    setSortieForm({lotId:"",date:new Date().toISOString().slice(0,10),qte:"",notes:""});
+                  }}>Enregistrer la sortie</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* == MODAL ACTION LOT == */}
       {lotAction&&(
