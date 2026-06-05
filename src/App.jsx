@@ -2718,7 +2718,7 @@ export default function App() {
                               <button style={{...s.ghostSm,fontSize:"10px",color:"#185FA5",borderColor:"#b4d0f0"}}
                                 onClick={()=>setLotAction({lot:l,action:"mouvement"})}>Mouvement</button>
                               <button style={{...s.ghostSm,fontSize:"10px",color:"#1a7a40",borderColor:"#b4d0b4"}}
-                                onClick={()=>{setSortieForm({lotId:l.id,date:new Date().toISOString().slice(0,10),qte:"",notes:""});setShowSortieForm(true);}}>Sortie</button>
+                                onClick={()=>{setSortieForm({lotId:l._ids?l._ids[0]:l.id,_ids:l._ids||[l.id],qteMax:l.qteActuelle,date:new Date().toISOString().slice(0,10),qte:"",notes:""});setShowSortieForm(true);}}>Sortie</button>
                               <button style={{...s.ghostSm,fontSize:"10px",color:"#7a5200",borderColor:"#d4c4a0"}}
                                 onClick={()=>setLotAction({lot:l,action:"diviser"})}>Diviser</button>
                               {l.mois>=14&&!l.passage15&&(
@@ -3825,7 +3825,7 @@ export default function App() {
                   <div><span style={s.lbl}>Date *</span>
                     <input type="date" style={s.inp} value={sortieForm.date} onChange={e=>setSortieForm(f=>({...f,date:e.target.value}))}/></div>
                   <div><span style={s.lbl}>Quantite sortie *</span>
-                    <input type="number" style={s.inp} placeholder={"max "+(lotSortie?.qteActuelle||0)} value={sortieForm.qte} onChange={e=>setSortieForm(f=>({...f,qte:e.target.value}))}/></div>
+                    <input type="number" style={s.inp} placeholder={"max "+(sortieForm.qteMax||lotSortie?.qteActuelle||0)} value={sortieForm.qte} onChange={e=>setSortieForm(f=>({...f,qte:e.target.value}))}/></div>
                 </div>
                 <div><span style={s.lbl}>Notes</span>
                   <input style={s.inp} placeholder="ex. Vente directe, Restaurant..." value={sortieForm.notes} onChange={e=>setSortieForm(f=>({...f,notes:e.target.value}))}/></div>
@@ -3836,9 +3836,20 @@ export default function App() {
                     if(!sortieForm.date) return alert("Date requise.");
                     if(qte<=0) return alert("Quantite invalide.");
                     if(qte>(lotSortie?.qteActuelle||0)) return alert("Quantite superieure au stock disponible.");
-                    const updatedLot = {...lotSortie, qteActuelle:(lotSortie.qteActuelle||0)-qte};
-                    setStockBouteilles(prev=>prev.map(x=>x.id===sortieForm.lotId?updatedLot:x));
-                    fbSave("stockBouteilles", sortieForm.lotId, updatedLot);
+                    // Deduire des lots fusionnes proportionnellement
+                    const ids = sortieForm._ids||[sortieForm.lotId];
+                    let remaining = qte;
+                    const updates = [];
+                    ids.forEach(id=>{
+                      const lot = stockBouteilles.find(x=>x.id===id);
+                      if(lot && remaining>0) {
+                        const deduit = Math.min(remaining, lot.qteActuelle||0);
+                        updates.push({...lot, qteActuelle:(lot.qteActuelle||0)-deduit});
+                        remaining -= deduit;
+                      }
+                    });
+                    setStockBouteilles(prev=>prev.map(x=>{const u=updates.find(u=>u.id===x.id);return u||x;}));
+                    updates.forEach(u=>fbSave("stockBouteilles",u.id,u));
                     const sortie = {id:"sortie_"+Date.now(), type:"sortie", lotId:sortieForm.lotId, cuvee:lotSortie.cuvee+" "+lotSortie.millesime, statut:lotSortie.statut, format:lotSortie.format, date:sortieForm.date, qte, notes:sortieForm.notes, timestamp:new Date().toISOString()};
                     setClotures(prev=>[sortie,...prev]);
                     fbSave("clotures", sortie.id, sortie);
