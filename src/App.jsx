@@ -26,6 +26,13 @@ const fbSave = (col, id, data) => {
   return setDoc(doc(db, col, String(id)), {...clean, _ts: new Date().toISOString()});
 };
 const fbDelete = (col, id) => deleteDoc(doc(db, col, String(id)));
+const fmt = (d) => {
+  if(!d) return "-";
+  const parts = d.slice(0,10).split("-");
+  if(parts.length===3) return parts[2]+"/"+parts[1]+"/"+parts[0];
+  return d;
+};
+
 const fbLoad = async (col, setter) => {
   try {
     const snap = await getDocs(collection(db, col));
@@ -426,6 +433,10 @@ export default function App() {
   const [filterStockLieu,  setFilterStockLieu]  = useState("");
   const [lotAction,        setLotAction]        = useState(null);
   const [showSortieForm,   setShowSortieForm]   = useState(false);
+  const [coiffesCRD,       setCoiffesCRD]       = useState(0);
+  const [coiffesExport,    setCoiffesExport]     = useState(0);
+  const [showCoiffesForm,  setShowCoiffesForm]   = useState(false);
+  const [coiffesForm,      setCoiffesForm]       = useState({type:"CRD",qte:"",operation:"achat"});
   const [sortieForm,       setSortieForm]       = useState({lotId:"",date:new Date().toISOString().slice(0,10),qte:"",notes:""});
   const [filterStockStatut,setFilterStockStatut]= useState("");
   const [filterStock15,    setFilterStock15]    = useState("");
@@ -501,9 +512,9 @@ export default function App() {
   const [clotures,          setClotures]          = useState([]);
   const LIEUX_STOCK = ["Domaine", "Lorain Champagnisation", "Epernay"];
   const FORMATS = [{key:"75", label:"Bouteille 75cl", vol:0.75}, {key:"magnum", label:"Magnum 1.5L", vol:1.5}, {key:"jeroboam", label:"Jeroboam 3L", vol:3.0}];
-  const STATUTS_BOUTEILLES = ["Sur latte / Sur pointe", "En cours de degorgement", "Degorge", "Habille"];
+  const STATUTS_BOUTEILLES = ["Sur latte / Sur pointe", "En cours de degorgement", "Degorge", "Habille CRD", "Habille Export"];
   const LIEU_COLORS = {"Domaine":{bg:"#d4edda",color:"#1a7a40"},"Lorain Champagnisation":{bg:"#d4e8f8",color:"#185FA5"},"Epernay":{bg:"#fde8b8",color:"#c47800"}};
-  const STATUT_COLORS = {"Sur latte / Sur pointe":{bg:"#e8f0fb",color:"#185FA5"},"En cours de degorgement":{bg:"#fff3cd",color:"#c47800"},"Degorge":{bg:"#d4f0dd",color:"#1a7a40"},"Habille":{bg:"#e8d4f8",color:"#6a2d8a"}};
+  const STATUT_COLORS = {"Sur latte / Sur pointe":{bg:"#e8f0fb",color:"#185FA5"},"En cours de degorgement":{bg:"#fff3cd",color:"#c47800"},"Degorge":{bg:"#d4f0dd",color:"#1a7a40"},"Habille CRD":{bg:"#e8d4f8",color:"#6a2d8a"},"Habille Export":{bg:"#f8d4e8",color:"#8a2d6a"}};
   const DEGORGE_EMPTY = {
     lotId: "", date:"", operateur:"",
     lieuDepart:"Domaine", lieuArrivee:"Lorain Champagnisation",
@@ -2605,7 +2616,7 @@ export default function App() {
         {/* -- STOCK -- */}
         {view==="stock" && (()=>{
           const now = new Date();
-          const lots = stockBouteilles.map(l=>({...l,
+          const lots = [...stockBouteilles].sort((a,b)=>new Date(a.dateTirage)-new Date(b.dateTirage)).map(l=>({...l,
             mois: l.dateTirage ? Math.floor((now-new Date(l.dateTirage))/(1000*60*60*24*30.5)) : 0
           }));
           const lotsFiltre = lots.filter(l=>{
@@ -2670,7 +2681,7 @@ export default function App() {
                   <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
                     <thead>
                       <tr style={{background:"#fff8ee",borderBottom:"1px solid #d4c4a0"}}>
-                        {["Cuvee","Millesime","Format","Date tirage","Age","Statut","Lieu","Qte actuelle","Actions"].map(h=>(
+                        {["Cuvee","Millesime","N° Lot","Format","Date tirage","Age","Statut","Lieu","Qte actuelle","Actions"].map(h=>(
                           <th key={h} style={{textAlign:"left",padding:"10px 12px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#9a8870",fontWeight:500}}>{h}</th>
                         ))}
                       </tr>
@@ -2680,8 +2691,9 @@ export default function App() {
                         <tr key={l.id} style={{borderBottom:"1px solid #ede5d4",background:l.mois>=14&&l.mois<16?"#fff8e8":l.mois>=15?"#f0fff4":i%2===0?"#ffffff":"#fffbf5"}}>
                           <td style={{padding:"10px 12px",fontWeight:500,color:"#1a1205"}}>{l.cuvee}</td>
                           <td style={{padding:"10px 12px",color:"#6a5838",fontFamily:"monospace"}}>{l.millesime||"-"}</td>
+                          <td style={{padding:"10px 12px",color:"#9a8870",fontFamily:"monospace",fontSize:"11px"}}>{l.lot||"-"}</td>
                           <td style={{padding:"10px 12px",color:"#6a5838"}}>{l.format}</td>
-                          <td style={{padding:"10px 12px",color:"#9a8870"}}>{l.dateTirage||"-"}</td>
+                          <td style={{padding:"10px 12px",color:"#9a8870"}}>{fmt(l.dateTirage)}</td>
                           <td style={{padding:"10px 12px"}}>
                             <span style={{background:l.mois>=15?"#d4f0dd":l.mois>=14?"#fff3cd":"#fde8e8",color:l.mois>=15?"#1a7a40":l.mois>=14?"#c47800":"#cc2222",borderRadius:"12px",padding:"2px 8px",fontSize:"11px",fontWeight:500}}>{l.mois}m</span>
                             {l.mois>=14&&l.mois<16&&<span style={{marginLeft:"4px",fontSize:"10px"}}>!</span>}
@@ -2699,6 +2711,10 @@ export default function App() {
                                 onClick={()=>{setSortieForm({lotId:l.id,date:new Date().toISOString().slice(0,10),qte:"",notes:""});setShowSortieForm(true);}}>Sortie</button>
                               <button style={{...s.ghostSm,fontSize:"10px",color:"#7a5200",borderColor:"#d4c4a0"}}
                                 onClick={()=>setLotAction({lot:l,action:"diviser"})}>Diviser</button>
+                              {l.mois>=14&&l.mois<16&&(
+                                <button style={{...s.ghostSm,fontSize:"10px",color:"#1a7a40",borderColor:"#b4d4b4",fontWeight:500}}
+                                  onClick={()=>{const upd={...l,passage15:true,statut:l.statut==="Sur latte / Sur pointe"?"Degorge":l.statut};setStockBouteilles(prev=>prev.map(x=>x.id===l.id?upd:x));fbSave("stockBouteilles",l.id,upd);}}>+15 mois</button>
+                              )}
                               <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
                                 onClick={()=>{if(window.confirm("Supprimer ce lot ?")){setStockBouteilles(prev=>prev.filter(x=>x.id!==l.id));fbDelete("stockBouteilles",l.id);}}}>Sup.</button>
                             </div>
@@ -2717,7 +2733,7 @@ export default function App() {
                   {clotures.filter(c=>c.type==="sortie").sort((a,b)=>b.date.localeCompare(a.date)).map(c=>(
                     <div key={c.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:"0.5px solid #ede5d4",fontSize:"12px"}}>
                       <div>
-                        <span style={{fontWeight:500,color:"#1a1205"}}>{c.date}</span>
+                        <span style={{fontWeight:500,color:"#1a1205"}}>{fmt(c.date)}</span>
                         <span style={{color:"#6a5838",marginLeft:"8px"}}>{c.cuvee}</span>
                         <span style={{color:"#b8860b",fontFamily:"monospace",marginLeft:"8px",fontWeight:500}}>{c.qte} btl sorties</span>
                         {c.notes&&<span style={{color:"#9a8870",marginLeft:"8px",fontStyle:"italic"}}>{c.notes}</span>}
