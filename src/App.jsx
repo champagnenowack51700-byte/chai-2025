@@ -2688,15 +2688,15 @@ export default function App() {
                     </thead>
                     <tbody>
                       {lotsFiltre.map((l,i)=>(
-                        <tr key={l.id} style={{borderBottom:"1px solid #ede5d4",background:l.mois>=14&&l.mois<16?"#fff8e8":l.mois>=15?"#f0fff4":i%2===0?"#ffffff":"#fffbf5"}}>
+                        <tr key={l.id} style={{borderBottom:"1px solid #ede5d4",background:l.mois>=14&&!l.passage15?"#fff8e8":i%2===0?"#ffffff":"#fffbf5"}}>
                           <td style={{padding:"10px 12px",fontWeight:500,color:"#1a1205"}}>{l.cuvee}</td>
                           <td style={{padding:"10px 12px",color:"#6a5838",fontFamily:"monospace"}}>{l.millesime||"-"}</td>
                           <td style={{padding:"10px 12px",color:"#9a8870",fontFamily:"monospace",fontSize:"11px"}}>{l.lot||"-"}</td>
                           <td style={{padding:"10px 12px",color:"#6a5838"}}>{l.format}</td>
                           <td style={{padding:"10px 12px",color:"#9a8870"}}>{fmt(l.dateTirage)}</td>
                           <td style={{padding:"10px 12px"}}>
-                            <span style={{background:l.mois>=15?"#d4f0dd":l.mois>=14?"#fff3cd":"#fde8e8",color:l.mois>=15?"#1a7a40":l.mois>=14?"#c47800":"#cc2222",borderRadius:"12px",padding:"2px 8px",fontSize:"11px",fontWeight:500}}>{l.mois}m</span>
-                            {l.mois>=14&&l.mois<16&&<span style={{marginLeft:"4px",fontSize:"10px"}}>!</span>}
+                            <span style={{background:l.passage15?"#d4f0dd":l.mois>=14?"#fff3cd":"#fde8e8",color:l.passage15?"#1a7a40":l.mois>=14?"#c47800":"#cc2222",borderRadius:"12px",padding:"2px 8px",fontSize:"11px",fontWeight:500}}>{l.mois}m</span>
+                            {l.mois>=14&&!l.passage15&&<span style={{marginLeft:"4px",fontSize:"10px",color:"#c47800",fontWeight:"bold"}}>!</span>}
                           </td>
                           <td style={{padding:"10px 12px"}}>
                             <span style={{background:(STATUT_COLORS[l.statut]||{bg:"#e8f0e8"}).bg,color:(STATUT_COLORS[l.statut]||{color:"#2d6a00"}).color,borderRadius:"4px",padding:"2px 8px",fontSize:"10px"}}>{l.statut}</span>
@@ -2711,9 +2711,9 @@ export default function App() {
                                 onClick={()=>{setSortieForm({lotId:l.id,date:new Date().toISOString().slice(0,10),qte:"",notes:""});setShowSortieForm(true);}}>Sortie</button>
                               <button style={{...s.ghostSm,fontSize:"10px",color:"#7a5200",borderColor:"#d4c4a0"}}
                                 onClick={()=>setLotAction({lot:l,action:"diviser"})}>Diviser</button>
-                              {l.mois>=14&&l.mois<16&&(
+                              {l.mois>=14&&!l.passage15&&(
                                 <button style={{...s.ghostSm,fontSize:"10px",color:"#1a7a40",borderColor:"#b4d4b4",fontWeight:500}}
-                                  onClick={()=>{const upd={...l,passage15:true,statut:l.statut==="Sur latte / Sur pointe"?"Degorge":l.statut};setStockBouteilles(prev=>prev.map(x=>x.id===l.id?upd:x));fbSave("stockBouteilles",l.id,upd);}}>+15 mois</button>
+                                  onClick={()=>{if(window.confirm("Confirmer le passage en +15 mois pour ce lot ?")){const upd={...l,passage15:true};setStockBouteilles(prev=>prev.map(x=>x.id===l.id?upd:x));fbSave("stockBouteilles",l.id,upd);}}}> Confirmer +15m</button>
                               )}
                               <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
                                 onClick={()=>{if(window.confirm("Supprimer ce lot ?")){setStockBouteilles(prev=>prev.filter(x=>x.id!==l.id));fbDelete("stockBouteilles",l.id);}}}>Sup.</button>
