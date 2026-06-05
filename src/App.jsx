@@ -3486,6 +3486,12 @@ export default function App() {
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr",gap:"10px"}}>
                   <div><span style={s.lbl}>Volume (L) *</span>
                     <input type="number" style={{...s.inp,fontWeight:500,color:"#2d6a00"}} placeholder="0" value={vendangeForm.volumeRecolte} onChange={e=>setVendangeForm(f=>({...f,volumeRecolte:e.target.value}))}/></div>
+                  <div><span style={s.lbl}>Volume (HL)</span>
+                    <input type="number" style={{...s.inp,fontWeight:500,color:"#2d6a00"}} placeholder="0" value={vendangeForm.volumeHL||""}
+                      onChange={e=>{const hl=parseFloat(e.target.value)||0;const kg=hl>0?Math.round(hl/25.5*4000):"";setVendangeForm(f=>({...f,volumeHL:e.target.value,poidsMarcKg:kg?String(kg):f.poidsMarcKg}));}}/></div>
+                  <div><span style={s.lbl}>Poids marc (kg)</span>
+                    <input type="number" style={{...s.inp,fontWeight:500,color:"#2d6a00"}} placeholder="4000" value={vendangeForm.poidsMarcKg||""}
+                      onChange={e=>{const kg=parseFloat(e.target.value)||0;const hl=kg>0?Math.round(kg/4000*25.5*10)/10:"";setVendangeForm(f=>({...f,poidsMarcKg:e.target.value,volumeHL:hl?String(hl):f.volumeHL}));}}/></div>
                   <div><span style={s.lbl}>Rendement kg/ha</span>
                     <input type="number" style={s.inp} placeholder="0" value={vendangeForm.rendement} onChange={e=>setVendangeForm(f=>({...f,rendement:e.target.value}))}/></div>
                   <div><span style={s.lbl}>Degre pot. (%)</span>
