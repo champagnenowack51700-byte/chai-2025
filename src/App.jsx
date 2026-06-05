@@ -2701,7 +2701,7 @@ export default function App() {
                         <tr key={l.id} style={{borderBottom:"1px solid #ede5d4",background:l.mois>=14&&!l.passage15?"#fff8e8":i%2===0?"#ffffff":"#fffbf5"}}>
                           <td style={{padding:"10px 12px",fontWeight:500,color:"#1a1205"}}>{l.cuvee}</td>
                           <td style={{padding:"10px 12px",color:"#6a5838",fontFamily:"monospace"}}>{l.millesime||"-"}</td>
-                          <td style={{padding:"10px 12px",color:"#9a8870",fontFamily:"monospace",fontSize:"11px"}}>{l._ids&&l._ids.length>1?"["+l._ids.length+" lots fusionnes]":l.lot||"-"}</td>
+                          <td style={{padding:"10px 12px",color:"#9a8870",fontFamily:"monospace",fontSize:"11px"}}>{l.lot||"-"}</td>
                           <td style={{padding:"10px 12px",color:"#6a5838"}}>{l.format}</td>
                           <td style={{padding:"10px 12px",color:"#9a8870"}}>{fmt(l.dateTirage)}</td>
                           <td style={{padding:"10px 12px"}}>
@@ -2739,7 +2739,19 @@ export default function App() {
               {/* Historique sorties */}
               {clotures.filter(c=>c.type==="sortie").length>0&&(
                 <div style={{...s.card,padding:"16px 20px",marginTop:"16px"}}>
-                  <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#7a5200",marginBottom:"12px"}}>Historique des sorties</div>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
+                    <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#7a5200"}}>Historique des sorties</div>
+                    <div style={{display:"flex",gap:"6px"}}>
+                      {[...new Set(clotures.filter(c=>c.type==="sortie").map(c=>c.date.slice(0,7)))].sort().map(mois=>(
+                        <button key={mois} style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
+                          onClick={()=>{if(window.confirm("Archiver et supprimer toutes les sorties de "+mois+" ?")){
+                            const toDelete = clotures.filter(c=>c.type==="sortie"&&c.date.slice(0,7)===mois);
+                            toDelete.forEach(c=>fbDelete("clotures",c.id));
+                            setClotures(prev=>prev.filter(c=>!(c.type==="sortie"&&c.date.slice(0,7)===mois)));
+                          }}}>Archiver {mois}</button>
+                      ))}
+                    </div>
+                  </div>
                   {clotures.filter(c=>c.type==="sortie").sort((a,b)=>b.date.localeCompare(a.date)).map(c=>(
                     <div key={c.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:"0.5px solid #ede5d4",fontSize:"12px"}}>
                       <div>
