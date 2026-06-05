@@ -1015,6 +1015,7 @@ export default function App() {
     ["pdfFactures",  setPdfFactures],
     ["amendements",  setAmendements],
     ["clotures",     setClotures],
+      ["coiffes",        setCoiffesStock],
     ["traitements",  setTraitements],
   ];
 
