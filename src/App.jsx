@@ -2787,7 +2787,7 @@ export default function App() {
                       <div>
                         <span style={{fontWeight:500,color:"#1a1205"}}>{fmt(c.date)}</span>
                         <span style={{color:"#6a5838",marginLeft:"8px"}}>{c.cuvee}</span>
-                        <span style={{color:"#b8860b",fontFamily:"monospace",marginLeft:"8px",fontWeight:500}}>{c.qte} btl sorties</span>
+                        <span style={{color:"#b8860b",fontFamily:"monospace",marginLeft:"8px",fontWeight:500}}>{c.qte} {c.format==="Magnum"?"Magnums":c.format==="Jeroboam"?"Jeroboams":"btl"} sorties</span>
                         {c.notes&&<span style={{color:"#9a8870",marginLeft:"8px",fontStyle:"italic"}}>{c.notes}</span>}
                       </div>
                       <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>{ if(!window.confirm("Annuler cette sortie ?")) return; const lot=stockBouteilles.find(x=>x.id===c.lotId); if(lot){const upd={...lot,qteActuelle:(lot.qteActuelle||0)+(parseInt(c.qte)||0)};setStockBouteilles(p=>p.map(x=>x.id===lot.id?upd:x));fbSave("stockBouteilles",lot.id,upd);} setClotures(p=>p.filter(x=>x.id!==c.id));fbDelete("clotures",c.id); }}>Annuler</button>
