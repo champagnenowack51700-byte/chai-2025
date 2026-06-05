@@ -2528,6 +2528,8 @@ export default function App() {
                             <div>
                               <div style={s.lbl}>Volume recolte</div>
                               <div style={{fontSize:"18px",fontWeight:500,color:"#2d6a00"}}>{v.volumeRecolte} L</div>
+                      {v.volumeHL&&<div style={{fontSize:"13px",color:"#2d6a00"}}>{v.volumeHL} HL</div>}
+                      {v.poidsMarcKg&&<div style={{fontSize:"12px",color:"#9a8870"}}>{parseInt(v.poidsMarcKg).toLocaleString()} kg marc</div>}
                               {v.rendement&&<div style={{fontSize:"11px",color:"#9a8870"}}>{v.rendement} kg/ha</div>}
                             </div>
                             <div>
