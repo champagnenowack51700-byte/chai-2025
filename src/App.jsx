@@ -2722,7 +2722,7 @@ export default function App() {
                         <span style={{color:"#b8860b",fontFamily:"monospace",marginLeft:"8px",fontWeight:500}}>{c.qte} btl sorties</span>
                         {c.notes&&<span style={{color:"#9a8870",marginLeft:"8px",fontStyle:"italic"}}>{c.notes}</span>}
                       </div>
-                      <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>{if(window.confirm("Annuler cette sortie ?")){const lot=stockBouteilles.find(l=>l.id===c.lotId);if(lot){const updated={...lot,qteActuelle:(lot.qteActuelle||0)+(parseInt(c.qte)||0)};setStockBouteilles(prev=>prev.map(x=>x.id===lot.id?updated:x));fbSave("stockBouteilles",lot.id,updated);}setClotures(prev=>prev.filter(x=>x.id!==c.id));fbDelete("clotures",c.id);}}>Annuler</button>
+                      <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>{ if(!window.confirm("Annuler cette sortie ?")) return; const lot=stockBouteilles.find(x=>x.id===c.lotId); if(lot){const upd={...lot,qteActuelle:(lot.qteActuelle||0)+(parseInt(c.qte)||0)};setStockBouteilles(p=>p.map(x=>x.id===lot.id?upd:x));fbSave("stockBouteilles",lot.id,upd);} setClotures(p=>p.filter(x=>x.id!==c.id));fbDelete("clotures",c.id); }}>Annuler</button>
                     </div>
                   ))}
                 </div>
