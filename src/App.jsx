@@ -2662,6 +2662,48 @@ export default function App() {
                 ))}
               </div>
 
+              {/* Alertes */}
+              {(()=>{
+                const calcStock = (type) => coiffesStock.filter(c=>c.type===type).reduce((s,c)=>s+(c.operation==="achat"?parseInt(c.qte)||0:-(parseInt(c.qte)||0)),0);
+                const alerteCoiffeCRD = calcStock("CRD") < 500;
+                const alerteCoiffeMag = calcStock("CRD Magnum") < 20 || calcStock("Export Magnum") < 20;
+                const alerteCoiffeExp = calcStock("Export") < 500;
+                const alerte15 = lots.filter(l=>l.mois>=14&&!l.passage15);
+                const hasAlertes = alerteCoiffeCRD || alerteCoiffeExp || alerteCoiffeMag || alerte15.length>0;
+                if(!hasAlertes) return null;
+                return (
+                  <div style={{marginBottom:"16px",display:"grid",gap:"8px"}}>
+                    {alerte15.length>0&&(
+                      <div style={{padding:"12px 16px",background:"#fff3cd",border:"1px solid #e8c888",borderRadius:"8px",display:"flex",alignItems:"center",gap:"10px"}}>
+                        <span style={{fontSize:"18px"}}>!</span>
+                        <div style={{flex:1}}>
+                          <div style={{fontWeight:500,color:"#c47800",fontSize:"13px"}}>Lots approchant les 15 mois</div>
+                          <div style={{display:"flex",gap:"6px",flexWrap:"wrap",marginTop:"4px"}}>
+                            {alerte15.map(l=>(
+                              <span key={l.id} style={{background:"#fff",color:"#c47800",border:"1px solid #e8c888",borderRadius:"4px",padding:"1px 8px",fontSize:"11px"}}>{l.cuvee} {l.millesime} - {l.format} - {l.mois}m</span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    {(alerteCoiffeCRD||alerteCoiffeExp||alerteCoiffeMag)&&(
+                      <div style={{padding:"12px 16px",background:"#fde8e8",border:"1px solid #f0b4b4",borderRadius:"8px",display:"flex",alignItems:"center",gap:"10px"}}>
+                        <span style={{fontSize:"18px"}}>!</span>
+                        <div style={{flex:1}}>
+                          <div style={{fontWeight:500,color:"#cc2222",fontSize:"13px"}}>Stock coiffes bas</div>
+                          <div style={{display:"flex",gap:"6px",flexWrap:"wrap",marginTop:"4px"}}>
+                            {alerteCoiffeCRD&&<span style={{background:"#fff",color:"#cc2222",border:"1px solid #f0b4b4",borderRadius:"4px",padding:"1px 8px",fontSize:"11px"}}>CRD 75cl : {calcStock("CRD")} coiffes (seuil 500)</span>}
+                            {alerteCoiffeExp&&<span style={{background:"#fff",color:"#cc2222",border:"1px solid #f0b4b4",borderRadius:"4px",padding:"1px 8px",fontSize:"11px"}}>Export 75cl : {calcStock("Export")} coiffes (seuil 500)</span>}
+                            {calcStock("CRD Magnum")<20&&<span style={{background:"#fff",color:"#cc2222",border:"1px solid #f0b4b4",borderRadius:"4px",padding:"1px 8px",fontSize:"11px"}}>CRD Magnum : {calcStock("CRD Magnum")} coiffes (seuil 20)</span>}
+                            {calcStock("Export Magnum")<20&&<span style={{background:"#fff",color:"#cc2222",border:"1px solid #f0b4b4",borderRadius:"4px",padding:"1px 8px",fontSize:"11px"}}>Export Magnum : {calcStock("Export Magnum")} coiffes (seuil 20)</span>}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
               {/* 2. Filtres */}
               <div style={{display:"flex",gap:"8px",marginBottom:"16px",flexWrap:"wrap",alignItems:"center"}}>
                 <select style={{...s.sel,maxWidth:"180px"}} value={filterStockLieu} onChange={e=>setFilterStockLieu(e.target.value)}>
