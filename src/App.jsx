@@ -437,6 +437,8 @@ export default function App() {
   const [coiffesCRD,       setCoiffesCRD]       = useState(0);
   const [coiffesExport,    setCoiffesExport]     = useState(0);
   const [showCoiffesForm,  setShowCoiffesForm]   = useState(false);
+  const [showHistSorties,  setShowHistSorties]   = useState(true);
+  const [showHistCoiffes,  setShowHistCoiffes]   = useState(true);
   const [coiffesForm,      setCoiffesForm]       = useState({type:"CRD",qte:"",operation:"achat"});
   const [sortieForm,       setSortieForm]       = useState({lotId:"",date:new Date().toISOString().slice(0,10),qte:"",notes:""});
   const [filterStockStatut,setFilterStockStatut]= useState("");
@@ -2739,30 +2741,33 @@ export default function App() {
 
               {/* Encart coiffes */}
               {(()=>{
-                const stockCRD = coiffesStock.filter(c=>c.type==="CRD").reduce((s,c)=>s+(c.operation==="achat"?parseInt(c.qte)||0:-(parseInt(c.qte)||0)),0);
-                const stockExport = coiffesStock.filter(c=>c.type==="Export").reduce((s,c)=>s+(c.operation==="achat"?parseInt(c.qte)||0:-(parseInt(c.qte)||0)),0);
+                const calcStock = (type) => coiffesStock.filter(c=>c.type===type).reduce((s,c)=>s+(c.operation==="achat"?parseInt(c.qte)||0:-(parseInt(c.qte)||0)),0);
+                const stockCRD = calcStock("CRD");
+                const stockCRDMag = calcStock("CRD Magnum");
+                const stockCRDJer = calcStock("CRD Jeroboam");
+                const stockExport = calcStock("Export");
+                const stockExpMag = calcStock("Export Magnum");
+                const stockExpJer = calcStock("Export Jeroboam");
                 return (
                   <div style={{...s.card,padding:"16px 20px",marginTop:"16px",marginBottom:"16px"}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
                       <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#7a5200"}}>Stock coiffes</div>
                       <button style={s.btnSm} onClick={()=>setShowCoiffesForm(true)}>+ Achat coiffes</button>
                     </div>
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
-                      <div style={{padding:"10px",background:stockCRD<100?"#fde8e8":"#f0fff4",borderRadius:"6px",textAlign:"center"}}>
-                        <div style={{fontSize:"11px",color:"#6a2d8a",fontWeight:500,marginBottom:"4px"}}>CRD</div>
-                        <div style={{fontSize:"22px",fontWeight:600,color:stockCRD<100?"#cc2222":"#1a7a40"}}>{stockCRD}</div>
-                        <div style={{fontSize:"10px",color:"#9a8870"}}>coiffes disponibles</div>
-                      </div>
-                      <div style={{padding:"10px",background:stockExport<100?"#fde8e8":"#f0fff4",borderRadius:"6px",textAlign:"center"}}>
-                        <div style={{fontSize:"11px",color:"#8a2d6a",fontWeight:500,marginBottom:"4px"}}>Export</div>
-                        <div style={{fontSize:"22px",fontWeight:600,color:stockExport<100?"#cc2222":"#1a7a40"}}>{stockExport}</div>
-                        <div style={{fontSize:"10px",color:"#9a8870"}}>coiffes disponibles</div>
-                      </div>
+                    <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:"8px"}}>
+                      {[["CRD 75cl",stockCRD,"#6a2d8a"],["CRD Mag",stockCRDMag,"#6a2d8a"],["CRD Jer",stockCRDJer,"#6a2d8a"],
+                        ["Export 75cl",stockExport,"#8a2d6a"],["Export Mag",stockExpMag,"#8a2d6a"],["Export Jer",stockExpJer,"#8a2d6a"]
+                      ].filter(([,q])=>q>0||true).map(([lbl,q,col])=>(
+                        <div key={lbl} style={{padding:"8px",background:q<50?"#fde8e8":"#f0fff4",borderRadius:"6px",textAlign:"center"}}>
+                          <div style={{fontSize:"10px",color:col,fontWeight:500,marginBottom:"2px"}}>{lbl}</div>
+                          <div style={{fontSize:"18px",fontWeight:600,color:q<50?"#cc2222":"#1a7a40"}}>{q}</div>
+                        </div>
+                      ))}
                     </div>
                     {coiffesStock.length>0&&(
                       <div style={{marginTop:"12px",borderTop:"0.5px solid #ede5d4",paddingTop:"10px"}}>
-                        <div style={{fontSize:"11px",color:"#9a8870",marginBottom:"6px"}}>Dernieres operations</div>
-                        {[...coiffesStock].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5).map(c=>(
+                        <div style={{fontSize:"11px",color:"#9a8870",marginBottom:"6px",cursor:"pointer",display:"flex",justifyContent:"space-between"}} onClick={()=>setShowHistCoiffes(p=>!p)}>Dernieres operations {showHistCoiffes?"▲":"▼"}</div>
+                        {showHistCoiffes&&[...coiffesStock].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5).map(c=>(
                           <div key={c.id} style={{display:"flex",justifyContent:"space-between",fontSize:"11px",padding:"3px 0",borderBottom:"0.5px solid #f5f0e8"}}>
                             <span style={{color:"#9a8870"}}>{fmt(c.date)}</span>
                             <span style={{color:c.type==="CRD"?"#6a2d8a":"#8a2d6a",fontWeight:500}}>{c.type}</span>
@@ -2779,8 +2784,8 @@ export default function App() {
               {/* Historique sorties */}
               {clotures.filter(c=>c.type==="sortie").length>0&&(
                 <div style={{...s.card,padding:"16px 20px",marginTop:"16px"}}>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
-                    <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#7a5200"}}>Historique des sorties</div>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px",cursor:"pointer"}} onClick={()=>setShowHistSorties(p=>!p)}>
+                    <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#7a5200"}}>Historique des sorties {showHistSorties?"▲":"▼"}</div>
                     <div style={{display:"flex",gap:"6px"}}>
                       {[...new Set(clotures.filter(c=>c.type==="sortie").map(c=>c.date.slice(0,7)))].sort().map(mois=>(
                         <button key={mois} style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
@@ -2792,7 +2797,7 @@ export default function App() {
                       ))}
                     </div>
                   </div>
-                  {(()=>{
+                  {showHistSorties&&(()=>{
                     const sorties = clotures.filter(c=>c.type==="sortie");
                     const tots = {};
                     sorties.forEach(c=>{
@@ -3915,8 +3920,12 @@ export default function App() {
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
                 <div><span style={s.lbl}>Type</span>
                   <select style={s.sel} value={coiffesForm.type} onChange={e=>setCoiffesForm(f=>({...f,type:e.target.value}))}>
-                    <option value="CRD">CRD</option>
-                    <option value="Export">Export</option>
+                    <option value="CRD">CRD 75cl</option>
+                    <option value="CRD Magnum">CRD Magnum</option>
+                    <option value="CRD Jeroboam">CRD Jeroboam</option>
+                    <option value="Export">Export 75cl</option>
+                    <option value="Export Magnum">Export Magnum</option>
+                    <option value="Export Jeroboam">Export Jeroboam</option>
                   </select></div>
                 <div><span style={s.lbl}>Date</span>
                   <input type="date" style={s.inp} value={coiffesForm.date||new Date().toISOString().slice(0,10)} onChange={e=>setCoiffesForm(f=>({...f,date:e.target.value}))}/></div>
@@ -3990,7 +3999,8 @@ export default function App() {
                     if(qte <= 0) return alert("Quantite invalide.");
                     // Deduire coiffes si habillage
                     if(newStatut==="Habille CRD"||newStatut==="Habille Export") {
-                      const typeCoiffe = newStatut==="Habille CRD"?"CRD":"Export";
+                      const fmt = lotAction.lot.format;
+                      const typeCoiffe = (newStatut==="Habille CRD"?"CRD":"Export") + (fmt==="Magnum"?" Magnum":fmt==="Jeroboam"?" Jeroboam":"");
                       const deduction = {id:"coiffe_"+Date.now(),type:typeCoiffe,operation:"utilisation",qte:String(qte),date,notes:"Habillage "+lotAction.lot.cuvee,timestamp:new Date().toISOString()};
                       setCoiffesStock(prev=>[deduction,...prev]);
                       fbSave("coiffes",deduction.id,deduction);
