@@ -2768,7 +2768,7 @@ export default function App() {
                                   onClick={()=>{if(window.confirm("Confirmer le passage en +15 mois pour ce lot ?")){const upd={...l,passage15:true};setStockBouteilles(prev=>prev.map(x=>x.id===l.id?upd:x));fbSave("stockBouteilles",l.id,upd);}}}> Confirmer +15m</button>
                               )}
                               <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
-                                onClick={()=>{if(window.confirm("Supprimer ce lot ?")){setStockBouteilles(prev=>prev.filter(x=>x.id!==l.id));fbDelete("stockBouteilles",l.id);}}}>Sup.</button>
+                                onClick={()=>{if((l.qteActuelle||0)>0)return alert("Impossible de supprimer un lot avec du stock restant ("+l.qteActuelle+" btl). Faites une sortie pour vider le stock.");if(window.confirm("Supprimer ce lot ?")){setStockBouteilles(prev=>prev.filter(x=>x.id!==l.id));fbDelete("stockBouteilles",l.id);}}}>Sup.</button>
                             </div>
                           </td>
                         </tr>
