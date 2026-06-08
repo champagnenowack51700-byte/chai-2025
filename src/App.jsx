@@ -2577,6 +2577,12 @@ export default function App() {
                               {v.destinationMarc&&v.destinationMarc!=="maison"&&<div style={{fontSize:"11px",color:"#c47800",marginTop:"3px"}}>Negoce{v.kgVendusNegoce?" - "+parseInt(v.kgVendusNegoce).toLocaleString()+" kg":""}{v.numeroDAE?" - DAE: "+v.numeroDAE:""}</div>}
                             </div>
                             <div>
+                              <div style={s.lbl}>Cuves destination</div>
+                              {v.cuveTailleId&&<div style={{fontSize:"12px",color:"#6a5838"}}>Taille : <strong>{tonneaux.find(t=>t.id===v.cuveTailleId)?.id||v.cuveTailleId}</strong>{v.volumeTaille&&<span style={{color:"#9a8870"}}> - {v.volumeTaille} HL</span>}</div>}
+                              {v.cuveCuveeId&&<div style={{fontSize:"12px",color:"#6a5838"}}>Cuvee : <strong>{tonneaux.find(t=>t.id===v.cuveCuveeId)?.id||v.cuveCuveeId}</strong>{v.volumeCuvee&&<span style={{color:"#9a8870"}}> - {v.volumeCuvee} HL</span>}</div>}
+                              {!v.cuveTailleId&&!v.cuveCuveeId&&<div style={{fontSize:"11px",color:"#9a8870",fontStyle:"italic"}}>Non renseigne</div>}
+                            </div>
+                            <div>
                               <div style={s.lbl}>Analyses</div>
                               {v.degreePotentiel&&<div style={{fontSize:"12px",color:"#6a5838"}}>Degre : <strong>{v.degreePotentiel}%</strong></div>}
                               {v.acidite&&<div style={{fontSize:"12px",color:"#6a5838"}}>Acidite : <strong>{v.acidite} g/L</strong></div>}
