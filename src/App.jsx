@@ -2567,7 +2567,7 @@ export default function App() {
                                 )}
                                 <span style={{fontSize:"11px",color:"#9a8870"}}>{parc?.cepage||""}{parc?.commune?` - ${parc.commune}`:""}</span>
                               </div>
-                              <div style={{fontSize:"11px",color:"#7a6840",marginTop:"3px"}}>{v.date}{v.heure?" - "+v.heure:""} - {v.operateur}</div>
+                              <div style={{fontSize:"11px",color:"#7a6840",marginTop:"3px"}}>{fmt(v.date)}{v.heure?" - "+v.heure:""} - {v.operateur}</div>
                             </div>
                             <div>
                               <div style={s.lbl}>Volume recolte</div>
