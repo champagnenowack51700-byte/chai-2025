@@ -3668,24 +3668,6 @@ export default function App() {
                 </div>
               </div>
               <div style={{background:"#fff8ee",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
-                <div style={{...s.lbl,marginBottom:"10px"}}>Cuve de reception</div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
-                  <div><span style={s.lbl}>Cuve existante</span>
-                    <select style={s.sel} value={vendangeForm.cuveReception} onChange={e=>setVendangeForm(f=>({...f,cuveReception:e.target.value,nouvelleCuveNom:""}))}>
-                      <option value="">-- Creer une nouvelle cuve --</option>
-                      {tonneaux.map(t=><option key={t.id} value={t.id}>{t.id} - {t.denomination} ({t.contenuActuel}L/{t.volume}L)</option>)}
-                    </select></div>
-                  {!vendangeForm.cuveReception&&(
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px"}}>
-                      <div><span style={s.lbl}>Nom nouvelle cuve</span>
-                        <input style={s.inp} placeholder="ex. CV-2025-01" value={vendangeForm.nouvelleCuveNom} onChange={e=>setVendangeForm(f=>({...f,nouvelleCuveNom:e.target.value}))}/></div>
-                      <div><span style={s.lbl}>Capacite (L)</span>
-                        <input type="number" style={s.inp} placeholder="optionnel" value={vendangeForm.nouvelleCuveVolume} onChange={e=>setVendangeForm(f=>({...f,nouvelleCuveVolume:e.target.value}))}/></div>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div style={{background:"#fff8ee",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"10px"}}>
                   <span style={s.lbl}>Produits ajoutes</span>
                   <button style={s.btnSm} onClick={()=>setShowProduitVendange(true)}>+ Ajouter</button>
