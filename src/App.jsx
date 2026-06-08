@@ -3645,23 +3645,26 @@ export default function App() {
                 </div>
               </div>
               <div style={{background:"#fff8ee",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
-                <div style={{...s.lbl,marginBottom:"10px"}}>Destination du marc</div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
-                  <div><span style={s.lbl}>Destination</span>
-                    <select style={s.sel} value={vendangeForm.destinationMarc||"maison"} onChange={e=>setVendangeForm(f=>({...f,destinationMarc:e.target.value}))}>
-                      <option value="maison">Vinification maison (totalite)</option>
-                      <option value="negoce_total">Vente negoce (totalite)</option>
-                      <option value="negoce_partiel">Vente negoce (partielle)</option>
-                    </select>
+                <div style={{marginTop:"10px"}}>
+                  <div style={{...s.lbl,marginBottom:"8px"}}>Repartition en cuves</div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px",marginBottom:"8px"}}>
+                    <div><span style={s.lbl}>Cuve Taille</span>
+                      <select style={s.sel} value={vendangeForm.cuveTailleId||""} onChange={e=>setVendangeForm(f=>({...f,cuveTailleId:e.target.value}))}>
+                        <option value="">Selectionner...</option>
+                        {tonneaux.map(t=><option key={t.id} value={t.id}>{t.id} - {t.denomination||t.appellation}</option>)}
+                      </select></div>
+                    <div><span style={s.lbl}>Volume taille (HL)</span>
+                      <input type="number" step="0.1" style={s.inp} placeholder="0" value={vendangeForm.volumeTaille||""} onChange={e=>setVendangeForm(f=>({...f,volumeTaille:e.target.value}))}/></div>
                   </div>
-                  {(vendangeForm.destinationMarc==="negoce_total"||vendangeForm.destinationMarc==="negoce_partiel")&&(
-                    <div><span style={s.lbl}>N° DAE</span>
-                      <input style={s.inp} placeholder="ex. DAE-2025-001" value={vendangeForm.numeroDAE||""} onChange={e=>setVendangeForm(f=>({...f,numeroDAE:e.target.value}))}/></div>
-                  )}
-                  {vendangeForm.destinationMarc==="negoce_partiel"&&(
-                    <div><span style={s.lbl}>Kg vendus negoce</span>
-                      <input type="number" style={s.inp} placeholder="ex. 2000" value={vendangeForm.kgVendusNegoce||""} onChange={e=>setVendangeForm(f=>({...f,kgVendusNegoce:e.target.value}))}/></div>
-                  )}
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px"}}>
+                    <div><span style={s.lbl}>Cuve Cuvee</span>
+                      <select style={s.sel} value={vendangeForm.cuveCuveeId||""} onChange={e=>setVendangeForm(f=>({...f,cuveCuveeId:e.target.value}))}>
+                        <option value="">Selectionner...</option>
+                        {tonneaux.map(t=><option key={t.id} value={t.id}>{t.id} - {t.denomination||t.appellation}</option>)}
+                      </select></div>
+                    <div><span style={s.lbl}>Volume cuvee (HL)</span>
+                      <input type="number" step="0.1" style={s.inp} placeholder="0" value={vendangeForm.volumeCuvee||""} onChange={e=>setVendangeForm(f=>({...f,volumeCuvee:e.target.value}))}/></div>
+                  </div>
                 </div>
               </div>
               <div style={{background:"#fff8ee",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
@@ -3750,27 +3753,7 @@ export default function App() {
                     }}>Enregistrer sortie negoce ({Math.round((vendangeForm.destinationMarc==="negoce_total"?parseFloat(vendangeForm.poidsMarcKg)||0:parseFloat(vendangeForm.kgVendusNegoce)||0)/4000*25.5*10)/10} HL)</button>
                   </div>
                 )}
-                <div style={{marginTop:"10px"}}>
-                  <div style={{...s.lbl,marginBottom:"8px"}}>Repartition en cuves</div>
-                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px",marginBottom:"8px"}}>
-                    <div><span style={s.lbl}>Cuve Taille</span>
-                      <select style={s.sel} value={vendangeForm.cuveTailleId||""} onChange={e=>setVendangeForm(f=>({...f,cuveTailleId:e.target.value}))}>
-                        <option value="">Selectionner...</option>
-                        {tonneaux.map(t=><option key={t.id} value={t.id}>{t.id} - {t.denomination||t.appellation}</option>)}
-                      </select></div>
-                    <div><span style={s.lbl}>Volume taille (HL)</span>
-                      <input type="number" step="0.1" style={s.inp} placeholder="0" value={vendangeForm.volumeTaille||""} onChange={e=>setVendangeForm(f=>({...f,volumeTaille:e.target.value}))}/></div>
-                  </div>
-                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px"}}>
-                    <div><span style={s.lbl}>Cuve Cuvee</span>
-                      <select style={s.sel} value={vendangeForm.cuveCuveeId||""} onChange={e=>setVendangeForm(f=>({...f,cuveCuveeId:e.target.value}))}>
-                        <option value="">Selectionner...</option>
-                        {tonneaux.map(t=><option key={t.id} value={t.id}>{t.id} - {t.denomination||t.appellation}</option>)}
-                      </select></div>
-                    <div><span style={s.lbl}>Volume cuvee (HL)</span>
-                      <input type="number" step="0.1" style={s.inp} placeholder="0" value={vendangeForm.volumeCuvee||""} onChange={e=>setVendangeForm(f=>({...f,volumeCuvee:e.target.value}))}/></div>
-                  </div>
-                </div>
+
               </div>
               <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
                 <button style={s.ghost} onClick={()=>{setShowVendangeForm(false);setEditingVendange(null);}}>Annuler</button>
