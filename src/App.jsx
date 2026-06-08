@@ -2551,7 +2551,6 @@ export default function App() {
                           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:"12px",marginBottom:"8px"}}>
                             <div>
                               {v.cuveeCreee&&<div style={{fontWeight:600,color:"#7a5200",fontSize:"14px",marginBottom:"2px"}}>{v.cuveeCreee}</div>}
-                              {v.cuveeCreee&&<div style={{fontWeight:600,color:"#7a5200",fontSize:"14px",marginBottom:"2px"}}>{v.cuveeCreee}</div>}
                               <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"2px"}}>
                                 <div style={{fontWeight:500,color:"#1a1205",fontSize:"13px"}}>{parc?.nom||"Parcelle inconnue"}</div>
                                 {v.numeroMarc&&(
@@ -2579,7 +2578,8 @@ export default function App() {
                             <div>
                               <div style={s.lbl}>Cuves destination</div>
                               {v.cuveTailleId&&<div style={{fontSize:"12px",color:"#6a5838"}}>Taille : <strong>{tonneaux.find(t=>t.id===v.cuveTailleId)?.id||v.cuveTailleId}</strong>{v.volumeTaille&&<span style={{color:"#9a8870"}}> - {v.volumeTaille} HL</span>}</div>}
-                              {v.cuveCuveeId&&<div style={{fontSize:"12px",color:"#6a5838"}}>Cuvee : <strong>{tonneaux.find(t=>t.id===v.cuveCuveeId)?.id||v.cuveCuveeId}</strong>{v.volumeCuvee&&<span style={{color:"#9a8870"}}> - {v.volumeCuvee} HL</span>}</div>}
+                              {v.cuveCuveeId&&<div style={{fontSize:"12px",color:"#6a5838"}}>Cuvee A : <strong>{tonneaux.find(t=>t.id===v.cuveCuveeId)?.id||v.cuveCuveeId}</strong>{v.volumeCuvee&&<span style={{color:"#9a8870"}}> - {v.volumeCuvee} HL</span>}</div>}
+                              {v.cuveCuveeBId&&<div style={{fontSize:"12px",color:"#6a5838"}}>Cuvee B : <strong>{tonneaux.find(t=>t.id===v.cuveCuveeBId)?.id||v.cuveCuveeBId}</strong>{v.volumeCuveeB&&<span style={{color:"#9a8870"}}> - {v.volumeCuveeB} HL</span>}</div>}
                               {!v.cuveTailleId&&!v.cuveCuveeId&&<div style={{fontSize:"11px",color:"#9a8870",fontStyle:"italic"}}>Non renseigne</div>}
                             </div>
                             <div>
@@ -3610,10 +3610,6 @@ export default function App() {
                   <div><span style={s.lbl}>Cuvee creee</span>
                     <input style={s.inp} placeholder="ex. Blanc de Blancs 2025" value={vendangeForm.cuveeCreee||""} onChange={e=>setVendangeForm(f=>({...f,cuveeCreee:e.target.value}))}/></div>
                   <div><span style={s.lbl}>Heure *</span>
-                    <input type="time" style={s.inp} value={vendangeForm.heure||""} onChange={e=>setVendangeForm(f=>({...f,heure:e.target.value}))}/></div>
-                  <div><span style={s.lbl}>Nom de la cuvee creee</span>
-                    <input style={s.inp} placeholder="ex. Blanc de Blancs 2025" value={vendangeForm.cuveeCreee||""} onChange={e=>setVendangeForm(f=>({...f,cuveeCreee:e.target.value}))}/></div>
-                  <div><span style={s.lbl}>Operateur</span>
                     <select style={s.sel} value={vendangeForm.operateur} onChange={e=>setVendangeForm(f=>({...f,operateur:e.target.value}))}>
                       <option value="">Selectionner...</option>
                       {degustateurs.map(d=><option key={d.nom} value={d.nom}>{d.nom}</option>)}
@@ -3663,13 +3659,22 @@ export default function App() {
                       <input type="number" step="0.1" style={s.inp} placeholder="0" value={vendangeForm.volumeTaille||""} onChange={e=>setVendangeForm(f=>({...f,volumeTaille:e.target.value}))}/></div>
                   </div>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px"}}>
-                    <div><span style={s.lbl}>Cuve Cuvee</span>
+                    <div><span style={s.lbl}>Cuve Cuvee A</span>
                       <select style={s.sel} value={vendangeForm.cuveCuveeId||""} onChange={e=>setVendangeForm(f=>({...f,cuveCuveeId:e.target.value}))}>
                         <option value="">Selectionner...</option>
                         {tonneaux.map(t=><option key={t.id} value={t.id}>{t.id} - {t.denomination||t.appellation}</option>)}
                       </select></div>
-                    <div><span style={s.lbl}>Volume cuvee (HL)</span>
+                    <div><span style={s.lbl}>Volume cuvee A (HL)</span>
                       <input type="number" step="0.1" style={s.inp} placeholder="0" value={vendangeForm.volumeCuvee||""} onChange={e=>setVendangeForm(f=>({...f,volumeCuvee:e.target.value}))}/></div>
+                  </div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px",marginTop:"8px"}}>
+                    <div><span style={s.lbl}>Cuve Cuvee B</span>
+                      <select style={s.sel} value={vendangeForm.cuveCuveeBId||""} onChange={e=>setVendangeForm(f=>({...f,cuveCuveeBId:e.target.value}))}>
+                        <option value="">Selectionner...</option>
+                        {tonneaux.map(t=><option key={t.id} value={t.id}>{t.id} - {t.denomination||t.appellation}</option>)}
+                      </select></div>
+                    <div><span style={s.lbl}>Volume cuvee B (HL)</span>
+                      <input type="number" step="0.1" style={s.inp} placeholder="0" value={vendangeForm.volumeCuveeB||""} onChange={e=>setVendangeForm(f=>({...f,volumeCuveeB:e.target.value}))}/></div>
                   </div>
                 </div>
               </div>
