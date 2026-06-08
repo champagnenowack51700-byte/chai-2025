@@ -2547,9 +2547,10 @@ export default function App() {
                     {vAnnee.map(v=>{
                       const parc = parcelles.find(p=>p.id===v.parcelleId);
                       return (
-                        <div key={v.id} style={{...s.card,marginBottom:"10px",borderLeft:`3px solid #2d6a00`}}>
+                        <div key={v.id} style={{...s.card,marginBottom:"10px",borderLeft:`3px solid ${v.destinationMarc&&v.destinationMarc!=="maison"?"#c47800":"#2d6a00"}`}}>
                           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:"12px",marginBottom:"8px"}}>
                             <div>
+                              {v.cuveeCreee&&<div style={{fontWeight:600,color:"#7a5200",fontSize:"14px",marginBottom:"2px"}}>{v.cuveeCreee}</div>}
                               {v.cuveeCreee&&<div style={{fontWeight:600,color:"#7a5200",fontSize:"14px",marginBottom:"2px"}}>{v.cuveeCreee}</div>}
                               <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"2px"}}>
                                 <div style={{fontWeight:500,color:"#1a1205",fontSize:"13px"}}>{parc?.nom||"Parcelle inconnue"}</div>
@@ -3598,6 +3599,10 @@ export default function App() {
                     <input type="number" style={s.inp} value={vendangeForm.annee} onChange={e=>setVendangeForm(f=>({...f,annee:e.target.value}))}/></div>
                   <div><span style={s.lbl}>Date *</span>
                     <input type="date" style={s.inp} value={vendangeForm.date} onChange={e=>setVendangeForm(f=>({...f,date:e.target.value}))}/></div>
+                  <div><span style={s.lbl}>Heure</span>
+                    <input type="time" style={s.inp} value={vendangeForm.heure||""} onChange={e=>setVendangeForm(f=>({...f,heure:e.target.value}))}/></div>
+                  <div><span style={s.lbl}>Cuvee creee</span>
+                    <input style={s.inp} placeholder="ex. Blanc de Blancs 2025" value={vendangeForm.cuveeCreee||""} onChange={e=>setVendangeForm(f=>({...f,cuveeCreee:e.target.value}))}/></div>
                   <div><span style={s.lbl}>Heure *</span>
                     <input type="time" style={s.inp} value={vendangeForm.heure||""} onChange={e=>setVendangeForm(f=>({...f,heure:e.target.value}))}/></div>
                   <div><span style={s.lbl}>Nom de la cuvee creee</span>
@@ -3713,6 +3718,54 @@ export default function App() {
               </div>
               <div><span style={s.lbl}>Observations</span>
                 <textarea style={{...s.inp,height:"64px",resize:"vertical"}} placeholder="Etat sanitaire, conditions..." value={vendangeForm.observations} onChange={e=>setVendangeForm(f=>({...f,observations:e.target.value}))}/></div>
+              <div style={{background:"#fff8ee",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
+                <div style={{...s.lbl,marginBottom:"10px"}}>Destination du marc</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                  <div><span style={s.lbl}>Destination</span>
+                    <select style={s.sel} value={vendangeForm.destinationMarc||"maison"} onChange={e=>setVendangeForm(f=>({...f,destinationMarc:e.target.value}))}>
+                      <option value="maison">Vinification maison</option>
+                      <option value="negoce_total">Vente negoce (total)</option>
+                      <option value="negoce_partiel">Vente negoce (partiel)</option>
+                    </select></div>
+                  {(vendangeForm.destinationMarc==="negoce_total"||vendangeForm.destinationMarc==="negoce_partiel")&&(
+                    <div><span style={s.lbl}>N° DAE</span>
+                      <input style={s.inp} placeholder="DAE-2025-001" value={vendangeForm.numeroDAE||""} onChange={e=>setVendangeForm(f=>({...f,numeroDAE:e.target.value}))}/></div>
+                  )}
+                  {vendangeForm.destinationMarc==="negoce_partiel"&&(
+                    <div><span style={s.lbl}>Kg vendus negoce</span>
+                      <input type="number" style={s.inp} placeholder="2000" value={vendangeForm.kgVendusNegoce||""} onChange={e=>setVendangeForm(f=>({...f,kgVendusNegoce:e.target.value}))}/></div>
+                  )}
+                </div>
+                {(vendangeForm.destinationMarc==="negoce_total"||vendangeForm.destinationMarc==="negoce_partiel")&&(
+                  <button style={{...s.ghostSm,marginTop:"10px",color:"#c47800",borderColor:"#e8c888"}} onClick={()=>{
+                    const kg = vendangeForm.destinationMarc==="negoce_total" ? parseFloat(vendangeForm.poidsMarcKg)||0 : parseFloat(vendangeForm.kgVendusNegoce)||0;
+                    const hl = Math.round(kg/4000*25.5*10)/10;
+                    const futId = "negoce_"+Date.now();
+                    const futNegoce = {id:futId,appellation:"negoce",denomination:"Vente Negoce "+(vendangeForm.annee||new Date().getFullYear()),millesime:null,volume:hl,tonnelier:"",grain:"",chauffe:"",certif:"",statut:"actif",contenuActuel:hl,marc:"",commentaire:"Vente negoce - "+kg+" kg - DAE: "+(vendangeForm.numeroDAE||"NC")};
+                    setTonneaux(prev=>[futNegoce,...prev]);
+                    saveTonneau(futNegoce);
+                    alert("Fut fictif negoce cree: "+hl+" HL");
+                  }}>+ Creer fut fictif negoce</button>
+                )}
+                <div style={{marginTop:"10px"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"6px"}}>
+                    <span style={s.lbl}>Repartition cuves (optionnel)</span>
+                    <button style={s.ghostSm} onClick={()=>setVendangeForm(f=>({...f,cuves:[...(f.cuves||[]),{cuveId:"",volume:""}]}))}>+ Ajouter</button>
+                  </div>
+                  {(vendangeForm.cuves||[]).map((c,i)=>(
+                    <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 1fr auto",gap:"8px",marginBottom:"6px",alignItems:"end"}}>
+                      <div><span style={s.lbl}>Cuve</span>
+                        <select style={s.sel} value={c.cuveId} onChange={e=>setVendangeForm(f=>({...f,cuves:f.cuves.map((x,j)=>j===i?{...x,cuveId:e.target.value}:x)}))}>
+                          <option value="">Selectionner...</option>
+                          {tonneaux.map(t=><option key={t.id} value={t.id}>{t.id} - {t.denomination||t.appellation}</option>)}
+                        </select></div>
+                      <div><span style={s.lbl}>Volume (HL)</span>
+                        <input type="number" step="0.1" style={s.inp} placeholder="0" value={c.volume||""} onChange={e=>setVendangeForm(f=>({...f,cuves:f.cuves.map((x,j)=>j===i?{...x,volume:e.target.value}:x)}))}/></div>
+                      <button style={{...s.ghostSm,color:"#cc2222",borderColor:"#f0b4b4",marginBottom:"1px"}} onClick={()=>setVendangeForm(f=>({...f,cuves:f.cuves.filter((_,j)=>j!==i)}))}>x</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
               <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
                 <button style={s.ghost} onClick={()=>{setShowVendangeForm(false);setEditingVendange(null);}}>Annuler</button>
                 <button style={s.btn} onClick={submitVendange}>{editingVendange?"Sauvegarder":"Enregistrer l'apport"}</button>
