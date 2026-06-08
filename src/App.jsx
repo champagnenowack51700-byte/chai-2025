@@ -4239,8 +4239,8 @@ export default function App() {
                     if(qte <= 0) return alert("Quantite invalide.");
                     // Deduire coiffes si habillage
                     if(newStatut==="Habille CRD"||newStatut==="Habille Export") {
-                      const fmt = lotAction.lot.format;
-                      const typeCoiffe = (newStatut==="Habille CRD"?"CRD":"Export") + (fmt==="Magnum"?" Magnum":fmt==="Jeroboam"?" Jeroboam":"");
+                      const lotFmt = lotAction.lot.format;
+                      const typeCoiffe = (newStatut==="Habille CRD"?"CRD":"Export") + (lotFmt==="Magnum"?" Magnum":lotFmt==="Jeroboam"?" Jeroboam":"");
                       const deduction = {id:"coiffe_"+Date.now(),type:typeCoiffe,operation:"utilisation",qte:String(qte),date,notes:"Habillage "+lotAction.lot.cuvee,timestamp:new Date().toISOString()};
                       setCoiffesStock(prev=>[deduction,...prev]);
                       fbSave("coiffes",deduction.id,deduction);
