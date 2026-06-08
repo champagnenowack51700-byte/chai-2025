@@ -3737,33 +3737,39 @@ export default function App() {
                   )}
                 </div>
                 {(vendangeForm.destinationMarc==="negoce_total"||vendangeForm.destinationMarc==="negoce_partiel")&&(
-                  <button style={{...s.ghostSm,marginTop:"10px",color:"#c47800",borderColor:"#e8c888"}} onClick={()=>{
-                    const kg = vendangeForm.destinationMarc==="negoce_total" ? parseFloat(vendangeForm.poidsMarcKg)||0 : parseFloat(vendangeForm.kgVendusNegoce)||0;
-                    const hl = Math.round(kg/4000*25.5*10)/10;
-                    const futId = "negoce_"+Date.now();
-                    const futNegoce = {id:futId,appellation:"negoce",denomination:"Vente Negoce "+(vendangeForm.annee||new Date().getFullYear()),millesime:null,volume:hl,tonnelier:"",grain:"",chauffe:"",certif:"",statut:"actif",contenuActuel:hl,marc:"",commentaire:"Vente negoce - "+kg+" kg - DAE: "+(vendangeForm.numeroDAE||"NC")};
-                    setTonneaux(prev=>[futNegoce,...prev]);
-                    saveTonneau(futNegoce);
-                    alert("Fut fictif negoce cree: "+hl+" HL");
-                  }}>+ Creer fut fictif negoce</button>
+                  <div style={{marginTop:"10px",padding:"10px",background:"#fff3cd",borderRadius:"6px",border:"0.5px solid #e8c888"}}>
+                    <div style={{fontSize:"11px",color:"#c47800",marginBottom:"6px"}}>Ce volume sera sorti definitivement du stock et ne pourra pas etre utilise.</div>
+                    <button style={{...s.ghostSm,color:"#c47800",borderColor:"#e8c888"}} onClick={()=>{
+                      const kg = vendangeForm.destinationMarc==="negoce_total" ? parseFloat(vendangeForm.poidsMarcKg)||0 : parseFloat(vendangeForm.kgVendusNegoce)||0;
+                      const hl = Math.round(kg/4000*25.5*10)/10;
+                      const mvtId = "negoce_sortie_"+Date.now();
+                      const mvt = {id:mvtId, type:"sortie_negoce", date:vendangeForm.date||new Date().toISOString().slice(0,10), kgVendus:kg, volumeHL:hl, numeroDAE:vendangeForm.numeroDAE||"", annee:vendangeForm.annee, notes:"Vente negoce marc", timestamp:new Date().toISOString()};
+                      setMouvements(prev=>[mvt,...prev]);
+                      fbSave("mouvements", mvtId, mvt);
+                      alert("Sortie negoce enregistree: "+kg+" kg / "+hl+" HL");
+                    }}>Enregistrer sortie negoce ({Math.round((vendangeForm.destinationMarc==="negoce_total"?parseFloat(vendangeForm.poidsMarcKg)||0:parseFloat(vendangeForm.kgVendusNegoce)||0)/4000*25.5*10)/10} HL)</button>
+                  </div>
                 )}
                 <div style={{marginTop:"10px"}}>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"6px"}}>
-                    <span style={s.lbl}>Repartition cuves (optionnel)</span>
-                    <button style={s.ghostSm} onClick={()=>setVendangeForm(f=>({...f,cuves:[...(f.cuves||[]),{cuveId:"",volume:""}]}))}>+ Ajouter</button>
+                  <div style={{...s.lbl,marginBottom:"8px"}}>Repartition en cuves</div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px",marginBottom:"8px"}}>
+                    <div><span style={s.lbl}>Cuve Taille</span>
+                      <select style={s.sel} value={vendangeForm.cuveTailleId||""} onChange={e=>setVendangeForm(f=>({...f,cuveTailleId:e.target.value}))}>
+                        <option value="">Selectionner...</option>
+                        {tonneaux.map(t=><option key={t.id} value={t.id}>{t.id} - {t.denomination||t.appellation}</option>)}
+                      </select></div>
+                    <div><span style={s.lbl}>Volume taille (HL)</span>
+                      <input type="number" step="0.1" style={s.inp} placeholder="0" value={vendangeForm.volumeTaille||""} onChange={e=>setVendangeForm(f=>({...f,volumeTaille:e.target.value}))}/></div>
                   </div>
-                  {(vendangeForm.cuves||[]).map((c,i)=>(
-                    <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 1fr auto",gap:"8px",marginBottom:"6px",alignItems:"end"}}>
-                      <div><span style={s.lbl}>Cuve</span>
-                        <select style={s.sel} value={c.cuveId} onChange={e=>setVendangeForm(f=>({...f,cuves:f.cuves.map((x,j)=>j===i?{...x,cuveId:e.target.value}:x)}))}>
-                          <option value="">Selectionner...</option>
-                          {tonneaux.map(t=><option key={t.id} value={t.id}>{t.id} - {t.denomination||t.appellation}</option>)}
-                        </select></div>
-                      <div><span style={s.lbl}>Volume (HL)</span>
-                        <input type="number" step="0.1" style={s.inp} placeholder="0" value={c.volume||""} onChange={e=>setVendangeForm(f=>({...f,cuves:f.cuves.map((x,j)=>j===i?{...x,volume:e.target.value}:x)}))}/></div>
-                      <button style={{...s.ghostSm,color:"#cc2222",borderColor:"#f0b4b4",marginBottom:"1px"}} onClick={()=>setVendangeForm(f=>({...f,cuves:f.cuves.filter((_,j)=>j!==i)}))}>x</button>
-                    </div>
-                  ))}
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px"}}>
+                    <div><span style={s.lbl}>Cuve Cuvee</span>
+                      <select style={s.sel} value={vendangeForm.cuveCuveeId||""} onChange={e=>setVendangeForm(f=>({...f,cuveCuveeId:e.target.value}))}>
+                        <option value="">Selectionner...</option>
+                        {tonneaux.map(t=><option key={t.id} value={t.id}>{t.id} - {t.denomination||t.appellation}</option>)}
+                      </select></div>
+                    <div><span style={s.lbl}>Volume cuvee (HL)</span>
+                      <input type="number" step="0.1" style={s.inp} placeholder="0" value={vendangeForm.volumeCuvee||""} onChange={e=>setVendangeForm(f=>({...f,volumeCuvee:e.target.value}))}/></div>
+                  </div>
                 </div>
               </div>
               <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
