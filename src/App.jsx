@@ -563,6 +563,7 @@ export default function App() {
     date: new Date().toISOString().slice(0,10),
     heure: "",
     parcelleId: "",
+    parcelleIds: [],
     cuveeCreee: "",
     operateur: "",
     numeroMarc: "",
@@ -1305,7 +1306,7 @@ export default function App() {
   };
 
   const submitVendange = () => {
-    if(!vendangeForm.parcelleId) return alert("Selectionner une parcelle.");
+    if(!vendangeForm.parcelleId&&(!vendangeForm.parcelleIds||vendangeForm.parcelleIds.length===0)) return alert("Selectionner au moins une parcelle.");
     if(!vendangeForm.date) return alert("La date est requise.");
     const v = { id:editingVendange?editingVendange.id:`vend_${Date.now()}`, ...vendangeForm, timestamp:new Date().toISOString() };
     if(editingVendange) {
@@ -2274,13 +2275,14 @@ export default function App() {
 
                     {vAnnee.map(v=>{
                       const parc = parcelles.find(p=>p.id===v.parcelleId);
+                      const parcs = (v.parcelleIds&&v.parcelleIds.length>0) ? v.parcelleIds.map(id=>parcelles.find(p=>p.id===id)).filter(Boolean) : (parc?[parc]:[]);
                       return (
                         <div key={v.id} style={{...s.card,marginBottom:"10px",borderLeft:`3px solid ${v.destinationMarc&&v.destinationMarc!=="maison"?"#c47800":"#2d6a00"}`}}>
                           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:"12px",marginBottom:"8px"}}>
                             <div>
                               {v.cuveeCreee&&<div style={{fontWeight:600,color:"#7a5200",fontSize:"14px",marginBottom:"2px"}}>{v.cuveeCreee}</div>}
                               <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"2px"}}>
-                                <div style={{fontWeight:500,color:"#1a1205",fontSize:"13px"}}>{parc?.nom||"Parcelle inconnue"}</div>
+                                <div style={{fontWeight:500,color:"#1a1205",fontSize:"13px"}}>{parcs.length>0?parcs.map(p=>p.nom).join(" + "):"Parcelle inconnue"}</div>
                                 {v.numeroMarc&&(
                                   <span style={{background:"#f5e8cc",color:"#7a5200",border:"0.5px solid #e0c050",borderRadius:"4px",padding:"1px 8px",fontSize:"11px",fontWeight:500,fontFamily:"monospace"}}>Marc {v.numeroMarc}</span>
                                 )}
@@ -3478,12 +3480,24 @@ export default function App() {
                     </select></div>
                 </div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 140px",gap:"12px",marginTop:"10px"}}>
-                  <div><span style={s.lbl}>Parcelle *</span>
-                    <select style={s.sel} value={vendangeForm.parcelleId} onChange={e=>setVendangeForm(f=>({...f,parcelleId:e.target.value}))}>
-                      <option value="">Selectionner une parcelle...</option>
-                      {parcelles.map(p=><option key={p.id} value={p.id}>{p.nom}{p.cepage?` - ${p.cepage}`:""}{p.surface?` (${p.surface} ha)`:""}</option>)}
-                    </select>
-                    {parcelles.length===0&&<div style={{fontSize:"11px",color:"#cc2222",marginTop:"4px"}}>Aucune parcelle.</div>}
+                  <div><span style={s.lbl}>Parcelle(s) *</span>
+                    <div style={{border:"0.5px solid #d4c4a0",borderRadius:"6px",padding:"6px",maxHeight:"120px",overflowY:"auto",background:"#fff"}}>
+                      {parcelles.length===0&&<div style={{fontSize:"11px",color:"#cc2222"}}>Aucune parcelle.</div>}
+                      {parcelles.map(p=>{
+                        const ids = vendangeForm.parcelleIds||[];
+                        const checked = ids.includes(p.id)||vendangeForm.parcelleId===p.id;
+                        return (
+                          <label key={p.id} style={{display:"flex",alignItems:"center",gap:"8px",padding:"3px 4px",cursor:"pointer",borderRadius:"3px",background:checked?"#f5e8cc":"transparent"}}>
+                            <input type="checkbox" checked={checked} onChange={e=>{
+                              const ids = vendangeForm.parcelleIds||[];
+                              const newIds = e.target.checked ? [...ids,p.id] : ids.filter(x=>x!==p.id);
+                              setVendangeForm(f=>({...f,parcelleIds:newIds,parcelleId:newIds[0]||""}));
+                            }}/>
+                            <span style={{fontSize:"12px"}}>{p.nom}{p.cepage?` - ${p.cepage}`:""}{p.surface?` (${p.surface} ha)`:""}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
                   </div>
                   <div><span style={s.lbl}>N° Marc</span>
                     <input type="number" style={s.inp} placeholder="ex. 5" value={vendangeForm.numeroMarc||""} onChange={e=>setVendangeForm(f=>({...f,numeroMarc:e.target.value}))}/>
