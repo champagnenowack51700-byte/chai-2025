@@ -558,6 +558,9 @@ export default function App() {
   const CUVERIE_EMPTY = {nom:"",type:"debourbage",volumeHL:"",contenuActuelHL:"0",notes:""};
   const [cuverieForm,      setCuverieForm]      = useState(CUVERIE_EMPTY);
   const [tonneauxTab,      setTonneauxTab]      = useState("futscuves");
+  const [showDivisionForm, setShowDivisionForm] = useState(false);
+  const [divisionFut,      setDivisionFut]      = useState(null);
+  const [divisionForm,     setDivisionForm]     = useState({volAOC:"",volRI:""});
   const VENDANGE_EMPTY = {
     annee: new Date().getFullYear().toString(),
     date: new Date().toISOString().slice(0,10),
@@ -3180,6 +3183,9 @@ export default function App() {
                       <button style={{...s.ghostSm,color:"#5a4a30"}} onClick={()=>openEditFut(selectedT)}>
                         <i className="ti ti-pencil" style={{marginRight:"3px"}}/>Modifier
                       </button>
+                      <button style={{...s.ghostSm,color:"#185FA5",borderColor:"#4a90d9"}} onClick={()=>{setDivisionFut(selectedT);setDivisionForm({volAOC:Math.max(0,(selectedT.contenuActuel||0)-(parseFloat(selectedT.volumeRI)||0)),volRI:parseFloat(selectedT.volumeRI)||0});setShowDivisionForm(true);}}>
+                        <i className="ti ti-scissors" style={{marginRight:"3px"}}/>Diviser
+                      </button>
                       <button style={{...s.ghostSm,color:"#cc2222",borderColor:"#A32D2D33"}} onClick={()=>deleteFut(selectedT.id)}>
                         <i className="ti ti-trash" style={{marginRight:"3px"}}/>Supprimer
                       </button>
@@ -4327,6 +4333,68 @@ export default function App() {
           </div>
         )}
       </div>
+
+      {/* == MODAL DIVISION FUT == */}
+      {showDivisionForm && divisionFut && (
+        <div style={s.modal}>
+          <div style={{...s.modalBox,width:"420px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#7a5200"}}>Diviser le volume — {divisionFut.id}</div>
+              <button style={s.ghost} onClick={()=>setShowDivisionForm(false)}>x</button>
+            </div>
+            <div style={{fontSize:"12px",color:"#9a8870",marginBottom:"16px"}}>
+              Contenu actuel : <strong>{divisionFut.contenuActuel} L</strong>
+            </div>
+            <div style={{display:"grid",gap:"12px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                <div>
+                  <span style={s.lbl}>Volume AOC tirable (L)</span>
+                  <input type="number" step="0.1" style={s.inp} placeholder="0"
+                    value={divisionForm.volAOC}
+                    onChange={e=>{
+                      const aoc = parseFloat(e.target.value)||0;
+                      const ri = Math.max(0,(divisionFut.contenuActuel||0)-aoc);
+                      setDivisionForm({volAOC:e.target.value, volRI:ri});
+                    }}/>
+                </div>
+                <div>
+                  <span style={s.lbl}>Volume RI (L)</span>
+                  <input type="number" step="0.1" style={s.inp} placeholder="0"
+                    value={divisionForm.volRI}
+                    onChange={e=>{
+                      const ri = parseFloat(e.target.value)||0;
+                      const aoc = Math.max(0,(divisionFut.contenuActuel||0)-ri);
+                      setDivisionForm({volRI:e.target.value, volAOC:aoc});
+                    }}/>
+                </div>
+              </div>
+              {(()=>{
+                const total = (parseFloat(divisionForm.volAOC)||0)+(parseFloat(divisionForm.volRI)||0);
+                const ok = Math.abs(total-(divisionFut.contenuActuel||0))<0.01;
+                return (
+                  <div style={{padding:"8px 12px",borderRadius:"6px",background:ok?"#d4f0dd":"#fde8e8",fontSize:"12px",color:ok?"#1a7a40":"#cc2222"}}>
+                    Total : {total.toFixed(1)} L {ok?"✓ correct":`≠ ${divisionFut.contenuActuel} L`}
+                  </div>
+                );
+              })()}
+              <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
+                <button style={s.ghost} onClick={()=>setShowDivisionForm(false)}>Annuler</button>
+                <button style={s.btn} onClick={()=>{
+                  const aoc = parseFloat(divisionForm.volAOC)||0;
+                  const ri = parseFloat(divisionForm.volRI)||0;
+                  const total = aoc+ri;
+                  if(Math.abs(total-(divisionFut.contenuActuel||0))>0.1) return alert("Le total doit egaliser le contenu actuel : "+divisionFut.contenuActuel+" L");
+                  const updated = {...divisionFut, volumeRI:ri};
+                  setTonneaux(prev=>prev.map(t=>t.id===divisionFut.id?updated:t));
+                  saveTonneau(updated);
+                  setShowDivisionForm(false);
+                  alert(`Division enregistree : ${aoc} L AOC + ${ri} L RI`);
+                }}>Enregistrer</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* == MODAL CUVERIE == */}
       {showCuverieForm&&(
