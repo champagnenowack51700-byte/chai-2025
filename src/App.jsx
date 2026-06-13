@@ -344,6 +344,7 @@ const TYPES_MOUVEMENT = [
 // Appellations fixes (non liées au millésime)
 const APPELLATION_FIXED = {
   vins_reserve: { label:"Vins de réserve", color:"#7a5200", bg:"#fde8b8", border:"#c89020" },
+  ri:           { label:"RI",              color:"#185FA5", bg:"#d4e8f8", border:"#4a90d9" },
   coteaux:      { label:"Coteaux",         color:"#8B0000", bg:"#fdd0d0", border:"#c85050" },
   ratafia:      { label:"Ratafia",         color:"#5c2a08", bg:"#ecd8c4", border:"#9a6040" },
 };
@@ -360,6 +361,7 @@ function getApc(appellation) {
 // Constante APPELLATION pour les sélecteurs - reconstituée dynamiquement dans le composant
 const APPELLATION = {
   vins_reserve: APPELLATION_FIXED.vins_reserve,
+  ri:           APPELLATION_FIXED.ri,
   coteaux:      APPELLATION_FIXED.coteaux,
   ratafia:      APPELLATION_FIXED.ratafia,
 };
@@ -1662,6 +1664,7 @@ export default function App() {
                     return <span style={{color:ok?"#8B0000":"#cc2222",fontWeight:ok?400:600}}>{totalRI.toFixed(1)} HL{requis?" / "+requis.volumeHL+" req.":""}</span>;
                   })(),sub:"reserve individuelle",col:"#8B0000"},
                 {lbl:"Volume tirable",val:(tonneaux.reduce((s,t)=>s+Math.max(0,(t.contenuActuel||0)-(parseFloat(t.volumeRI)||0)),0).toFixed(1))+" HL",sub:"disponible pour tirage",col:"#1a7a40"},
+                {lbl:"RI requis",val:(<div style={{display:"flex",alignItems:"center",gap:"6px"}}><span>{riRequis.find(r=>r.annee===new Date().getFullYear().toString())?.volumeHL||"-"} HL</span><button style={{...s.ghostSm,fontSize:"9px",padding:"1px 5px"}} onClick={()=>setShowRiForm(true)}>Saisir</button></div>),sub:"volume minimum reglementaire",col:"#185FA5"},
                 {lbl:"Mouvements",val:mouvements.length,sub:"enregistrés"},
                 {lbl:"Notes de dégustation",val:degustations.length,sub:`${[...new Set(degustations.map(d=>d.session))].length} session(s)`},
               ].map((it,i)=>(
