@@ -2436,9 +2436,9 @@ export default function App() {
                             </div>
                             <div>
                               <div style={s.lbl}>Cuves destination</div>
-                              {v.cuveTailleId&&<div style={{fontSize:"12px",color:"#6a5838"}}>Taille : <strong>{tonneaux.find(t=>t.id===v.cuveTailleId)?.id||v.cuveTailleId}</strong>{v.volumeTaille&&<span style={{color:"#9a8870"}}> - {v.volumeTaille} HL</span>}</div>}
-                              {v.cuveCuveeId&&<div style={{fontSize:"12px",color:"#6a5838"}}>Cuvee A : <strong>{tonneaux.find(t=>t.id===v.cuveCuveeId)?.id||v.cuveCuveeId}</strong>{v.volumeCuvee&&<span style={{color:"#9a8870"}}> - {v.volumeCuvee} HL</span>}</div>}
-                              {v.cuveCuveeBId&&<div style={{fontSize:"12px",color:"#6a5838"}}>Cuvee B : <strong>{tonneaux.find(t=>t.id===v.cuveCuveeBId)?.id||v.cuveCuveeBId}</strong>{v.volumeCuveeB&&<span style={{color:"#9a8870"}}> - {v.volumeCuveeB} HL</span>}</div>}
+                              {v.cuveTailleId&&<div style={{fontSize:"12px",color:"#6a5838"}}>Taille : <strong>{cuvesCuverie.find(c=>c.id===v.cuveTailleId)?.nom||v.cuveTailleId}</strong>{v.volumeTaille&&<span style={{color:"#9a8870"}}> - {v.volumeTaille} HL</span>}</div>}
+                              {v.cuveCuveeId&&<div style={{fontSize:"12px",color:"#6a5838"}}>Cuvee A : <strong>{cuvesCuverie.find(c=>c.id===v.cuveCuveeId)?.nom||v.cuveCuveeId}</strong>{v.volumeCuvee&&<span style={{color:"#9a8870"}}> - {v.volumeCuvee} HL</span>}</div>}
+                              {v.cuveCuveeBId&&<div style={{fontSize:"12px",color:"#6a5838"}}>Cuvee B : <strong>{cuvesCuverie.find(c=>c.id===v.cuveCuveeBId)?.nom||v.cuveCuveeBId}</strong>{v.volumeCuveeB&&<span style={{color:"#9a8870"}}> - {v.volumeCuveeB} HL</span>}</div>}
                               {v.cuveBourbesId&&<div style={{fontSize:"12px",color:"#8B0000"}}>Bourbes : <strong>{cuvesCuverie.find(c=>c.id===v.cuveBourbesId)?.nom||v.cuveBourbesId}</strong>{v.volumeBourbes&&<span style={{color:"#9a8870"}}> - {v.volumeBourbes} HL</span>}</div>}
                               {!v.cuveTailleId&&!v.cuveCuveeId&&<div style={{fontSize:"11px",color:"#9a8870",fontStyle:"italic"}}>Non renseigne</div>}
                             </div>
