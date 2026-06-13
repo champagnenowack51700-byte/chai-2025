@@ -4488,7 +4488,6 @@ export default function App() {
                   </div>
                 )}
               </div>
-              </div>}
               <div style={{background:"#fff8ee",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
                 <div style={{...s.lbl,marginBottom:"10px",fontSize:"11px"}}>Mise en bouteilles - 1 numero de lot par format</div>
                 <div style={{display:"grid",gap:"10px"}}>
