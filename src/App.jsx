@@ -517,6 +517,8 @@ export default function App() {
   const LIEUX_STOCK = ["Domaine", "Lorain Champagnisation", "Epernay"];
   const FORMATS = [{key:"75", label:"Bouteille 75cl", vol:0.75}, {key:"magnum", label:"Magnum 1.5L", vol:1.5}, {key:"jeroboam", label:"Jeroboam 3L", vol:3.0}];
   const STATUTS_BOUTEILLES = ["Sur latte / Sur pointe", "En cours de degorgement", "Degorge", "Habille CRD", "Habille Export"];
+  const STATUTS_AUTRES = ["En vieillissement", "Habille"];
+  const getStatuts = (type) => ["coteaux_blanc","coteaux_rouge","ratafia"].includes(type) ? STATUTS_AUTRES : STATUTS_BOUTEILLES;
   const LIEU_COLORS = {"Domaine":{bg:"#d4edda",color:"#1a7a40"},"Lorain Champagnisation":{bg:"#d4e8f8",color:"#185FA5"},"Epernay":{bg:"#fde8b8",color:"#c47800"}};
   const STATUT_COLORS = {"Sur latte / Sur pointe":{bg:"#e8f0fb",color:"#185FA5"},"En cours de degorgement":{bg:"#fff3cd",color:"#c47800"},"Degorge":{bg:"#d4f0dd",color:"#1a7a40"},"Habille CRD":{bg:"#e8d4f8",color:"#6a2d8a"},"Habille Export":{bg:"#f8d4e8",color:"#8a2d6a"}};
   const DEGORGE_EMPTY = {
@@ -577,6 +579,7 @@ export default function App() {
   const TIRAGE_EMPTY = {
     date: new Date().toISOString().slice(0,10),
     operateur: "",
+    typeProduit: "champagne",
     cuvee: "",
     millesime: "",
     futsSources: [],
@@ -1130,7 +1133,7 @@ export default function App() {
   // -- TIRAGE ---------------------------------------------------------------
   const openEditTirage = (t) => {
     setTirageForm({
-      date:t.date||"", operateur:t.operateur||"", cuvee:t.cuvee||"",
+      date:t.date||"", operateur:t.operateur||"", typeProduit:t.typeProduit||"champagne", cuvee:t.cuvee||"",
       millesime:t.millesime||"", futsSources:t.futsSources||[],
       volumeTotal:t.volumeTotal||"", levainEau:t.levainEau||"",
       levainVin:t.levainVin||"", levainLevure:t.levainLevure||"",
@@ -1226,6 +1229,7 @@ export default function App() {
         const lot = {
           id: updated.id+"_"+l.fmt,
           tirageId: updated.id,
+          typeProduit: tirageForm.typeProduit||"champagne",
           cuvee: tirageForm.cuvee,
           millesime: tirageForm.millesime||"",
           dateTirage: tirageForm.date,
@@ -1233,7 +1237,7 @@ export default function App() {
           lot: l.lot,
           qteInitiale: l.qte,
           qteActuelle: l.qte,
-          statut: "Sur latte / Sur pointe",
+          statut: ["coteaux_blanc","coteaux_rouge","ratafia"].includes(tirageForm.typeProduit) ? "En vieillissement" : "Sur latte / Sur pointe",
           lieu: "Domaine",
           mouvements: [],
           timestamp: new Date().toISOString(),
@@ -4379,6 +4383,13 @@ export default function App() {
               <div style={{background:"#fff8ee",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
                 <div style={{...s.lbl,marginBottom:"10px",fontSize:"11px"}}>Identification du tirage</div>
                 <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:"12px"}}>
+                  <div><span style={s.lbl}>Type de produit *</span>
+                    <select style={s.sel} value={tirageForm.typeProduit||"champagne"} onChange={e=>setTirageForm(f=>({...f,typeProduit:e.target.value}))}>
+                      <option value="champagne">Champagne</option>
+                      <option value="coteaux_blanc">Coteaux Champenois Blanc</option>
+                      <option value="coteaux_rouge">Coteaux Champenois Rouge</option>
+                      <option value="ratafia">Ratafia</option>
+                    </select></div>
                   <div><span style={s.lbl}>Date *</span>
                     <input type="date" style={s.inp} value={tirageForm.date} onChange={e=>setTirageForm(f=>({...f,date:e.target.value}))}/></div>
                   <div><span style={s.lbl}>Operateur *</span>
@@ -4394,7 +4405,7 @@ export default function App() {
                   <input style={s.inp} placeholder="ex. FONTINETTE..." value={tirageForm.cuvee} onChange={e=>setTirageForm(f=>({...f,cuvee:e.target.value}))}/></div>
               </div>
               <div style={{background:"#fff8ee",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
-                <div style={{...s.lbl,marginBottom:"10px",fontSize:"11px"}}>Volume vin (depuis les futs)</div>
+                <div style={{...s.lbl,marginBottom:"10px",fontSize:"11px"}}>Assemblage - Volume vin (depuis les futs)</div>
                 {editingTirage&&<div style={{fontSize:"11px",color:"#c47800",background:"#fde8b8",border:"0.5px solid #e8c888",borderRadius:"4px",padding:"6px 10px",marginBottom:"10px"}}>En mode modification, les volumes des futs ne sont pas recalcules automatiquement.</div>}
                 <div style={{display:"grid",gridTemplateColumns:"1fr 140px",gap:"12px"}}>
                   <div>
@@ -4477,6 +4488,7 @@ export default function App() {
                   </div>
                 )}
               </div>
+              </div>}
               <div style={{background:"#fff8ee",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
                 <div style={{...s.lbl,marginBottom:"10px",fontSize:"11px"}}>Mise en bouteilles - 1 numero de lot par format</div>
                 <div style={{display:"grid",gap:"10px"}}>
