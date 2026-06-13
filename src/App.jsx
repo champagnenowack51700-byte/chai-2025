@@ -1702,7 +1702,7 @@ export default function App() {
             })()}
             {(()=>{
               const vinsClairs = tonneaux.filter(t=>t.appellation&&t.appellation.startsWith("vins_clairs")&&t.appellation!=="ri"&&t.statut!=="vide");
-              const vinsReserve = tonneaux.filter(t=>(t.appellation==="vins_reserve"||t.appellation==="ri")&&t.statut!=="vide");
+              const vinsReserve = tonneaux.filter(t=>t.appellation==="vins_reserve"&&t.statut!=="vide");
               const calcTirable = (futs) => futs.reduce((s,t)=>{ if(t.appellation==="ri") return s+Math.max(0,((t.contenuActuel||0)/100)-((parseFloat(t.volumeRI)||0)/100)); return s+Math.max(0,((t.contenuActuel||0)/100)-((parseFloat(t.volumeRI)||0)/100)); },0);
               return (
                 <div style={{...s.card,marginBottom:"28px",padding:"12px 16px"}}>
