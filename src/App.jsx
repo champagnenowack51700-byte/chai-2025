@@ -1337,6 +1337,7 @@ export default function App() {
     }
     saveVendange(v);
     // Mettre a jour le contenu de la cuve bourbes
+    console.log("bourbes check:", vendangeForm.cuveBourbesId, vendangeForm.volumeBourbes);
     if(!editingVendange && vendangeForm.cuveBourbesId && vendangeForm.volumeBourbes) {
       const volBourbes = parseFloat(vendangeForm.volumeBourbes)||0;
       setCuvesCuverie(prev=>prev.map(c=>{
