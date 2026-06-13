@@ -432,6 +432,7 @@ export default function App() {
   const [filterStatut,     setFilterStatut]     = useState("actif");
   const [filterStockLieu,  setFilterStockLieu]  = useState("");
   const [filterStockCuvee, setFilterStockCuvee] = useState("");
+  const [stockTab,         setStockTab]         = useState("champagne");
   const [lotAction,        setLotAction]        = useState(null);
   const [showSortieForm,   setShowSortieForm]   = useState(false);
   const [coiffesStock,     setCoiffesStock]     = useState([]);
@@ -2731,6 +2732,8 @@ export default function App() {
             mois: l.dateTirage ? Math.floor((now-new Date(l.dateTirage))/(1000*60*60*24*30.5)) : 0
           }));
           const lotsFiltre = lots.filter(l=>{
+            if(stockTab==="champagne" && ["coteaux_blanc","coteaux_rouge","ratafia"].includes(l.typeProduit)) return false;
+            if(stockTab!=="champagne" && (l.typeProduit||"champagne")!==stockTab) return false;
             if(filterStockCuvee && !l.cuvee.toLowerCase().includes(filterStockCuvee.toLowerCase())) return false;
             if(filterStockLieu && l.lieu!==filterStockLieu) return false;
             if(filterStockStatut && l.statut!==filterStockStatut) return false;
@@ -2767,6 +2770,13 @@ export default function App() {
                     <div style={{fontSize:"24px",fontWeight:500,color:k.col}}>{k.val}</div>
                     <div style={{fontSize:"11px",color:"#9a8870",marginTop:"3px"}}>{k.sub}</div>
                   </div>
+                ))}
+              </div>
+
+              {/* Onglets type produit */}
+              <div style={{display:"flex",gap:"4px",marginBottom:"16px",borderBottom:"1px solid #d4c4a0",paddingBottom:"0"}}>
+                {[["champagne","Champagne"],["coteaux_blanc","Coteaux Blanc"],["coteaux_rouge","Coteaux Rouge"],["ratafia","Ratafia"]].map(([key,lbl])=>(
+                  <button key={key} onClick={()=>{setStockTab(key);setFilterStockStatut("");}} style={{padding:"8px 14px",border:"none",borderBottom:stockTab===key?"2px solid #b8860b":"2px solid transparent",background:"transparent",color:stockTab===key?"#7a5200":"#9a8870",fontWeight:stockTab===key?500:400,fontSize:"12px",cursor:"pointer",fontFamily:"Georgia,serif"}}>{lbl}</button>
                 ))}
               </div>
 
