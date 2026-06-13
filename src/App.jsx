@@ -1671,7 +1671,7 @@ export default function App() {
               {(()=>{
                 const totalVin = tonneaux.filter(t=>t.statut!=="vide").reduce((s,t)=>s+(t.contenuActuel||0),0);
                 const totalCap = tonneaux.reduce((s,t)=>s+(t.volume||0),0);
-                const totalTirable = tonneaux.filter(t=>t.appellation!=="ri").reduce((s,t)=>s+Math.max(0,((t.contenuActuel||0)/100)-(parseFloat(t.volumeRI)||0)),0);
+                const totalTirable = tonneaux.filter(t=>t.appellation!=="ri").reduce((s,t)=>s+Math.max(0,((t.contenuActuel||0)/100)-((parseFloat(t.volumeRI)||0)/100)),0);
                 return [
                   {lbl:"Volume total",val:(totalVin/100).toFixed(1)+" HL",sub:`cap. ${(totalCap/100).toFixed(0)} HL`},
                   {lbl:"Volume tirable",val:totalTirable.toFixed(1)+" HL",sub:"~"+Math.floor(totalTirable*100/0.75).toLocaleString("fr-FR")+" btl 75cl",col:"#1a7a40"},
@@ -1687,7 +1687,7 @@ export default function App() {
             {(()=>{
               const annee = new Date().getFullYear().toString();
               const riRequisAnnee = riRequis.find(r=>r.annee===annee);
-              const totalRI = tonneaux.reduce((s,t)=>s+(t.appellation==="ri"?(t.contenuActuel||0)/100:(parseFloat(t.volumeRI)||0)),0);
+              const totalRI = tonneaux.reduce((s,t)=>s+(t.appellation==="ri"?(t.contenuActuel||0)/100:(parseFloat(t.volumeRI)||0)/100),0);
               const riOk = !riRequisAnnee || totalRI>=(parseFloat(riRequisAnnee.volumeHL)||0);
               return (
                 <div style={{...s.card,marginBottom:"12px",padding:"10px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",background:riOk?"#fff":"#fde8e8",border:riOk?"0.5px solid #d4c4a0":"1px solid #f0b4b4"}}>
@@ -1703,7 +1703,7 @@ export default function App() {
             {(()=>{
               const vinsClairs = tonneaux.filter(t=>t.appellation&&t.appellation.startsWith("vins_clairs")&&t.appellation!=="ri"&&t.statut!=="vide");
               const vinsReserve = tonneaux.filter(t=>t.appellation==="vins_reserve"&&t.statut!=="vide");
-              const calcTirable = (futs) => futs.reduce((s,t)=>s+Math.max(0,((t.contenuActuel||0)/100)-(parseFloat(t.volumeRI)||0)),0);
+              const calcTirable = (futs) => futs.reduce((s,t)=>s+Math.max(0,((t.contenuActuel||0)/100)-((parseFloat(t.volumeRI)||0)/100)),0);
               return (
                 <div style={{...s.card,marginBottom:"28px",padding:"12px 16px"}}>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1px 1fr",gap:"0",alignItems:"center"}}>
