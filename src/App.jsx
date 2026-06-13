@@ -337,6 +337,7 @@ const TYPES_MOUVEMENT = [
   { value:"remplissage", label:"Remplissage cuve",        icon:"ti-droplet-filled", color:"#533AB7" },
   { value:"batonnage",   label:"Bâtonnage",               icon:"ti-refresh",        color:"#5F5E5A" },
   { value:"ajout_produit",label:"Ajout produit",          icon:"ti-flask",          color:"#BA7517" },
+  { value:"entonnage",    label:"Entonnage",               icon:"ti-beer",           color:"#7a5200" },
 ];
 
 
@@ -621,7 +622,7 @@ export default function App() {
   // Mouvement form
   const [mvtForm, setMvtForm] = useState({
     type:"ouillage", date:new Date().toISOString().slice(0,16),
-    operateur:"", futSource:[], futDest:"", volume:"", notes:"", produit:"", dosage:"", numeroLot:"",
+    operateur:"", futSource:[], futDest:"", volume:"", notes:"", produit:"", dosage:"", numeroLot:"", entonnageMarcId:"", entonnageCuveId:"",
   });
   // Dégustation form - une ligne par dégustateur
   const [degForm, setDegForm] = useState({
@@ -3204,6 +3205,38 @@ export default function App() {
                 </div>
               )}
               <div><span style={s.lbl}>Notes</span><textarea style={{...s.inp,height:"64px",resize:"vertical"}} value={mvtForm.notes} onChange={e=>setMvtForm(f=>({...f,notes:e.target.value}))}/></div>
+              {mvtForm.type==="entonnage"&&(
+                <div style={{borderTop:"0.5px solid #d4c4a0",paddingTop:"12px",display:"grid",gap:"10px"}}>
+                  <div style={{fontFamily:"Georgia,serif",fontSize:"13px",color:"#7a5200",marginBottom:"4px"}}>Details entonnage</div>
+                  <div><span style={s.lbl}>Marc source</span>
+                    <select style={s.sel} value={mvtForm.entonnageMarcId||""} onChange={e=>{
+                      const v = vendanges.find(v=>v.id===e.target.value);
+                      setMvtForm(f=>({...f,entonnageMarcId:e.target.value,entonnageCuveId:v?.cuveTailleId||v?.cuveCuveeId||""}));
+                    }}>
+                      <option value="">Selectionner un marc...</option>
+                      {vendanges.sort((a,b)=>b.date.localeCompare(a.date)).map(v=>(
+                        <option key={v.id} value={v.id}>{fmt(v.date)} - {v.cuveeCreee||v.parcelleId} - Marc {v.numeroMarc} ({v.poidsMarcKg?parseInt(v.poidsMarcKg).toLocaleString()+" kg":""}{v.volumeHL?" / "+v.volumeHL+" HL":""})</option>
+                      ))}
+                    </select>
+                  </div>
+                  {mvtForm.entonnageMarcId&&(()=>{
+                    const marc = vendanges.find(v=>v.id===mvtForm.entonnageMarcId);
+                    const cuves = [
+                      marc?.cuveTailleId && {id:marc.cuveTailleId, label:"Taille", vol:marc.volumeTaille},
+                      marc?.cuveCuveeId && {id:marc.cuveCuveeId, label:"Cuvee A", vol:marc.volumeCuvee},
+                      marc?.cuveCuveeBId && {id:marc.cuveCuveeBId, label:"Cuvee B", vol:marc.volumeCuveeB},
+                    ].filter(Boolean);
+                    return cuves.length>0&&(
+                      <div><span style={s.lbl}>Cuve de debourbage source</span>
+                        <select style={s.sel} value={mvtForm.entonnageCuveId||""} onChange={e=>setMvtForm(f=>({...f,entonnageCuveId:e.target.value}))}>
+                          <option value="">Selectionner...</option>
+                          {cuves.map(c=><option key={c.id} value={c.id}>{c.id} - {c.label}{c.vol?" ("+c.vol+" HL)":""}</option>)}
+                        </select>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
               {mvtForm.type==="soutirage"&&mvtForm.futSource[0]&&mvtForm.futDest&&mvtForm.volume&&(
                 <div style={{background:"#d0f0dc",border:"1px solid #a8d4b4",borderRadius:"5px",padding:"10px 12px",fontSize:"12px"}}>
                   <div style={{color:"#1a7a40",fontWeight:600,marginBottom:"3px"}}>Aperçu</div>
