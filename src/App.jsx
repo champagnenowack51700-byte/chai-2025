@@ -1806,6 +1806,7 @@ export default function App() {
               {filteredTonneaux.map(t=><FutCard key={t.id} t={t}/>)}
             </div>
           </div>
+            </div>}
         )}
 
         {/* -- DÉGUSTATIONS (vue globale) -- */}
