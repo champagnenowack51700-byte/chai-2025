@@ -1657,16 +1657,16 @@ export default function App() {
           <div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:"12px",marginBottom:"24px"}}>
               {[
-                {lbl:"Volume total en chai",val:`${totalVin.toLocaleString("fr-FR")} L`,sub:`/ ${totalCap.toLocaleString("fr-FR")} L capacité`},
+                {lbl:"Volume total en chai",val:`${(totalVin/100).toFixed(1)} HL`,sub:`/ ${totalCap.toLocaleString("fr-FR")} L capacité`},
                 {lbl:"Fûts actifs",val:tonneaux.filter(t=>t.statut==="actif").length,sub:`${tonneaux.length} fûts au total`},
                 {lbl:"Volume RI",val:(()=>{
-                    const totalRI = tonneaux.reduce((s,t)=>s+(t.appellation==="ri"?(t.contenuActuel||0):(parseFloat(t.volumeRI)||0)),0);
+                    const totalRI = tonneaux.reduce((s,t)=>s+(t.appellation==="ri"?(t.contenuActuel||0)/100:(parseFloat(t.volumeRI)||0)),0);
                     const annee = new Date().getFullYear().toString();
                     const requis = riRequis.find(r=>r.annee===annee);
                     const ok = !requis || totalRI>=(parseFloat(requis.volumeHL)||0);
                     return <span style={{color:ok?"#8B0000":"#cc2222",fontWeight:ok?400:600}}>{totalRI.toFixed(1)} HL{requis?" / "+requis.volumeHL+" req.":""}</span>;
                   })(),sub:"reserve individuelle",col:"#8B0000"},
-                {lbl:"Volume tirable",val:(tonneaux.filter(t=>t.appellation!=="ri").reduce((s,t)=>s+Math.max(0,(t.contenuActuel||0)-(parseFloat(t.volumeRI)||0)),0).toFixed(1))+" HL",sub:"disponible pour tirage",col:"#1a7a40"},
+                {lbl:"Volume tirable",val:(tonneaux.filter(t=>t.appellation!=="ri").reduce((s,t)=>s+Math.max(0,((t.contenuActuel||0)/100)-(parseFloat(t.volumeRI)||0)),0).toFixed(1))+" HL",sub:"disponible pour tirage",col:"#1a7a40"},
                 {lbl:"RI requis",val:(<div style={{display:"flex",alignItems:"center",gap:"6px"}}><span>{riRequis.find(r=>r.annee===new Date().getFullYear().toString())?.volumeHL||"-"} HL</span><button style={{...s.ghostSm,fontSize:"9px",padding:"1px 5px"}} onClick={()=>setShowRiForm(true)}>Saisir</button></div>),sub:"volume minimum reglementaire",col:"#185FA5"},
                 {lbl:"Mouvements",val:mouvements.length,sub:"enregistrés"},
                 {lbl:"Notes de dégustation",val:degustations.length,sub:`${[...new Set(degustations.map(d=>d.session))].length} session(s)`},
