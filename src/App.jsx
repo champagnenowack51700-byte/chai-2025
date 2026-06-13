@@ -1687,7 +1687,7 @@ export default function App() {
             {(()=>{
               const annee = new Date().getFullYear().toString();
               const riRequisAnnee = riRequis.find(r=>r.annee===annee);
-              const totalRI = tonneaux.reduce((s,t)=>s+(t.appellation==="ri"?(t.contenuActuel||0)/100:(parseFloat(t.volumeRI)||0)/100),0);
+              const totalRI = tonneaux.reduce((s,t)=>{ if(t.appellation==="ri") return s+((parseFloat(t.volumeRI)||0)>0?(parseFloat(t.volumeRI)||0)/100:(t.contenuActuel||0)/100); return s+(parseFloat(t.volumeRI)||0)/100; },0);
               const riOk = !riRequisAnnee || totalRI>=(parseFloat(riRequisAnnee.volumeHL)||0);
               return (
                 <div style={{...s.card,marginBottom:"12px",padding:"10px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",background:riOk?"#fff":"#fde8e8",border:riOk?"0.5px solid #d4c4a0":"1px solid #f0b4b4"}}>
@@ -1703,7 +1703,7 @@ export default function App() {
             {(()=>{
               const vinsClairs = tonneaux.filter(t=>t.appellation&&t.appellation.startsWith("vins_clairs")&&t.appellation!=="ri"&&t.statut!=="vide");
               const vinsReserve = tonneaux.filter(t=>t.appellation==="vins_reserve"&&t.statut!=="vide");
-              const calcTirable = (futs) => futs.reduce((s,t)=>s+Math.max(0,((t.contenuActuel||0)/100)-((parseFloat(t.volumeRI)||0)/100)),0);
+              const calcTirable = (futs) => futs.reduce((s,t)=>{ if(t.appellation==="ri") return s+Math.max(0,((t.contenuActuel||0)/100)-((parseFloat(t.volumeRI)||0)/100)); return s+Math.max(0,((t.contenuActuel||0)/100)-((parseFloat(t.volumeRI)||0)/100)); },0);
               return (
                 <div style={{...s.card,marginBottom:"28px",padding:"12px 16px"}}>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1px 1fr",gap:"0",alignItems:"center"}}>
