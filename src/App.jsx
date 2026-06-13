@@ -1337,6 +1337,8 @@ export default function App() {
     }
     saveVendange(v);
     // Mettre a jour les cuves de cuverie (taille, cuvee A, cuvee B, bourbes)
+    console.log("cuves:", {taille:vendangeForm.cuveTailleId, volTaille:vendangeForm.volumeTaille, cuveeA:vendangeForm.cuveCuveeId, bourbes:vendangeForm.cuveBourbesId, volBourbes:vendangeForm.volumeBourbes});
+    console.log("cuvesCuverie:", cuvesCuverie.map(c=>c.id));
     if(!editingVendange) {
       const majCuve = (cuveId, volHL) => {
         if(!cuveId || !volHL) return;
