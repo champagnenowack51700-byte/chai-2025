@@ -1510,7 +1510,7 @@ export default function App() {
     const borderCol = t.statut==="surveillance" ? "#854F0B88" : apc.border;
     const barCol    = t.statut==="surveillance" ? "#c47800"   : apc.color;
     return (
-      <div style={{...s.cardSm,position:"relative",overflow:"hidden", borderColor:borderCol, background:apc.bg||"#1a1a1c"}}>
+      <div style={{...s.cardSm,position:"relative",overflow:"hidden", borderColor:borderCol, borderWidth:t.statut==="surveillance"?"2px":"1px", background:t.statut==="surveillance"?"#fff8e8":apc.bg||"#1a1a1c"}}>
         <div style={{position:"absolute",bottom:0,left:0,width:`${p}%`,height:"2px",background:barCol}}/>
         <div style={{position:"absolute",top:0,left:0,width:"3px",height:"100%",background:apc.color,opacity:0.7}}/>
         {/* actions top-right */}
@@ -1525,6 +1525,7 @@ export default function App() {
           </button>
         </div>
         <div style={{cursor:"pointer"}} onClick={()=>{setSelectedFut(t.id);setView("fiche");setFicheTab("degustations");}}>
+          {t.statut==="surveillance"&&<div style={{fontSize:"9px",background:"#c47800",color:"#fff",padding:"1px 6px",marginBottom:"3px",borderRadius:"3px",display:"inline-block",fontWeight:600,letterSpacing:"0.05em"}}>SURVEILLANCE</div>}
           <div style={{fontSize:"13px",fontWeight:600,color:"#1a1205",marginBottom:"1px",paddingLeft:"6px"}}>{t.id}</div>
           <div style={{fontSize:"10px",color:"#6a5838",marginBottom:"6px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",paddingLeft:"6px"}}>{t.denomination}</div>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingLeft:"6px"}}>
