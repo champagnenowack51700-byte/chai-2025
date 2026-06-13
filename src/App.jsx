@@ -2184,6 +2184,107 @@ export default function App() {
           );
         })()}
 
+        {/* -- TONNEAUX -- */}
+        {view==="tonneaux" && (
+          <div>
+            {/* Onglets principaux */}
+            <div style={{display:"flex",gap:"0",marginBottom:"20px",borderBottom:"1px solid #d4c4a0"}}>
+              {[["futscuves","Futs et Cuves"],["cuverie","Cuverie"]].map(([key,lbl])=>(
+                <button key={key} onClick={()=>setTonneauxTab(key)} style={{padding:"10px 20px",border:"none",borderBottom:tonneauxTab===key?"2px solid #b8860b":"2px solid transparent",background:"transparent",color:tonneauxTab===key?"#7a5200":"#9a8870",fontWeight:tonneauxTab===key?500:400,fontSize:"13px",cursor:"pointer",fontFamily:"Georgia,serif"}}>
+                  {lbl}
+                </button>
+              ))}
+            </div>
+
+            {tonneauxTab==="cuverie"&&(
+              <div>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"16px"}}>
+                  <div style={{fontSize:"13px",color:"#7a6840"}}>{cuvesCuverie.length} cuve(s) de cuverie</div>
+                  <button style={s.btn} onClick={()=>{setCuverieForm(CUVERIE_EMPTY);setEditingCuverie(null);setShowCuverieForm(true);}}>+ Nouvelle cuve</button>
+                </div>
+                {cuvesCuverie.length===0&&(
+                  <div style={{...s.card,textAlign:"center",padding:"40px",color:"#9a8870"}}>
+                    <div style={{fontSize:"24px",marginBottom:"12px"}}>Aucune cuve de cuverie</div>
+                    <div style={{fontSize:"13px",marginBottom:"16px"}}>Ajoutez vos cuves de debourbage et d assemblage.</div>
+                  </div>
+                )}
+                {cuvesCuverie.length>0&&(
+                  <div style={{display:"grid",gap:"12px"}}>
+                    {cuvesCuverie.map(c=>(
+                      <div key={c.id} style={{...s.card,borderLeft:`3px solid ${c.type==="debourbage"?"#185FA5":"#1a7a40"}`}}>
+                        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr auto",gap:"16px",alignItems:"center"}}>
+                          <div>
+                            <div style={{fontWeight:500,color:"#1a1205",fontSize:"14px"}}>{c.nom}</div>
+                            <div style={{fontSize:"11px",color:"#9a8870",marginTop:"2px"}}>
+                              <span style={{background:c.type==="debourbage"?"#e8f0fb":"#d4f0dd",color:c.type==="debourbage"?"#185FA5":"#1a7a40",borderRadius:"3px",padding:"1px 6px",fontSize:"10px"}}>{c.type==="debourbage"?"Debourbage":"Assemblage"}</span>
+                            </div>
+                          </div>
+                          <div>
+                            <div style={s.lbl}>Volume total</div>
+                            <div style={{fontWeight:500,color:"#1a1205"}}>{c.volumeHL} HL</div>
+                          </div>
+                          <div>
+                            <div style={s.lbl}>Contenu actuel</div>
+                            <div style={{fontWeight:500,color:parseFloat(c.contenuActuelHL)>0?"#b8860b":"#9a8870"}}>{c.contenuActuelHL||"0"} HL</div>
+                            {c.notes&&<div style={{fontSize:"11px",color:"#9a8870",fontStyle:"italic",marginTop:"2px"}}>{c.notes}</div>}
+                          </div>
+                          <div style={{display:"flex",gap:"6px"}}>
+                            <button style={{...s.ghostSm,fontSize:"10px"}} onClick={()=>{setCuverieForm({nom:c.nom,type:c.type,volumeHL:c.volumeHL,contenuActuelHL:c.contenuActuelHL||"0",notes:c.notes||""});setEditingCuverie(c);setShowCuverieForm(true);}}>Mod.</button>
+                            <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>{if(window.confirm("Supprimer cette cuve ?")){setCuvesCuverie(prev=>prev.filter(x=>x.id!==c.id));fbDelete("cuvesCuverie",c.id);}}}>Sup.</button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {tonneauxTab==="futscuves"&&<div>
+            {/* Onglets appellation */}
+            <div style={{display:"flex",gap:"6px",marginBottom:"16px",flexWrap:"wrap",overflowX:"auto"}}>
+              <button onClick={()=>setFilterAppellation("")}
+                style={{padding:"5px 14px",borderRadius:"4px",border:`1px solid ${!filterAppellation?"#b8860b":"#2a2a2c"}`,background:!filterAppellation?"#fce8a8":"transparent",color:!filterAppellation?"#7a5200":"#7a6840",fontSize:"12px",cursor:"pointer",fontFamily:"inherit"}}>
+                Tous ({tonneaux.length})
+              </button>
+              {allAppellations.map(key=>{
+                const apc=getApc(key);
+                const count=tonneaux.filter(t=>t.appellation===key).length;
+                if(count===0) return null;
+                const active=filterAppellation===key;
+                return (
+                  <button key={key} onClick={()=>setFilterAppellation(active?"":key)}
+                    style={{padding:"5px 14px",borderRadius:"4px",border:`1px solid ${active?apc.color:apc.border}`,background:active?apc.bg:"transparent",color:active?apc.color:"#7a6840",fontSize:"12px",cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:"5px"}}>
+                    <span style={{width:"7px",height:"7px",borderRadius:"50%",background:apc.color,display:"inline-block"}}/>
+                    {apc.label} ({count})
+                  </button>
+                );
+              })}
+            </div>
+            <div style={{display:"flex",gap:"10px",marginBottom:"14px",alignItems:"center"}}>
+              <input style={{...s.inp,maxWidth:"220px"}} placeholder="Recherche fût ou cuvée..." value={searchFut} onChange={e=>setSearchFut(e.target.value)}/>
+              <select style={{...s.sel,maxWidth:"200px"}} value={filterDenom} onChange={e=>setFilterDenom(e.target.value)}>
+                <option value="">Toutes les cuvées</option>
+                {[...new Set(filteredTonneaux.map(t=>t.denomination))].sort().map(d=><option key={d} value={d}>{d}</option>)}
+              </select>
+              <div style={{display:"flex",gap:"4px"}}>
+                {[["","Tous"],["actif","Actifs"],["vide","Vides"]].map(([val,lbl])=>(
+                  <button key={val} onClick={()=>setFilterStatut(val)} style={{padding:"3px 10px",borderRadius:"4px",border:`0.5px solid ${filterStatut===val?"#b8860b":"#d4c4a0"}`,background:filterStatut===val?"#f5e8cc":"transparent",color:filterStatut===val?"#7a5200":"#9a8870",fontSize:"11px",cursor:"pointer"}}>{lbl}</button>
+                ))}
+              </div>
+              <span style={{color:"#8a7248",fontSize:"11px",marginLeft:"auto"}}>{filteredTonneaux.length} fûts</span>
+              <button style={s.btnSm} onClick={()=>{setFutForm(EMPTY_FUT);setEditingFut(null);setShowFutForm(true);}}>
+                <i className="ti ti-plus" style={{marginRight:"3px"}}/>Ajouter
+              </button>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))",gap:"8px"}}>
+              {filteredTonneaux.map(t=><FutCard key={t.id} t={t}/>)}
+            </div>
+            </div>}
+          </div>
+        )}
+
+
         {/* -- VENDANGES -- */}
         {view==="vendanges" && (
           <div style={{display:"grid",gridTemplateColumns:"clamp(200px,1fr,1fr) clamp(200px,260px,30vw)",gap:"16px",alignItems:"start"}}>
