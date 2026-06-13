@@ -547,6 +547,12 @@ export default function App() {
   const [showParcelleForm, setShowParcelleForm] = useState(false);
   const [editingParcelle,  setEditingParcelle]  = useState(null);
   const [parcelleForm,     setParcelleForm]     = useState({nom:"",cepage:"",certification:"BIO",surface:"",commune:"",observations:""});
+  const [cuvesCuverie,     setCuvesCuverie]     = useState([]);
+  const [showCuverieForm,  setShowCuverieForm]  = useState(false);
+  const [editingCuverie,   setEditingCuverie]   = useState(null);
+  const CUVERIE_EMPTY = {nom:"",type:"debourbage",volumeHL:"",contenuActuelHL:"0",notes:""};
+  const [cuverieForm,      setCuverieForm]      = useState(CUVERIE_EMPTY);
+  const [tonneauxTab,      setTonneauxTab]      = useState("futscuves");
   const VENDANGE_EMPTY = {
     annee: new Date().getFullYear().toString(),
     date: new Date().toISOString().slice(0,10),
@@ -1711,6 +1717,60 @@ export default function App() {
         {/* -- TONNEAUX -- */}
         {view==="tonneaux" && (
           <div>
+            {/* Onglets principaux */}
+            <div style={{display:"flex",gap:"0",marginBottom:"20px",borderBottom:"1px solid #d4c4a0"}}>
+              {[["futscuves","Futs et Cuves"],["cuverie","Cuverie"]].map(([key,lbl])=>(
+                <button key={key} onClick={()=>setTonneauxTab(key)} style={{padding:"10px 20px",border:"none",borderBottom:tonneauxTab===key?"2px solid #b8860b":"2px solid transparent",background:"transparent",color:tonneauxTab===key?"#7a5200":"#9a8870",fontWeight:tonneauxTab===key?500:400,fontSize:"13px",cursor:"pointer",fontFamily:"Georgia,serif"}}>
+                  {lbl}
+                </button>
+              ))}
+            </div>
+
+            {tonneauxTab==="cuverie"&&(
+              <div>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"16px"}}>
+                  <div style={{fontSize:"13px",color:"#7a6840"}}>{cuvesCuverie.length} cuve(s) de cuverie</div>
+                  <button style={s.btn} onClick={()=>{setCuverieForm(CUVERIE_EMPTY);setEditingCuverie(null);setShowCuverieForm(true);}}>+ Nouvelle cuve</button>
+                </div>
+                {cuvesCuverie.length===0&&(
+                  <div style={{...s.card,textAlign:"center",padding:"40px",color:"#9a8870"}}>
+                    <div style={{fontSize:"24px",marginBottom:"12px"}}>Aucune cuve de cuverie</div>
+                    <div style={{fontSize:"13px",marginBottom:"16px"}}>Ajoutez vos cuves de debourbage et d assemblage.</div>
+                  </div>
+                )}
+                {cuvesCuverie.length>0&&(
+                  <div style={{display:"grid",gap:"12px"}}>
+                    {cuvesCuverie.map(c=>(
+                      <div key={c.id} style={{...s.card,borderLeft:`3px solid ${c.type==="debourbage"?"#185FA5":"#1a7a40"}`}}>
+                        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr auto",gap:"16px",alignItems:"center"}}>
+                          <div>
+                            <div style={{fontWeight:500,color:"#1a1205",fontSize:"14px"}}>{c.nom}</div>
+                            <div style={{fontSize:"11px",color:"#9a8870",marginTop:"2px"}}>
+                              <span style={{background:c.type==="debourbage"?"#e8f0fb":"#d4f0dd",color:c.type==="debourbage"?"#185FA5":"#1a7a40",borderRadius:"3px",padding:"1px 6px",fontSize:"10px"}}>{c.type==="debourbage"?"Debourbage":"Assemblage"}</span>
+                            </div>
+                          </div>
+                          <div>
+                            <div style={s.lbl}>Volume total</div>
+                            <div style={{fontWeight:500,color:"#1a1205"}}>{c.volumeHL} HL</div>
+                          </div>
+                          <div>
+                            <div style={s.lbl}>Contenu actuel</div>
+                            <div style={{fontWeight:500,color:parseFloat(c.contenuActuelHL)>0?"#b8860b":"#9a8870"}}>{c.contenuActuelHL||"0"} HL</div>
+                            {c.notes&&<div style={{fontSize:"11px",color:"#9a8870",fontStyle:"italic",marginTop:"2px"}}>{c.notes}</div>}
+                          </div>
+                          <div style={{display:"flex",gap:"6px"}}>
+                            <button style={{...s.ghostSm,fontSize:"10px"}} onClick={()=>{setCuverieForm({nom:c.nom,type:c.type,volumeHL:c.volumeHL,contenuActuelHL:c.contenuActuelHL||"0",notes:c.notes||""});setEditingCuverie(c);setShowCuverieForm(true);}}>Mod.</button>
+                            <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>{if(window.confirm("Supprimer cette cuve ?")){setCuvesCuverie(prev=>prev.filter(x=>x.id!==c.id));fbDelete("cuvesCuverie",c.id);}}}>Sup.</button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {tonneauxTab==="futscuves"&&<div>
             {/* Onglets appellation */}
             <div style={{display:"flex",gap:"6px",marginBottom:"16px",flexWrap:"wrap",overflowX:"auto"}}>
               <button onClick={()=>setFilterAppellation("")}
@@ -3134,6 +3194,55 @@ export default function App() {
           </div>
         )}
       </div>
+
+      {/* == MODAL CUVERIE == */}
+      {showCuverieForm&&(
+        <div style={s.modal}>
+          <div style={{...s.modalBox,width:"440px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#7a5200"}}>{editingCuverie?"Modifier la cuve":"Nouvelle cuve de cuverie"}</div>
+              <button style={s.ghost} onClick={()=>setShowCuverieForm(false)}>x</button>
+            </div>
+            <div style={{display:"grid",gap:"12px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                <div><span style={s.lbl}>Nom / ID *</span>
+                  <input style={s.inp} placeholder="ex. D1, Cuve-01" value={cuverieForm.nom} onChange={e=>setCuverieForm(f=>({...f,nom:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Type</span>
+                  <select style={s.sel} value={cuverieForm.type} onChange={e=>setCuverieForm(f=>({...f,type:e.target.value}))}>
+                    <option value="debourbage">Debourbage</option>
+                    <option value="assemblage">Assemblage</option>
+                  </select></div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                <div><span style={s.lbl}>Volume total (HL)</span>
+                  <input type="number" step="0.1" style={s.inp} placeholder="ex. 50" value={cuverieForm.volumeHL} onChange={e=>setCuverieForm(f=>({...f,volumeHL:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Contenu actuel (HL)</span>
+                  <input type="number" step="0.1" style={s.inp} placeholder="0" value={cuverieForm.contenuActuelHL} onChange={e=>setCuverieForm(f=>({...f,contenuActuelHL:e.target.value}))}/></div>
+              </div>
+              <div><span style={s.lbl}>Notes</span>
+                <input style={s.inp} placeholder="ex. Inox 50HL..." value={cuverieForm.notes||""} onChange={e=>setCuverieForm(f=>({...f,notes:e.target.value}))}/></div>
+              <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
+                <button style={s.ghost} onClick={()=>setShowCuverieForm(false)}>Annuler</button>
+                <button style={s.btn} onClick={()=>{
+                  if(!cuverieForm.nom.trim()) return alert("Nom requis.");
+                  if(editingCuverie) {
+                    const updated = {...editingCuverie,...cuverieForm};
+                    setCuvesCuverie(prev=>prev.map(x=>x.id===editingCuverie.id?updated:x));
+                    fbSave("cuvesCuverie",editingCuverie.id,updated);
+                  } else {
+                    const c = {id:"cuverie_"+Date.now(),...cuverieForm,timestamp:new Date().toISOString()};
+                    setCuvesCuverie(prev=>[c,...prev]);
+                    fbSave("cuvesCuverie",c.id,c);
+                  }
+                  setShowCuverieForm(false);
+                  setEditingCuverie(null);
+                  setCuverieForm(CUVERIE_EMPTY);
+                }}>Enregistrer</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* == MODAL MOUVEMENT == */}
       {showMvtForm&&(
