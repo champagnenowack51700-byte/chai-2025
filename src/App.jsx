@@ -2940,6 +2940,1374 @@ export default function App() {
           </div>
         )}
 
+        {/* -- DÉGUSTATIONS (vue globale) -- */}
+        {view==="degustations" && (
+          <div style={{display:"grid",gridTemplateColumns:"1fr 280px",gap:"20px",alignItems:"start"}}>
+
+            {/* Colonne principale */}
+            <div>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px"}}>
+                <div style={{fontSize:"13px",color:"#7a6840"}}>{degustations.length} notes · {[...new Set(degustations.map(d=>d.session))].length} sessions · {futsAvecNotes.length} fûts</div>
+                <div style={{display:"flex",gap:"8px"}}>
+                  <button style={s.ghost} onClick={()=>setShowImport(true)}>
+                    <i className="ti ti-file-import" style={{marginRight:"4px"}}/>Importer (CSV)
+                  </button>
+                  <button style={s.btn} onClick={()=>{setDegForm({futId:"",session:"",date:new Date().toISOString().slice(0,10),lignes:degustateurs.filter(d=>d.actif).map(d=>({degustateur:d.nom,boise:"",longueur:"",noteG:"",commentaire:""}))});setShowDegForm(true);}}>
+                    <i className="ti ti-plus" style={{marginRight:"4px"}}/>Nouvelle dégustation
+                  </button>
+                </div>
+              </div>
+
+              {/* Barre de filtres */}
+              <div style={{display:"flex",gap:"8px",marginBottom:"14px",flexWrap:"wrap",alignItems:"center",padding:"10px 14px",background:"#fffbf3",border:"1px solid #cfc0a0",borderRadius:"8px"}}>
+                <i className="ti ti-filter" style={{fontSize:"14px",color:"#b8860b",flexShrink:0}}/>
+                <input style={{...s.inp,maxWidth:"150px",padding:"5px 9px",fontSize:"12px"}}
+                  placeholder="N° fût..." value={filterDegFut}
+                  onChange={e=>setFilterDegFut(e.target.value)}/>
+                <select style={{...s.sel,maxWidth:"190px",padding:"5px 9px",fontSize:"12px"}}
+                  value={filterDegCuvee} onChange={e=>setFilterDegCuvee(e.target.value)}>
+                  <option value="">Toutes les cuvées</option>
+                  {cuveeOptions.map(c=><option key={c} value={c}>{c}</option>)}
+                </select>
+                <select style={{...s.sel,maxWidth:"170px",padding:"5px 9px",fontSize:"12px"}}
+                  value={filterDegFabric} onChange={e=>setFilterDegFabric(e.target.value)}>
+                  <option value="">Tous les fabricants</option>
+                  {fabricOptions.map(f=><option key={f} value={f}>{f}</option>)}
+                </select>
+                {hasFilter && (
+                  <button style={{...s.ghostSm,color:"#cc2222",borderColor:"#e8888855",fontSize:"11px"}}
+                    onClick={()=>{setFilterDegFut("");setFilterDegCuvee("");setFilterDegFabric("");}}>
+                    <i className="ti ti-x" style={{marginRight:"3px"}}/>Réinitialiser
+                  </button>
+                )}
+                <span style={{marginLeft:"auto",fontSize:"11px",color:"#8a7248"}}>{futsFiltres.length} / {futsAvecNotes.length} fûts</span>
+              </div>
+
+              <div style={s.card}>
+                <div style={{overflowX:"auto"}}>
+                  <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
+                    <thead>
+                      <tr style={{borderBottom:"2px solid #d4c4a0",background:"#fff8ee"}}>
+                        {["N° Fût","Cuvée","Fabricant","Mill.","Moy. Note G","Moy. Boisé","Moy. Long.","Nb notes","Sessions"].map(h=>(
+                          <th key={h} style={{textAlign:"left",padding:"8px 10px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#8a7248",fontWeight:600}}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {futsFiltres.sort((a,b)=>(avgNoteG(b.id)||0)-(avgNoteG(a.id)||0)).map((t,i)=>{
+                        const ng=avgNoteG(t.id); const nb=avgBoise(t.id); const nl=avgLong(t.id);
+                        return (
+                          <tr key={t.id}
+                            style={{borderBottom:"1px solid #e8dcc6",cursor:"pointer",background:i%2===0?"transparent":"#fffbf3",transition:"background 0.1s"}}
+                            onClick={()=>{setSelectedFut(t.id);setView("fiche");setFicheTab("degustations");}}>
+                            <td style={{padding:"9px 10px",color:"#b8860b",fontWeight:700,fontFamily:"'IBM Plex Mono',monospace"}}>{t.id}</td>
+                            <td style={{padding:"9px 10px",color:"#1a1205",fontWeight:500,maxWidth:"160px"}}>
+                              <div style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.denomination}</div>
+                            </td>
+                            <td style={{padding:"9px 10px"}}>
+                              {t.tonnelier
+                                ? <span style={{background:"#fce8a8",color:"#7a5200",border:"1px solid #e0c050",borderRadius:"3px",padding:"1px 7px",fontSize:"11px",fontWeight:600,whiteSpace:"nowrap"}}>{t.tonnelier}</span>
+                                : <span style={{color:"#c0b090",fontSize:"11px"}}>-</span>
+                              }
+                            </td>
+                            <td style={{padding:"9px 10px",color:"#6a5838",fontFamily:"'IBM Plex Mono',monospace"}}>{t.millesime||"-"}</td>
+                            <td style={{padding:"9px 10px"}}>
+                              <div style={{display:"flex",alignItems:"center",gap:"6px"}}>
+                                <div style={{width:"44px",height:"5px",background:"#e8dcc6",borderRadius:"3px",overflow:"hidden"}}>
+                                  <div style={{width:`${((ng||0)/5)*100}%`,height:"100%",background:ng>=4?"#1a7a40":ng>=3?"#b8860b":"#cc6622",borderRadius:"3px"}}/>
+                                </div>
+                                <span style={{fontWeight:700,color:ng>=4?"#1a7a40":ng>=3?"#b8860b":"#8a7248",fontFamily:"'IBM Plex Mono',monospace",minWidth:"28px"}}>{ng?.toFixed(1)||"-"}</span>
+                              </div>
+                            </td>
+                            <td style={{padding:"9px 10px",color:"#6a5838",fontFamily:"'IBM Plex Mono',monospace"}}>{nb?.toFixed(1)||"-"}</td>
+                            <td style={{padding:"9px 10px",color:"#6a5838",fontFamily:"'IBM Plex Mono',monospace"}}>{nl?.toFixed(1)||"-"}</td>
+                            <td style={{padding:"9px 10px",color:"#7a6840",textAlign:"center"}}>{notesForFut(t.id).length}</td>
+                            <td style={{padding:"9px 10px",color:"#8a7248",fontSize:"11px",maxWidth:"120px"}}>
+                              <div style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{sessions(t.id).join(", ")}</div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                      {futsFiltres.length===0&&(
+                        <tr><td colSpan={9} style={{padding:"24px 10px",color:"#8a7248",fontSize:"13px",textAlign:"center"}}>
+                          {hasFilter?"Aucun fût ne correspond aux filtres.":"Aucune note encore."}
+                        </td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            {/* Colonne droite - gestion des dégustateurs */}
+            <div style={s.card}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px"}}>
+                <span style={{...s.lbl,marginBottom:0}}>Dégustateurs</span>
+                {editingDeg && (
+                  <div style={{display:"flex",gap:"6px"}}>
+                    <button style={s.ghostSm} onClick={()=>setEditingDeg(false)}>Annuler</button>
+                    <button style={s.btnSm} onClick={()=>{setDegustateurs(degDraft.filter(d=>d.nom.trim()));setEditingDeg(false);}}>
+                      <i className="ti ti-check" style={{marginRight:"3px"}}/>Sauver
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {!editingDeg ? (
+                <div>
+                  {degustateurs.map((d,i)=>(
+                    <div key={i} style={{display:"flex",alignItems:"center",gap:"8px",padding:"7px 0",borderBottom:"1px solid #d0c4a0",opacity:d.actif?1:0.45}}>
+                      <div style={{width:"26px",height:"26px",borderRadius:"50%",background:d.actif?"#b8860b22":"#2a2a2c",border:`1px solid ${d.actif?"#b8860b33":"#3a3a3c"}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"11px",fontWeight:600,color:d.actif?"#b8860b":"#555",flexShrink:0}}>
+                        {d.nom.charAt(0).toUpperCase()}
+                      </div>
+                      <span style={{fontSize:"13px",color:d.actif?"#e8e4d8":"#555",flex:1}}>{d.nom}</span>
+                      <span style={{fontSize:"10px",color:"#8a7248",marginRight:"4px"}}>{degustations.filter(dg=>dg.degustateur===d.nom).length}</span>
+                      <button title={d.actif?"Marquer absent":"Marquer présent"}
+                        style={{...s.ghostSm,padding:"3px 7px",color:d.actif?"#555":"#c47800",borderColor:d.actif?"#2a2a2c":"#854F0B44",fontSize:"11px"}}
+                        onClick={()=>toggleActif(i)}>
+                        {d.actif
+                          ? <><i className="ti ti-eye-off" style={{fontSize:"13px",verticalAlign:"middle"}}/></>
+                          : <><i className="ti ti-eye" style={{fontSize:"13px",verticalAlign:"middle"}}/></>
+                        }
+                      </button>
+                    </div>
+                  ))}
+                  <div style={{marginTop:"10px",padding:"8px",background:"#fffbf3",borderRadius:"5px",fontSize:"11px",color:"#8a7248"}}>
+                    {degustateurs.filter(d=>!d.actif).length===0
+                      ? "Tous présents - les absents sont masqués du formulaire de saisie."
+                      : `${degustateurs.filter(d=>!d.actif).length} absent(s) - masqué(s) du prochain formulaire.`
+                    }
+                  </div>
+                  <button style={{...s.ghostSm,width:"100%",marginTop:"10px",textAlign:"center"}}
+                    onClick={()=>{setDegDraft(degustateurs.map(d=>({...d})));setEditingDeg(true);}}>
+                    <i className="ti ti-pencil" style={{marginRight:"3px"}}/>Renommer / Ajouter
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <div style={{fontSize:"11px",color:"#7a6840",marginBottom:"10px"}}>Laissez vide pour supprimer. Les notes existantes sont conservées.</div>
+                  {degDraft.map((d,i)=>(
+                    <div key={i} style={{display:"flex",alignItems:"center",gap:"6px",marginBottom:"6px"}}>
+                      <input style={{...s.inp,padding:"6px 8px",fontSize:"12px",flex:1}} value={d.nom}
+                        onChange={e=>{const nd=[...degDraft];nd[i]={...nd[i],nom:e.target.value};setDegDraft(nd);}}
+                        placeholder={`Dégustateur ${i+1}`}/>
+                      <button style={{...s.ghostSm,padding:"5px 7px",color:"#cc2222",borderColor:"#A32D2D33",flexShrink:0}}
+                        onClick={()=>setDegDraft(degDraft.filter((_,j)=>j!==i))}>
+                        <i className="ti ti-x"/>
+                      </button>
+                    </div>
+                  ))}
+                  <button style={{...s.ghostSm,width:"100%",marginTop:"6px",textAlign:"center"}}
+                    onClick={()=>setDegDraft([...degDraft,{nom:"",actif:true}])}>
+                    <i className="ti ti-plus" style={{marginRight:"3px"}}/>Ajouter une ligne
+                  </button>
+                </div>
+              )}
+            </div>
+
+          </div>
+        )}
+
+        {/* -- FICHE FÛT -- */}
+        {view==="fiche" && selectedT && (
+            <div>
+              <button style={{...s.ghost,marginBottom:"16px"}} onClick={()=>setView("tonneaux")}>Retour Tonneaux</button>
+              <div style={{display:"grid",gridTemplateColumns:"clamp(240px,30vw,300px) 1fr",gap:"20px"}}>
+                {/* Colonne gauche */}
+                <div>
+                  <div style={s.card}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"start",marginBottom:"14px"}}>
+                      <div>
+                        <div style={{fontFamily:"'Playfair Display',serif",fontSize:"22px",color:"#b8860b"}}>{selectedT.id}</div>
+                        <div style={{fontSize:"12px",color:"#6a5838",marginTop:"2px"}}>{selectedT.denomination}</div>
+                        {selectedT.appellation && <div style={{marginTop:"6px",display:"inline-flex",alignItems:"center",gap:"5px",padding:"2px 8px",borderRadius:"3px",background:getApc(selectedT.appellation).bg,border:`1px solid ${getApc(selectedT.appellation).border}`,fontSize:"10px",color:getApc(selectedT.appellation).color,letterSpacing:"0.06em",textTransform:"uppercase"}}>
+                            <span style={{width:"5px",height:"5px",borderRadius:"50%",background:getApc(selectedT.appellation).color}}/>
+                            {getApc(selectedT.appellation).label}
+                          </div>}
+                      </div>
+                      <span style={s.tag(selectedT.statut==="surveillance"?"#c47800":selectedT.contenuActuel<10?"#cc2222":"#1a7a40")}>
+                        {selectedT.statut==="surveillance"?"surveillance":selectedT.contenuActuel<10?"vide":"actif"}
+                      </span>
+                    </div>
+                    <div style={{marginBottom:"14px"}}>
+                      <div style={{display:"flex",justifyContent:"space-between",fontSize:"10px",color:"#7a6840",marginBottom:"5px"}}>
+                        <span>Niveau</span><span style={{color:"#b8860b",fontWeight:600}}>{selectedT.contenuActuel}L / {selectedT.volume}L ({selectedP}%)</span>
+                      </div>
+                      <div style={{background:"#fffbf3",borderRadius:"2px",height:"6px",overflow:"hidden"}}>
+                        <div style={{width:`${selectedP}%`,height:"100%",background:selectedP<20?"#cc2222":"#b8860b",borderRadius:"2px"}}/>
+                      </div>
+                    </div>
+                    {[["N Marc",selectedT.marc||"-"],["Millesime vin",selectedT.millesime||"-"],["Certification",selectedT.certif||"-"],["Tonnelier",selectedT.tonnelier||"-"],["Grain",selectedT.grain||"-"],["Chauffe",selectedT.chauffe||"-"],["Capacite",`${selectedT.volume} L`]].map(([k,v])=>(
+                      <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:"1px solid #d0c4a0",fontSize:"12px"}}>
+                        <span style={{color:"#8a7248"}}>{k}</span><span style={{color:"#1a1205"}}>{v}</span>
+                      </div>
+                    ))}
+                    {avgNoteG(selectedT.id)!=null&&(
+                      <div style={{marginTop:"14px",padding:"10px",background:"#fffbf3",borderRadius:"6px"}}>
+                        <div style={{fontSize:"10px",color:"#8a7248",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:"6px"}}>Note dégustation</div>
+                        <div style={{display:"flex",gap:"16px"}}>
+                          <div><div style={{fontSize:"18px",fontWeight:600,color:avgNoteG(selectedT.id)>=4?"#1a7a40":"#b8860b"}}>{avgNoteG(selectedT.id)?.toFixed(1)}<span style={{fontSize:"11px",color:"#8a7248"}}>/5</span></div><div style={{fontSize:"10px",color:"#8a7248"}}>Note globale</div></div>
+                          {avgBoise(selectedT.id)&&<div><div style={{fontSize:"18px",fontWeight:600,color:"#5a4a30"}}>{avgBoise(selectedT.id)?.toFixed(1)}</div><div style={{fontSize:"10px",color:"#8a7248"}}>Boisé</div></div>}
+                          {avgLong(selectedT.id)&&<div><div style={{fontSize:"18px",fontWeight:600,color:"#5a4a30"}}>{avgLong(selectedT.id)?.toFixed(1)}</div><div style={{fontSize:"10px",color:"#8a7248"}}>Longueur</div></div>}
+                        </div>
+                      </div>
+                    )}
+                    {selectedT.commentaire&&(
+                        <div style={{margin:"8px 0 12px",padding:"9px 12px",background:"#fff8ee",borderRadius:"6px",border:"1px solid #d4c4a0"}}>
+                          <div style={{fontSize:"10px",letterSpacing:"0.08em",textTransform:"uppercase",color:"#9a8870",marginBottom:"4px",fontFamily:"monospace"}}>Notes</div>
+                          <div style={{color:"#1a1205",fontSize:"12px",lineHeight:"1.6"}}>{selectedT.commentaire}</div>
+                        </div>
+                      )}
+                    <div style={{display:"flex",gap:"6px",marginTop:"14px",flexWrap:"wrap"}}>
+                      <button style={{...s.ghostSm,color:"#533AB7",borderColor:"#533AB744",width:"100%",textAlign:"center",marginBottom:"6px"}}
+                        onClick={()=>{setCampFutId(selectedT.id);setCampForm({annee:new Date().getFullYear().toString(),denomination:selectedT.denomination,millesime:selectedT.millesime||"",notes:""});setShowCampForm(true);}}>
+                        + Nouvelle campagne
+                      </button>
+                      <button style={s.btnSm} onClick={()=>{setMvtForm(f=>({...f,futDest:selectedT.id,type:"ouillage"}));setShowMvtForm(true);}}>Ouiller</button>
+                      <button style={s.ghostSm} onClick={()=>{setMvtForm(f=>({...f,futSource:[selectedT.id],type:"soutirage"}));setShowMvtForm(true);}}>Soutirer</button>
+                      <button style={s.ghostSm} onClick={()=>{setDegForm({futId:selectedT.id,session:"",date:new Date().toISOString().slice(0,10),lignes:degustateurs.filter(d=>d.actif).map(d=>({degustateur:d.nom,boise:"",longueur:"",noteG:"",commentaire:""}))});setShowDegForm(true);}}>+ Dégustation</button>
+                    </div>
+                    {selectedT.appellation&&selectedT.appellation.startsWith("vins_clairs")&&(
+                      <div style={{marginTop:"8px"}}>
+                        <button style={{...s.ghostSm,color:"#BA7517",borderColor:"#BA751744",width:"100%",justifyContent:"center",display:"flex",alignItems:"center",gap:"5px",padding:"6px 10px"}}
+                          onClick={()=>{if(window.confirm(`Passer le fût "${selectedT.id}" en Vin de réserve ?`)) passerEnReserve(selectedT.id);}}>
+                          <i className="ti ti-arrow-right" style={{fontSize:"12px"}}/>
+                          Passer en Vin de réserve
+                        </button>
+                      </div>
+                    )}
+                    <div style={{display:"flex",gap:"6px",marginTop:"6px",paddingTop:"10px",borderTop:"1px solid #e8dcc6"}}>
+                      <button style={{...s.ghostSm,color:"#5a4a30"}} onClick={()=>openEditFut(selectedT)}>
+                        <i className="ti ti-pencil" style={{marginRight:"3px"}}/>Modifier
+                      </button>
+                      <button style={{...s.ghostSm,color:"#cc2222",borderColor:"#A32D2D33"}} onClick={()=>deleteFut(selectedT.id)}>
+                        <i className="ti ti-trash" style={{marginRight:"3px"}}/>Supprimer
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                {/* Colonne droite - onglets */}
+                <div style={s.card}>
+                  <div style={{display:"flex",borderBottom:"1px solid #cfc0a0",marginBottom:"16px",gap:"0"}}>
+                    {[["degustations",`Degustations (${notesForFut(selectedT.id).length})`],["mouvements",`Mouvements (${selectedMvts.length})`],["historique","Historique"]].map(([tab,lbl])=>(
+                      <button key={tab} style={s.tabBtn(ficheTab===tab)} onClick={()=>setFicheTab(tab)}>{lbl}</button>
+                    ))}
+                  </div>
+
+                  {ficheTab==="degustations"&&<NoteResume futId={selectedT.id}/>}
+                  {ficheTab==="mouvements"&&(
+                    <div>
+                      {selectedMvts.length===0&&<div style={{color:"#8a7248",fontSize:"13px"}}>Aucun mouvement enregistré.</div>}
+                      {selectedMvts.map(m=><MvtRow key={m.id} m={m}/>)}
+                    </div>
+                  )}
+
+                  {ficheTab==="historique"&&(()=>{
+                    const mvtsParAn = {};
+                    selectedMvts.forEach(m=>{ const y=m.date?m.date.slice(0,4):"?"; if(!mvtsParAn[y]) mvtsParAn[y]=[]; mvtsParAn[y].push(m); });
+                    const notesParAn = {};
+                    notesForFut(selectedT.id).forEach(n=>{ const y=n.date?n.date.slice(0,4):"?"; if(!notesParAn[y]) notesParAn[y]=[]; notesParAn[y].push(n); });
+                    const allYears=[...new Set([...Object.keys(mvtsParAn),...Object.keys(notesParAn)])].sort().reverse();
+                    return (
+                      <div>
+                        {allYears.length===0&&<div style={{color:"#9a8870",fontStyle:"italic",padding:"12px 0"}}>Aucun historique.</div>}
+                        {allYears.map(year=>(
+                          <div key={year} style={{marginBottom:"16px"}}>
+                            <div style={{fontFamily:"Georgia,serif",fontSize:"15px",color:"#b8860b",borderBottom:"0.5px solid #d4c4a0",paddingBottom:"6px",marginBottom:"8px"}}>
+                              Campagne {year}
+                              {mvtsParAn[year]&&<span style={{fontSize:"11px",color:"#9a8870",fontWeight:400,marginLeft:"8px"}}>{mvtsParAn[year].length} mvt(s)</span>}
+                              {notesParAn[year]&&<span style={{fontSize:"11px",color:"#9a8870",fontWeight:400,marginLeft:"8px"}}>{notesParAn[year].length} deg.</span>}
+                            </div>
+                            {(mvtsParAn[year]||[]).map((m,i)=>(
+                              <div key={i} style={{display:"flex",gap:"8px",padding:"5px 0",borderBottom:"0.5px solid #ede5d4",fontSize:"12px"}}>
+                                <div style={{width:"80px",color:"#9a8870",flexShrink:0}}>{m.date}</div>
+                                <div style={{flex:1}}>
+                                  <span style={{background:"#e8f0e8",color:"#2d6a00",borderRadius:"3px",padding:"1px 6px",fontSize:"10px",marginRight:"6px"}}>{m.type}</span>
+                                  {m.lieuDepart&&<span style={{color:"#6a5838"}}>{m.lieuDepart}</span>}
+                                  {m.lieuArrivee&&<span style={{color:"#9a8870"}}> -> {m.lieuArrivee}</span>}
+                                  {m.volume&&<span style={{color:"#b8860b",fontFamily:"monospace",marginLeft:"6px",fontWeight:500}}>{m.volume}L</span>}
+                                  {m.notes&&<div style={{color:"#9a8870",fontStyle:"italic",fontSize:"11px"}}>{m.notes}</div>}
+                                </div>
+                              </div>
+                            ))}
+                            {(notesParAn[year]||[]).map((n,i)=>(
+                              <div key={i} style={{display:"flex",gap:"8px",padding:"5px 0",borderBottom:"0.5px solid #ede5d4",fontSize:"12px"}}>
+                                <div style={{width:"80px",color:"#9a8870",flexShrink:0}}>{n.date}</div>
+                                <div style={{flex:1}}>
+                                  <span style={{background:"#f0e8f8",color:"#6a2d6a",borderRadius:"3px",padding:"1px 6px",fontSize:"10px",marginRight:"6px"}}>Degustation</span>
+                                  <span style={{color:"#6a5838"}}>{n.degustateur}</span>
+                                  {n.noteG&&<span style={{background:"#fde8b8",color:"#7a5200",borderRadius:"3px",padding:"1px 6px",fontSize:"10px",marginLeft:"6px"}}>{n.noteG}/5</span>}
+                                  {n.commentaire&&<div style={{color:"#9a8870",fontStyle:"italic",fontSize:"11px"}}>{n.commentaire}</div>}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
+
+                </div>
+              </div>
+            </div>
+          )}
+
+        {/* -- VIGNE -- */}
+        {view==="vigne" && (()=>{
+          const allTraits = [...traitements].sort((a,b)=>new Date(b.date)-new Date(a.date));
+          const campagnes = [...new Set(allTraits.map(t=>t.campagne))].sort().reverse();
+          const traitsFiltres = filterTraitAn ? allTraits.filter(t=>t.campagne===filterTraitAn) : allTraits;
+          const biodyFiltres  = filterTraitAn ? biodynamies.filter(b=>b.campagne===filterTraitAn) : biodynamies;
+          const amendFiltres  = filterTraitAn ? amendements.filter(a=>a.campagne===filterTraitAn) : amendements;
+          const cuivreParCampagne = {};
+          campagnes.forEach(c=>{
+            cuivreParCampagne[c] = allTraits.filter(t=>t.campagne===c).reduce((s,t)=>s+(parseFloat(t.cuivreTotal)||0),0);
+          });
+          const closed = isCampagneClosed(filterTraitAn);
+          return (
+            <div>
+              {/* Header */}
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px",flexWrap:"wrap",gap:"8px"}}>
+                <div style={{fontSize:"13px",color:"#7a6840"}}>{allTraits.length} traitement(s)</div>
+                <div style={{display:"flex",gap:"8px",alignItems:"center"}}>
+                  {filterTraitAn && !closed && (
+                    <button style={{...s.ghost,fontSize:"11px",color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>cloturerCampagne(filterTraitAn)}>
+                      Cloture campagne {filterTraitAn}
+                    </button>
+                  )}
+                  {filterTraitAn && closed && (
+                    <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
+                      <span style={{background:"#fdd0d0",color:"#cc2222",borderRadius:"4px",padding:"3px 10px",fontSize:"11px",fontFamily:"monospace"}}>Campagne {filterTraitAn} cloturee</span>
+                      <button style={{...s.ghost,fontSize:"10px"}} onClick={()=>rouvrirCampagne(filterTraitAn)}>Rouvrir</button>
+                    </div>
+                  )}
+                  {!closed && vigneTab==="traitements" && (
+                    <button style={s.btn} onClick={()=>{setTraitForm({...TRAIT_EMPTY,campagne:filterTraitAn||new Date().getFullYear().toString()});setEditingTrait(null);setShowTraitForm(true);}}>
+                      + Traitement
+                    </button>
+                  )}
+                  {!closed && vigneTab==="biodynamie" && (
+                    <button style={s.btn} onClick={()=>{setBiodyForm(f=>({...f,campagne:filterTraitAn||new Date().getFullYear().toString()}));setShowBiodyForm(true);}}>
+                      + Biodynamie
+                    </button>
+                  )}
+                  {!closed && vigneTab==="amendements" && (
+                    <button style={s.btn} onClick={()=>{setAmendForm(f=>({...f,campagne:filterTraitAn||new Date().getFullYear().toString()}));setShowAmendForm(true);}}>
+                      + Amendement
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Filtre campagne */}
+              <div style={{display:"flex",gap:"6px",marginBottom:"14px",flexWrap:"wrap",alignItems:"center"}}>
+                <span style={{fontSize:"10px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#9a8870",fontFamily:"monospace",marginRight:"4px"}}>Campagne :</span>
+                {campagnes.map(c=>(
+                  <button key={c} onClick={()=>setFilterTraitAn(c)}
+                    style={{padding:"4px 10px",borderRadius:"4px",border:`0.5px solid ${filterTraitAn===c?"#2d6a00":"#d4c4a0"}`,background:filterTraitAn===c?"#d4edc0":"transparent",color:filterTraitAn===c?"#2d6a00":"#9a8870",fontSize:"11px",cursor:"pointer",fontFamily:"monospace",display:"flex",alignItems:"center",gap:"4px"}}>
+                    {c}
+                    {isCampagneClosed(c)&&<span style={{fontSize:"9px",color:"#cc2222"}}>cloturee</span>}
+                    <span style={{background:cuivreParCampagne[c]>3000?"#fdd0d0":cuivreParCampagne[c]>2000?"#fde8b8":"#d4edc0",color:cuivreParCampagne[c]>3000?"#cc2222":cuivreParCampagne[c]>2000?"#c47800":"#2d6a00",borderRadius:"3px",padding:"0 4px",fontSize:"10px",fontWeight:500}}>
+                      {(cuivreParCampagne[c]/1000).toFixed(2)}kg Cu
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              {/* KPIs */}
+              {filterTraitAn && vigneTab==="traitements" && (()=>{
+                const cu = cuivreParCampagne[filterTraitAn]||0;
+                return (
+                  <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(120px,1fr))",gap:"8px",marginBottom:"14px"}}>
+                    {[
+                      {lbl:"Traitements",val:traitsFiltres.length},
+                      {lbl:"Total Cuivre",val:`${(cu/1000).toFixed(3)}kg`,col:cu>3000?"#cc2222":cu>2000?"#c47800":"#1a7a40"},
+                      {lbl:"Avril",val:`${traitsFiltres.filter(t=>t.date?.slice(5,7)==="04").reduce((s,t)=>s+(parseFloat(t.cuivreTotal)||0),0)}g`,col:"#185FA5"},
+                      {lbl:"Mai",val:`${traitsFiltres.filter(t=>t.date?.slice(5,7)==="05").reduce((s,t)=>s+(parseFloat(t.cuivreTotal)||0),0)}g`,col:"#185FA5"},
+                      {lbl:"Juin",val:`${traitsFiltres.filter(t=>t.date?.slice(5,7)==="06").reduce((s,t)=>s+(parseFloat(t.cuivreTotal)||0),0)}g`,col:"#185FA5"},
+                      {lbl:"Juillet",val:`${traitsFiltres.filter(t=>t.date?.slice(5,7)==="07").reduce((s,t)=>s+(parseFloat(t.cuivreTotal)||0),0)}g`,col:"#185FA5"},
+                      {lbl:"Aout",val:`${traitsFiltres.filter(t=>t.date?.slice(5,7)==="08").reduce((s,t)=>s+(parseFloat(t.cuivreTotal)||0),0)}g`,col:"#185FA5"},
+                    ].map((k,i)=>(
+                      <div key={i} style={{...s.card,padding:"10px 12px"}}>
+                        <div style={s.lbl}>{k.lbl}</div>
+                        <div style={{fontSize:"16px",fontWeight:500,color:k.col||"#b8860b",lineHeight:1.2}}>{k.val}</div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+
+              {/* Onglets */}
+              <div style={{display:"flex",borderBottom:"0.5px solid #d4c4a0",marginBottom:"16px"}}>
+                {[["traitements","Traitements"],["biodynamie","Biodynamie"],["amendements","Amendements"],["stockprod","Stock Produits"]].map(([tab,lbl])=>(
+                  <button key={tab} style={s.tabBtn(vigneTab===tab)} onClick={()=>setVigneTab(tab)}>{lbl}</button>
+                ))}
+              </div>
+
+              {/* === TRAITEMENTS === */}
+              {vigneTab==="traitements" && (
+                <div style={s.card}>
+                  <div style={{overflowX:"auto"}}>
+                    <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
+                      <thead>
+                        <tr style={{borderBottom:"1px solid #d4c4a0",background:"#fff8ee"}}>
+                          {["N°","Date","Surface","Produits","Cu/ha",""].map(h=>(
+                            <th key={h} style={{textAlign:"left",padding:"7px 10px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#9a8870",fontWeight:500}}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {traitsFiltres.map((t,i)=>{
+                          const currentYear = new Date().getFullYear().toString();
+                          const isHist = t.campagne !== currentYear;
+                          const canEdit = !closed && !isHist;
+                          return (
+                            <tr key={t.id||i} style={{borderBottom:"1px solid #ede5d4",background:i%2===0?"transparent":"#fffbf3"}}>
+                              <td style={{padding:"8px 10px",fontFamily:"monospace",color:"#b8860b",fontWeight:500}}>N°{t.numero}</td>
+                              <td style={{padding:"8px 10px",color:"#6a5838"}}>{t.date}</td>
+                              <td style={{padding:"8px 10px",color:"#6a5838"}}>{t.surface}</td>
+                              <td style={{padding:"8px 10px",maxWidth:"320px"}}>
+                                <div style={{display:"flex",gap:"3px",flexWrap:"wrap"}}>
+                                  {(t.produits||[]).map((p,j)=>(
+                                    <span key={j} style={{background:p.matiereActive==="Cuivre"?"#fde8b8":p.matiereActive==="Soufre"?"#e6f0fb":"#ede5d4",color:p.matiereActive==="Cuivre"?"#7a5200":p.matiereActive==="Soufre"?"#185FA5":"#5f5e5a",borderRadius:"3px",padding:"1px 5px",fontSize:"10px",fontFamily:"monospace",whiteSpace:"nowrap"}}>
+                                      {p.nom} {p.dose}
+                                    </span>
+                                  ))}
+                                </div>
+                                {t.observations&&<div style={{fontSize:"11px",color:"#9a8870",fontStyle:"italic",marginTop:"2px"}}>{t.observations}</div>}
+                              </td>
+                              <td style={{padding:"8px 10px",fontWeight:500,color:parseFloat(t.cuivreTotal)>400?"#cc2222":parseFloat(t.cuivreTotal)>200?"#c47800":"#1a7a40",fontFamily:"monospace",whiteSpace:"nowrap"}}>
+                                {t.cuivreTotal?`${t.cuivreTotal}g`:"-"}
+                              </td>
+                              <td style={{padding:"8px 10px",whiteSpace:"nowrap"}}>
+                                {canEdit ? (
+                                  <div style={{display:"flex",gap:"3px"}}>
+                                    <button style={{...s.ghostSm,fontSize:"10px"}} onClick={()=>{setTraitForm({...TRAIT_EMPTY,...t});setEditingTrait(t);setShowTraitForm(true);}}>Mod.</button>
+                                    <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
+                                      onClick={()=>{if(window.confirm("Supprimer ?")){ setTraitements(prev=>prev.filter(x=>x.id!==t.id)); fbDelete("traitements",t.id||""); if(t.produits?.length>0 && t.surface) deduireStock([], 0, t.produits, t.surface); }}}>Sup.</button>
+                                  </div>
+                                ) : <span style={{fontSize:"10px",color:"#9a8870",fontStyle:"italic"}}>{closed?"cloture":""}</span>}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                        {traitsFiltres.length===0&&<tr><td colSpan={6} style={{padding:"20px",color:"#9a8870",textAlign:"center",fontStyle:"italic"}}>Aucun traitement pour cette campagne.</td></tr>}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Documents PDF prestataires - uniquement onglet traitements */}
+              {vigneTab==="traitements" && filterTraitAn && (
+                <div style={{...s.card,marginTop:"14px"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
+                    <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#7a5200"}}>Calendriers prestataires</div>
+                    {!closed && (
+                      <label style={{...s.btnSm,cursor:"pointer",display:"flex",alignItems:"center",gap:"5px"}}>
+                        {uploadingPdf?"Chargement...":"+ Ajouter PDF"}
+                        <input type="file" accept=".pdf" style={{display:"none"}} onChange={e=>{
+                          const file=e.target.files[0];
+                          if(file){
+                            const nom=window.prompt("Nom du document (ex: Calendrier Lorain 2026)", file.name.replace(".pdf",""));
+                            if(nom!==null) uploadPdf(file, filterTraitAn, nom||file.name);
+                          }
+                          e.target.value="";
+                        }}/>
+                      </label>
+                    )}
+                  </div>
+                  {pdfDocs.filter(p=>p.campagne===filterTraitAn).length===0&&(
+                    <div style={{fontSize:"12px",color:"#9a8870",fontStyle:"italic"}}>Aucun document pour cette campagne.</div>
+                  )}
+                  <div style={{display:"grid",gap:"8px"}}>
+                    {pdfDocs.filter(p=>p.campagne===filterTraitAn).map(pdf=>(
+                      <div key={pdf.id} style={{display:"flex",alignItems:"center",gap:"12px",padding:"10px 12px",background:"#fff8ee",borderRadius:"6px",border:"0.5px solid #d4c4a0"}}>
+                        <div style={{width:"32px",height:"32px",background:"#fdd0d0",borderRadius:"4px",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                          <span style={{fontSize:"10px",fontWeight:500,color:"#cc2222",fontFamily:"monospace"}}>PDF</span>
+                        </div>
+                        <div style={{flex:1}}>
+                          <div style={{fontWeight:500,color:"#1a1205",fontSize:"13px"}}>{pdf.nom}</div>
+                          <div style={{fontSize:"10px",color:"#9a8870",marginTop:"1px"}}>{pdf.dateUpload?.slice(0,10)}</div>
+                        </div>
+                        <button style={s.btnSm} onClick={()=>openPdf(pdf)}>
+                          Ouvrir
+                        </button>
+                        {!closed&&(
+                          <div style={{display:"flex",gap:"4px"}}>
+                            <button style={s.ghostSm} onClick={()=>{
+                              const n=window.prompt("Nouveau nom :", pdf.nom);
+                              if(n&&n.trim()){
+                                const updated={...pdf,nom:n.trim()};
+                                setPdfDocs(prev=>prev.map(p=>p.id===pdf.id?updated:p));
+                                fbSave("pdfDocs",pdf.id,updated);
+                              }
+                            }}>Renommer</button>
+                            <button style={{...s.ghostSm,color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>deletePdf(pdf)}>Sup.</button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* === STOCK PRODUITS === */}
+              {vigneTab==="stockprod" && (
+                <div>
+                  {/* Actions */}
+                  <div style={{display:"flex",gap:"8px",marginBottom:"14px",flexWrap:"wrap",alignItems:"center"}}>
+                    <button style={s.btnSm} onClick={()=>{setProduitForm(PRODUIT_EMPTY);setEditingStockProd(null);setShowStockProdForm(true);}}>+ Ajouter un produit</button>
+                    <label style={{...s.btnSm,cursor:"pointer",background:"#fff8ee",color:"#7a5200",border:"0.5px solid #d4c4a0"}}>
+                      {uploadingPdf?"Chargement...":"+ Ajouter une facture (PDF)"}
+                      <input type="file" accept=".pdf" style={{display:"none"}} onChange={e=>{
+                        const file=e.target.files[0];
+                        if(file){ const nom=window.prompt("Nom du document",file.name.replace(".pdf","")); if(nom!==null) uploadFacture(file,nom||file.name); }
+                        e.target.value="";
+                      }}/>
+                    </label>
+                    <div style={{marginLeft:"auto",fontSize:"11px",color:"#9a8870"}}>{stockProduits.length} produit(s)</div>
+                  </div>
+                  {stockProduits.length>0&&(
+                    <div style={s.card}>
+                      <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
+                        <thead>
+                          <tr style={{borderBottom:"1px solid #d4c4a0",background:"#fff8ee"}}>
+
+                        {["Produit","N°AMM","Substance active","Teneur Cu g/kg|L","Stock actuel","Actions"].map(h=>(
+                              <th key={h} style={{textAlign:"left",padding:"7px 10px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#9a8870",fontWeight:500}}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {stockProduits.map((p,i)=>{
+                            const stock = parseFloat(p.stockActuel)||0;
+                            const init  = parseFloat(p.stockInitial)||0;
+                            const pct   = init>0 ? Math.round(stock/init*100) : 100;
+                            return (
+                              <tr key={p.id} style={{borderBottom:"1px solid #ede5d4",background:i%2===0?"transparent":"#fffbf3"}}>
+                                <td style={{padding:"8px 10px"}}>
+                                  <div style={{fontWeight:500,color:"#1a1205"}}>{p.nom}</div>
+                                  {p.fournisseur&&<div style={{fontSize:"10px",color:"#9a8870"}}>{p.fournisseur}</div>}
+                                </td>
+                                <td style={{padding:"8px 10px",fontFamily:"monospace",fontSize:"11px",color:"#9a8870"}}>{p.nAmm||"-"}</td>
+                                <td style={{padding:"8px 10px"}}>
+                                  {(()=>{ const sa=p.substanceActive||p.matiereActive||"-";
+                                    return <span style={{background:sa==="Cuivre"?"#fde8b8":sa==="Soufre"?"#e6f0fb":"#ede5d4",color:sa==="Cuivre"?"#7a5200":sa==="Soufre"?"#185FA5":"#5f5e5a",borderRadius:"3px",padding:"1px 6px",fontSize:"10px",fontFamily:"monospace"}}>{sa}</span>;
+                                  })()}
+                                </td>
+                                <td style={{padding:"8px 10px",fontFamily:"monospace",fontWeight:500}}>
+                                  {parseFloat(p.teneurCuivre)>0
+                                    ?<span style={{color:"#c47800"}}>{p.teneurCuivre}g/{p.unite} <span style={{fontSize:"10px",color:"#9a8870",fontWeight:400}}>({Math.round(parseFloat(p.teneurCuivre)/10)}%)</span></span>
+                                    :<span style={{color:"#9a8870"}}>-</span>}
+                                </td>
+                                <td style={{padding:"8px 10px"}}>
+                                  <div style={{display:"flex",alignItems:"center",gap:"6px"}}>
+                                    <button style={{background:"#f0f0f0",border:"none",borderRadius:"3px",width:"20px",height:"20px",cursor:"pointer",fontWeight:700,color:"#555"}} onClick={()=>updateStockProduit(p.id,-1)}>-</button>
+                                    <span style={{fontWeight:500,color:stock<0?"#cc2222":stock===0?"#c47800":pct<20?"#c47800":"#1a7a40",minWidth:"50px",textAlign:"center",fontFamily:"monospace"}}>
+                                      {stock} {p.unite}
+                                    </span>
+                                    <button style={{background:"#f0f0f0",border:"none",borderRadius:"3px",width:"20px",height:"20px",cursor:"pointer",fontWeight:700,color:"#555"}} onClick={()=>updateStockProduit(p.id,1)}>+</button>
+                                  </div>
+                                  <div style={{height:"3px",background:"#e8dcc6",borderRadius:"2px",marginTop:"4px",width:"80px"}}>
+                                    <div style={{height:"100%",borderRadius:"2px",background:pct<20?"#cc2222":pct<50?"#c47800":"#1a7a40",width:`${Math.min(100,pct)}%`}}/>
+                                  </div>
+                                </td>
+                                <td style={{padding:"8px 10px"}}>
+                                  <div style={{display:"flex",gap:"3px"}}>
+                                    <button style={{...s.ghostSm,fontSize:"10px"}} onClick={()=>{setProduitForm({...PRODUIT_EMPTY,...p});setEditingStockProd(p);setShowStockProdForm(true);}}>Mod.</button>
+                                    <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
+                                      onClick={()=>{if(window.confirm("Supprimer ?")){ setStockProduits(prev=>prev.filter(x=>x.id!==p.id)); fbDelete("stockProduits",p.id); }}}>Sup.</button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+
+                  {pdfFactures.length>0&&(
+                    <div style={{...s.card,marginBottom:"14px"}}>
+                      <div style={{...s.lbl,marginBottom:"8px"}}>Factures / BL</div>
+                      <div style={{display:"grid",gap:"6px"}}>
+                        {pdfFactures.map(pdf=>(
+                          <div key={pdf.id} style={{display:"flex",alignItems:"center",gap:"10px",padding:"8px 12px",background:"#fff8ee",borderRadius:"6px",border:"0.5px solid #d4c4a0"}}>
+                            <div style={{width:"28px",height:"28px",background:"#fdd0d0",borderRadius:"4px",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                              <span style={{fontSize:"9px",fontWeight:500,color:"#cc2222",fontFamily:"monospace"}}>PDF</span>
+                            </div>
+                            <div style={{flex:1}}>
+                              <div style={{fontWeight:500,color:"#1a1205",fontSize:"12px"}}>{pdf.nom}</div>
+                              <div style={{fontSize:"10px",color:"#9a8870"}}>{pdf.dateUpload?.slice(0,10)}</div>
+                            </div>
+                            <button style={s.btnSm} onClick={()=>openPdfFacture(pdf)}>Ouvrir</button>
+                            <button style={{...s.ghostSm,color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>deleteFacture(pdf.id)}>Sup.</button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {/* Catalogue rapide */}
+                  {stockProduits.length===0&&(
+                    <div style={{...s.card,marginBottom:"14px"}}>
+                      <div style={{...s.lbl,marginBottom:"10px"}}>Ajout rapide depuis le catalogue</div>
+                      <div style={{display:"flex",gap:"6px",flexWrap:"wrap"}}>
+                        {CATALOGUE_PRODUITS.filter(c=>!stockProduits.find(p=>p.nAmm===c.nAmm)).map((c,i)=>(
+                          <button key={i} onClick={()=>addFromCatalogue(c)}
+                            style={{background:"#fff8ee",border:"0.5px solid #d4c4a0",borderRadius:"5px",padding:"6px 12px",fontSize:"11px",cursor:"pointer",color:"#7a5200",fontFamily:"monospace",display:"flex",alignItems:"center",gap:"5px"}}>
+                            <span style={{background:(c.substanceActive||c.matiereActive)==="Cuivre"?"#fde8b8":(c.substanceActive||c.matiereActive)==="Soufre"?"#e6f0fb":"#ede5d4",color:(c.substanceActive||c.matiereActive)==="Cuivre"?"#7a5200":"#185FA5",borderRadius:"3px",padding:"0 4px",fontSize:"9px"}}>{c.substanceActive||c.matiereActive}</span>
+                            + {c.nom}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {vigneTab==="biodynamie" && (
+                <div style={s.card}>
+                  {biodyFiltres.length===0&&<div style={{color:"#9a8870",fontSize:"13px",padding:"12px 0",fontStyle:"italic"}}>Aucun passage biodynamique pour cette campagne.</div>}
+                  {biodyFiltres.length>0&&(
+                    <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
+                      <thead>
+                        <tr style={{borderBottom:"1px solid #d4c4a0",background:"#fff8ee"}}>
+                          {["Date","Surface","Produit","Observations",""].map(h=>(
+                            <th key={h} style={{textAlign:"left",padding:"7px 10px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#9a8870",fontWeight:500}}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {biodyFiltres.sort((a,b)=>new Date(a.date)-new Date(b.date)).map((b,i)=>(
+                          <tr key={b.id} style={{borderBottom:"1px solid #ede5d4",background:i%2===0?"transparent":"#fffbf3"}}>
+                            <td style={{padding:"8px 10px",color:"#6a5838"}}>{b.date}</td>
+                            <td style={{padding:"8px 10px",color:"#6a5838"}}>{b.surface}</td>
+                            <td style={{padding:"8px 10px"}}>
+                              <span style={{background:"#d4edc0",color:"#2d6a00",borderRadius:"3px",padding:"1px 8px",fontSize:"11px",fontFamily:"monospace",fontWeight:500}}>{b.produit}</span>
+                            </td>
+                            <td style={{padding:"8px 10px",color:"#7a6840",fontStyle:"italic",fontSize:"11px"}}>{b.observations}</td>
+                            <td style={{padding:"8px 10px"}}>
+                              {!closed&&(
+                                <div style={{display:"flex",gap:"3px"}}>
+                                  <button style={{...s.ghostSm,fontSize:"10px"}}
+                                    onClick={()=>{setBiodyForm({campagne:b.campagne,date:b.date,surface:b.surface,produit:b.produit,observations:b.observations});setEditingBiody(b);setShowBiodyForm(true);}}>Mod.</button>
+                                  <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
+                                    onClick={()=>{if(window.confirm("Supprimer ?")){ setBiodynamies(prev=>prev.filter(x=>x.id!==b.id)); fbDelete("biodynamies",b.id); if(b.produit && b.surface && b.dose) deduireStock([], 0, [{nom:b.produit,dose:b.dose}], b.surface); }}}>Sup.</button>
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              )}
+
+              {/* === AMENDEMENTS === */}
+              {vigneTab==="amendements" && (
+                <div style={s.card}>
+                  {amendFiltres.length===0&&<div style={{color:"#9a8870",fontSize:"13px",padding:"12px 0",fontStyle:"italic"}}>Aucun amendement pour cette campagne.</div>}
+                  {amendFiltres.length>0&&(
+                    <div style={{overflowX:"auto"}}>
+                      <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
+                        <thead>
+                          <tr style={{borderBottom:"1px solid #d4c4a0",background:"#fff8ee"}}>
+                            {["Parcelle","Surface","Produit","Quantite","N total","N/ha","Observations",""].map(h=>(
+                              <th key={h} style={{textAlign:"left",padding:"7px 10px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#9a8870",fontWeight:500}}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {amendFiltres.sort((a,b)=>a.parcelle.localeCompare(b.parcelle)).map((a,i)=>(
+                            <tr key={a.id} style={{borderBottom:"1px solid #ede5d4",background:i%2===0?"transparent":"#fffbf3"}}>
+                              <td style={{padding:"8px 10px",fontWeight:500,color:"#1a1205"}}>{a.parcelle}</td>
+                              <td style={{padding:"8px 10px",color:"#6a5838",fontFamily:"monospace"}}>{a.surface} ha</td>
+                              <td style={{padding:"8px 10px"}}>
+                                <span style={{background:"#fde8b8",color:"#7a5200",borderRadius:"3px",padding:"1px 7px",fontSize:"11px",fontFamily:"monospace"}}>{a.produit}</span>
+                              </td>
+                              <td style={{padding:"8px 10px",color:"#6a5838",fontFamily:"monospace"}}>{a.quantite}</td>
+                              <td style={{padding:"8px 10px",color:"#6a5838",fontFamily:"monospace"}}>{a.nTotal}</td>
+                              <td style={{padding:"8px 10px",color:"#6a5838",fontFamily:"monospace"}}>{a.nParHa}</td>
+                              <td style={{padding:"8px 10px",color:"#7a6840",fontStyle:"italic",fontSize:"11px"}}>{a.observations}</td>
+                              <td style={{padding:"8px 10px"}}>
+                                {!closed&&(
+                                  <div style={{display:"flex",gap:"3px"}}>
+                                    <button style={{...s.ghostSm,fontSize:"10px"}}
+                                      onClick={()=>{setAmendForm({campagne:a.campagne,parcelle:a.parcelle,surface:a.surface,produit:a.produit,quantite:a.quantite,nTotal:a.nTotal,nParHa:a.nParHa,observations:a.observations});setEditingAmend(a);setShowAmendForm(true);}}>Mod.</button>
+                                    <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
+                                      onClick={()=>{if(window.confirm("Supprimer ?")){ setAmendements(prev=>prev.filter(x=>x.id!==a.id)); fbDelete("amendements",a.id); if(a.produit && a.quantite){ const sp=findStockProd(a.produit); if(sp){ const q=parseFloat(a.quantite.replace(/[^0-9.]/g,""))||0; const updated={...sp,stockActuel:String(Math.round(((parseFloat(sp.stockActuel)||0)+q)*100)/100)}; setStockProduits(prev=>prev.map(x=>x.id===sp.id?updated:x)); fbSave("stockProduits",sp.id,updated); } } }}}>Sup.</button>
+                                  </div>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* -- VENDANGES -- */}
+        {view==="vendanges" && (
+          <div style={{display:"grid",gridTemplateColumns:"clamp(200px,1fr,1fr) clamp(200px,260px,30vw)",gap:"16px",alignItems:"start"}}>
+
+            {/* Colonne principale */}
+            <div>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px"}}>
+                <div style={{fontSize:"13px",color:"#7a6840"}}>{vendanges.length} entree(s) de vendange</div>
+                <button style={s.btn} onClick={()=>{setVendangeForm(VENDANGE_EMPTY);setEditingVendange(null);setShowVendangeForm(true);}}>
+                  + Nouvelle entree
+                </button>
+              </div>
+
+              {/* Filtre par campagne */}
+              {[...new Set(vendanges.map(v=>v.annee))].length>1&&(
+                <div style={{display:"flex",gap:"6px",marginBottom:"16px",flexWrap:"wrap",alignItems:"center"}}>
+                  <span style={{fontSize:"10px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#9a8870",fontFamily:"monospace",marginRight:"4px"}}>Campagne :</span>
+                  <button onClick={()=>setFilterVendangeAn("")}
+                    style={{padding:"4px 12px",borderRadius:"4px",border:`0.5px solid ${!filterVendangeAn?"#b8860b":"#d4c4a0"}`,background:!filterVendangeAn?"#f5e8cc":"transparent",color:!filterVendangeAn?"#7a5200":"#9a8870",fontSize:"11px",cursor:"pointer",fontFamily:"monospace"}}>
+                    Toutes
+                  </button>
+                  {[...new Set(vendanges.map(v=>v.annee))].sort().reverse().map(an=>(
+                    <button key={an} onClick={()=>setFilterVendangeAn(an)}
+                      style={{padding:"4px 12px",borderRadius:"4px",border:`0.5px solid ${filterVendangeAn===an?"#2d6a00":"#d4c4a0"}`,background:filterVendangeAn===an?"#d4edc0":"transparent",color:filterVendangeAn===an?"#2d6a00":"#9a8870",fontSize:"11px",cursor:"pointer",fontFamily:"monospace"}}>
+                      {an} ({vendanges.filter(v=>v.annee===an).length})
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {vendanges.length===0&&(
+                <div style={{...s.card,textAlign:"center",padding:"40px",color:"#9a8870"}}>
+                  <div style={{fontSize:"13px",marginBottom:"16px"}}>Aucune vendange enregistree. Commencez par creer vos parcelles puis saisissez les apports.</div>
+                  <button style={s.btn} onClick={()=>{setVendangeForm(VENDANGE_EMPTY);setEditingVendange(null);setShowVendangeForm(true);}}>+ Premiere entree</button>
+                </div>
+              )}
+
+              {/* Grouper par annee */}
+              {[...new Set(vendanges.map(v=>v.annee))].sort().reverse().filter(an=>!filterVendangeAn||an===filterVendangeAn).map(annee=>{
+                const vAnnee = vendanges.filter(v=>v.annee===annee);
+                const volTotal = vAnnee.reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0);
+                return (
+                  <div key={annee} style={{marginBottom:"20px"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:"10px",marginBottom:"10px"}}>
+                      <div style={{fontFamily:"Georgia,serif",fontSize:"16px",fontWeight:500,color:"#7a5200"}}>Campagne {annee}</div>
+                      <div style={{flex:1,height:"0.5px",background:"#d4c4a0"}}/>
+                      <div style={{display:"flex",gap:"12px",fontSize:"11px",color:"#9a8870",fontFamily:"monospace"}}>
+                        <span>{vAnnee.length} apport(s)</span>
+                        <span style={{color:"#2d6a00",fontWeight:500}}>{volTotal.toLocaleString()} kg</span>
+                        {vAnnee.filter(v=>v.numeroMarc).length>0&&(
+                          <span>{[...new Set(vAnnee.map(v=>v.numeroMarc).filter(Boolean))].sort().length} Marc(s)</span>
+                        )}
+                      </div>
+                    </div>
+                    {/* Recap rendement campagne */}
+                    {(()=>{
+                      const kgRecoltes = vAnnee.reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0);
+                      const kgMaison = vAnnee.filter(v=>!v.destinationMarc||v.destinationMarc==="maison").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0)
+                        + vAnnee.filter(v=>v.destinationMarc==="negoce_partiel").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0)-(parseFloat(v.kgVendusNegoce)||0),0);
+                      const kgNegoce = vAnnee.filter(v=>v.destinationMarc==="negoce_total").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0)
+                        + vAnnee.filter(v=>v.destinationMarc==="negoce_partiel").reduce((s,v)=>s+(parseFloat(v.kgVendusNegoce)||0),0);
+                      const rendAnnee = rendementsAnnuels.find(r=>r.annee===annee);
+                      const surfTotale = parcelles.reduce((s,p)=>s+(parseFloat(p.surface)||0),0);
+                      const kgHaReel = surfTotale>0 ? Math.round(kgRecoltes/surfTotale) : 0;
+                      const kgHaAutorise = rendAnnee ? parseFloat(rendAnnee.rendementAutorise)||0 : 0;
+                      const enRI = kgHaAutorise>0 && kgHaReel>kgHaAutorise;
+                      return (
+                        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))",gap:"8px",marginBottom:"12px"}}>
+                          <div style={{...s.card,padding:"10px"}}>
+                            <div style={s.lbl}>Total recolte</div>
+                            <div style={{fontSize:"16px",fontWeight:500,color:"#1a1205"}}>{kgRecoltes.toLocaleString()} kg</div>
+                          </div>
+                          <div style={{...s.card,padding:"10px"}}>
+                            <div style={s.lbl}>Conserve maison</div>
+                            <div style={{fontSize:"16px",fontWeight:500,color:"#2d6a00"}}>{Math.round(kgMaison).toLocaleString()} kg</div>
+                          </div>
+                          <div style={{...s.card,padding:"10px"}}>
+                            <div style={s.lbl}>Vendu negoce</div>
+                            <div style={{fontSize:"16px",fontWeight:500,color:"#c47800"}}>{Math.round(kgNegoce).toLocaleString()} kg</div>
+                          </div>
+                          {surfTotale>0&&<div style={{...s.card,padding:"10px",background:enRI?"#fde8e8":"transparent"}}>
+                            <div style={s.lbl}>kg/ha {kgHaAutorise>0?"vs "+kgHaAutorise+" autorise":""}</div>
+                            <div style={{fontSize:"16px",fontWeight:500,color:enRI?"#cc2222":"#1a1205"}}>{kgHaReel.toLocaleString()} kg/ha</div>
+                            {enRI&&<div style={{fontSize:"10px",color:"#cc2222",fontWeight:500}}>Section RI +{(kgHaReel-kgHaAutorise).toLocaleString()} kg/ha</div>}
+                          </div>}
+                        </div>
+                      );
+                    })()}
+
+                    {vAnnee.map(v=>{
+                      const parc = parcelles.find(p=>p.id===v.parcelleId);
+                      return (
+                        <div key={v.id} style={{...s.card,marginBottom:"10px",borderLeft:`3px solid ${v.destinationMarc&&v.destinationMarc!=="maison"?"#c47800":"#2d6a00"}`}}>
+                          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:"12px",marginBottom:"8px"}}>
+                            <div>
+                              {v.cuveeCreee&&<div style={{fontWeight:600,color:"#7a5200",fontSize:"14px",marginBottom:"2px"}}>{v.cuveeCreee}</div>}
+                              <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"2px"}}>
+                                <div style={{fontWeight:500,color:"#1a1205",fontSize:"13px"}}>{parc?.nom||"Parcelle inconnue"}</div>
+                                {v.numeroMarc&&(
+                                  <span style={{background:"#f5e8cc",color:"#7a5200",border:"0.5px solid #e0c050",borderRadius:"4px",padding:"1px 8px",fontSize:"11px",fontWeight:500,fontFamily:"monospace"}}>Marc {v.numeroMarc}</span>
+                                )}
+                              </div>
+                              <div style={{display:"flex",alignItems:"center",gap:"5px",marginBottom:"2px"}}>
+                                {parc?.certification&&(
+                                  <span style={{fontSize:"10px",padding:"1px 5px",borderRadius:"3px",fontFamily:"monospace",fontWeight:500,
+                                    background:parc.certification==="BIO"?"#d4edc0":parc.certification==="NON BIO"?"#ede5d4":"#fde8b8",
+                                    color:parc.certification==="BIO"?"#2d6a00":parc.certification==="NON BIO"?"#5f5e5a":"#8b5e0a"}}>
+                                    {parc.certification}
+                                  </span>
+                                )}
+                                <span style={{fontSize:"11px",color:"#9a8870"}}>{parc?.cepage||""}{parc?.commune?` - ${parc.commune}`:""}</span>
+                              </div>
+                              <div style={{fontSize:"11px",color:"#7a6840",marginTop:"3px"}}>{fmt(v.date)}{v.heure?" - "+v.heure:""} - {v.operateur}</div>
+                            </div>
+                            <div>
+                              <div style={s.lbl}>Volume recolte</div>
+                              {v.poidsMarcKg&&<div style={{fontSize:"18px",fontWeight:500,color:"#2d6a00"}}>{parseInt(v.poidsMarcKg).toLocaleString()} kg</div>}
+                              {v.volumeHL&&<div style={{fontSize:"13px",color:"#2d6a00"}}>{v.volumeHL} HL</div>}
+                              {v.destinationMarc&&v.destinationMarc!=="maison"&&<div style={{fontSize:"11px",color:"#c47800",marginTop:"3px"}}>Negoce{v.kgVendusNegoce?" - "+parseInt(v.kgVendusNegoce).toLocaleString()+" kg":""}{v.numeroDAE?" - DAE: "+v.numeroDAE:""}</div>}
+                            </div>
+                            <div>
+                              <div style={s.lbl}>Cuves destination</div>
+                              {v.cuveTailleId&&<div style={{fontSize:"12px",color:"#6a5838"}}>Taille : <strong>{tonneaux.find(t=>t.id===v.cuveTailleId)?.id||v.cuveTailleId}</strong>{v.volumeTaille&&<span style={{color:"#9a8870"}}> - {v.volumeTaille} HL</span>}</div>}
+                              {v.cuveCuveeId&&<div style={{fontSize:"12px",color:"#6a5838"}}>Cuvee A : <strong>{tonneaux.find(t=>t.id===v.cuveCuveeId)?.id||v.cuveCuveeId}</strong>{v.volumeCuvee&&<span style={{color:"#9a8870"}}> - {v.volumeCuvee} HL</span>}</div>}
+                              {v.cuveCuveeBId&&<div style={{fontSize:"12px",color:"#6a5838"}}>Cuvee B : <strong>{tonneaux.find(t=>t.id===v.cuveCuveeBId)?.id||v.cuveCuveeBId}</strong>{v.volumeCuveeB&&<span style={{color:"#9a8870"}}> - {v.volumeCuveeB} HL</span>}</div>}
+                              {!v.cuveTailleId&&!v.cuveCuveeId&&<div style={{fontSize:"11px",color:"#9a8870",fontStyle:"italic"}}>Non renseigne</div>}
+                            </div>
+                            <div>
+                              <div style={s.lbl}>Analyses</div>
+                              {v.degreePotentiel&&<div style={{fontSize:"12px",color:"#6a5838"}}>Degre : <strong>{v.degreePotentiel}%</strong></div>}
+                              {v.acidite&&<div style={{fontSize:"12px",color:"#6a5838"}}>Acidite : <strong>{v.acidite} g/L</strong></div>}
+                              {v.so2&&<div style={{fontSize:"12px",color:"#6a5838"}}>SO2 : <strong>{v.so2} mg/L</strong></div>}
+                            </div>
+                            <div>
+                              <div style={s.lbl}>Cuve reception</div>
+                              {(v.cuveReception||v.nouvelleCuveNom)?(
+                                <div style={{display:"inline-flex",alignItems:"center",background:"#eeedfe",color:"#533AB7",border:"0.5px solid #534ab744",borderRadius:"4px",padding:"2px 10px",fontFamily:"monospace",fontSize:"12px",fontWeight:500}}>
+                                  {v.cuveReception||v.nouvelleCuveNom}
+                                </div>
+                              ):<div style={{fontSize:"11px",color:"#9a8870",fontStyle:"italic"}}>Non definie</div>}
+                            </div>
+                          </div>
+                          {v.produitsAjoutes?.length>0&&(
+                            <div style={{borderTop:"0.5px solid #ede5d4",paddingTop:"8px",marginTop:"4px"}}>
+                              <div style={{...s.lbl,marginBottom:"5px"}}>Produits ajoutes</div>
+                              <div style={{display:"flex",gap:"6px",flexWrap:"wrap"}}>
+                                {v.produitsAjoutes.map(p=>(
+                                  <div key={p.id} style={{background:"#fff8ee",border:"0.5px solid #d4c4a0",borderRadius:"4px",padding:"3px 10px",fontSize:"11px",color:"#7a5200"}}>
+                                    <strong>{p.nom}</strong>{p.dose?` - ${p.dose}`:""}{p.lot?` (Lot: ${p.lot})`:""}{p.date?` - ${p.date}`:""}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {v.observations&&<div style={{borderTop:"0.5px solid #ede5d4",paddingTop:"6px",marginTop:"6px",fontSize:"12px",color:"#6a5838",fontStyle:"italic"}}>{v.observations}</div>}
+                          <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",marginTop:"8px"}}>
+                            <button style={{...s.ghostSm}} onClick={()=>openEditVendange(v)}>Modifier</button>
+                            <button style={{...s.ghostSm,color:"#cc2222",borderColor:"#f0b4b4"}}
+                              onClick={()=>{if(window.confirm("Supprimer cet apport ?")) { setVendanges(prev=>prev.filter(x=>x.id!==v.id)); deleteVendangeFb(v.id); }}}>
+                              Supprimer
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Colonne droite */}
+            <div style={{display:"grid",gap:"16px"}}>
+
+            {/* Tableau de bord rendement */}
+            <div style={s.card}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
+                <span style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#7a5200"}}>Rendement</span>
+                <button style={s.btnSm} onClick={()=>setShowRendementForm(true)}>+ Saisir</button>
+              </div>
+              {[...new Set(vendanges.map(v=>v.annee))].sort().reverse().map(annee=>{
+                const vAnnee = vendanges.filter(v=>v.annee===annee);
+                const kgRecoltes = vAnnee.reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0);
+                const kgMaison = vAnnee.filter(v=>!v.destinationMarc||v.destinationMarc==="maison").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0)
+                  + vAnnee.filter(v=>v.destinationMarc==="negoce_partiel").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0)-(parseFloat(v.kgVendusNegoce)||0),0);
+                const kgNegoce = vAnnee.filter(v=>v.destinationMarc==="negoce_total").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0)
+                  + vAnnee.filter(v=>v.destinationMarc==="negoce_partiel").reduce((s,v)=>s+(parseFloat(v.kgVendusNegoce)||0),0);
+                const rendAnnee = rendementsAnnuels.find(r=>r.annee===annee);
+                const surfTotale = parcelles.reduce((s,p)=>s+(parseFloat(p.surface)||0),0);
+                const kgHaReel = surfTotale>0 ? Math.round(kgRecoltes/surfTotale) : 0;
+                const kgHaAutorise = rendAnnee ? parseFloat(rendAnnee.rendementAutorise)||0 : 0;
+                const enRI = kgHaAutorise>0 && kgHaReel>kgHaAutorise;
+                return (
+                  <div key={annee} style={{borderBottom:"0.5px solid #ede5d4",paddingBottom:"10px",marginBottom:"10px"}}>
+                    <div style={{fontWeight:500,color:"#7a5200",fontSize:"13px",marginBottom:"6px"}}>Campagne {annee}</div>
+                    <div style={{display:"grid",gap:"4px",fontSize:"12px"}}>
+                      <div style={{display:"flex",justifyContent:"space-between"}}>
+                        <span style={{color:"#9a8870"}}>Total recolte</span>
+                        <span style={{fontWeight:500,color:"#1a1205"}}>{kgRecoltes.toLocaleString()} kg</span>
+                      </div>
+                      <div style={{display:"flex",justifyContent:"space-between"}}>
+                        <span style={{color:"#9a8870"}}>Conserve maison</span>
+                        <span style={{fontWeight:500,color:"#2d6a00"}}>{Math.round(kgMaison).toLocaleString()} kg</span>
+                      </div>
+                      <div style={{display:"flex",justifyContent:"space-between"}}>
+                        <span style={{color:"#9a8870"}}>Vendu negoce</span>
+                        <span style={{fontWeight:500,color:"#c47800"}}>{Math.round(kgNegoce).toLocaleString()} kg</span>
+                      </div>
+                      {surfTotale>0&&<div style={{display:"flex",justifyContent:"space-between"}}>
+                        <span style={{color:"#9a8870"}}>kg/ha reel</span>
+                        <span style={{fontWeight:500,color:enRI?"#cc2222":"#1a1205"}}>{kgHaReel.toLocaleString()} kg/ha</span>
+                      </div>}
+                      {kgHaAutorise>0&&<div style={{display:"flex",justifyContent:"space-between"}}>
+                        <span style={{color:"#9a8870"}}>Rendement autorise</span>
+                        <span style={{fontWeight:500,color:"#6a5838"}}>{kgHaAutorise.toLocaleString()} kg/ha</span>
+                      </div>}
+                      {enRI&&<div style={{marginTop:"6px",padding:"6px 10px",background:"#fde8e8",borderRadius:"4px",border:"1px solid #f0b4b4"}}>
+                        <div style={{fontSize:"11px",fontWeight:500,color:"#cc2222"}}>Depassement - Section RI</div>
+                        <div style={{fontSize:"11px",color:"#cc2222"}}>+{(kgHaReel-kgHaAutorise).toLocaleString()} kg/ha au-dela du rendement</div>
+                      </div>}
+                    </div>
+                  </div>
+                );
+              })}
+              {rendementsAnnuels.length===0&&vendanges.length===0&&<div style={{fontSize:"12px",color:"#9a8870",fontStyle:"italic"}}>Aucune donnee.</div>}
+            </div>
+
+            {/* Colonne droite - Parcelles */}
+            <div style={s.card}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
+                <span style={{...s.lbl,marginBottom:0}}>Parcelles</span>
+                <button style={s.btnSm} onClick={()=>{setParcelleForm({nom:"",cepage:"",surface:"",commune:""});setEditingParcelle(null);setShowParcelleForm(true);}}>+ Ajouter</button>
+              </div>
+              {parcelles.length===0&&<div style={{fontSize:"12px",color:"#9a8870",fontStyle:"italic"}}>Aucune parcelle. Ajoutez-en une pour commencer.</div>}
+              {parcelles.map(p=>(
+                <div key={p.id} style={{borderBottom:"0.5px solid #ede5d4",padding:"8px 0"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
+                    <div style={{flex:1}}>
+                      <div style={{display:"flex",alignItems:"center",gap:"6px",marginBottom:"2px"}}>
+                        <div style={{fontSize:"13px",fontWeight:500,color:"#1a1205"}}>{p.nom}</div>
+                        {p.certification&&(
+                          <span style={{fontSize:"10px",padding:"1px 6px",borderRadius:"3px",fontFamily:"monospace",fontWeight:500,
+                            background:p.certification==="BIO"?"#d4edc0":p.certification==="NON BIO"?"#ede5d4":p.certification==="C1"?"#fde8b8":p.certification==="C2"?"#fce8a8":"#fad4a0",
+                            color:p.certification==="BIO"?"#2d6a00":p.certification==="NON BIO"?"#5f5e5a":p.certification==="C1"?"#8b5e0a":p.certification==="C2"?"#7a4800":"#6b3a00"}}>
+                            {p.certification}
+                          </span>
+                        )}
+                      </div>
+                      {p.cepage&&<div style={{fontSize:"11px",color:"#9a8870"}}>{p.cepage}</div>}
+                      <div style={{fontSize:"11px",color:"#9a8870"}}>{p.commune||""}{p.surface?` - ${p.surface} ha`:""}</div>
+                      {p.observations&&<div style={{fontSize:"10px",color:"#7a6840",fontStyle:"italic",marginTop:"2px"}}>{p.observations}</div>}
+                      <div style={{fontSize:"10px",color:"#a8987e",marginTop:"2px"}}>{vendanges.filter(v=>v.parcelleId===p.id).length} apport(s)</div>
+                    </div>
+                    <div style={{display:"flex",gap:"4px"}}>
+                      <button style={{...s.ghostSm,fontSize:"10px"}} onClick={()=>{setParcelleForm({nom:p.nom,cepage:p.cepage||"",certification:p.certification||"BIO",surface:p.surface||"",commune:p.commune||"",observations:p.observations||""});setEditingParcelle(p);setShowParcelleForm(true);}}>Mod.</button>
+                      <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
+                        onClick={()=>{if(window.confirm("Supprimer cette parcelle ?")) { setParcelles(prev=>prev.filter(x=>x.id!==p.id)); deleteParcelleFb(p.id); }}}>Sup.</button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            </div>
+          </div>
+        )}
+
+        {/* -- STOCK -- */}
+        {view==="stock" && (()=>{
+          const now = new Date();
+          const lots = [...stockBouteilles].sort((a,b)=>new Date(a.dateTirage)-new Date(b.dateTirage)).map(l=>({...l,
+            mois: l.dateTirage ? Math.floor((now-new Date(l.dateTirage))/(1000*60*60*24*30.5)) : 0
+          }));
+          const lotsFiltre = lots.filter(l=>{
+            if(stockTab==="champagne" && ["coteaux_blanc","coteaux_rouge","ratafia"].includes(l.typeProduit)) return false;
+            if(stockTab!=="champagne" && (l.typeProduit||"champagne")!==stockTab) return false;
+            if(filterStockCuvee && !l.cuvee.toLowerCase().includes(filterStockCuvee.toLowerCase())) return false;
+            if(filterStockLieu && l.lieu!==filterStockLieu) return false;
+            if(filterStockStatut && l.statut!==filterStockStatut) return false;
+            if(filterStock15==="moins15" && l.mois>=15) return false;
+            if(filterStock15==="plus15" && l.mois<15) return false;
+            return true;
+          });
+          // Fusion pour Habille CRD et Habille Export uniquement
+          const fusionMap = {};
+          lotsFiltre.forEach(l=>{
+            const shouldFuse = l.statut==="Habille CRD" || l.statut==="Habille Export";
+            const k = shouldFuse ? l.cuvee+"|"+l.lot+"|"+l.statut : l.id;
+            if(!fusionMap[k]) fusionMap[k] = {...l, _ids:[l.id], qteActuelle:parseInt(l.qteActuelle)||0};
+            else { fusionMap[k].qteActuelle += parseInt(l.qteActuelle)||0; fusionMap[k]._ids.push(l.id); }
+          });
+          const lotsFusionnes = Object.values(fusionMap);
+
+          const total = lots.reduce((s,l)=>s+(parseInt(l.qteActuelle)||0),0);
+          const moins15 = lots.filter(l=>l.mois<15).reduce((s,l)=>s+(parseInt(l.qteActuelle)||0),0);
+          const plus15 = lots.filter(l=>l.mois>=15).reduce((s,l)=>s+(parseInt(l.qteActuelle)||0),0);
+          const alertes = lots.filter(l=>l.mois>=14&&!l.passage15).length;
+          return (
+            <div>
+              {/* 1. KPIs */}
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:"12px",marginBottom:"20px"}}>
+                {[
+                  {lbl:"Total en stock",val:total+" btl",sub:"tous formats",col:"#b8860b"},
+                  {lbl:"< 15 mois",val:moins15+" btl",sub:"non commercialisables",col:"#cc2222"},
+                  {lbl:"> 15 mois",val:plus15+" btl",sub:"commercialisables",col:"#1a7a40"},
+                  {lbl:"Alertes 15 mois",val:alertes+" lot(s)",sub:"passent le cap ce mois",col:"#c47800"},
+                ].map((k,i)=>(
+                  <div key={i} style={s.card}>
+                    <div style={s.lbl}>{k.lbl}</div>
+                    <div style={{fontSize:"24px",fontWeight:500,color:k.col}}>{k.val}</div>
+                    <div style={{fontSize:"11px",color:"#9a8870",marginTop:"3px"}}>{k.sub}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Onglets type produit */}
+              <div style={{display:"flex",gap:"4px",marginBottom:"16px",borderBottom:"1px solid #d4c4a0",paddingBottom:"0"}}>
+                {[["champagne","Champagne"],["coteaux_blanc","Coteaux Blanc"],["coteaux_rouge","Coteaux Rouge"],["ratafia","Ratafia"]].map(([key,lbl])=>(
+                  <button key={key} onClick={()=>{setStockTab(key);setFilterStockStatut("");}} style={{padding:"8px 14px",border:"none",borderBottom:stockTab===key?"2px solid #b8860b":"2px solid transparent",background:"transparent",color:stockTab===key?"#7a5200":"#9a8870",fontWeight:stockTab===key?500:400,fontSize:"12px",cursor:"pointer",fontFamily:"Georgia,serif"}}>{lbl}</button>
+                ))}
+              </div>
+
+              {/* Alertes */}
+              {(()=>{
+                const calcStock = (type) => coiffesStock.filter(c=>c.type===type).reduce((s,c)=>s+(c.operation==="achat"?parseInt(c.qte)||0:-(parseInt(c.qte)||0)),0);
+                const alerteCoiffeCRD = calcStock("CRD") < 500;
+                const alerteCoiffeMag = calcStock("CRD Magnum") < 20 || calcStock("Export Magnum") < 20;
+                const alerteCoiffeExp = calcStock("Export") < 500;
+                const alerte15 = lots.filter(l=>l.mois>=14&&!l.passage15);
+                const hasAlertes = alerteCoiffeCRD || alerteCoiffeExp || alerteCoiffeMag || alerte15.length>0;
+                if(!hasAlertes) return null;
+                return (
+                  <div style={{marginBottom:"16px",display:"grid",gap:"8px"}}>
+                    {alerte15.length>0&&(
+                      <div style={{padding:"12px 16px",background:"#fff3cd",border:"1px solid #e8c888",borderRadius:"8px",display:"flex",alignItems:"center",gap:"10px"}}>
+                        <span style={{fontSize:"18px"}}>!</span>
+                        <div style={{flex:1}}>
+                          <div style={{fontWeight:500,color:"#c47800",fontSize:"13px"}}>Lots approchant les 15 mois</div>
+                          <div style={{display:"flex",gap:"6px",flexWrap:"wrap",marginTop:"4px"}}>
+                            {alerte15.map(l=>(
+                              <span key={l.id} style={{background:"#fff",color:"#c47800",border:"1px solid #e8c888",borderRadius:"4px",padding:"1px 8px",fontSize:"11px"}}>{l.cuvee} {l.millesime} - {l.format} - {l.mois}m</span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    {(alerteCoiffeCRD||alerteCoiffeExp||alerteCoiffeMag)&&(
+                      <div style={{padding:"12px 16px",background:"#fde8e8",border:"1px solid #f0b4b4",borderRadius:"8px",display:"flex",alignItems:"center",gap:"10px"}}>
+                        <span style={{fontSize:"18px"}}>!</span>
+                        <div style={{flex:1}}>
+                          <div style={{fontWeight:500,color:"#cc2222",fontSize:"13px"}}>Stock coiffes bas</div>
+                          <div style={{display:"flex",gap:"6px",flexWrap:"wrap",marginTop:"4px"}}>
+                            {alerteCoiffeCRD&&<span style={{background:"#fff",color:"#cc2222",border:"1px solid #f0b4b4",borderRadius:"4px",padding:"1px 8px",fontSize:"11px"}}>CRD 75cl : {calcStock("CRD")} coiffes (seuil 500)</span>}
+                            {alerteCoiffeExp&&<span style={{background:"#fff",color:"#cc2222",border:"1px solid #f0b4b4",borderRadius:"4px",padding:"1px 8px",fontSize:"11px"}}>Export 75cl : {calcStock("Export")} coiffes (seuil 500)</span>}
+                            {calcStock("CRD Magnum")<20&&<span style={{background:"#fff",color:"#cc2222",border:"1px solid #f0b4b4",borderRadius:"4px",padding:"1px 8px",fontSize:"11px"}}>CRD Magnum : {calcStock("CRD Magnum")} coiffes (seuil 20)</span>}
+                            {calcStock("Export Magnum")<20&&<span style={{background:"#fff",color:"#cc2222",border:"1px solid #f0b4b4",borderRadius:"4px",padding:"1px 8px",fontSize:"11px"}}>Export Magnum : {calcStock("Export Magnum")} coiffes (seuil 20)</span>}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
+              {/* 2. Filtres */}
+              <div style={{display:"flex",gap:"8px",marginBottom:"16px",flexWrap:"wrap",alignItems:"center"}}>
+                <input style={{...s.inp,maxWidth:"180px"}} placeholder="Recherche cuvee..." value={filterStockCuvee} onChange={e=>setFilterStockCuvee(e.target.value)}/>
+                <select style={{...s.sel,maxWidth:"180px"}} value={filterStockLieu} onChange={e=>setFilterStockLieu(e.target.value)}>
+                  <option value="">Tous les lieux</option>
+                  {LIEUX_STOCK.map(l=><option key={l} value={l}>{l}</option>)}
+                </select>
+                <select style={{...s.sel,maxWidth:"220px"}} value={filterStockStatut} onChange={e=>setFilterStockStatut(e.target.value)}>
+                  <option value="">Tous les statuts</option>
+                  {[...STATUTS_BOUTEILLES,"Passage 15 mois (commercialisable)"].map(st=><option key={st} value={st}>{st}</option>)}
+                </select>
+                <select style={{...s.sel,maxWidth:"160px"}} value={filterStock15} onChange={e=>setFilterStock15(e.target.value)}>
+                  <option value="">Tous ages</option>
+                  <option value="moins15">Moins de 15 mois</option>
+                  <option value="plus15">Plus de 15 mois</option>
+                </select>
+                {(filterStockLieu||filterStockStatut||filterStock15||filterStockCuvee)&&(
+                  <button style={s.ghostSm} onClick={()=>{setFilterStockLieu("");setFilterStockStatut("");setFilterStock15("");setFilterStockCuvee("");}}>Reinitialiser</button>
+                )}
+                <span style={{marginLeft:"auto",fontSize:"11px",color:"#9a8870"}}>{lotsFusionnes.length} ligne(s) ({lotsFiltre.length} lots)</span>
+              </div>
+
+              {/* 3. Tableau */}
+              {lotsFiltre.length===0&&(
+                <div style={{...s.card,textAlign:"center",padding:"40px",color:"#9a8870"}}>
+                  <div style={{fontSize:"32px",marginBottom:"12px"}}>Aucun lot en stock</div>
+                  <div style={{fontSize:"13px"}}>Creez un tirage pour alimenter automatiquement le stock.</div>
+                </div>
+              )}
+              {lotsFiltre.length>0&&(
+                <div style={{...s.card,padding:0,overflow:"hidden",marginBottom:"24px"}}>
+                  <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
+                    <thead>
+                      <tr style={{background:"#fff8ee",borderBottom:"1px solid #d4c4a0"}}>
+                        {["Cuvee","Millesime","N° Lot","Format","Date tirage","Age","Statut","Lieu","Qte actuelle","Actions"].map(h=>(
+                          <th key={h} style={{textAlign:"left",padding:"10px 12px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#9a8870",fontWeight:500}}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {lotsFusionnes.map((l,i)=>(
+                        <tr key={l.id} style={{borderBottom:"1px solid #ede5d4",background:l.mois>=14&&!l.passage15?"#fff8e8":i%2===0?"#ffffff":"#fffbf5"}}>
+                          <td style={{padding:"10px 12px",fontWeight:500,color:"#1a1205"}}>{l.cuvee}</td>
+                          <td style={{padding:"10px 12px",color:"#6a5838",fontFamily:"monospace"}}>{l.millesime||"-"}</td>
+                          <td style={{padding:"10px 12px",color:"#9a8870",fontFamily:"monospace",fontSize:"11px"}}>{l.lot||"-"}</td>
+                          <td style={{padding:"10px 12px",color:"#6a5838"}}>{l.format}</td>
+                          <td style={{padding:"10px 12px",color:"#9a8870"}}>{fmt(l.dateTirage)}</td>
+                          <td style={{padding:"10px 12px"}}>
+                            <span style={{background:l.passage15?"#d4f0dd":l.mois>=14?"#fff3cd":"#fde8e8",color:l.passage15?"#1a7a40":l.mois>=14?"#c47800":"#cc2222",borderRadius:"12px",padding:"2px 8px",fontSize:"11px",fontWeight:500}}>{l.mois}m</span>
+                            {l.mois>=14&&!l.passage15&&<span style={{marginLeft:"4px",fontSize:"10px",color:"#c47800",fontWeight:"bold"}}>!</span>}
+                          </td>
+                          <td style={{padding:"10px 12px"}}>
+                            <span style={{background:(STATUT_COLORS[l.statut]||{bg:"#e8f0e8"}).bg,color:(STATUT_COLORS[l.statut]||{color:"#2d6a00"}).color,borderRadius:"4px",padding:"2px 8px",fontSize:"10px"}}>{l.statut}</span>
+                          </td>
+                          <td style={{padding:"10px 12px"}}><span style={{background:(LIEU_COLORS[l.lieu]||{bg:"#ede5d4"}).bg,color:(LIEU_COLORS[l.lieu]||{color:"#6a5838"}).color,borderRadius:"4px",padding:"2px 8px",fontSize:"10px"}}>{l.lieu}</span></td>
+                          <td style={{padding:"10px 12px",fontWeight:600,color:"#b8860b",fontFamily:"monospace",fontSize:"14px"}}>{l.qteActuelle}</td>
+                          <td style={{padding:"10px 12px"}}>
+                            <div style={{display:"flex",gap:"4px"}}>
+                              <button style={{...s.ghostSm,fontSize:"10px",color:"#185FA5",borderColor:"#b4d0f0"}}
+                                onClick={()=>setLotAction({lot:l,action:"mouvement"})}>Mouvement</button>
+                              <button style={{...s.ghostSm,fontSize:"10px",color:"#1a7a40",borderColor:"#b4d0b4"}}
+                                onClick={()=>{setSortieForm({lotId:l._ids?l._ids[0]:l.id,_ids:l._ids||[l.id],qteMax:parseInt(l.qteActuelle)||0,cuvee:l.cuvee,millesime:l.millesime,format:l.format,date:new Date().toISOString().slice(0,10),qte:"",notes:""});setShowSortieForm(true);}}>Sortie</button>
+                              <button style={{...s.ghostSm,fontSize:"10px",color:"#7a5200",borderColor:"#d4c4a0"}}
+                                onClick={()=>setLotAction({lot:l,action:"diviser"})}>Diviser</button>
+                              {l.mois>=14&&!l.passage15&&(
+                                <button style={{...s.ghostSm,fontSize:"10px",color:"#1a7a40",borderColor:"#b4d4b4",fontWeight:500}}
+                                  onClick={()=>{if(window.confirm("Confirmer le passage en +15 mois pour ce lot ?")){const upd={...l,passage15:true};setStockBouteilles(prev=>prev.map(x=>x.id===l.id?upd:x));fbSave("stockBouteilles",l.id,upd);}}}> Confirmer +15m</button>
+                              )}
+                              <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
+                                onClick={()=>{if((l.qteActuelle||0)>0)return alert("Impossible de supprimer un lot avec du stock restant ("+l.qteActuelle+" btl). Faites une sortie pour vider le stock.");if(window.confirm("Supprimer ce lot ?")){setStockBouteilles(prev=>prev.filter(x=>x.id!==l.id));fbDelete("stockBouteilles",l.id);}}}>Sup.</button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Encart coiffes */}
+              {(()=>{
+                const calcStock = (type) => coiffesStock.filter(c=>c.type===type).reduce((s,c)=>s+(c.operation==="achat"?parseInt(c.qte)||0:-(parseInt(c.qte)||0)),0);
+                const stockCRD = calcStock("CRD");
+                const stockCRDMag = calcStock("CRD Magnum");
+                const stockCRDJer = calcStock("CRD Jeroboam");
+                const stockExport = calcStock("Export");
+                const stockExpMag = calcStock("Export Magnum");
+                const stockExpJer = calcStock("Export Jeroboam");
+                return (
+                  <div style={{...s.card,padding:"16px 20px",marginTop:"16px",marginBottom:"16px"}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
+                      <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#7a5200"}}>Stock coiffes</div>
+                      <button style={s.btnSm} onClick={()=>setShowCoiffesForm(true)}>+ Achat coiffes</button>
+                    </div>
+                    <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:"8px"}}>
+                      {[["CRD 75cl",stockCRD,"#6a2d8a"],["CRD Mag",stockCRDMag,"#6a2d8a"],["CRD Jer",stockCRDJer,"#6a2d8a"],
+                        ["Export 75cl",stockExport,"#8a2d6a"],["Export Mag",stockExpMag,"#8a2d6a"],["Export Jer",stockExpJer,"#8a2d6a"]
+                      ].filter(([,q])=>q>0||true).map(([lbl,q,col])=>(
+                        <div key={lbl} style={{padding:"8px",background:q<50?"#fde8e8":"#f0fff4",borderRadius:"6px",textAlign:"center"}}>
+                          <div style={{fontSize:"10px",color:col,fontWeight:500,marginBottom:"2px"}}>{lbl}</div>
+                          <div style={{fontSize:"18px",fontWeight:600,color:q<50?"#cc2222":"#1a7a40"}}>{q}</div>
+                        </div>
+                      ))}
+                    </div>
+                    {coiffesStock.length>0&&(
+                      <div style={{marginTop:"12px",borderTop:"0.5px solid #ede5d4",paddingTop:"10px"}}>
+                        <div style={{fontSize:"11px",color:"#9a8870",marginBottom:"6px",cursor:"pointer",display:"flex",justifyContent:"space-between"}} onClick={()=>setShowHistCoiffes(p=>!p)}>Dernieres operations {showHistCoiffes?"▲":"▼"}</div>
+                        {showHistCoiffes&&[...coiffesStock].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5).map(c=>(
+                          <div key={c.id} style={{display:"flex",justifyContent:"space-between",fontSize:"11px",padding:"3px 0",borderBottom:"0.5px solid #f5f0e8"}}>
+                            <span style={{color:"#9a8870"}}>{fmt(c.date)}</span>
+                            <span style={{color:c.type==="CRD"?"#6a2d8a":"#8a2d6a",fontWeight:500}}>{c.type}</span>
+                            <span style={{color:c.operation==="achat"?"#1a7a40":"#cc2222"}}>{c.operation==="achat"?"+":"-"}{c.qte}</span>
+                            <button style={{...s.ghostSm,fontSize:"9px",color:"#cc2222",borderColor:"#f0b4b4",padding:"1px 4px"}} onClick={()=>{if(window.confirm("Supprimer ?")){setCoiffesStock(prev=>prev.filter(x=>x.id!==c.id));fbDelete("coiffes",c.id);}}}>x</button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
+              {/* Historique sorties */}
+              {clotures.filter(c=>c.type==="sortie").length>0&&(
+                <div style={{...s.card,padding:"16px 20px",marginTop:"16px"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px",cursor:"pointer"}} onClick={()=>setShowHistSorties(p=>!p)}>
+                    <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#7a5200"}}>Historique des sorties {showHistSorties?"▲":"▼"}</div>
+                    <div style={{display:"flex",gap:"6px"}}>
+                      {[...new Set(clotures.filter(c=>c.type==="sortie").map(c=>c.date.slice(0,7)))].sort().map(mois=>(
+                        <button key={mois} style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
+                          onClick={()=>{if(window.confirm("Archiver et supprimer toutes les sorties de "+mois+" ?")){
+                            const toDelete = clotures.filter(c=>c.type==="sortie"&&c.date.slice(0,7)===mois);
+                            toDelete.forEach(c=>fbDelete("clotures",c.id));
+                            setClotures(prev=>prev.filter(c=>!(c.type==="sortie"&&c.date.slice(0,7)===mois)));
+                          }}}>Archiver {mois}</button>
+                      ))}
+                    </div>
+                  </div>
+                  {(()=>{
+                    const sorties = clotures.filter(c=>c.type==="sortie");
+                    const tots = {};
+                    sorties.forEach(c=>{
+                      const k = (c.statut||"Vente")+"|"+(c.format||"75cl");
+                      tots[k] = (tots[k]||0) + (parseInt(c.qte)||0);
+                    });
+                    const totCRD75 = sorties.filter(c=>c.statut==="Habille CRD"&&c.format==="75cl").reduce((s,c)=>s+(parseInt(c.qte)||0),0);
+                    const totCRDMag = sorties.filter(c=>c.statut==="Habille CRD"&&c.format==="Magnum").reduce((s,c)=>s+(parseInt(c.qte)||0),0);
+                    const totCRDJer = sorties.filter(c=>c.statut==="Habille CRD"&&c.format==="Jeroboam").reduce((s,c)=>s+(parseInt(c.qte)||0),0);
+                    const totExp75 = sorties.filter(c=>c.statut==="Habille Export"&&c.format==="75cl").reduce((s,c)=>s+(parseInt(c.qte)||0),0);
+                    const totExpMag = sorties.filter(c=>c.statut==="Habille Export"&&c.format==="Magnum").reduce((s,c)=>s+(parseInt(c.qte)||0),0);
+                    const totExpJer = sorties.filter(c=>c.statut==="Habille Export"&&c.format==="Jeroboam").reduce((s,c)=>s+(parseInt(c.qte)||0),0);
+                    return (
+                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px",marginBottom:"14px",padding:"10px",background:"#fff8ee",borderRadius:"6px"}}>
+                        {totCRD75+totCRDMag+totCRDJer>0&&<div>
+                          <div style={{fontSize:"11px",fontWeight:500,color:"#6a2d8a",marginBottom:"4px"}}>CRD</div>
+                          {totCRD75>0&&<div style={{fontSize:"11px",color:"#6a5838"}}>75cl : <strong>{totCRD75}</strong> btl</div>}
+                          {totCRDMag>0&&<div style={{fontSize:"11px",color:"#6a5838"}}>Magnum : <strong>{totCRDMag}</strong></div>}
+                          {totCRDJer>0&&<div style={{fontSize:"11px",color:"#6a5838"}}>Jeroboam : <strong>{totCRDJer}</strong></div>}
+                        </div>}
+                        {totExp75+totExpMag+totExpJer>0&&<div>
+                          <div style={{fontSize:"11px",fontWeight:500,color:"#8a2d6a",marginBottom:"4px"}}>Export</div>
+                          {totExp75>0&&<div style={{fontSize:"11px",color:"#6a5838"}}>75cl : <strong>{totExp75}</strong> btl</div>}
+                          {totExpMag>0&&<div style={{fontSize:"11px",color:"#6a5838"}}>Magnum : <strong>{totExpMag}</strong></div>}
+                          {totExpJer>0&&<div style={{fontSize:"11px",color:"#6a5838"}}>Jeroboam : <strong>{totExpJer}</strong></div>}
+                        </div>}
+                      </div>
+                    );
+                  })()}
+                  {showHistSorties&&clotures.filter(c=>c.type==="sortie").sort((a,b)=>b.date.localeCompare(a.date)).map(c=>(
+                    <div key={c.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:"0.5px solid #ede5d4",fontSize:"12px"}}>
+                      <div>
+                        <span style={{fontWeight:500,color:"#1a1205"}}>{fmt(c.date)}</span>
+                        <span style={{color:"#6a5838",marginLeft:"8px"}}>{c.cuvee}</span>
+                        <span style={{color:"#b8860b",fontFamily:"monospace",marginLeft:"8px",fontWeight:500}}>{c.qte} {c.format==="Magnum"?"Magnums":c.format==="Jeroboam"?"Jeroboams":"btl"} sorties</span>
+                        {c.notes&&<span style={{color:"#9a8870",marginLeft:"8px",fontStyle:"italic"}}>{c.notes}</span>}
+                      </div>
+                      <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>{ if(!window.confirm("Annuler cette sortie ?")) return; const lot=stockBouteilles.find(x=>x.id===c.lotId); if(lot){const upd={...lot,qteActuelle:(lot.qteActuelle||0)+(parseInt(c.qte)||0)};setStockBouteilles(p=>p.map(x=>x.id===lot.id?upd:x));fbSave("stockBouteilles",lot.id,upd);} setClotures(p=>p.filter(x=>x.id!==c.id));fbDelete("clotures",c.id); }}>Annuler</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* -- TIRAGES -- */}
+        {view==="tirages" && (
+          <div>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
+              <div style={{fontSize:"13px",color:"#7a6840"}}>{tirages.length} tirage(s) enregistré(s)</div>
+              <button style={s.btn} onClick={()=>{setTirageForm(TIRAGE_EMPTY);setEditingTirage(null);setShowTirageForm(true);}}>
+                + Nouveau tirage
+              </button>
+            </div>
+
+            {tirages.length===0 && (
+              <div style={{...s.card,textAlign:"center",padding:"40px",color:"#9a8870"}}>
+                <div style={{fontSize:"32px",marginBottom:"12px"}}>Aucun tirage enregistré</div>
+                <div style={{fontSize:"13px",marginBottom:"16px"}}>Créez votre premier tirage pour commencer le suivi.</div>
+                <button style={s.btn} onClick={()=>{setTirageForm(TIRAGE_EMPTY);setEditingTirage(null);setShowTirageForm(true);}}>+ Nouveau tirage</button>
+              </div>
+            )}
+
+            <div style={{display:"grid",gap:"14px"}}>
+              {tirages.map(t=>(
+                <div key={t.id} style={{...s.card,borderLeft:"3px solid #533AB7"}}>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:"16px"}}>
+                    {/* Identite */}
+                    <div>
+                      <div style={{fontFamily:"Georgia,serif",fontSize:"16px",fontWeight:500,color:"#7a5200",marginBottom:"2px"}}>{t.cuvee}</div>
+                      <div style={{fontSize:"12px",color:"#9a8870",marginBottom:"8px"}}>{t.date} - {t.operateur}</div>
+                      {t.millesime&&<div style={{fontSize:"11px",color:"#6a5838"}}>Millésime : <strong>{t.millesime}</strong></div>}
+                      {t.futsSources?.length>0&&(
+                        <div style={{fontSize:"11px",color:"#6a5838",marginTop:"3px"}}>
+                          Futs : {t.futsSources.join(", ")}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Volumes assembles */}
+                    <div style={{borderLeft:"0.5px solid #d4c4a0",paddingLeft:"14px"}}>
+                      <div style={s.lbl}>Volume assemblé</div>
+                      <div style={{fontSize:"20px",fontWeight:500,color:"#533AB7"}}>{t.volAssemble?.toFixed(1)} L</div>
+                      <div style={{fontSize:"11px",color:"#9a8870",marginTop:"4px"}}>
+                        Vin : {t.volumeTotal||0} L
+                      </div>
+                      {t.volLevain>0&&(
+                        <div style={{fontSize:"11px",color:"#9a8870"}}>
+                          Levain : {t.volLevain?.toFixed(1)} L
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Levain */}
+                    <div style={{borderLeft:"0.5px solid #d4c4a0",paddingLeft:"14px"}}>
+                      <div style={s.lbl}>Levain</div>
+                      {t.levainLevureNom ? (
+                        <div>
+                          <div style={{fontSize:"13px",fontWeight:500,color:"#1a1205",marginBottom:"3px"}}>{t.levainLevureNom}</div>
+                          {t.levainLot&&<div style={{display:"inline-flex",alignItems:"center",background:"#fff8ee",border:"0.5px solid #d4c4a0",borderRadius:"3px",padding:"1px 7px",fontSize:"10px",color:"#7a5200",fontFamily:"monospace",marginBottom:"4px"}}>Lot: {t.levainLot}</div>}
+                          <div style={{fontSize:"11px",color:"#9a8870"}}>
+                            Eau: {t.levainEau||0}L · Vin: {t.levainVin||0}L · Lev: {t.levainLevure||0}L
+                          </div>
+                        </div>
+                      ) : <div style={{fontSize:"12px",color:"#9a8870",fontStyle:"italic"}}>Pas de levain</div>}
+                    </div>
+
+                    {/* Bouteilles */}
+                    <div style={{borderLeft:"0.5px solid #d4c4a0",paddingLeft:"14px"}}>
+                      <div style={s.lbl}>Mise en bouteilles</div>
+                      <div style={{fontSize:"20px",fontWeight:500,color:"#1a7a40"}}>{t.volBouteilles?.toFixed(1)} L</div>
+                      <div style={{marginTop:"6px",display:"flex",flexDirection:"column",gap:"3px"}}>
+                        {(parseFloat(t.qte75)||0)>0&&<div style={{fontSize:"11px",color:"#6a5838"}}>
+                          <span style={{display:"inline-block",width:"18px",height:"18px",background:"#d4edc0",borderRadius:"3px",textAlign:"center",lineHeight:"18px",fontSize:"10px",marginRight:"5px",color:"#2d6a00",fontFamily:"monospace"}}>75</span>
+                          {t.qte75} bouteilles = {((parseFloat(t.qte75)||0)*0.75).toFixed(0)}L
+                        </div>}
+                        {(parseFloat(t.qteMagnum)||0)>0&&<div style={{fontSize:"11px",color:"#6a5838"}}>
+                          <span style={{display:"inline-block",width:"18px",height:"18px",background:"#fde8b8",borderRadius:"3px",textAlign:"center",lineHeight:"18px",fontSize:"10px",marginRight:"5px",color:"#7a5200",fontFamily:"monospace"}}>M</span>
+                          {t.qteMagnum} magnums = {((parseFloat(t.qteMagnum)||0)*1.5).toFixed(0)}L
+                        </div>}
+                        {(parseFloat(t.qteJeroboam)||0)>0&&<div style={{fontSize:"11px",color:"#6a5838"}}>
+                          <span style={{display:"inline-block",width:"18px",height:"18px",background:"#fdd0d0",borderRadius:"3px",textAlign:"center",lineHeight:"18px",fontSize:"10px",marginRight:"5px",color:"#8B0000",fontFamily:"monospace"}}>J</span>
+                          {t.qteJeroboam} jeroboams = {((parseFloat(t.qteJeroboam)||0)*3.0).toFixed(0)}L
+                        </div>}
+                      </div>
+                    </div>
+                  </div>
+                  {(t.cuveDestId||t.nouvelleCuveId)&&(
+                    <div style={{marginTop:"10px",paddingTop:"10px",borderTop:"0.5px solid #ede5d4",display:"flex",alignItems:"center",gap:"8px",fontSize:"12px"}}>
+                      <span style={{color:"#9a8870"}}>Stocke dans :</span>
+                      <span style={{background:"#eeedfe",color:"#533AB7",border:"0.5px solid #534ab744",borderRadius:"4px",padding:"2px 10px",fontFamily:"monospace",fontWeight:500}}>
+                        {t.cuveDestId || t.nouvelleCuveId}
+                      </span>
+                      <span style={{color:"#9a8870",fontSize:"11px"}}>{t.volAssemble?.toFixed(1)} L</span>
+                    </div>
+                  )}
+                  {t.notes&&<div style={{marginTop:"12px",paddingTop:"10px",borderTop:"0.5px solid #ede5d4",fontSize:"12px",color:"#6a5838",fontStyle:"italic"}}>{t.notes}</div>}
+                  <div style={{marginTop:"10px",display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #ede5d4",paddingTop:"10px"}}>
+                    <button style={{background:"#fff8ee",color:"#7a5200",border:"0.5px solid #d4c4a0",borderRadius:"4px",padding:"4px 12px",fontSize:"11px",cursor:"pointer",fontFamily:"monospace"}}
+                      onClick={()=>openEditTirage(t)}>
+                      Modifier
+                    </button>
+                    <button style={{background:"#fce8e8",color:"#cc2222",border:"0.5px solid #f0b4b4",borderRadius:"4px",padding:"4px 12px",fontSize:"11px",cursor:"pointer",fontFamily:"monospace"}}
+                      onClick={()=>{if(window.confirm("Supprimer ce tirage ? Cette action est irreversible.")) { setTirages(prev=>prev.filter(tr=>tr.id!==t.id)); deleteTirageFb(t.id); }}}>
+                      Supprimer
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+
         {/* -- MOUVEMENTS -- */}
         {view==="mouvements"&&(
           <div>
