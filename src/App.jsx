@@ -576,6 +576,7 @@ export default function App() {
     degreePotentiel: "",
     acidite: "",
     so2: "",
+    ph: "",
     observations: "",
     cuveReception: "",
     nouvelleCuveNom: "",
@@ -5076,6 +5077,8 @@ export default function App() {
                     <input type="number" step="0.1" style={s.inp} placeholder="0.0" value={vendangeForm.acidite} onChange={e=>setVendangeForm(f=>({...f,acidite:e.target.value}))}/></div>
                   <div><span style={s.lbl}>SO2 (mg/L)</span>
                     <input type="number" style={s.inp} placeholder="0" value={vendangeForm.so2} onChange={e=>setVendangeForm(f=>({...f,so2:e.target.value}))}/></div>
+                  <div><span style={s.lbl}>pH</span>
+                    <input type="number" step="0.01" style={s.inp} placeholder="3.10" value={vendangeForm.ph||""} onChange={e=>setVendangeForm(f=>({...f,ph:e.target.value}))}/></div>
                 </div>
               </div>
               <div style={{background:"#fff8ee",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
