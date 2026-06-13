@@ -1336,19 +1336,25 @@ export default function App() {
       }
     }
     saveVendange(v);
-    // Mettre a jour le contenu de la cuve bourbes
-    console.log("bourbes check:", vendangeForm.cuveBourbesId, vendangeForm.volumeBourbes);
-    if(!editingVendange && vendangeForm.cuveBourbesId && vendangeForm.volumeBourbes) {
-      const volBourbes = parseFloat(vendangeForm.volumeBourbes)||0;
-      setCuvesCuverie(prev=>prev.map(c=>{
-        if(c.id===vendangeForm.cuveBourbesId) {
-          const updated = {...c, contenuActuelHL:String((parseFloat(c.contenuActuelHL)||0)+volBourbes)};
-          fbSave("cuvesCuverie", c.id, updated);
-          return updated;
-        }
-        return c;
-      }));
+    // Mettre a jour les cuves de cuverie (taille, cuvee A, cuvee B, bourbes)
+    if(!editingVendange) {
+      const majCuve = (cuveId, volHL) => {
+        if(!cuveId || !volHL) return;
+        setCuvesCuverie(prev=>prev.map(c=>{
+          if(c.id===cuveId) {
+            const updated = {...c, contenuActuelHL:String(Math.round(((parseFloat(c.contenuActuelHL)||0)+(parseFloat(volHL)||0))*100)/100)};
+            fbSave("cuvesCuverie", c.id, updated);
+            return updated;
+          }
+          return c;
+        }));
+      };
+      majCuve(vendangeForm.cuveTailleId, vendangeForm.volumeTaille);
+      majCuve(vendangeForm.cuveCuveeId, vendangeForm.volumeCuvee);
+      majCuve(vendangeForm.cuveCuveeBId, vendangeForm.volumeCuveeB);
+      majCuve(vendangeForm.cuveBourbesId, vendangeForm.volumeBourbes);
     }
+
     if(!editingVendange) { tonneaux.forEach(t=>saveTonneau(t)); }
     setVendangeForm(VENDANGE_EMPTY); setEditingVendange(null); setShowVendangeForm(false);
   };
