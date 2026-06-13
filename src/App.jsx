@@ -622,7 +622,7 @@ export default function App() {
   const [importMsg,   setImportMsg]   = useState("");
 
   // Fût / Cuve form
-  const EMPTY_FUT = { id:"", appellation:"vins_clairs_2025", denomination:"", millesime:"2025", volume:"", tonnelier:"", grain:"", chauffe:"", certif:"BIO", statut:"actif", contenuActuel:"", marc:"", commentaire:"" };
+  const EMPTY_FUT = { id:"", appellation:"", denomination:"", millesime:"2025", volume:"", tonnelier:"", grain:"", chauffe:"", certif:"BIO", statut:"actif", contenuActuel:"", marc:"", commentaire:"" };
   const [futForm, setFutForm] = useState(EMPTY_FUT);
 
   // Mouvement form
@@ -1087,11 +1087,10 @@ export default function App() {
   // Submit ajout/modif fût
   const submitFut = () => {
     if(!futForm.id.trim())     return alert("Le N° de fût est requis.");
-    if(!futForm.denomination.trim()) return alert("La dénomination est requise.");
     if(!futForm.volume || isNaN(+futForm.volume)) return alert("Le volume doit être un nombre.");
     if(!editingFut && tonneaux.find(t=>t.id===futForm.id.trim())) return alert(`Le fût "${futForm.id}" existe déjà.`);
     const vol = +futForm.volume;
-    const contenu = futForm.contenuActuel!==""?Math.min(vol,+futForm.contenuActuel):vol;
+    const contenu = futForm.contenuActuel!==""?Math.min(vol,+futForm.contenuActuel):0;
     const fut = { id:futForm.id.trim(), appellation:futForm.appellation, denomination:futForm.denomination.trim(),
       millesime:futForm.millesime?+futForm.millesime:null, volume:vol, tonnelier:futForm.tonnelier,
       grain:futForm.grain, chauffe:futForm.chauffe, certif:futForm.certif,
