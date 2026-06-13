@@ -1078,7 +1078,7 @@ export default function App() {
       .map(t=>t.appellation)
   )].sort();
   // Toutes les appellations disponibles pour les filtres
-  const allAppellations = [...vinsClairsAnnes, "vins_reserve","coteaux","ratafia"];
+  const allAppellations = [...vinsClairsAnnes, "vins_reserve","ri","coteaux","ratafia"];
   // Passer un fût en réserve
   const passerEnReserve = (id) => {
     setTonneaux(prev=>prev.map(t=>{ if(t.id===id){ const u={...t,appellation:"vins_reserve"}; saveTonneau(u); return u; } return t; }));
