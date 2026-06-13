@@ -338,6 +338,7 @@ const TYPES_MOUVEMENT = [
   { value:"batonnage",   label:"Bâtonnage",               icon:"ti-refresh",        color:"#5F5E5A" },
   { value:"ajout_produit",label:"Ajout produit",          icon:"ti-flask",          color:"#BA7517" },
   { value:"entonnage",    label:"Entonnage",               icon:"ti-beer",           color:"#7a5200" },
+  { value:"mutage",       label:"Mutage (bourbes + alcool)", icon:"ti-flask",          color:"#8B0000" },
 ];
 
 
@@ -638,7 +639,7 @@ export default function App() {
   // Mouvement form
   const [mvtForm, setMvtForm] = useState({
     type:"ouillage", date:new Date().toISOString().slice(0,16),
-    operateur:"", futSource:[], futDest:"", volume:"", notes:"", produit:"", dosage:"", numeroLot:"", entonnageMarcId:"", entonnageCuveId:"",
+    operateur:"", futSource:[], futDest:"", volume:"", notes:"", produit:"", dosage:"", numeroLot:"", entonnageMarcId:"", entonnageCuveId:"", mutageCuveId:"", mutageBourbesHL:"", mutageAlcoolHL:"", mutageDegreAlcool:"", mutageDestId:"",
   });
   // Dégustation form - une ligne par dégustateur
   const [degForm, setDegForm] = useState({
@@ -2217,12 +2218,12 @@ export default function App() {
                 {cuvesCuverie.length>0&&(
                   <div style={{display:"grid",gap:"12px"}}>
                     {cuvesCuverie.map(c=>(
-                      <div key={c.id} style={{...s.card,borderLeft:`3px solid ${c.type==="debourbage"?"#185FA5":"#1a7a40"}`}}>
+                      <div key={c.id} style={{...s.card,borderLeft:`3px solid ${c.type==="debourbage"?"#185FA5":c.type==="bourbes"?"#8B0000":"#1a7a40"}`}}>
                         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr auto",gap:"16px",alignItems:"center"}}>
                           <div>
                             <div style={{fontWeight:500,color:"#1a1205",fontSize:"14px"}}>{c.nom}</div>
                             <div style={{fontSize:"11px",color:"#9a8870",marginTop:"2px"}}>
-                              <span style={{background:c.type==="debourbage"?"#e8f0fb":"#d4f0dd",color:c.type==="debourbage"?"#185FA5":"#1a7a40",borderRadius:"3px",padding:"1px 6px",fontSize:"10px"}}>{c.type==="debourbage"?"Debourbage":"Assemblage"}</span>
+                              <span style={{background:c.type==="debourbage"?"#e8f0fb":c.type==="bourbes"?"#fdd0d0":"#d4f0dd",color:c.type==="debourbage"?"#185FA5":c.type==="bourbes"?"#8B0000":"#1a7a40",borderRadius:"3px",padding:"1px 6px",fontSize:"10px"}}>{c.type==="debourbage"?"Debourbage":c.type==="bourbes"?"Bourbes":"Assemblage"}</span>
                             </div>
                           </div>
                           <div>
@@ -4432,6 +4433,7 @@ export default function App() {
                   <select style={s.sel} value={cuverieForm.type} onChange={e=>setCuverieForm(f=>({...f,type:e.target.value}))}>
                     <option value="debourbage">Debourbage</option>
                     <option value="assemblage">Assemblage</option>
+                    <option value="bourbes">Bourbes</option>
                   </select></div>
               </div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
@@ -4572,6 +4574,36 @@ export default function App() {
                 </div>
               )}
               <div><span style={s.lbl}>Notes</span><textarea style={{...s.inp,height:"64px",resize:"vertical"}} value={mvtForm.notes} onChange={e=>setMvtForm(f=>({...f,notes:e.target.value}))}/></div>
+              {mvtForm.type==="mutage"&&(
+                <div style={{borderTop:"0.5px solid #d4c4a0",paddingTop:"12px",display:"grid",gap:"10px"}}>
+                  <div style={{fontFamily:"Georgia,serif",fontSize:"13px",color:"#8B0000",marginBottom:"4px"}}>Details mutage</div>
+                  <div><span style={s.lbl}>Cuve bourbes (source)</span>
+                    <select style={s.sel} value={mvtForm.mutageCuveId||""} onChange={e=>setMvtForm(f=>({...f,mutageCuveId:e.target.value}))}>
+                      <option value="">Selectionner...</option>
+                      {cuvesCuverie.filter(c=>c.type==="bourbes").map(c=><option key={c.id} value={c.id}>{c.nom} ({c.contenuActuelHL||0} HL)</option>)}
+                    </select>
+                  </div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px"}}>
+                    <div><span style={s.lbl}>Volume bourbes (HL)</span>
+                      <input type="number" step="0.1" style={s.inp} placeholder="0" value={mvtForm.mutageBourbesHL||""} onChange={e=>setMvtForm(f=>({...f,mutageBourbesHL:e.target.value}))}/></div>
+                    <div><span style={s.lbl}>Volume alcool (HL)</span>
+                      <input type="number" step="0.1" style={s.inp} placeholder="0" value={mvtForm.mutageAlcoolHL||""} onChange={e=>setMvtForm(f=>({...f,mutageAlcoolHL:e.target.value}))}/></div>
+                  </div>
+                  <div><span style={s.lbl}>Degre alcool (%)</span>
+                    <input type="number" step="0.1" style={s.inp} placeholder="96" value={mvtForm.mutageDegreAlcool||""} onChange={e=>setMvtForm(f=>({...f,mutageDegreAlcool:e.target.value}))}/></div>
+                  <div><span style={s.lbl}>Cuve destination (apres mutage)</span>
+                    <select style={s.sel} value={mvtForm.mutageDestId||""} onChange={e=>setMvtForm(f=>({...f,mutageDestId:e.target.value}))}>
+                      <option value="">Selectionner...</option>
+                      {cuvesCuverie.map(c=><option key={c.id} value={c.id}>{c.nom} - {c.type} ({c.contenuActuelHL||0} HL)</option>)}
+                    </select>
+                  </div>
+                  {mvtForm.mutageBourbesHL&&mvtForm.mutageAlcoolHL&&(
+                    <div style={{padding:"8px 12px",background:"#fdd0d0",borderRadius:"6px",fontSize:"12px",color:"#8B0000"}}>
+                      Volume total apres mutage : {(parseFloat(mvtForm.mutageBourbesHL)||0)+(parseFloat(mvtForm.mutageAlcoolHL)||0)} HL
+                    </div>
+                  )}
+                </div>
+              )}
               {mvtForm.type==="entonnage"&&(
                 <div style={{borderTop:"0.5px solid #d4c4a0",paddingTop:"12px",display:"grid",gap:"10px"}}>
                   <div style={{fontFamily:"Georgia,serif",fontSize:"13px",color:"#7a5200",marginBottom:"4px"}}>Details entonnage</div>
