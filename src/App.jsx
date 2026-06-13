@@ -5134,7 +5134,7 @@ export default function App() {
                     <div><span style={s.lbl}>Cuve Taille</span>
                       <select style={s.sel} value={vendangeForm.cuveTailleId||""} onChange={e=>setVendangeForm(f=>({...f,cuveTailleId:e.target.value}))}>
                         <option value="">Selectionner...</option>
-                        {tonneaux.map(t=><option key={t.id} value={t.id}>{t.id} - {t.denomination||t.appellation}</option>)}
+                        {cuvesCuverie.filter(c=>c.type!=="bourbes"&&(parseFloat(c.volumeHL)||0)-(parseFloat(c.contenuActuelHL)||0)>0).map(c=><option key={c.id} value={c.id}>{c.nom} - {c.type} (dispo: {((parseFloat(c.volumeHL)||0)-(parseFloat(c.contenuActuelHL)||0)).toFixed(1)} HL)</option>)}
                       </select></div>
                     <div><span style={s.lbl}>Volume taille (HL)</span>
                       <input type="number" step="0.1" style={s.inp} placeholder="0" value={vendangeForm.volumeTaille||""} onChange={e=>setVendangeForm(f=>({...f,volumeTaille:e.target.value}))}/></div>
@@ -5143,7 +5143,7 @@ export default function App() {
                     <div><span style={s.lbl}>Cuve Cuvee A</span>
                       <select style={s.sel} value={vendangeForm.cuveCuveeId||""} onChange={e=>setVendangeForm(f=>({...f,cuveCuveeId:e.target.value}))}>
                         <option value="">Selectionner...</option>
-                        {tonneaux.map(t=><option key={t.id} value={t.id}>{t.id} - {t.denomination||t.appellation}</option>)}
+                        {cuvesCuverie.filter(c=>c.type!=="bourbes"&&(parseFloat(c.volumeHL)||0)-(parseFloat(c.contenuActuelHL)||0)>0).map(c=><option key={c.id} value={c.id}>{c.nom} - {c.type} (dispo: {((parseFloat(c.volumeHL)||0)-(parseFloat(c.contenuActuelHL)||0)).toFixed(1)} HL)</option>)}
                       </select></div>
                     <div><span style={s.lbl}>Volume cuvee A (HL)</span>
                       <input type="number" step="0.1" style={s.inp} placeholder="0" value={vendangeForm.volumeCuvee||""} onChange={e=>setVendangeForm(f=>({...f,volumeCuvee:e.target.value}))}/></div>
@@ -5152,7 +5152,7 @@ export default function App() {
                     <div><span style={s.lbl}>Cuve Cuvee B</span>
                       <select style={s.sel} value={vendangeForm.cuveCuveeBId||""} onChange={e=>setVendangeForm(f=>({...f,cuveCuveeBId:e.target.value}))}>
                         <option value="">Selectionner...</option>
-                        {tonneaux.map(t=><option key={t.id} value={t.id}>{t.id} - {t.denomination||t.appellation}</option>)}
+                        {cuvesCuverie.filter(c=>c.type!=="bourbes"&&(parseFloat(c.volumeHL)||0)-(parseFloat(c.contenuActuelHL)||0)>0).map(c=><option key={c.id} value={c.id}>{c.nom} - {c.type} (dispo: {((parseFloat(c.volumeHL)||0)-(parseFloat(c.contenuActuelHL)||0)).toFixed(1)} HL)</option>)}
                       </select></div>
                     <div><span style={s.lbl}>Volume cuvee B (HL)</span>
                       <input type="number" step="0.1" style={s.inp} placeholder="0" value={vendangeForm.volumeCuveeB||""} onChange={e=>setVendangeForm(f=>({...f,volumeCuveeB:e.target.value}))}/></div>
