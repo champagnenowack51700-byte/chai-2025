@@ -2423,6 +2423,7 @@ export default function App() {
                               {v.degreePotentiel&&<div style={{fontSize:"12px",color:"#6a5838"}}>Degre : <strong>{v.degreePotentiel}%</strong></div>}
                               {v.acidite&&<div style={{fontSize:"12px",color:"#6a5838"}}>Acidite : <strong>{v.acidite} g/L</strong></div>}
                               {v.so2&&<div style={{fontSize:"12px",color:"#6a5838"}}>SO2 : <strong>{v.so2} mg/L</strong></div>}
+                              {v.ph&&<div style={{fontSize:"12px",color:"#6a5838"}}>pH : <strong>{v.ph}</strong></div>}
                             </div>
                             <div style={{display:"none"}}>
                               <div style={s.lbl}>Cuve reception</div>
@@ -3808,6 +3809,7 @@ export default function App() {
                               {v.degreePotentiel&&<div style={{fontSize:"12px",color:"#6a5838"}}>Degre : <strong>{v.degreePotentiel}%</strong></div>}
                               {v.acidite&&<div style={{fontSize:"12px",color:"#6a5838"}}>Acidite : <strong>{v.acidite} g/L</strong></div>}
                               {v.so2&&<div style={{fontSize:"12px",color:"#6a5838"}}>SO2 : <strong>{v.so2} mg/L</strong></div>}
+                              {v.ph&&<div style={{fontSize:"12px",color:"#6a5838"}}>pH : <strong>{v.ph}</strong></div>}
                             </div>
                             <div>
                               <div style={s.lbl}>Cuve reception</div>
