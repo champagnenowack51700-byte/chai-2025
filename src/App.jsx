@@ -1336,6 +1336,18 @@ export default function App() {
       }
     }
     saveVendange(v);
+    // Mettre a jour le contenu de la cuve bourbes
+    if(!editingVendange && vendangeForm.cuveBourbesId && vendangeForm.volumeBourbes) {
+      const volBourbes = parseFloat(vendangeForm.volumeBourbes)||0;
+      setCuvesCuverie(prev=>prev.map(c=>{
+        if(c.id===vendangeForm.cuveBourbesId) {
+          const updated = {...c, contenuActuelHL:String((parseFloat(c.contenuActuelHL)||0)+volBourbes)};
+          fbSave("cuvesCuverie", c.id, updated);
+          return updated;
+        }
+        return c;
+      }));
+    }
     if(!editingVendange) { tonneaux.forEach(t=>saveTonneau(t)); }
     setVendangeForm(VENDANGE_EMPTY); setEditingVendange(null); setShowVendangeForm(false);
   };
