@@ -1532,7 +1532,7 @@ export default function App() {
             <span style={{fontSize:"10px",color:"#7a6840"}}>{t.marc?"Marc "+t.marc+" · ":""}{t.millesime||"-"} · {t.volume}L</span>
             <div style={{display:"flex",alignItems:"center",gap:"5px"}}>
               {hasNotes && <span style={{fontSize:"10px",color:apc.color,fontWeight:600}}>{ng?.toFixed(1)}*</span>}
-              {(parseFloat(t.volumeRI)||0)>0&&<span style={{fontSize:"9px",background:t.appellation==="ri"?"#1a7a40":"#8B0000",color:"#fff",fontFamily:"monospace",borderRadius:"3px",padding:"1px 4px",marginRight:"3px",fontWeight:600}}}>{t.appellation==="ri"?"AOC":"RI"}</span>}
+              {(parseFloat(t.volumeRI)||0)>0&&<span style={{fontSize:"9px",background:t.appellation==="ri"?"#1a7a40":"#8B0000",color:"#fff",fontFamily:"monospace",borderRadius:"3px",padding:"1px 4px",marginRight:"3px",fontWeight:600}}>{t.appellation==="ri"?"AOC":"RI"}</span>}
               <span style={{fontSize:"11px",fontWeight:600,color:p<20?"#cc2222":p>90?"#1a7a40":apc.color}}>{t.contenuActuel}L</span>
             </div>
           </div>
