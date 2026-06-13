@@ -433,6 +433,9 @@ export default function App() {
   const [filterStatut,     setFilterStatut]     = useState("");
   const [filterStockLieu,  setFilterStockLieu]  = useState("");
   const [filterStockCuvee, setFilterStockCuvee] = useState("");
+  const [riRequis,         setRiRequis]         = useState([]);
+  const [showRiForm,       setShowRiForm]       = useState(false);
+  const [riForm,           setRiForm]           = useState({annee:new Date().getFullYear().toString(),volumeHL:""});
   const [stockTab,         setStockTab]         = useState("champagne");
   const [lotAction,        setLotAction]        = useState(null);
   const [showSortieForm,   setShowSortieForm]   = useState(false);
@@ -622,7 +625,7 @@ export default function App() {
   const [importMsg,   setImportMsg]   = useState("");
 
   // Fût / Cuve form
-  const EMPTY_FUT = { id:"", appellation:"", denomination:"", millesime:"2025", volume:"", tonnelier:"", grain:"", chauffe:"", certif:"BIO", statut:"actif", contenuActuel:"", marc:"", commentaire:"" };
+  const EMPTY_FUT = { id:"", appellation:"", denomination:"", millesime:"2025", volume:"", tonnelier:"", grain:"", chauffe:"", certif:"BIO", statut:"actif", contenuActuel:"", volumeRI:"0", marc:"", commentaire:"" };
   const [futForm, setFutForm] = useState(EMPTY_FUT);
 
   // Mouvement form
@@ -1094,7 +1097,7 @@ export default function App() {
     const fut = { id:futForm.id.trim(), appellation:futForm.appellation, denomination:futForm.denomination.trim(),
       millesime:futForm.millesime?+futForm.millesime:null, volume:vol, tonnelier:futForm.tonnelier,
       grain:futForm.grain, chauffe:futForm.chauffe, certif:futForm.certif,
-      statut:futForm.statut, contenuActuel:contenu, marc:futForm.marc||"", commentaire:futForm.commentaire||"" };
+      statut:futForm.statut, contenuActuel:contenu, volumeRI:parseFloat(futForm.volumeRI)||0, marc:futForm.marc||"", commentaire:futForm.commentaire||"" };
     if(editingFut) {
       setTonneaux(prev=>prev.map(t=>t.id===editingFut.id?fut:t));
     } else {
@@ -1651,6 +1654,14 @@ export default function App() {
               {[
                 {lbl:"Volume total en chai",val:`${totalVin.toLocaleString("fr-FR")} L`,sub:`/ ${totalCap.toLocaleString("fr-FR")} L capacité`},
                 {lbl:"Fûts actifs",val:tonneaux.filter(t=>t.statut==="actif").length,sub:`${tonneaux.length} fûts au total`},
+                {lbl:"Volume RI",val:(()=>{
+                    const totalRI = tonneaux.reduce((s,t)=>s+(parseFloat(t.volumeRI)||0),0);
+                    const annee = new Date().getFullYear().toString();
+                    const requis = riRequis.find(r=>r.annee===annee);
+                    const ok = !requis || totalRI>=(parseFloat(requis.volumeHL)||0);
+                    return <span style={{color:ok?"#8B0000":"#cc2222",fontWeight:ok?400:600}}>{totalRI.toFixed(1)} HL{requis?" / "+requis.volumeHL+" req.":""}</span>;
+                  })(),sub:"reserve individuelle",col:"#8B0000"},
+                {lbl:"Volume tirable",val:(tonneaux.reduce((s,t)=>s+Math.max(0,(t.contenuActuel||0)-(parseFloat(t.volumeRI)||0)),0).toFixed(1))+" HL",sub:"disponible pour tirage",col:"#1a7a40"},
                 {lbl:"Mouvements",val:mouvements.length,sub:"enregistrés"},
                 {lbl:"Notes de dégustation",val:degustations.length,sub:`${[...new Set(degustations.map(d=>d.session))].length} session(s)`},
               ].map((it,i)=>(
@@ -3249,6 +3260,43 @@ export default function App() {
         </div>
       )}
 
+      {/* == MODAL RI REQUIS == */}
+      {showRiForm&&(
+        <div style={s.modal}>
+          <div style={{...s.modalBox,width:"380px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#7a5200"}}>RI requis</div>
+              <button style={s.ghost} onClick={()=>setShowRiForm(false)}>x</button>
+            </div>
+            <div style={{display:"grid",gap:"12px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                <div><span style={s.lbl}>Campagne</span>
+                  <input type="number" style={s.inp} placeholder="2025" value={riForm.annee} onChange={e=>setRiForm(f=>({...f,annee:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Volume RI requis (HL)</span>
+                  <input type="number" step="0.1" style={s.inp} placeholder="ex. 120" value={riForm.volumeHL} onChange={e=>setRiForm(f=>({...f,volumeHL:e.target.value}))}/></div>
+              </div>
+              <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
+                <button style={s.ghost} onClick={()=>setShowRiForm(false)}>Annuler</button>
+                <button style={s.btn} onClick={()=>{
+                  if(!riForm.annee||!riForm.volumeHL) return alert("Tous les champs sont requis.");
+                  const existing = riRequis.find(r=>r.annee===riForm.annee);
+                  if(existing) {
+                    const updated = {...existing,...riForm,id:existing.id};
+                    setRiRequis(prev=>prev.map(r=>r.annee===riForm.annee?updated:r));
+                    fbSave("riRequis",updated.id,updated);
+                  } else {
+                    const r = {id:"ri_"+Date.now(),...riForm,timestamp:new Date().toISOString()};
+                    setRiRequis(prev=>[r,...prev]);
+                    fbSave("riRequis",r.id,r);
+                  }
+                  setShowRiForm(false);
+                }}>Enregistrer</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* == MODAL MOUVEMENT == */}
       {showMvtForm&&(
         <div style={s.modal}>
@@ -3633,6 +3681,13 @@ export default function App() {
                   <input type="number" min="0" max="3" step="0.5" style={s.inp} value={editNoteForm.longueur} onChange={e=>setEditNoteForm(f=>({...f,longueur:e.target.value}))}/></div>
                 <div><span style={s.lbl}>Note globale /5</span>
                   <input type="number" min="0" max="5" step="0.5" style={s.inp} value={editNoteForm.noteG} onChange={e=>setEditNoteForm(f=>({...f,noteG:e.target.value}))}/></div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                <div><span style={s.lbl}>Volume RI (HL)</span>
+                  <input type="number" step="0.1" style={s.inp} placeholder="0" value={futForm.volumeRI||"0"} onChange={e=>setFutForm(f=>({...f,volumeRI:e.target.value}))}/></div>
+                <div style={{paddingTop:"18px",fontSize:"11px",color:"#9a8870"}}>
+                  {futForm.contenuActuel&&futForm.volumeRI?<span>Tirable : <strong style={{color:"#2d6a00"}}>{Math.max(0,(parseFloat(futForm.contenuActuel)||0)-(parseFloat(futForm.volumeRI)||0)).toFixed(1)} HL</strong></span>:null}
+                </div>
               </div>
               <div><span style={s.lbl}>Commentaire</span>
                 <textarea style={{...s.inp,height:"80px",resize:"vertical"}} value={editNoteForm.commentaire} onChange={e=>setEditNoteForm(f=>({...f,commentaire:e.target.value}))}/></div>
