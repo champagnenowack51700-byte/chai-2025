@@ -1655,492 +1655,132 @@ export default function App() {
         {/* -- DASHBOARD -- */}
         {view==="dashboard" && (
           <div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:"12px",marginBottom:"24px"}}>
-              {[
-                {lbl:"Volume total en chai",val:`${(totalVin/100).toFixed(1)} HL`,sub:`/ ${totalCap.toLocaleString("fr-FR")} L capacité`},
-                {lbl:"Fûts actifs",val:tonneaux.filter(t=>t.statut==="actif").length,sub:`${tonneaux.length} fûts au total`},
-                {lbl:"Volume RI",val:(()=>{
-                    const totalRI = tonneaux.reduce((s,t)=>s+(t.appellation==="ri"?(t.contenuActuel||0)/100:(parseFloat(t.volumeRI)||0)),0);
-                    const annee = new Date().getFullYear().toString();
-                    const requis = riRequis.find(r=>r.annee===annee);
-                    const ok = !requis || totalRI>=(parseFloat(requis.volumeHL)||0);
-                    return <span style={{color:ok?"#8B0000":"#cc2222",fontWeight:ok?400:600}}>{totalRI.toFixed(1)} HL{requis?" / "+requis.volumeHL+" req.":""}</span>;
-                  })(),sub:"reserve individuelle",col:"#8B0000"},
-                {lbl:"Volume tirable",val:(()=>{ const hl=tonneaux.filter(t=>t.appellation!=="ri").reduce((s,t)=>s+Math.max(0,((t.contenuActuel||0)/100)-(parseFloat(t.volumeRI)||0)),0); return hl.toFixed(1)+" HL (~"+Math.floor(hl*100/0.75).toLocaleString("fr-FR")+" btl)"; })(),sub:"disponible pour tirage",col:"#1a7a40"},
-                {lbl:"RI requis",val:(<div style={{display:"flex",alignItems:"center",gap:"6px"}}><span>{riRequis.find(r=>r.annee===new Date().getFullYear().toString())?.volumeHL||"-"} HL</span><button style={{...s.ghostSm,fontSize:"9px",padding:"1px 5px"}} onClick={()=>setShowRiForm(true)}>Saisir</button></div>),sub:"volume minimum reglementaire",col:"#185FA5"},
-                {lbl:"Mouvements",val:mouvements.length,sub:"enregistrés"},
-                {lbl:"Notes de dégustation",val:degustations.length,sub:`${[...new Set(degustations.map(d=>d.session))].length} session(s)`},
-              ].map((it,i)=>(
-                <div key={i} style={s.card}>
-                  <div style={s.lbl}>{it.lbl}</div>
-                  <div style={{fontSize:"26px",fontWeight:600,color:"#b8860b",lineHeight:1.1}}>{it.val}</div>
-                  <div style={{fontSize:"11px",color:"#8a7248",marginTop:"3px"}}>{it.sub}</div>
-                </div>
-              ))}
+
+            {/* SECTION 1 : STOCK CHAI */}
+            <div style={{display:"flex",alignItems:"center",gap:"10px",marginBottom:"16px"}}>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"18px",color:"#7a5200",fontWeight:500}}>Stock chai</div>
+              <div style={{flex:1,height:"1px",background:"linear-gradient(to right, #d4c4a0, transparent)"}}/>
             </div>
-            {/* Légende appellations */}
-            <div style={{display:"flex",gap:"8px",marginBottom:"20px",flexWrap:"wrap"}}>
-              {allAppellations.map(key=>{
-                const apc=getApc(key);
-                const count=tonneaux.filter(t=>t.appellation===key).length;
-                if(count===0) return null;
-                return (
-                  <button key={key} onClick={()=>{setFilterAppellation(key);setView("tonneaux");}}
-                    style={{display:"flex",alignItems:"center",gap:"6px",padding:"5px 12px",borderRadius:"4px",background:apc.bg,border:`1px solid ${apc.border}`,fontSize:"11px",color:apc.color,cursor:"pointer",fontFamily:"inherit"}}>
-                    <span style={{width:"7px",height:"7px",borderRadius:"50%",background:apc.color,flexShrink:0}}/>
-                    {apc.label} - <strong>{count}</strong> fûts
-                  </button>
-                );
-              })}
-            </div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:"16px"}}>
-              <div style={s.card}>
-                <div style={{...s.lbl,marginBottom:"12px"}}>Derniers mouvements</div>
-                {mouvements.length===0&&<div style={{color:"#8a7248",fontSize:"13px"}}>Aucun mouvement enregistré.</div>}
-                {mouvements.slice(0,5).map(m=>(
-                  <div key={m.id} style={{borderBottom:"1px solid #e8dcc6",padding:"7px 0",display:"flex",justifyContent:"space-between",alignItems:"center",gap:"10px"}}>
-                    <div style={{display:"flex",alignItems:"center",gap:"7px"}}>
-                      <span style={s.tag(typeColor(m.type))}>{typeLabel(m.type)}</span>
-                      <span style={{fontSize:"11px",color:"#6a5838"}}>{m.futSource?.join(", ")}{m.futDest&&` &rarr; ${m.futDest}`}</span>
-                    </div>
-                    <span style={{fontSize:"10px",color:"#8a7248",whiteSpace:"nowrap"}}>{fmtDate(m.timestamp)}</span>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(180px,1fr))",gap:"12px",marginBottom:"12px"}}>
+              {(()=>{
+                const totalVin = tonneaux.filter(t=>t.statut!=="vide").reduce((s,t)=>s+(t.contenuActuel||0),0);
+                const totalCap = tonneaux.reduce((s,t)=>s+(t.volume||0),0);
+                const totalTirable = tonneaux.filter(t=>t.appellation!=="ri").reduce((s,t)=>s+Math.max(0,((t.contenuActuel||0)/100)-(parseFloat(t.volumeRI)||0)),0);
+                return [
+                  {lbl:"Volume total",val:(totalVin/100).toFixed(1)+" HL",sub:`cap. ${(totalCap/100).toFixed(0)} HL`},
+                  {lbl:"Volume tirable",val:totalTirable.toFixed(1)+" HL",sub:"~"+Math.floor(totalTirable*100/0.75).toLocaleString("fr-FR")+" btl 75cl",col:"#1a7a40"},
+                ].map((k,i)=>(
+                  <div key={i} style={s.card}>
+                    <div style={s.lbl}>{k.lbl}</div>
+                    <div style={{fontSize:"28px",fontWeight:700,color:k.col||"#b8860b",letterSpacing:"-0.5px"}}>{k.val}</div>
+                    <div style={{fontSize:"11px",color:"#9a8870",marginTop:"4px"}}>{k.sub}</div>
                   </div>
-                ))}
-              </div>
-              <div style={s.card}>
-                <div style={{...s.lbl,marginBottom:"12px"}}>Meilleures notes (moyenne globale)</div>
-                {tonneaux.filter(t=>avgNoteG(t.id)!=null).sort((a,b)=>(avgNoteG(b.id)||0)-(avgNoteG(a.id)||0)).slice(0,7).map(t=>(
-                  <div key={t.id} onClick={()=>{setSelectedFut(t.id);setView("fiche");setFicheTab("degustations");}}
-                    style={{borderBottom:"1px solid #e8dcc6",padding:"7px 0",display:"flex",justifyContent:"space-between",cursor:"pointer",alignItems:"center"}}>
-                    <div>
-                      <span style={{fontSize:"12px",color:"#b8860b",marginRight:"8px"}}>{t.id}</span>
-                      <span style={{fontSize:"11px",color:"#7a6840"}}>{t.denomination}</span>
+                ));
+              })()}
+            </div>
+            {(()=>{
+              const annee = new Date().getFullYear().toString();
+              const riRequisAnnee = riRequis.find(r=>r.annee===annee);
+              const totalRI = tonneaux.reduce((s,t)=>s+(t.appellation==="ri"?(t.contenuActuel||0)/100:(parseFloat(t.volumeRI)||0)),0);
+              const riOk = !riRequisAnnee || totalRI>=(parseFloat(riRequisAnnee.volumeHL)||0);
+              return (
+                <div style={{...s.card,marginBottom:"12px",padding:"10px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",background:riOk?"#fff":"#fde8e8",border:riOk?"0.5px solid #d4c4a0":"1px solid #f0b4b4"}}>
+                  <div style={{display:"flex",gap:"24px",alignItems:"center"}}>
+                    <div><div style={{fontSize:"10px",color:"#9a8870",textTransform:"uppercase",letterSpacing:"0.05em"}}>RI actuelle</div><div style={{fontSize:"18px",fontWeight:600,color:riOk?"#8B0000":"#cc2222"}}>{totalRI.toFixed(1)} <span style={{fontSize:"11px"}}>HL</span></div></div>
+                    <div><div style={{fontSize:"10px",color:"#9a8870",textTransform:"uppercase",letterSpacing:"0.05em"}}>RI requise {annee}</div><div style={{fontSize:"18px",fontWeight:600,color:"#9a8870"}}>{riRequisAnnee?.volumeHL||"-"} <span style={{fontSize:"11px"}}>HL</span></div></div>
+                    {!riOk&&<div style={{fontSize:"12px",color:"#cc2222",fontWeight:500}}>RI insuffisante</div>}
+                  </div>
+                  <button style={{...s.ghostSm,fontSize:"11px"}} onClick={()=>setShowRiForm(true)}>Saisir RI requise</button>
+                </div>
+              );
+            })()}
+            {(()=>{
+              const vinsClairs = tonneaux.filter(t=>t.appellation&&t.appellation.startsWith("vins_clairs")&&t.appellation!=="ri"&&t.statut!=="vide");
+              const vinsReserve = tonneaux.filter(t=>t.appellation==="vins_reserve"&&t.statut!=="vide");
+              const calcTirable = (futs) => futs.reduce((s,t)=>s+Math.max(0,((t.contenuActuel||0)/100)-(parseFloat(t.volumeRI)||0)),0);
+              return (
+                <div style={{...s.card,marginBottom:"28px",padding:"12px 16px"}}>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1px 1fr",gap:"0",alignItems:"center"}}>
+                    <div style={{paddingRight:"16px"}}>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"6px"}}>
+                        <span style={{fontFamily:"Georgia,serif",fontSize:"13px",color:"#2d6a00",fontWeight:500}}>Vins Clairs AOC</span>
+                        <span style={{fontSize:"10px",color:"#9a8870"}}>{vinsClairs.length} futs</span>
+                      </div>
+                      <div style={{display:"flex",gap:"16px"}}>
+                        <div><div style={{fontSize:"10px",color:"#9a8870",textTransform:"uppercase",letterSpacing:"0.05em"}}>Tirable</div><div style={{fontSize:"18px",fontWeight:600,color:"#1a7a40"}}>{calcTirable(vinsClairs).toFixed(1)} <span style={{fontSize:"11px"}}>HL</span></div></div>
+                        <div><div style={{fontSize:"10px",color:"#9a8870",textTransform:"uppercase",letterSpacing:"0.05em"}}>~Bouteilles</div><div style={{fontSize:"18px",fontWeight:600,color:"#1a7a40"}}>{Math.floor(calcTirable(vinsClairs)*100/0.75).toLocaleString("fr-FR")} <span style={{fontSize:"11px"}}>btl</span></div></div>
+                      </div>
                     </div>
-                    <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
-                      <span style={{fontSize:"11px",color:"#8a7248"}}>{avgNoteG(t.id)?.toFixed(1)}/5</span>
-                      <div style={{width:"60px",height:"4px",background:"#e8dcc6",borderRadius:"2px"}}>
-                        <div style={{width:`${((avgNoteG(t.id)||0)/5)*100}%`,height:"100%",background:"#b8860b",borderRadius:"2px"}}/>
+                    <div style={{width:"1px",background:"#d4c4a0",alignSelf:"stretch"}}/>
+                    <div style={{paddingLeft:"16px"}}>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"6px"}}>
+                        <span style={{fontFamily:"Georgia,serif",fontSize:"13px",color:"#7a5200",fontWeight:500}}>Vins de Reserve AOC</span>
+                        <span style={{fontSize:"10px",color:"#9a8870"}}>{vinsReserve.length} futs</span>
+                      </div>
+                      <div style={{display:"flex",gap:"16px"}}>
+                        <div><div style={{fontSize:"10px",color:"#9a8870",textTransform:"uppercase",letterSpacing:"0.05em"}}>Tirable</div><div style={{fontSize:"18px",fontWeight:600,color:"#1a7a40"}}>{calcTirable(vinsReserve).toFixed(1)} <span style={{fontSize:"11px"}}>HL</span></div></div>
+                        <div><div style={{fontSize:"10px",color:"#9a8870",textTransform:"uppercase",letterSpacing:"0.05em"}}>~Bouteilles</div><div style={{fontSize:"18px",fontWeight:600,color:"#1a7a40"}}>{Math.floor(calcTirable(vinsReserve)*100/0.75).toLocaleString("fr-FR")} <span style={{fontSize:"11px"}}>btl</span></div></div>
                       </div>
                     </div>
                   </div>
-                ))}
-                {tonneaux.filter(t=>avgNoteG(t.id)!=null).length===0&&<div style={{color:"#8a7248",fontSize:"13px"}}>Aucune note encore.</div>}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* -- TONNEAUX -- */}
-        {view==="tonneaux" && (
-          <div>
-            {/* Onglets principaux */}
-            <div style={{display:"flex",gap:"0",marginBottom:"20px",borderBottom:"1px solid #d4c4a0"}}>
-              {[["futscuves","Futs et Cuves"],["cuverie","Cuverie"]].map(([key,lbl])=>(
-                <button key={key} onClick={()=>setTonneauxTab(key)} style={{padding:"10px 20px",border:"none",borderBottom:tonneauxTab===key?"2px solid #b8860b":"2px solid transparent",background:"transparent",color:tonneauxTab===key?"#7a5200":"#9a8870",fontWeight:tonneauxTab===key?500:400,fontSize:"13px",cursor:"pointer",fontFamily:"Georgia,serif"}}>
-                  {lbl}
-                </button>
-              ))}
-            </div>
-
-            {tonneauxTab==="cuverie"&&(
-              <div>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"16px"}}>
-                  <div style={{fontSize:"13px",color:"#7a6840"}}>{cuvesCuverie.length} cuve(s) de cuverie</div>
-                  <button style={s.btn} onClick={()=>{setCuverieForm(CUVERIE_EMPTY);setEditingCuverie(null);setShowCuverieForm(true);}}>+ Nouvelle cuve</button>
                 </div>
-                {cuvesCuverie.length===0&&(
-                  <div style={{...s.card,textAlign:"center",padding:"40px",color:"#9a8870"}}>
-                    <div style={{fontSize:"24px",marginBottom:"12px"}}>Aucune cuve de cuverie</div>
-                    <div style={{fontSize:"13px",marginBottom:"16px"}}>Ajoutez vos cuves de debourbage et d assemblage.</div>
+              );
+            })()}
+
+            {/* SECTION 2 : STOCK BOUTEILLES */}
+            <div style={{display:"flex",alignItems:"center",gap:"10px",marginBottom:"16px"}}>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"18px",color:"#7a5200",fontWeight:500}}>Stock bouteilles</div>
+              <div style={{flex:1,height:"1px",background:"linear-gradient(to right, #d4c4a0, transparent)"}}/>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:"12px",marginBottom:"28px"}}>
+              {(()=>{
+                const now = new Date();
+                const lots = stockBouteilles.map(l=>({...l,mois:l.dateTirage?Math.floor((now-new Date(l.dateTirage))/(1000*60*60*24*30.5)):0}));
+                const total = lots.reduce((s,l)=>s+(parseInt(l.qteActuelle)||0),0);
+                const moins15 = lots.filter(l=>l.mois<15).reduce((s,l)=>s+(parseInt(l.qteActuelle)||0),0);
+                const plus15 = lots.filter(l=>l.mois>=15).reduce((s,l)=>s+(parseInt(l.qteActuelle)||0),0);
+                const alertes = lots.filter(l=>l.mois>=14&&!l.passage15).length;
+                return [
+                  {lbl:"Total en stock",val:total+" btl",sub:"tous formats",col:"#b8860b"},
+                  {lbl:"< 15 mois",val:moins15+" btl",sub:"non commercialisables",col:"#cc2222"},
+                  {lbl:"> 15 mois",val:plus15+" btl",sub:"commercialisables",col:"#1a7a40"},
+                  {lbl:"Alertes 15 mois",val:alertes+" lot(s)",sub:"a confirmer",col:"#c47800"},
+                ].map((k,i)=>(
+                  <div key={i} style={s.card}>
+                    <div style={s.lbl}>{k.lbl}</div>
+                    <div style={{fontSize:"28px",fontWeight:700,color:k.col,letterSpacing:"-0.5px"}}>{k.val}</div>
+                    <div style={{fontSize:"11px",color:"#9a8870",marginTop:"4px"}}>{k.sub}</div>
                   </div>
-                )}
-                {cuvesCuverie.length>0&&(
-                  <div style={{display:"grid",gap:"12px"}}>
-                    {cuvesCuverie.map(c=>(
-                      <div key={c.id} style={{...s.card,borderLeft:`3px solid ${c.type==="debourbage"?"#185FA5":"#1a7a40"}`}}>
-                        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr auto",gap:"16px",alignItems:"center"}}>
-                          <div>
-                            <div style={{fontWeight:500,color:"#1a1205",fontSize:"14px"}}>{c.nom}</div>
-                            <div style={{fontSize:"11px",color:"#9a8870",marginTop:"2px"}}>
-                              <span style={{background:c.type==="debourbage"?"#e8f0fb":"#d4f0dd",color:c.type==="debourbage"?"#185FA5":"#1a7a40",borderRadius:"3px",padding:"1px 6px",fontSize:"10px"}}>{c.type==="debourbage"?"Debourbage":"Assemblage"}</span>
-                            </div>
-                          </div>
-                          <div>
-                            <div style={s.lbl}>Volume total</div>
-                            <div style={{fontWeight:500,color:"#1a1205"}}>{c.volumeHL} HL</div>
-                          </div>
-                          <div>
-                            <div style={s.lbl}>Contenu actuel</div>
-                            <div style={{fontWeight:500,color:parseFloat(c.contenuActuelHL)>0?"#b8860b":"#9a8870"}}>{c.contenuActuelHL||"0"} HL</div>
-                            {c.notes&&<div style={{fontSize:"11px",color:"#9a8870",fontStyle:"italic",marginTop:"2px"}}>{c.notes}</div>}
-                          </div>
-                          <div style={{display:"flex",gap:"6px"}}>
-                            <button style={{...s.ghostSm,fontSize:"10px"}} onClick={()=>{setCuverieForm({nom:c.nom,type:c.type,volumeHL:c.volumeHL,contenuActuelHL:c.contenuActuelHL||"0",notes:c.notes||""});setEditingCuverie(c);setShowCuverieForm(true);}}>Mod.</button>
-                            <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>{if(window.confirm("Supprimer cette cuve ?")){setCuvesCuverie(prev=>prev.filter(x=>x.id!==c.id));fbDelete("cuvesCuverie",c.id);}}}>Sup.</button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {tonneauxTab==="futscuves"&&<div>
-            {/* Onglets appellation */}
-            <div style={{display:"flex",gap:"6px",marginBottom:"16px",flexWrap:"wrap",overflowX:"auto"}}>
-              <button onClick={()=>setFilterAppellation("")}
-                style={{padding:"5px 14px",borderRadius:"4px",border:`1px solid ${!filterAppellation?"#b8860b":"#2a2a2c"}`,background:!filterAppellation?"#fce8a8":"transparent",color:!filterAppellation?"#7a5200":"#7a6840",fontSize:"12px",cursor:"pointer",fontFamily:"inherit"}}>
-                Tous ({tonneaux.length})
-              </button>
-              {allAppellations.map(key=>{
-                const apc=getApc(key);
-                const count=tonneaux.filter(t=>t.appellation===key).length;
-                if(count===0) return null;
-                const active=filterAppellation===key;
-                return (
-                  <button key={key} onClick={()=>setFilterAppellation(active?"":key)}
-                    style={{padding:"5px 14px",borderRadius:"4px",border:`1px solid ${active?apc.color:apc.border}`,background:active?apc.bg:"transparent",color:active?apc.color:"#7a6840",fontSize:"12px",cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:"5px"}}>
-                    <span style={{width:"7px",height:"7px",borderRadius:"50%",background:apc.color,display:"inline-block"}}/>
-                    {apc.label} ({count})
-                  </button>
-                );
-              })}
-            </div>
-            <div style={{display:"flex",gap:"10px",marginBottom:"14px",alignItems:"center"}}>
-              <input style={{...s.inp,maxWidth:"220px"}} placeholder="Recherche fût ou cuvée..." value={searchFut} onChange={e=>setSearchFut(e.target.value)}/>
-              <select style={{...s.sel,maxWidth:"200px"}} value={filterDenom} onChange={e=>setFilterDenom(e.target.value)}>
-                <option value="">Toutes les cuvées</option>
-                {[...new Set(filteredTonneaux.map(t=>t.denomination))].sort().map(d=><option key={d} value={d}>{d}</option>)}
-              </select>
-              <div style={{display:"flex",gap:"4px"}}>
-                {[["","Tous"],["actif","Actifs"],["vide","Vides"]].map(([val,lbl])=>(
-                  <button key={val} onClick={()=>setFilterStatut(val)} style={{padding:"3px 10px",borderRadius:"4px",border:`0.5px solid ${filterStatut===val?"#b8860b":"#d4c4a0"}`,background:filterStatut===val?"#f5e8cc":"transparent",color:filterStatut===val?"#7a5200":"#9a8870",fontSize:"11px",cursor:"pointer"}}>{lbl}</button>
-                ))}
-              </div>
-              <span style={{color:"#8a7248",fontSize:"11px",marginLeft:"auto"}}>{filteredTonneaux.length} fûts</span>
-              <button style={s.btnSm} onClick={()=>{setFutForm(EMPTY_FUT);setEditingFut(null);setShowFutForm(true);}}>
-                <i className="ti ti-plus" style={{marginRight:"3px"}}/>Ajouter
-              </button>
-            </div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))",gap:"8px"}}>
-              {filteredTonneaux.map(t=><FutCard key={t.id} t={t}/>)}
-            </div>
-            </div>}
-          </div>
-        )}
-
-        {/* -- DÉGUSTATIONS (vue globale) -- */}
-        {view==="degustations" && (
-          <div style={{display:"grid",gridTemplateColumns:"1fr 280px",gap:"20px",alignItems:"start"}}>
-
-            {/* Colonne principale */}
-            <div>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px"}}>
-                <div style={{fontSize:"13px",color:"#7a6840"}}>{degustations.length} notes · {[...new Set(degustations.map(d=>d.session))].length} sessions · {futsAvecNotes.length} fûts</div>
-                <div style={{display:"flex",gap:"8px"}}>
-                  <button style={s.ghost} onClick={()=>setShowImport(true)}>
-                    <i className="ti ti-file-import" style={{marginRight:"4px"}}/>Importer (CSV)
-                  </button>
-                  <button style={s.btn} onClick={()=>{setDegForm({futId:"",session:"",date:new Date().toISOString().slice(0,10),lignes:degustateurs.filter(d=>d.actif).map(d=>({degustateur:d.nom,boise:"",longueur:"",noteG:"",commentaire:""}))});setShowDegForm(true);}}>
-                    <i className="ti ti-plus" style={{marginRight:"4px"}}/>Nouvelle dégustation
-                  </button>
-                </div>
-              </div>
-
-              {/* Barre de filtres */}
-              <div style={{display:"flex",gap:"8px",marginBottom:"14px",flexWrap:"wrap",alignItems:"center",padding:"10px 14px",background:"#fffbf3",border:"1px solid #cfc0a0",borderRadius:"8px"}}>
-                <i className="ti ti-filter" style={{fontSize:"14px",color:"#b8860b",flexShrink:0}}/>
-                <input style={{...s.inp,maxWidth:"150px",padding:"5px 9px",fontSize:"12px"}}
-                  placeholder="N° fût..." value={filterDegFut}
-                  onChange={e=>setFilterDegFut(e.target.value)}/>
-                <select style={{...s.sel,maxWidth:"190px",padding:"5px 9px",fontSize:"12px"}}
-                  value={filterDegCuvee} onChange={e=>setFilterDegCuvee(e.target.value)}>
-                  <option value="">Toutes les cuvées</option>
-                  {cuveeOptions.map(c=><option key={c} value={c}>{c}</option>)}
-                </select>
-                <select style={{...s.sel,maxWidth:"170px",padding:"5px 9px",fontSize:"12px"}}
-                  value={filterDegFabric} onChange={e=>setFilterDegFabric(e.target.value)}>
-                  <option value="">Tous les fabricants</option>
-                  {fabricOptions.map(f=><option key={f} value={f}>{f}</option>)}
-                </select>
-                {hasFilter && (
-                  <button style={{...s.ghostSm,color:"#cc2222",borderColor:"#e8888855",fontSize:"11px"}}
-                    onClick={()=>{setFilterDegFut("");setFilterDegCuvee("");setFilterDegFabric("");}}>
-                    <i className="ti ti-x" style={{marginRight:"3px"}}/>Réinitialiser
-                  </button>
-                )}
-                <span style={{marginLeft:"auto",fontSize:"11px",color:"#8a7248"}}>{futsFiltres.length} / {futsAvecNotes.length} fûts</span>
-              </div>
-
-              <div style={s.card}>
-                <div style={{overflowX:"auto"}}>
-                  <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
-                    <thead>
-                      <tr style={{borderBottom:"2px solid #d4c4a0",background:"#fff8ee"}}>
-                        {["N° Fût","Cuvée","Fabricant","Mill.","Moy. Note G","Moy. Boisé","Moy. Long.","Nb notes","Sessions"].map(h=>(
-                          <th key={h} style={{textAlign:"left",padding:"8px 10px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#8a7248",fontWeight:600}}>{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {futsFiltres.sort((a,b)=>(avgNoteG(b.id)||0)-(avgNoteG(a.id)||0)).map((t,i)=>{
-                        const ng=avgNoteG(t.id); const nb=avgBoise(t.id); const nl=avgLong(t.id);
-                        return (
-                          <tr key={t.id}
-                            style={{borderBottom:"1px solid #e8dcc6",cursor:"pointer",background:i%2===0?"transparent":"#fffbf3",transition:"background 0.1s"}}
-                            onClick={()=>{setSelectedFut(t.id);setView("fiche");setFicheTab("degustations");}}>
-                            <td style={{padding:"9px 10px",color:"#b8860b",fontWeight:700,fontFamily:"'IBM Plex Mono',monospace"}}>{t.id}</td>
-                            <td style={{padding:"9px 10px",color:"#1a1205",fontWeight:500,maxWidth:"160px"}}>
-                              <div style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.denomination}</div>
-                            </td>
-                            <td style={{padding:"9px 10px"}}>
-                              {t.tonnelier
-                                ? <span style={{background:"#fce8a8",color:"#7a5200",border:"1px solid #e0c050",borderRadius:"3px",padding:"1px 7px",fontSize:"11px",fontWeight:600,whiteSpace:"nowrap"}}>{t.tonnelier}</span>
-                                : <span style={{color:"#c0b090",fontSize:"11px"}}>-</span>
-                              }
-                            </td>
-                            <td style={{padding:"9px 10px",color:"#6a5838",fontFamily:"'IBM Plex Mono',monospace"}}>{t.millesime||"-"}</td>
-                            <td style={{padding:"9px 10px"}}>
-                              <div style={{display:"flex",alignItems:"center",gap:"6px"}}>
-                                <div style={{width:"44px",height:"5px",background:"#e8dcc6",borderRadius:"3px",overflow:"hidden"}}>
-                                  <div style={{width:`${((ng||0)/5)*100}%`,height:"100%",background:ng>=4?"#1a7a40":ng>=3?"#b8860b":"#cc6622",borderRadius:"3px"}}/>
-                                </div>
-                                <span style={{fontWeight:700,color:ng>=4?"#1a7a40":ng>=3?"#b8860b":"#8a7248",fontFamily:"'IBM Plex Mono',monospace",minWidth:"28px"}}>{ng?.toFixed(1)||"-"}</span>
-                              </div>
-                            </td>
-                            <td style={{padding:"9px 10px",color:"#6a5838",fontFamily:"'IBM Plex Mono',monospace"}}>{nb?.toFixed(1)||"-"}</td>
-                            <td style={{padding:"9px 10px",color:"#6a5838",fontFamily:"'IBM Plex Mono',monospace"}}>{nl?.toFixed(1)||"-"}</td>
-                            <td style={{padding:"9px 10px",color:"#7a6840",textAlign:"center"}}>{notesForFut(t.id).length}</td>
-                            <td style={{padding:"9px 10px",color:"#8a7248",fontSize:"11px",maxWidth:"120px"}}>
-                              <div style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{sessions(t.id).join(", ")}</div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                      {futsFiltres.length===0&&(
-                        <tr><td colSpan={9} style={{padding:"24px 10px",color:"#8a7248",fontSize:"13px",textAlign:"center"}}>
-                          {hasFilter?"Aucun fût ne correspond aux filtres.":"Aucune note encore."}
-                        </td></tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+                ));
+              })()}
             </div>
 
-            {/* Colonne droite - gestion des dégustateurs */}
-            <div style={s.card}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px"}}>
-                <span style={{...s.lbl,marginBottom:0}}>Dégustateurs</span>
-                {editingDeg && (
-                  <div style={{display:"flex",gap:"6px"}}>
-                    <button style={s.ghostSm} onClick={()=>setEditingDeg(false)}>Annuler</button>
-                    <button style={s.btnSm} onClick={()=>{setDegustateurs(degDraft.filter(d=>d.nom.trim()));setEditingDeg(false);}}>
-                      <i className="ti ti-check" style={{marginRight:"3px"}}/>Sauver
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {!editingDeg ? (
+            {/* SECTION 3 : ALERTES COIFFES */}
+            {(()=>{
+              const calcStock = (type) => coiffesStock.filter(c=>c.type===type).reduce((s,c)=>s+(c.operation==="achat"?parseInt(c.qte)||0:-(parseInt(c.qte)||0)),0);
+              const alertesCRD = calcStock("CRD")<500;
+              const alertesExp = calcStock("Export")<500;
+              const alertesCRDMag = calcStock("CRD Magnum")<20;
+              const alertesExpMag = calcStock("Export Magnum")<20;
+              if(!alertesCRD&&!alertesExp&&!alertesCRDMag&&!alertesExpMag) return null;
+              return (
                 <div>
-                  {degustateurs.map((d,i)=>(
-                    <div key={i} style={{display:"flex",alignItems:"center",gap:"8px",padding:"7px 0",borderBottom:"1px solid #d0c4a0",opacity:d.actif?1:0.45}}>
-                      <div style={{width:"26px",height:"26px",borderRadius:"50%",background:d.actif?"#b8860b22":"#2a2a2c",border:`1px solid ${d.actif?"#b8860b33":"#3a3a3c"}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"11px",fontWeight:600,color:d.actif?"#b8860b":"#555",flexShrink:0}}>
-                        {d.nom.charAt(0).toUpperCase()}
-                      </div>
-                      <span style={{fontSize:"13px",color:d.actif?"#e8e4d8":"#555",flex:1}}>{d.nom}</span>
-                      <span style={{fontSize:"10px",color:"#8a7248",marginRight:"4px"}}>{degustations.filter(dg=>dg.degustateur===d.nom).length}</span>
-                      <button title={d.actif?"Marquer absent":"Marquer présent"}
-                        style={{...s.ghostSm,padding:"3px 7px",color:d.actif?"#555":"#c47800",borderColor:d.actif?"#2a2a2c":"#854F0B44",fontSize:"11px"}}
-                        onClick={()=>toggleActif(i)}>
-                        {d.actif
-                          ? <><i className="ti ti-eye-off" style={{fontSize:"13px",verticalAlign:"middle"}}/></>
-                          : <><i className="ti ti-eye" style={{fontSize:"13px",verticalAlign:"middle"}}/></>
-                        }
-                      </button>
-                    </div>
-                  ))}
-                  <div style={{marginTop:"10px",padding:"8px",background:"#fffbf3",borderRadius:"5px",fontSize:"11px",color:"#8a7248"}}>
-                    {degustateurs.filter(d=>!d.actif).length===0
-                      ? "Tous présents - les absents sont masqués du formulaire de saisie."
-                      : `${degustateurs.filter(d=>!d.actif).length} absent(s) - masqué(s) du prochain formulaire.`
-                    }
+                  <div style={{display:"flex",alignItems:"center",gap:"10px",marginBottom:"16px"}}>
+                    <div style={{fontFamily:"Georgia,serif",fontSize:"18px",color:"#cc2222",fontWeight:500}}>Alertes coiffes</div>
+                    <div style={{flex:1,height:"1px",background:"linear-gradient(to right, #f0b4b4, transparent)"}}/>
                   </div>
-                  <button style={{...s.ghostSm,width:"100%",marginTop:"10px",textAlign:"center"}}
-                    onClick={()=>{setDegDraft(degustateurs.map(d=>({...d})));setEditingDeg(true);}}>
-                    <i className="ti ti-pencil" style={{marginRight:"3px"}}/>Renommer / Ajouter
-                  </button>
+                  <div style={{display:"grid",gap:"8px"}}>
+                    {alertesCRD&&<div style={{padding:"10px 14px",background:"#fde8e8",border:"1px solid #f0b4b4",borderRadius:"6px",fontSize:"12px",color:"#cc2222"}}>CRD 75cl : {calcStock("CRD")} coiffes (seuil 500)</div>}
+                    {alertesExp&&<div style={{padding:"10px 14px",background:"#fde8e8",border:"1px solid #f0b4b4",borderRadius:"6px",fontSize:"12px",color:"#cc2222"}}>Export 75cl : {calcStock("Export")} coiffes (seuil 500)</div>}
+                    {alertesCRDMag&&<div style={{padding:"10px 14px",background:"#fde8e8",border:"1px solid #f0b4b4",borderRadius:"6px",fontSize:"12px",color:"#cc2222"}}>CRD Magnum : {calcStock("CRD Magnum")} coiffes (seuil 20)</div>}
+                    {alertesExpMag&&<div style={{padding:"10px 14px",background:"#fde8e8",border:"1px solid #f0b4b4",borderRadius:"6px",fontSize:"12px",color:"#cc2222"}}>Export Magnum : {calcStock("Export Magnum")} coiffes (seuil 20)</div>}
+                  </div>
                 </div>
-              ) : (
-                <div>
-                  <div style={{fontSize:"11px",color:"#7a6840",marginBottom:"10px"}}>Laissez vide pour supprimer. Les notes existantes sont conservées.</div>
-                  {degDraft.map((d,i)=>(
-                    <div key={i} style={{display:"flex",alignItems:"center",gap:"6px",marginBottom:"6px"}}>
-                      <input style={{...s.inp,padding:"6px 8px",fontSize:"12px",flex:1}} value={d.nom}
-                        onChange={e=>{const nd=[...degDraft];nd[i]={...nd[i],nom:e.target.value};setDegDraft(nd);}}
-                        placeholder={`Dégustateur ${i+1}`}/>
-                      <button style={{...s.ghostSm,padding:"5px 7px",color:"#cc2222",borderColor:"#A32D2D33",flexShrink:0}}
-                        onClick={()=>setDegDraft(degDraft.filter((_,j)=>j!==i))}>
-                        <i className="ti ti-x"/>
-                      </button>
-                    </div>
-                  ))}
-                  <button style={{...s.ghostSm,width:"100%",marginTop:"6px",textAlign:"center"}}
-                    onClick={()=>setDegDraft([...degDraft,{nom:"",actif:true}])}>
-                    <i className="ti ti-plus" style={{marginRight:"3px"}}/>Ajouter une ligne
-                  </button>
-                </div>
-              )}
-            </div>
+              );
+            })()}
 
           </div>
         )}
-
-        {/* -- FICHE FÛT -- */}
-        {view==="fiche" && selectedT && (
-            <div>
-              <button style={{...s.ghost,marginBottom:"16px"}} onClick={()=>setView("tonneaux")}>Retour Tonneaux</button>
-              <div style={{display:"grid",gridTemplateColumns:"clamp(240px,30vw,300px) 1fr",gap:"20px"}}>
-                {/* Colonne gauche */}
-                <div>
-                  <div style={s.card}>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"start",marginBottom:"14px"}}>
-                      <div>
-                        <div style={{fontFamily:"'Playfair Display',serif",fontSize:"22px",color:"#b8860b"}}>{selectedT.id}</div>
-                        <div style={{fontSize:"12px",color:"#6a5838",marginTop:"2px"}}>{selectedT.denomination}</div>
-                        {selectedT.appellation && <div style={{marginTop:"6px",display:"inline-flex",alignItems:"center",gap:"5px",padding:"2px 8px",borderRadius:"3px",background:getApc(selectedT.appellation).bg,border:`1px solid ${getApc(selectedT.appellation).border}`,fontSize:"10px",color:getApc(selectedT.appellation).color,letterSpacing:"0.06em",textTransform:"uppercase"}}>
-                            <span style={{width:"5px",height:"5px",borderRadius:"50%",background:getApc(selectedT.appellation).color}}/>
-                            {getApc(selectedT.appellation).label}
-                          </div>}
-                      </div>
-                      <span style={s.tag(selectedT.statut==="surveillance"?"#c47800":selectedT.contenuActuel<10?"#cc2222":"#1a7a40")}>
-                        {selectedT.statut==="surveillance"?"surveillance":selectedT.contenuActuel<10?"vide":"actif"}
-                      </span>
-                    </div>
-                    <div style={{marginBottom:"14px"}}>
-                      <div style={{display:"flex",justifyContent:"space-between",fontSize:"10px",color:"#7a6840",marginBottom:"5px"}}>
-                        <span>Niveau</span><span style={{color:"#b8860b",fontWeight:600}}>{selectedT.contenuActuel}L / {selectedT.volume}L ({selectedP}%)</span>
-                      </div>
-                      <div style={{background:"#fffbf3",borderRadius:"2px",height:"6px",overflow:"hidden"}}>
-                        <div style={{width:`${selectedP}%`,height:"100%",background:selectedP<20?"#cc2222":"#b8860b",borderRadius:"2px"}}/>
-                      </div>
-                    </div>
-                    {[["N Marc",selectedT.marc||"-"],["Millesime vin",selectedT.millesime||"-"],["Certification",selectedT.certif||"-"],["Tonnelier",selectedT.tonnelier||"-"],["Grain",selectedT.grain||"-"],["Chauffe",selectedT.chauffe||"-"],["Capacite",`${selectedT.volume} L`]].map(([k,v])=>(
-                      <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:"1px solid #d0c4a0",fontSize:"12px"}}>
-                        <span style={{color:"#8a7248"}}>{k}</span><span style={{color:"#1a1205"}}>{v}</span>
-                      </div>
-                    ))}
-                    {avgNoteG(selectedT.id)!=null&&(
-                      <div style={{marginTop:"14px",padding:"10px",background:"#fffbf3",borderRadius:"6px"}}>
-                        <div style={{fontSize:"10px",color:"#8a7248",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:"6px"}}>Note dégustation</div>
-                        <div style={{display:"flex",gap:"16px"}}>
-                          <div><div style={{fontSize:"18px",fontWeight:600,color:avgNoteG(selectedT.id)>=4?"#1a7a40":"#b8860b"}}>{avgNoteG(selectedT.id)?.toFixed(1)}<span style={{fontSize:"11px",color:"#8a7248"}}>/5</span></div><div style={{fontSize:"10px",color:"#8a7248"}}>Note globale</div></div>
-                          {avgBoise(selectedT.id)&&<div><div style={{fontSize:"18px",fontWeight:600,color:"#5a4a30"}}>{avgBoise(selectedT.id)?.toFixed(1)}</div><div style={{fontSize:"10px",color:"#8a7248"}}>Boisé</div></div>}
-                          {avgLong(selectedT.id)&&<div><div style={{fontSize:"18px",fontWeight:600,color:"#5a4a30"}}>{avgLong(selectedT.id)?.toFixed(1)}</div><div style={{fontSize:"10px",color:"#8a7248"}}>Longueur</div></div>}
-                        </div>
-                      </div>
-                    )}
-                    {selectedT.commentaire&&(
-                        <div style={{margin:"8px 0 12px",padding:"9px 12px",background:"#fff8ee",borderRadius:"6px",border:"1px solid #d4c4a0"}}>
-                          <div style={{fontSize:"10px",letterSpacing:"0.08em",textTransform:"uppercase",color:"#9a8870",marginBottom:"4px",fontFamily:"monospace"}}>Notes</div>
-                          <div style={{color:"#1a1205",fontSize:"12px",lineHeight:"1.6"}}>{selectedT.commentaire}</div>
-                        </div>
-                      )}
-                    <div style={{display:"flex",gap:"6px",marginTop:"14px",flexWrap:"wrap"}}>
-                      <button style={{...s.ghostSm,color:"#533AB7",borderColor:"#533AB744",width:"100%",textAlign:"center",marginBottom:"6px"}}
-                        onClick={()=>{setCampFutId(selectedT.id);setCampForm({annee:new Date().getFullYear().toString(),denomination:selectedT.denomination,millesime:selectedT.millesime||"",notes:""});setShowCampForm(true);}}>
-                        + Nouvelle campagne
-                      </button>
-                      <button style={s.btnSm} onClick={()=>{setMvtForm(f=>({...f,futDest:selectedT.id,type:"ouillage"}));setShowMvtForm(true);}}>Ouiller</button>
-                      <button style={s.ghostSm} onClick={()=>{setMvtForm(f=>({...f,futSource:[selectedT.id],type:"soutirage"}));setShowMvtForm(true);}}>Soutirer</button>
-                      <button style={s.ghostSm} onClick={()=>{setDegForm({futId:selectedT.id,session:"",date:new Date().toISOString().slice(0,10),lignes:degustateurs.filter(d=>d.actif).map(d=>({degustateur:d.nom,boise:"",longueur:"",noteG:"",commentaire:""}))});setShowDegForm(true);}}>+ Dégustation</button>
-                    </div>
-                    {selectedT.appellation&&selectedT.appellation.startsWith("vins_clairs")&&(
-                      <div style={{marginTop:"8px"}}>
-                        <button style={{...s.ghostSm,color:"#BA7517",borderColor:"#BA751744",width:"100%",justifyContent:"center",display:"flex",alignItems:"center",gap:"5px",padding:"6px 10px"}}
-                          onClick={()=>{if(window.confirm(`Passer le fût "${selectedT.id}" en Vin de réserve ?`)) passerEnReserve(selectedT.id);}}>
-                          <i className="ti ti-arrow-right" style={{fontSize:"12px"}}/>
-                          Passer en Vin de réserve
-                        </button>
-                      </div>
-                    )}
-                    <div style={{display:"flex",gap:"6px",marginTop:"6px",paddingTop:"10px",borderTop:"1px solid #e8dcc6"}}>
-                      <button style={{...s.ghostSm,color:"#5a4a30"}} onClick={()=>openEditFut(selectedT)}>
-                        <i className="ti ti-pencil" style={{marginRight:"3px"}}/>Modifier
-                      </button>
-                      <button style={{...s.ghostSm,color:"#cc2222",borderColor:"#A32D2D33"}} onClick={()=>deleteFut(selectedT.id)}>
-                        <i className="ti ti-trash" style={{marginRight:"3px"}}/>Supprimer
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                {/* Colonne droite - onglets */}
-                <div style={s.card}>
-                  <div style={{display:"flex",borderBottom:"1px solid #cfc0a0",marginBottom:"16px",gap:"0"}}>
-                    {[["degustations",`Degustations (${notesForFut(selectedT.id).length})`],["mouvements",`Mouvements (${selectedMvts.length})`],["historique","Historique"]].map(([tab,lbl])=>(
-                      <button key={tab} style={s.tabBtn(ficheTab===tab)} onClick={()=>setFicheTab(tab)}>{lbl}</button>
-                    ))}
-                  </div>
-
-                  {ficheTab==="degustations"&&<NoteResume futId={selectedT.id}/>}
-                  {ficheTab==="mouvements"&&(
-                    <div>
-                      {selectedMvts.length===0&&<div style={{color:"#8a7248",fontSize:"13px"}}>Aucun mouvement enregistré.</div>}
-                      {selectedMvts.map(m=><MvtRow key={m.id} m={m}/>)}
-                    </div>
-                  )}
-
-                  {ficheTab==="historique"&&(()=>{
-                    const mvtsParAn = {};
-                    selectedMvts.forEach(m=>{ const y=m.date?m.date.slice(0,4):"?"; if(!mvtsParAn[y]) mvtsParAn[y]=[]; mvtsParAn[y].push(m); });
-                    const notesParAn = {};
-                    notesForFut(selectedT.id).forEach(n=>{ const y=n.date?n.date.slice(0,4):"?"; if(!notesParAn[y]) notesParAn[y]=[]; notesParAn[y].push(n); });
-                    const allYears=[...new Set([...Object.keys(mvtsParAn),...Object.keys(notesParAn)])].sort().reverse();
-                    return (
-                      <div>
-                        {allYears.length===0&&<div style={{color:"#9a8870",fontStyle:"italic",padding:"12px 0"}}>Aucun historique.</div>}
-                        {allYears.map(year=>(
-                          <div key={year} style={{marginBottom:"16px"}}>
-                            <div style={{fontFamily:"Georgia,serif",fontSize:"15px",color:"#b8860b",borderBottom:"0.5px solid #d4c4a0",paddingBottom:"6px",marginBottom:"8px"}}>
-                              Campagne {year}
-                              {mvtsParAn[year]&&<span style={{fontSize:"11px",color:"#9a8870",fontWeight:400,marginLeft:"8px"}}>{mvtsParAn[year].length} mvt(s)</span>}
-                              {notesParAn[year]&&<span style={{fontSize:"11px",color:"#9a8870",fontWeight:400,marginLeft:"8px"}}>{notesParAn[year].length} deg.</span>}
-                            </div>
-                            {(mvtsParAn[year]||[]).map((m,i)=>(
-                              <div key={i} style={{display:"flex",gap:"8px",padding:"5px 0",borderBottom:"0.5px solid #ede5d4",fontSize:"12px"}}>
-                                <div style={{width:"80px",color:"#9a8870",flexShrink:0}}>{m.date}</div>
-                                <div style={{flex:1}}>
-                                  <span style={{background:"#e8f0e8",color:"#2d6a00",borderRadius:"3px",padding:"1px 6px",fontSize:"10px",marginRight:"6px"}}>{m.type}</span>
-                                  {m.lieuDepart&&<span style={{color:"#6a5838"}}>{m.lieuDepart}</span>}
-                                  {m.lieuArrivee&&<span style={{color:"#9a8870"}}> -> {m.lieuArrivee}</span>}
-                                  {m.volume&&<span style={{color:"#b8860b",fontFamily:"monospace",marginLeft:"6px",fontWeight:500}}>{m.volume}L</span>}
-                                  {m.notes&&<div style={{color:"#9a8870",fontStyle:"italic",fontSize:"11px"}}>{m.notes}</div>}
-                                </div>
-                              </div>
-                            ))}
-                            {(notesParAn[year]||[]).map((n,i)=>(
-                              <div key={i} style={{display:"flex",gap:"8px",padding:"5px 0",borderBottom:"0.5px solid #ede5d4",fontSize:"12px"}}>
-                                <div style={{width:"80px",color:"#9a8870",flexShrink:0}}>{n.date}</div>
-                                <div style={{flex:1}}>
-                                  <span style={{background:"#f0e8f8",color:"#6a2d6a",borderRadius:"3px",padding:"1px 6px",fontSize:"10px",marginRight:"6px"}}>Degustation</span>
-                                  <span style={{color:"#6a5838"}}>{n.degustateur}</span>
-                                  {n.noteG&&<span style={{background:"#fde8b8",color:"#7a5200",borderRadius:"3px",padding:"1px 6px",fontSize:"10px",marginLeft:"6px"}}>{n.noteG}/5</span>}
-                                  {n.commentaire&&<div style={{color:"#9a8870",fontStyle:"italic",fontSize:"11px"}}>{n.commentaire}</div>}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        ))}
-                      </div>
-                    );
-                  })()}
-
-                </div>
-              </div>
-            </div>
-          )}
 
         {/* -- VIGNE -- */}
         {view==="vigne" && (()=>{
@@ -2254,7 +1894,7 @@ export default function App() {
                           return (
                             <tr key={t.id||i} style={{borderBottom:"1px solid #ede5d4",background:i%2===0?"transparent":"#fffbf3"}}>
                               <td style={{padding:"8px 10px",fontFamily:"monospace",color:"#b8860b",fontWeight:500}}>N°{t.numero}</td>
-                              <td style={{padding:"8px 10px",color:"#6a5838"}}>{t.date}</td>
+                              <td style={{padding:"8px 10px",color:"#6a5838"}}>{fmt(t.date)}</td>
                               <td style={{padding:"8px 10px",color:"#6a5838"}}>{t.surface}</td>
                               <td style={{padding:"8px 10px",maxWidth:"320px"}}>
                                 <div style={{display:"flex",gap:"3px",flexWrap:"wrap"}}>
@@ -2471,7 +2111,7 @@ export default function App() {
                       <tbody>
                         {biodyFiltres.sort((a,b)=>new Date(a.date)-new Date(b.date)).map((b,i)=>(
                           <tr key={b.id} style={{borderBottom:"1px solid #ede5d4",background:i%2===0?"transparent":"#fffbf3"}}>
-                            <td style={{padding:"8px 10px",color:"#6a5838"}}>{b.date}</td>
+                            <td style={{padding:"8px 10px",color:"#6a5838"}}>{fmt(b.date)}</td>
                             <td style={{padding:"8px 10px",color:"#6a5838"}}>{b.surface}</td>
                             <td style={{padding:"8px 10px"}}>
                               <span style={{background:"#d4edc0",color:"#2d6a00",borderRadius:"3px",padding:"1px 8px",fontSize:"11px",fontFamily:"monospace",fontWeight:500}}>{b.produit}</span>
@@ -2676,7 +2316,7 @@ export default function App() {
                               {v.acidite&&<div style={{fontSize:"12px",color:"#6a5838"}}>Acidite : <strong>{v.acidite} g/L</strong></div>}
                               {v.so2&&<div style={{fontSize:"12px",color:"#6a5838"}}>SO2 : <strong>{v.so2} mg/L</strong></div>}
                             </div>
-                            <div>
+                            <div style={{display:"none"}}>
                               <div style={s.lbl}>Cuve reception</div>
                               {(v.cuveReception||v.nouvelleCuveNom)?(
                                 <div style={{display:"inline-flex",alignItems:"center",background:"#eeedfe",color:"#533AB7",border:"0.5px solid #534ab744",borderRadius:"4px",padding:"2px 10px",fontFamily:"monospace",fontSize:"12px",fontWeight:500}}>
@@ -2691,7 +2331,7 @@ export default function App() {
                               <div style={{display:"flex",gap:"6px",flexWrap:"wrap"}}>
                                 {v.produitsAjoutes.map(p=>(
                                   <div key={p.id} style={{background:"#fff8ee",border:"0.5px solid #d4c4a0",borderRadius:"4px",padding:"3px 10px",fontSize:"11px",color:"#7a5200"}}>
-                                    <strong>{p.nom}</strong>{p.dose?` - ${p.dose}`:""}{p.lot?` (Lot: ${p.lot})`:""}{p.date?` - ${p.date}`:""}
+                                    <strong>{p.nom}</strong>{p.dose?` - ${p.dose}`:""}{p.lot?` (Lot: ${p.lot})`:""}{p.date?` - ${fmt(p.date)}`:""}
                                   </div>
                                 ))}
                               </div>
@@ -3114,7 +2754,7 @@ export default function App() {
                     {/* Identite */}
                     <div>
                       <div style={{fontFamily:"Georgia,serif",fontSize:"16px",fontWeight:500,color:"#7a5200",marginBottom:"2px"}}>{t.cuvee}</div>
-                      <div style={{fontSize:"12px",color:"#9a8870",marginBottom:"8px"}}>{t.date} - {t.operateur}</div>
+                      <div style={{fontSize:"12px",color:"#9a8870",marginBottom:"8px"}}>{fmt(t.date)} - {t.operateur}</div>
                       {t.millesime&&<div style={{fontSize:"11px",color:"#6a5838"}}>Millésime : <strong>{t.millesime}</strong></div>}
                       {t.futsSources?.length>0&&(
                         <div style={{fontSize:"11px",color:"#6a5838",marginTop:"3px"}}>
