@@ -1805,8 +1805,8 @@ export default function App() {
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))",gap:"8px"}}>
               {filteredTonneaux.map(t=><FutCard key={t.id} t={t}/>)}
             </div>
-          </div>
             </div>}
+          </div>
         )}
 
         {/* -- DÉGUSTATIONS (vue globale) -- */}
