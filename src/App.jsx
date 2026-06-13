@@ -3499,7 +3499,7 @@ export default function App() {
                       onChange={e=>{const hl=parseFloat(e.target.value)||0;const kg=hl>0?Math.round(hl/25.5*4000):"";setVendangeForm(f=>({...f,volumeHL:e.target.value,poidsMarcKg:kg?String(kg):f.poidsMarcKg}));}}/></div>
                   <div><span style={s.lbl}>Poids marc (kg)</span>
                     <input type="number" style={{...s.inp,fontWeight:500,color:"#2d6a00"}} placeholder="4000" value={vendangeForm.poidsMarcKg||""}
-                      onChange={e=>{const kg=parseFloat(e.target.value)||0;const hl=kg>0?Math.round(kg/4000*25.5*10)/10:"";setVendangeForm(f=>({...f,poidsMarcKg:e.target.value,volumeHL:hl?String(hl):f.volumeHL}));}}/></div>
+                      onChange={e=>{const kg=parseFloat(e.target.value)||0;const hl=kg>0?Math.ceil(kg/4000*25.5*100)/100:"";setVendangeForm(f=>({...f,poidsMarcKg:e.target.value,volumeHL:hl?String(hl):f.volumeHL}));}}/></div>
                   <div><span style={s.lbl}>Degre pot. (%)</span>
                     <input type="number" step="0.1" style={s.inp} placeholder="0.0" value={vendangeForm.degreePotentiel} onChange={e=>setVendangeForm(f=>({...f,degreePotentiel:e.target.value}))}/></div>
                   <div><span style={s.lbl}>Acidite (g/L)</span>
@@ -3599,13 +3599,13 @@ export default function App() {
                     <div style={{fontSize:"11px",color:"#c47800",marginBottom:"6px"}}>Ce volume sera sorti definitivement du stock et ne pourra pas etre utilise.</div>
                     <button style={{...s.ghostSm,color:"#c47800",borderColor:"#e8c888"}} onClick={()=>{
                       const kg = vendangeForm.destinationMarc==="negoce_total" ? parseFloat(vendangeForm.poidsMarcKg)||0 : parseFloat(vendangeForm.kgVendusNegoce)||0;
-                      const hl = Math.round(kg/4000*25.5*10)/10;
+                      const hl = Math.ceil(kg/4000*25.5*100)/100;
                       const mvtId = "negoce_sortie_"+Date.now();
                       const mvt = {id:mvtId, type:"sortie_negoce", date:vendangeForm.date||new Date().toISOString().slice(0,10), kgVendus:kg, volumeHL:hl, numeroDAE:vendangeForm.numeroDAE||"", annee:vendangeForm.annee, notes:"Vente negoce marc", timestamp:new Date().toISOString()};
                       setMouvements(prev=>[mvt,...prev]);
                       fbSave("mouvements", mvtId, mvt);
                       alert("Sortie negoce enregistree: "+kg+" kg / "+hl+" HL");
-                    }}>Enregistrer sortie negoce ({Math.round((vendangeForm.destinationMarc==="negoce_total"?parseFloat(vendangeForm.poidsMarcKg)||0:parseFloat(vendangeForm.kgVendusNegoce)||0)/4000*25.5*10)/10} HL)</button>
+                    }}>Enregistrer sortie negoce ({Math.ceil((vendangeForm.destinationMarc==="negoce_total"?parseFloat(vendangeForm.poidsMarcKg)||0:parseFloat(vendangeForm.kgVendusNegoce)||0)/4000*25.5*100)/100} HL)</button>
                   </div>
                 )}
 
