@@ -1666,7 +1666,7 @@ export default function App() {
                     const ok = !requis || totalRI>=(parseFloat(requis.volumeHL)||0);
                     return <span style={{color:ok?"#8B0000":"#cc2222",fontWeight:ok?400:600}}>{totalRI.toFixed(1)} HL{requis?" / "+requis.volumeHL+" req.":""}</span>;
                   })(),sub:"reserve individuelle",col:"#8B0000"},
-                {lbl:"Volume tirable",val:(tonneaux.filter(t=>t.appellation!=="ri").reduce((s,t)=>s+Math.max(0,((t.contenuActuel||0)/100)-(parseFloat(t.volumeRI)||0)),0).toFixed(1))+" HL",sub:"disponible pour tirage",col:"#1a7a40"},
+                {lbl:"Volume tirable",val:(()=>{ const hl=tonneaux.filter(t=>t.appellation!=="ri").reduce((s,t)=>s+Math.max(0,((t.contenuActuel||0)/100)-(parseFloat(t.volumeRI)||0)),0); return hl.toFixed(1)+" HL (~"+Math.floor(hl*100/0.75).toLocaleString("fr-FR")+" btl)"; })(),sub:"disponible pour tirage",col:"#1a7a40"},
                 {lbl:"RI requis",val:(<div style={{display:"flex",alignItems:"center",gap:"6px"}}><span>{riRequis.find(r=>r.annee===new Date().getFullYear().toString())?.volumeHL||"-"} HL</span><button style={{...s.ghostSm,fontSize:"9px",padding:"1px 5px"}} onClick={()=>setShowRiForm(true)}>Saisir</button></div>),sub:"volume minimum reglementaire",col:"#185FA5"},
                 {lbl:"Mouvements",val:mouvements.length,sub:"enregistrés"},
                 {lbl:"Notes de dégustation",val:degustations.length,sub:`${[...new Set(degustations.map(d=>d.session))].length} session(s)`},
