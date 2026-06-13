@@ -1043,6 +1043,9 @@ export default function App() {
     ["clotures",     setClotures],
       ["coiffes",        setCoiffesStock],
     ["traitements",  setTraitements],
+    ["cuvesCuverie",  setCuvesCuverie],
+    ["riRequis",      setRiRequis],
+    ["rendements",    setRendementsAnnuels],
   ];
 
   const refreshFromFirebase = async () => {
