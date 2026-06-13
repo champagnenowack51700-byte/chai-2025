@@ -1531,6 +1531,7 @@ export default function App() {
             <span style={{fontSize:"10px",color:"#7a6840"}}>{t.marc?"Marc "+t.marc+" · ":""}{t.millesime||"-"} · {t.volume}L</span>
             <div style={{display:"flex",alignItems:"center",gap:"5px"}}>
               {hasNotes && <span style={{fontSize:"10px",color:apc.color,fontWeight:600}}>{ng?.toFixed(1)}*</span>}
+              {(parseFloat(t.volumeRI)||0)>0&&<span style={{fontSize:"9px",color:"#185FA5",fontFamily:"monospace",marginRight:"2px"}}>RI</span>}
               <span style={{fontSize:"11px",fontWeight:600,color:p<20?"#cc2222":p>90?"#1a7a40":apc.color}}>{t.contenuActuel}L</span>
             </div>
           </div>
@@ -3140,6 +3141,21 @@ export default function App() {
                         <div style={{width:`${selectedP}%`,height:"100%",background:selectedP<20?"#cc2222":"#b8860b",borderRadius:"2px"}}/>
                       </div>
                     </div>
+                    {(parseFloat(selectedT.volumeRI)||0)>0&&(
+                      <div style={{marginBottom:"14px",padding:"10px",background:"#f0f8ff",borderRadius:"6px",border:"0.5px solid #4a90d9"}}>
+                        <div style={{fontSize:"11px",color:"#185FA5",fontWeight:500,marginBottom:"6px",textTransform:"uppercase",letterSpacing:"0.05em"}}>Repartition du volume</div>
+                        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px"}}>
+                          <div style={{textAlign:"center"}}>
+                            <div style={{fontSize:"10px",color:"#9a8870",marginBottom:"2px"}}>AOC Tirable</div>
+                            <div style={{fontSize:"16px",fontWeight:600,color:"#1a7a40"}}>{((selectedT.contenuActuel||0)-(parseFloat(selectedT.volumeRI)||0)).toFixed(1)} L</div>
+                          </div>
+                          <div style={{textAlign:"center"}}>
+                            <div style={{fontSize:"10px",color:"#9a8870",marginBottom:"2px"}}>RI</div>
+                            <div style={{fontSize:"16px",fontWeight:600,color:"#8B0000"}}>{parseFloat(selectedT.volumeRI).toFixed(1)} L</div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     {[["N Marc",selectedT.marc||"-"],["Millesime vin",selectedT.millesime||"-"],["Certification",selectedT.certif||"-"],["Tonnelier",selectedT.tonnelier||"-"],["Grain",selectedT.grain||"-"],["Chauffe",selectedT.chauffe||"-"],["Capacite",`${selectedT.volume} L`]].map(([k,v])=>(
                       <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:"1px solid #d0c4a0",fontSize:"12px"}}>
                         <span style={{color:"#8a7248"}}>{k}</span><span style={{color:"#1a1205"}}>{v}</span>
