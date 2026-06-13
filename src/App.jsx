@@ -430,7 +430,7 @@ export default function App() {
   const [ficheTab,    setFicheTab]    = useState("infos"); // infos | mouvements | degustations
   const [searchFut,   setSearchFut]   = useState("");
   const [filterDenom,      setFilterDenom]      = useState("");
-  const [filterStatut,     setFilterStatut]     = useState("actif");
+  const [filterStatut,     setFilterStatut]     = useState("");
   const [filterStockLieu,  setFilterStockLieu]  = useState("");
   const [filterStockCuvee, setFilterStockCuvee] = useState("");
   const [stockTab,         setStockTab]         = useState("champagne");
@@ -1796,6 +1796,11 @@ export default function App() {
                 <option value="">Toutes les cuvées</option>
                 {[...new Set(filteredTonneaux.map(t=>t.denomination))].sort().map(d=><option key={d} value={d}>{d}</option>)}
               </select>
+              <div style={{display:"flex",gap:"4px"}}>
+                {[["","Tous"],["actif","Actifs"],["vide","Vides"]].map(([val,lbl])=>(
+                  <button key={val} onClick={()=>setFilterStatut(val)} style={{padding:"3px 10px",borderRadius:"4px",border:`0.5px solid ${filterStatut===val?"#b8860b":"#d4c4a0"}`,background:filterStatut===val?"#f5e8cc":"transparent",color:filterStatut===val?"#7a5200":"#9a8870",fontSize:"11px",cursor:"pointer"}}>{lbl}</button>
+                ))}
+              </div>
               <span style={{color:"#8a7248",fontSize:"11px",marginLeft:"auto"}}>{filteredTonneaux.length} fûts</span>
               <button style={s.btnSm} onClick={()=>{setFutForm(EMPTY_FUT);setEditingFut(null);setShowFutForm(true);}}>
                 <i className="ti ti-plus" style={{marginRight:"3px"}}/>Ajouter
