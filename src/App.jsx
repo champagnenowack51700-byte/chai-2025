@@ -2418,6 +2418,7 @@ export default function App() {
                               {v.cuveTailleId&&<div style={{fontSize:"12px",color:"#6a5838"}}>Taille : <strong>{tonneaux.find(t=>t.id===v.cuveTailleId)?.id||v.cuveTailleId}</strong>{v.volumeTaille&&<span style={{color:"#9a8870"}}> - {v.volumeTaille} HL</span>}</div>}
                               {v.cuveCuveeId&&<div style={{fontSize:"12px",color:"#6a5838"}}>Cuvee A : <strong>{tonneaux.find(t=>t.id===v.cuveCuveeId)?.id||v.cuveCuveeId}</strong>{v.volumeCuvee&&<span style={{color:"#9a8870"}}> - {v.volumeCuvee} HL</span>}</div>}
                               {v.cuveCuveeBId&&<div style={{fontSize:"12px",color:"#6a5838"}}>Cuvee B : <strong>{tonneaux.find(t=>t.id===v.cuveCuveeBId)?.id||v.cuveCuveeBId}</strong>{v.volumeCuveeB&&<span style={{color:"#9a8870"}}> - {v.volumeCuveeB} HL</span>}</div>}
+                              {v.cuveBourbesId&&<div style={{fontSize:"12px",color:"#8B0000"}}>Bourbes : <strong>{cuvesCuverie.find(c=>c.id===v.cuveBourbesId)?.nom||v.cuveBourbesId}</strong>{v.volumeBourbes&&<span style={{color:"#9a8870"}}> - {v.volumeBourbes} HL</span>}</div>}
                               {!v.cuveTailleId&&!v.cuveCuveeId&&<div style={{fontSize:"11px",color:"#9a8870",fontStyle:"italic"}}>Non renseigne</div>}
                             </div>
                             <div>
@@ -5142,6 +5143,15 @@ export default function App() {
                       </select></div>
                     <div><span style={s.lbl}>Volume cuvee B (HL)</span>
                       <input type="number" step="0.1" style={s.inp} placeholder="0" value={vendangeForm.volumeCuveeB||""} onChange={e=>setVendangeForm(f=>({...f,volumeCuveeB:e.target.value}))}/></div>
+                  </div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px",marginTop:"8px",borderTop:"0.5px dashed #d4c4a0",paddingTop:"8px"}}>
+                    <div><span style={s.lbl}>Cuve Bourbes (optionnel)</span>
+                      <select style={s.sel} value={vendangeForm.cuveBourbesId||""} onChange={e=>setVendangeForm(f=>({...f,cuveBourbesId:e.target.value}))}>
+                        <option value="">Aucune</option>
+                        {cuvesCuverie.filter(c=>c.type==="bourbes").map(c=><option key={c.id} value={c.id}>{c.nom}</option>)}
+                      </select></div>
+                    <div><span style={s.lbl}>Volume bourbes (HL)</span>
+                      <input type="number" step="0.1" style={s.inp} placeholder="0" value={vendangeForm.volumeBourbes||""} onChange={e=>setVendangeForm(f=>({...f,volumeBourbes:e.target.value}))}/></div>
                   </div>
                 </div>
               </div>
