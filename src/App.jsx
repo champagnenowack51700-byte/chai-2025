@@ -1340,21 +1340,27 @@ export default function App() {
     console.log("cuves:", {taille:vendangeForm.cuveTailleId, volTaille:vendangeForm.volumeTaille, cuveeA:vendangeForm.cuveCuveeId, bourbes:vendangeForm.cuveBourbesId, volBourbes:vendangeForm.volumeBourbes});
     console.log("cuvesCuverie:", cuvesCuverie.map(c=>c.id));
     if(!editingVendange) {
-      const majCuve = (cuveId, volHL) => {
-        if(!cuveId || !volHL) return;
-        setCuvesCuverie(prev=>prev.map(c=>{
-          if(c.id===cuveId) {
-            const updated = {...c, contenuActuelHL:String(Math.round(((parseFloat(c.contenuActuelHL)||0)+(parseFloat(volHL)||0))*100)/100)};
-            fbSave("cuvesCuverie", c.id, updated);
-            return updated;
-          }
-          return c;
-        }));
-      };
-      majCuve(vendangeForm.cuveTailleId, vendangeForm.volumeTaille);
-      majCuve(vendangeForm.cuveCuveeId, vendangeForm.volumeCuvee);
-      majCuve(vendangeForm.cuveCuveeBId, vendangeForm.volumeCuveeB);
-      majCuve(vendangeForm.cuveBourbesId, vendangeForm.volumeBourbes);
+      // Mise a jour groupee des cuves cuverie
+      const updates = [
+        {id:vendangeForm.cuveTailleId, vol:vendangeForm.volumeTaille},
+        {id:vendangeForm.cuveCuveeId,  vol:vendangeForm.volumeCuvee},
+        {id:vendangeForm.cuveCuveeBId, vol:vendangeForm.volumeCuveeB},
+        {id:vendangeForm.cuveBourbesId,vol:vendangeForm.volumeBourbes},
+      ].filter(u=>u.id&&u.vol&&parseFloat(u.vol)>0);
+      if(updates.length>0) {
+        setCuvesCuverie(prev=>{
+          const next = prev.map(c=>{
+            const u = updates.find(u=>u.id===c.id);
+            if(u) {
+              const updated = {...c, contenuActuelHL:String(Math.round(((parseFloat(c.contenuActuelHL)||0)+(parseFloat(u.vol)||0))*100)/100)};
+              fbSave("cuvesCuverie", c.id, updated);
+              return updated;
+            }
+            return c;
+          });
+          return next;
+        });
+      }
     }
 
     if(!editingVendange) { tonneaux.forEach(t=>saveTonneau(t)); }
