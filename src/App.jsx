@@ -1420,6 +1420,33 @@ export default function App() {
     }
     setTonneaux(upd);
     upd.forEach(t => saveTonneau(t));
+
+    // Entonnage: mettre a jour la cuve cuverie source et les futs destination
+    if(mvtForm.type==="entonnage" && mvtForm.entonnageCuveId) {
+      const volTotal = (mvtForm.entonnageFuts||[]).reduce((s,ef)=>s+(parseFloat(ef.volume)||0),0);
+      // Deduire de la cuve cuverie
+      setCuvesCuverie(prev=>prev.map(c=>{
+        if(c.id===mvtForm.entonnageCuveId) {
+          const updated = {...c, contenuActuelHL:String(Math.max(0,Math.round(((parseFloat(c.contenuActuelHL)||0)-(volTotal))*100)/100))};
+          fbSave("cuvesCuverie", c.id, updated);
+          return updated;
+        }
+        return c;
+      }));
+      // Ajouter dans les futs destination (en L)
+      const updFuts = tonneaux.map(t=>{
+        const ef = (mvtForm.entonnageFuts||[]).find(ef=>ef.futId===t.id);
+        if(ef && parseFloat(ef.volume)>0) {
+          const volL = Math.round(parseFloat(ef.volume)*100);
+          const updated = {...t, contenuActuel:Math.min(t.volume, (t.contenuActuel||0)+volL), statut:"actif"};
+          saveTonneau(updated);
+          return updated;
+        }
+        return t;
+      });
+      setTonneaux(updFuts);
+    }
+
     if(mvtForm.type==="ajout_produit" && !mvtForm.numeroLot.trim()) return alert("Le numéro de lot est obligatoire pour un ajout de produit.");
     const newMvt = {id:Date.now().toString(),...mvtForm,timestamp:new Date().toISOString()};
     setMouvements(prev=>[newMvt,...prev]);
