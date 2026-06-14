@@ -639,7 +639,7 @@ export default function App() {
   // Mouvement form
   const [mvtForm, setMvtForm] = useState({
     type:"ouillage", date:new Date().toISOString().slice(0,16),
-    operateur:"", futSource:[], futDest:"", volume:"", notes:"", produit:"", dosage:"", numeroLot:"", entonnageMarcId:"", entonnageCuveId:"", mutageCuveId:"", mutageBourbesHL:"", mutageAlcoolHL:"", mutageDegreAlcool:"", mutageDestId:"",
+    operateur:"", futSource:[], futDest:"", volume:"", notes:"", produit:"", dosage:"", numeroLot:"", entonnageMarcId:"", entonnageCuveId:"", entonnageFuts:[{futId:"",volume:""}], mutageCuveId:"", mutageBourbesHL:"", mutageAlcoolHL:"", mutageDegreAlcool:"", mutageDestId:"",
   });
   // Dégustation form - une ligne par dégustateur
   const [degForm, setDegForm] = useState({
@@ -4639,13 +4639,33 @@ export default function App() {
                   </div>
                   <div><span style={s.lbl}>Volume a entonner (HL)</span>
                     <input type="number" step="0.1" style={s.inp} placeholder="0" value={mvtForm.volume||""} onChange={e=>setMvtForm(f=>({...f,volume:e.target.value}))}/></div>
-                  <div><span style={s.lbl}>Fut destination</span>
-                    <select style={s.sel} value={mvtForm.futDest||""} onChange={e=>setMvtForm(f=>({...f,futDest:e.target.value}))}>
-                      <option value="">Selectionner un fut...</option>
-                      {tonneaux.filter(t=>t.statut==="vide"||(t.contenuActuel||0)<(t.volume||0)).map(t=>(
-                        <option key={t.id} value={t.id}>{t.id}{t.denomination?" - "+t.denomination:""} (dispo: {Math.max(0,(t.volume||0)-(t.contenuActuel||0))}L)</option>
-                      ))}
-                    </select>
+                  <div>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"4px"}}>
+                      <span style={s.lbl}>Futs destination</span>
+                      <button style={s.ghostSm} onClick={()=>setMvtForm(f=>({...f,entonnageFuts:[...(f.entonnageFuts||[]),{futId:"",volume:""}]}))}>+ Ajouter</button>
+                    </div>
+                    {(mvtForm.entonnageFuts||[{futId:"",volume:""}]).map((ef,i)=>(
+                      <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 100px auto",gap:"8px",marginBottom:"6px",alignItems:"end"}}>
+                        <div>
+                          <select style={s.sel} value={ef.futId} onChange={e=>setMvtForm(f=>({...f,entonnageFuts:f.entonnageFuts.map((x,j)=>j===i?{...x,futId:e.target.value}:x)}))}>
+                            <option value="">Selectionner...</option>
+                            {tonneaux.filter(t=>t.statut==="vide"||(t.contenuActuel||0)<(t.volume||0)).map(t=>(
+                              <option key={t.id} value={t.id}>{t.id}{t.denomination?" - "+t.denomination:""} ({Math.max(0,(t.volume||0)-(t.contenuActuel||0))}L dispo)</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <input type="number" step="0.1" style={s.inp} placeholder="HL" value={ef.volume} onChange={e=>setMvtForm(f=>({...f,entonnageFuts:f.entonnageFuts.map((x,j)=>j===i?{...x,volume:e.target.value}:x)}))}/>
+                        </div>
+                        {i>0&&<button style={{...s.ghostSm,color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>setMvtForm(f=>({...f,entonnageFuts:f.entonnageFuts.filter((_,j)=>j!==i)}))}>x</button>}
+                        {i===0&&<div/>}
+                      </div>
+                    ))}
+                    {(mvtForm.entonnageFuts||[]).length>0&&(
+                      <div style={{fontSize:"11px",color:"#9a8870",marginTop:"4px"}}>
+                        Total : {(mvtForm.entonnageFuts||[]).reduce((s,ef)=>s+(parseFloat(ef.volume)||0),0).toFixed(1)} HL
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
