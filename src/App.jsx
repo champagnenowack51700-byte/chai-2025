@@ -4629,33 +4629,24 @@ export default function App() {
               {mvtForm.type==="entonnage"&&(
                 <div style={{borderTop:"0.5px solid #d4c4a0",paddingTop:"12px",display:"grid",gap:"10px"}}>
                   <div style={{fontFamily:"Georgia,serif",fontSize:"13px",color:"#7a5200",marginBottom:"4px"}}>Details entonnage</div>
-                  <div><span style={s.lbl}>Marc source</span>
-                    <select style={s.sel} value={mvtForm.entonnageMarcId||""} onChange={e=>{
-                      const v = vendanges.find(v=>v.id===e.target.value);
-                      setMvtForm(f=>({...f,entonnageMarcId:e.target.value,entonnageCuveId:v?.cuveTailleId||v?.cuveCuveeId||""}));
-                    }}>
-                      <option value="">Selectionner un marc...</option>
-                      {vendanges.sort((a,b)=>b.date.localeCompare(a.date)).map(v=>(
-                        <option key={v.id} value={v.id}>{fmt(v.date)} - {v.cuveeCreee||v.parcelleId} - Marc {v.numeroMarc} ({v.poidsMarcKg?parseInt(v.poidsMarcKg).toLocaleString()+" kg":""}{v.volumeHL?" / "+v.volumeHL+" HL":""})</option>
+                  <div><span style={s.lbl}>Cuve source (Cuverie)</span>
+                    <select style={s.sel} value={mvtForm.entonnageCuveId||""} onChange={e=>setMvtForm(f=>({...f,entonnageCuveId:e.target.value}))}>
+                      <option value="">Selectionner une cuve...</option>
+                      {cuvesCuverie.filter(c=>parseFloat(c.contenuActuelHL)||0>0).map(c=>(
+                        <option key={c.id} value={c.id}>{c.nom} - {c.type} ({c.contenuActuelHL||0} HL dispo)</option>
                       ))}
                     </select>
                   </div>
-                  {mvtForm.entonnageMarcId&&(()=>{
-                    const marc = vendanges.find(v=>v.id===mvtForm.entonnageMarcId);
-                    const cuves = [
-                      marc?.cuveTailleId && {id:marc.cuveTailleId, label:"Taille", vol:marc.volumeTaille},
-                      marc?.cuveCuveeId && {id:marc.cuveCuveeId, label:"Cuvee A", vol:marc.volumeCuvee},
-                      marc?.cuveCuveeBId && {id:marc.cuveCuveeBId, label:"Cuvee B", vol:marc.volumeCuveeB},
-                    ].filter(Boolean);
-                    return cuves.length>0&&(
-                      <div><span style={s.lbl}>Cuve de debourbage source</span>
-                        <select style={s.sel} value={mvtForm.entonnageCuveId||""} onChange={e=>setMvtForm(f=>({...f,entonnageCuveId:e.target.value}))}>
-                          <option value="">Selectionner...</option>
-                          {cuves.map(c=><option key={c.id} value={c.id}>{c.id} - {c.label}{c.vol?" ("+c.vol+" HL)":""}</option>)}
-                        </select>
-                      </div>
-                    );
-                  })()}
+                  <div><span style={s.lbl}>Volume a entonner (HL)</span>
+                    <input type="number" step="0.1" style={s.inp} placeholder="0" value={mvtForm.volume||""} onChange={e=>setMvtForm(f=>({...f,volume:e.target.value}))}/></div>
+                  <div><span style={s.lbl}>Fut destination</span>
+                    <select style={s.sel} value={mvtForm.futDest||""} onChange={e=>setMvtForm(f=>({...f,futDest:e.target.value}))}>
+                      <option value="">Selectionner un fut...</option>
+                      {tonneaux.filter(t=>t.statut==="vide"||(t.contenuActuel||0)<(t.volume||0)).map(t=>(
+                        <option key={t.id} value={t.id}>{t.id}{t.denomination?" - "+t.denomination:""} (dispo: {Math.max(0,(t.volume||0)-(t.contenuActuel||0))}L)</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               )}
               {mvtForm.type==="soutirage"&&mvtForm.futSource[0]&&mvtForm.futDest&&mvtForm.volume&&(
