@@ -640,7 +640,7 @@ export default function App() {
   // Mouvement form
   const [mvtForm, setMvtForm] = useState({
     type:"ouillage", date:new Date().toISOString().slice(0,16),
-    operateur:"", futSource:[], futDest:"", volume:"", notes:"", produit:"", dosage:"", numeroLot:"", entonnageMarcId:"", entonnageCuveId:"", entonnageFuts:[{futId:"",volume:""}], mutageCuveId:"", mutageBourbesHL:"", mutageAlcoolHL:"", mutageDegreAlcool:"", mutageDestId:"",
+    operateur:"", futSource:[], futDest:"", volume:"", notes:"", produit:"", dosage:"", numeroLot:"", entonnageMarcId:"", entonnageCuveId:"", entonnageVendangeId:"", entonnageFuts:[{futId:"",volume:""}], mutageCuveId:"", mutageBourbesHL:"", mutageAlcoolHL:"", mutageDegreAlcool:"", mutageDestId:"",
   });
   // Dégustation form - une ligne par dégustateur
   const [degForm, setDegForm] = useState({
@@ -1518,12 +1518,18 @@ export default function App() {
         }
         return c;
       }));
-      // Ajouter dans les futs destination (en L)
+      // Ajouter dans les futs destination (en L) + reporter le marc
+      const vendangeSource = mvtForm.entonnageVendangeId ? vendanges.find(v=>v.id===mvtForm.entonnageVendangeId) : null;
       const updFuts = tonneaux.map(t=>{
         const ef = (mvtForm.entonnageFuts||[]).find(ef=>ef.futId===t.id);
         if(ef && parseFloat(ef.volume)>0) {
           const volL = Math.round(parseFloat(ef.volume)*100);
-          const updated = {...t, contenuActuel:Math.min(t.volume, (t.contenuActuel||0)+volL), statut:"actif"};
+          const updated = {...t, 
+            contenuActuel:Math.min(t.volume, (t.contenuActuel||0)+volL), 
+            statut:"actif",
+            marc: vendangeSource?.numeroMarc||t.marc||"",
+            denomination: t.denomination||vendangeSource?.cuveeCreee||t.denomination,
+          };
           saveTonneau(updated);
           return updated;
         }
@@ -4764,6 +4770,21 @@ export default function App() {
                         <option key={c.id} value={c.id}>{c.nom} - {c.type} ({c.contenuActuelHL||0} HL dispo)</option>
                       ))}
                     </select>
+                  </div>
+                  <div><span style={s.lbl}>Vendange associee (pour n° Marc)</span>
+                    <select style={s.sel} value={mvtForm.entonnageVendangeId||""} onChange={e=>setMvtForm(f=>({...f,entonnageVendangeId:e.target.value}))}>
+                      <option value="">Selectionner...</option>
+                      {vendanges.filter(v=>v.cuveTailleId===mvtForm.entonnageCuveId||v.cuveCuveeId===mvtForm.entonnageCuveId||v.cuveCuveeBId===mvtForm.entonnageCuveId).map(v=>(
+                        <option key={v.id} value={v.id}>{fmt(v.date)} - {v.cuveeCreee||"Marc "+v.numeroMarc} - Marc {v.numeroMarc}</option>
+                      ))}
+                      {vendanges.filter(v=>v.cuveTailleId===mvtForm.entonnageCuveId||v.cuveCuveeId===mvtForm.entonnageCuveId||v.cuveCuveeBId===mvtForm.entonnageCuveId).length===0&&
+                        vendanges.map(v=><option key={v.id} value={v.id}>{fmt(v.date)} - {v.cuveeCreee||"Marc "+v.numeroMarc} - Marc {v.numeroMarc}</option>)
+                      }
+                    </select>
+                    {mvtForm.entonnageVendangeId&&(()=>{
+                      const vd = vendanges.find(v=>v.id===mvtForm.entonnageVendangeId);
+                      return vd?.numeroMarc&&<div style={{fontSize:"11px",color:"#7a5200",marginTop:"3px"}}>Marc {vd.numeroMarc} sera reporté sur les futs destination</div>;
+                    })()}
                   </div>
                   <div><span style={s.lbl}>Volume a entonner (HL)</span>
                     <input type="number" step="0.1" style={s.inp} placeholder="0" value={mvtForm.volume||""} onChange={e=>setMvtForm(f=>({...f,volume:e.target.value}))}/></div>
