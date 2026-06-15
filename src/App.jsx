@@ -1379,6 +1379,26 @@ export default function App() {
       upd=upd.map(t=>t.id===mvt.futDest?{...t,contenuActuel:Math.max(0,t.contenuActuel-vol)}:t);
     } else if(mvt.type==="assemblage"){
       if(!window.confirm("L'assemblage ne peut pas etre restaure automatiquement. Supprimer quand meme ?")) return;
+    } else if(mvt.type==="entonnage" && mvt.entonnageCuveId) {
+      // Remettre le volume dans la cuve cuverie
+      const volTotal = (mvt.entonnageFuts||[]).reduce((s,ef)=>s+(parseFloat(ef.volume)||0),0);
+      setCuvesCuverie(prev=>prev.map(c=>{
+        if(c.id===mvt.entonnageCuveId) {
+          const updated = {...c, contenuActuelHL:String(Math.round(((parseFloat(c.contenuActuelHL)||0)+volTotal)*100)/100)};
+          fbSave("cuvesCuverie", c.id, updated);
+          return updated;
+        }
+        return c;
+      }));
+      // Deduire des futs destination
+      upd = upd.map(t=>{
+        const ef = (mvt.entonnageFuts||[]).find(ef=>ef.futId===t.id);
+        if(ef) {
+          const volL = Math.round(parseFloat(ef.volume)*100);
+          return {...t, contenuActuel:Math.max(0,(t.contenuActuel||0)-volL)};
+        }
+        return t;
+      });
     }
     setTonneaux(upd);
     upd.forEach(t=>saveTonneau(t));
