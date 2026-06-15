@@ -4744,7 +4744,7 @@ export default function App() {
                   <div><span style={s.lbl}>Cuve destination (apres mutage)</span>
                     <select style={s.sel} value={mvtForm.mutageDestId||""} onChange={e=>setMvtForm(f=>({...f,mutageDestId:e.target.value}))}>
                       <option value="">Selectionner...</option>
-                      {cuvesCuverie.map(c=><option key={c.id} value={c.id}>{c.nom} - {c.type} ({c.contenuActuelHL||0} HL)</option>)}
+                      {tonneaux.filter(t=>t.statut==="vide"||(t.contenuActuel||0)<(t.volume||0)).map(t=><option key={t.id} value={t.id}>{t.id}{t.denomination?" - "+t.denomination:""} (dispo: {Math.max(0,(t.volume||0)-(t.contenuActuel||0))}L)</option>)}
                     </select>
                   </div>
                   {mvtForm.mutageBourbesHL&&mvtForm.mutageAlcoolHL&&(
