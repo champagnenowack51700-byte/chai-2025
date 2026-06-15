@@ -590,6 +590,7 @@ export default function App() {
   const [vendangeForm, setVendangeForm] = useState(VENDANGE_EMPTY);
   const [rendementsAnnuels, setRendementsAnnuels] = useState([]);
   const [showRendementForm, setShowRendementForm] = useState(false);
+  const [showParcellesList, setShowParcellesList] = useState(true);
   const [rendementForm, setRendementForm] = useState({annee:new Date().getFullYear().toString(),rendementAutorise:"",surface:""});
   const [showProduitVendange, setShowProduitVendange] = useState(false);
   const [produitVendangeForm, setProduitVendangeForm] = useState({nom:"",dose:"",lot:"",date:""});
@@ -2597,12 +2598,24 @@ export default function App() {
 
             {/* Colonne droite - Parcelles */}
             <div style={s.card}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
-                <span style={{...s.lbl,marginBottom:0}}>Parcelles</span>
-                <button style={s.btnSm} onClick={()=>{setParcelleForm({nom:"",cepage:"",surface:"",commune:""});setEditingParcelle(null);setShowParcelleForm(true);}}>+ Ajouter</button>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:showParcellesList?"12px":"0"}}>
+                <div style={{display:"flex",alignItems:"center",gap:"8px",cursor:"pointer"}} onClick={()=>setShowParcellesList(p=>!p)}>
+                  <span style={{...s.lbl,marginBottom:0}}>Parcelles ({parcelles.length})</span>
+                  <span style={{fontSize:"10px",color:"#9a8870"}}>{showParcellesList?"▲":"▼"}</span>
+                </div>
+                <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
+                  {(()=>{
+                    const totalHa = parcelles.reduce((s,p)=>s+(parseFloat(p.surface)||0),0);
+                    const ha = Math.floor(totalHa);
+                    const ares = Math.floor((totalHa-ha)*100);
+                    const ca = Math.round(((totalHa-ha)*100-ares)*100);
+                    return <span style={{fontSize:"11px",color:"#7a5200",fontWeight:500}}>{ha}ha {String(ares).padStart(2,"0")}a {String(ca).padStart(2,"0")}ca</span>;
+                  })()}
+                  <button style={s.btnSm} onClick={()=>{setParcelleForm({nom:"",cepage:"",surface:"",commune:""});setEditingParcelle(null);setShowParcelleForm(true);}}>+ Ajouter</button>
+                </div>
               </div>
-              {parcelles.length===0&&<div style={{fontSize:"12px",color:"#9a8870",fontStyle:"italic"}}>Aucune parcelle. Ajoutez-en une pour commencer.</div>}
-              {parcelles.map(p=>(
+              {showParcellesList&&parcelles.length===0&&<div style={{fontSize:"12px",color:"#9a8870",fontStyle:"italic"}}>Aucune parcelle. Ajoutez-en une pour commencer.</div>}
+              {showParcellesList&&parcelles.map(p=>(
                 <div key={p.id} style={{borderBottom:"0.5px solid #ede5d4",padding:"8px 0"}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
                     <div style={{flex:1}}>
