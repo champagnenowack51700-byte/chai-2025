@@ -1656,7 +1656,8 @@ export default function App() {
         <div style={{cursor:"pointer"}} onClick={()=>{setSelectedFut(t.id);setView("fiche");setFicheTab("degustations");}}>
           {t.statut==="surveillance"&&<div style={{fontSize:"9px",background:"#c47800",color:"#fff",padding:"1px 6px",marginBottom:"3px",borderRadius:"3px",display:"inline-block",fontWeight:600,letterSpacing:"0.05em"}}>SURVEILLANCE</div>}
           <div style={{fontSize:"13px",fontWeight:600,color:"#1a1205",marginBottom:"1px",paddingLeft:"6px"}}>{t.id}</div>
-          <div style={{fontSize:"10px",color:"#6a5838",marginBottom:"6px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",paddingLeft:"6px"}}>{t.denomination}{t.certif==="BIO"&&<span style={{marginLeft:"4px",fontSize:"9px",background:"#d4edc0",color:"#2d6a00",borderRadius:"2px",padding:"0px 3px",fontWeight:600}}>🌿</span>}</div>
+          <div style={{fontSize:"10px",color:"#6a5838",marginBottom:"2px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",paddingLeft:"6px"}}>{t.denomination}</div>
+          {t.certif==="BIO"&&<div style={{paddingLeft:"6px",marginBottom:"4px"}}><span style={{fontSize:"10px",background:"#2d6a00",color:"#fff",borderRadius:"3px",padding:"1px 6px",fontWeight:600}}>🌿 BIO</span></div>}
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingLeft:"6px"}}>
             <span style={{fontSize:"10px",color:"#7a6840"}}>{t.marc?"Marc "+t.marc+" · ":""}{t.millesime||"-"} · {t.volume}L</span>
             <div style={{display:"flex",alignItems:"center",gap:"5px"}}>
@@ -2518,7 +2519,7 @@ export default function App() {
                           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:"12px",marginBottom:"8px"}}>
                             <div>
                               {v.cuveeCreee&&<div style={{fontWeight:600,color:"#7a5200",fontSize:"14px",marginBottom:"2px"}}>{v.cuveeCreee}</div>}
-                              {v.isBio&&<span style={{fontSize:"10px",background:"#d4edc0",color:"#2d6a00",borderRadius:"3px",padding:"1px 6px",fontWeight:600,marginBottom:"4px",display:"inline-block"}}>🌿 BIO</span>}
+                              {v.isBio&&<div style={{marginBottom:"4px"}}><span style={{fontSize:"11px",background:"#2d6a00",color:"#fff",borderRadius:"4px",padding:"2px 8px",fontWeight:600}}>🌿 BIO</span></div>}
                               <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"2px"}}>
                                 <div style={{fontWeight:500,color:"#1a1205",fontSize:"13px"}}>{parcs.length>0?parcs.map(p=>p.nom).join(" + "):"Parcelle inconnue"}</div>
                                 {v.numeroMarc&&(
