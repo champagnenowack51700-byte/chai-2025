@@ -1111,7 +1111,13 @@ export default function App() {
       grain:futForm.grain, chauffe:futForm.chauffe, certif:futForm.certif,
       statut:futForm.statut, contenuActuel:contenu, volumeRI:parseFloat(futForm.volumeRI)||0, marc:futForm.marc||"", commentaire:futForm.commentaire||"" };
     if(editingFut) {
-      setTonneaux(prev=>prev.map(t=>t.id===editingFut.id?fut:t));
+      if(editingFut.id !== fut.id) {
+        // ID changed - remove old, add new
+        setTonneaux(prev=>[...prev.filter(t=>t.id!==editingFut.id), fut]);
+        fbDelete("tonneaux", editingFut.id);
+      } else {
+        setTonneaux(prev=>prev.map(t=>t.id===editingFut.id?fut:t));
+      }
     } else {
       setTonneaux(prev=>[...prev, fut]);
     }
@@ -4900,11 +4906,11 @@ export default function App() {
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
                 <div>
                   <span style={s.lbl}>N° Fût / Nom *</span>
-                  <input style={{...s.inp, opacity:editingFut?0.5:1}} value={futForm.id}
+                  <input style={s.inp} value={futForm.id}
                     readOnly={!!editingFut}
                     onChange={e=>setFutForm(f=>({...f,id:e.target.value}))}
                     placeholder="ex. 23.28, Foudre 7, Cuve Meunier"/>
-                  {editingFut && <div style={{fontSize:"10px",color:"#7a6840",marginTop:"3px"}}>Non modifiable - crée un nouveau fût si besoin</div>}
+
                 </div>
                 <div>
                   <span style={s.lbl}>Appellation *</span>
