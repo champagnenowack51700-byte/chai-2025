@@ -1311,6 +1311,57 @@ export default function App() {
     setEditingVendange(v); setShowVendangeForm(true);
   };
 
+  const exportVendangeCSV = (annee, vAnnee) => {
+    const headers = ["Date","Heure","Parcelles","Cuvee creee","Marc","Kg","HL","Degre","Acidite","SO2","pH","Dest. Marc","Cuve Taille","Vol Taille","Cuve Cuvee A","Vol Cuvee A","Cuve Cuvee B","Vol Cuvee B","Operateur","Observations"];
+    const rows = vAnnee.map(v=>{
+      const parcs = (v.parcelleIds&&v.parcelleIds.length>0) ? v.parcelleIds.map(id=>parcelles.find(p=>p.id===id)?.nom||id).join(" + ") : (parcelles.find(p=>p.id===v.parcelleId)?.nom||"");
+      const cuveTaille = cuvesCuverie.find(c=>c.id===v.cuveTailleId)?.nom||v.cuveTailleId||"";
+      const cuveA = cuvesCuverie.find(c=>c.id===v.cuveCuveeId)?.nom||v.cuveCuveeId||"";
+      const cuveB = cuvesCuverie.find(c=>c.id===v.cuveCuveeBId)?.nom||v.cuveCuveeBId||"";
+      return [fmt(v.date),v.heure||"",parcs,v.cuveeCreee||"",v.numeroMarc||"",v.poidsMarcKg||"",v.volumeHL||"",v.degreePotentiel||"",v.acidite||"",v.so2||"",v.ph||"",v.destinationMarc||"maison",cuveTaille,v.volumeTaille||"",cuveA,v.volumeCuvee||"",cuveB,v.volumeCuveeB||"",v.operateur||"",v.observations||""];
+    });
+    const csv = [headers,...rows].map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(";")).join("\n");
+    const blob = new Blob(["﻿"+csv],{type:"text/csv;charset=utf-8;"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href=url; a.download=`vendange_${annee}.csv`; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportVendangePDF = (annee, vAnnee) => {
+    const parcsNom = (v) => (v.parcelleIds&&v.parcelleIds.length>0) ? v.parcelleIds.map(id=>parcelles.find(p=>p.id===id)?.nom||id).join(" + ") : (parcelles.find(p=>p.id===v.parcelleId)?.nom||"");
+    const kgTotal = vAnnee.reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0);
+    const hlTotal = vAnnee.reduce((s,v)=>s+(parseFloat(v.volumeHL)||0),0);
+    const rows = vAnnee.map(v=>`
+      <tr>
+        <td>${fmt(v.date)}${v.heure?" "+v.heure:""}</td>
+        <td>${parcsNom(v)}</td>
+        <td>${v.cuveeCreee||"-"}</td>
+        <td>${v.numeroMarc||"-"}</td>
+        <td>${v.poidsMarcKg?parseInt(v.poidsMarcKg).toLocaleString()+" kg":"-"}</td>
+        <td>${v.volumeHL||"-"} HL</td>
+        <td>${v.degreePotentiel?v.degreePotentiel+"%":"-"}</td>
+        <td>${v.acidite?v.acidite+" g/L":"-"}</td>
+        <td>${v.so2?v.so2+" mg/L":"-"}</td>
+        <td>${v.ph||"-"}</td>
+        <td>${cuvesCuverie.find(c=>c.id===v.cuveTailleId)?.nom||"-"}${v.volumeTaille?" ("+v.volumeTaille+" HL)":""}</td>
+        <td>${cuvesCuverie.find(c=>c.id===v.cuveCuveeId)?.nom||"-"}${v.volumeCuvee?" ("+v.volumeCuvee+" HL)":""}</td>
+      </tr>`).join("");
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+    <style>body{font-family:Georgia,serif;margin:20px;color:#1a1205}h1{color:#7a5200;border-bottom:1px solid #d4c4a0;padding-bottom:8px}
+    table{width:100%;border-collapse:collapse;font-size:11px}th{background:#f5e8cc;color:#7a5200;padding:6px;text-align:left;border:0.5px solid #d4c4a0}
+    td{padding:5px 6px;border:0.5px solid #ede5d4}.total{background:#f5f5f0;font-weight:bold}</style></head>
+    <body><h1>Champagne Nowack — Campagne ${annee}</h1>
+    <p style="color:#9a8870;font-size:12px">${vAnnee.length} apport(s) — Total : ${kgTotal.toLocaleString()} kg / ${hlTotal.toFixed(2)} HL</p>
+    <table><thead><tr><th>Date</th><th>Parcelles</th><th>Cuvee</th><th>Marc</th><th>Kg</th><th>HL</th><th>Degre</th><th>Acidite</th><th>SO2</th><th>pH</th><th>Cuve Taille</th><th>Cuve Cuvee A</th></tr></thead>
+    <tbody>${rows}<tr class="total"><td colspan="4">TOTAL</td><td>${kgTotal.toLocaleString()} kg</td><td>${hlTotal.toFixed(2)} HL</td><td colspan="6"></td></tr></tbody></table>
+    </body></html>`;
+    const w = window.open("","_blank");
+    w.document.write(html);
+    w.document.close();
+    setTimeout(()=>w.print(),500);
+  };
+
   const submitVendange = () => {
     if(!vendangeForm.parcelleId&&(!vendangeForm.parcelleIds||vendangeForm.parcelleIds.length===0)) return alert("Selectionner au moins une parcelle.");
     if(!vendangeForm.date) return alert("La date est requise.");
@@ -2413,6 +2464,8 @@ export default function App() {
                     <div style={{display:"flex",alignItems:"center",gap:"10px",marginBottom:"10px"}}>
                       <div style={{fontFamily:"Georgia,serif",fontSize:"16px",fontWeight:500,color:"#7a5200"}}>Campagne {annee}</div>
                       <div style={{flex:1,height:"0.5px",background:"#d4c4a0"}}/>
+                      <button style={{...s.ghostSm,fontSize:"10px",color:"#2d6a00",borderColor:"#7ab848"}} onClick={()=>exportVendangeCSV(annee,vAnnee)}>↓ CSV</button>
+                      <button style={{...s.ghostSm,fontSize:"10px",color:"#8B0000",borderColor:"#c85050"}} onClick={()=>exportVendangePDF(annee,vAnnee)}>↓ PDF</button>
                       <div style={{display:"flex",gap:"12px",fontSize:"11px",color:"#9a8870",fontFamily:"monospace"}}>
                         <span>{vAnnee.length} apport(s)</span>
                         <span style={{color:"#2d6a00",fontWeight:500}}>{volTotal.toLocaleString()} kg</span>
