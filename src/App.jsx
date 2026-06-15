@@ -3334,7 +3334,7 @@ export default function App() {
           )}
 
         {/* -- VIGNE -- */}
-        {view==="vigne" && (()=>{
+        {false&&view==="vigne" && (()=>{
           const allTraits = [...traitements].sort((a,b)=>new Date(b.date)-new Date(a.date));
           const campagnes = [...new Set(allTraits.map(t=>t.campagne))].sort().reverse();
           const traitsFiltres = filterTraitAn ? allTraits.filter(t=>t.campagne===filterTraitAn) : allTraits;
@@ -3735,7 +3735,7 @@ export default function App() {
         })()}
 
         {/* -- VENDANGES -- */}
-        {view==="vendanges" && (
+        {false&&view==="vendanges" && (
           <div style={{display:"grid",gridTemplateColumns:"clamp(200px,1fr,1fr) clamp(200px,260px,30vw)",gap:"16px",alignItems:"start"}}>
 
             {/* Colonne principale */}
@@ -4001,7 +4001,7 @@ export default function App() {
         )}
 
         {/* -- STOCK -- */}
-        {view==="stock" && (()=>{
+        {false&&view==="stock" && (()=>{
           const now = new Date();
           const lots = [...stockBouteilles].sort((a,b)=>new Date(a.dateTirage)-new Date(b.dateTirage)).map(l=>({...l,
             mois: l.dateTirage ? Math.floor((now-new Date(l.dateTirage))/(1000*60*60*24*30.5)) : 0
@@ -4282,7 +4282,7 @@ export default function App() {
         })()}
 
         {/* -- TIRAGES -- */}
-        {view==="tirages" && (
+        {false&&view==="tirages" && (
           <div>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
               <div style={{fontSize:"13px",color:"#7a6840"}}>{tirages.length} tirage(s) enregistré(s)</div>
