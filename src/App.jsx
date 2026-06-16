@@ -1468,31 +1468,49 @@ export default function App() {
 
   const exportVendangePDF = (annee, vAnnee) => {
     const parcsNom = (v) => (v.parcelleIds&&v.parcelleIds.length>0) ? v.parcelleIds.map(id=>parcelles.find(p=>p.id===id)?.nom||id).join(" + ") : (parcelles.find(p=>p.id===v.parcelleId)?.nom||"");
+    const isBio = (v) => {
+      const ids = v.parcelleIds&&v.parcelleIds.length>0 ? v.parcelleIds : (v.parcelleId?[v.parcelleId]:[]);
+      return ids.length>0 && ids.every(id=>parcelles.find(p=>p.id===id)?.certification==="BIO");
+    };
     const kgTotal = vAnnee.reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0);
     const hlTotal = vAnnee.reduce((s,v)=>s+(parseFloat(v.volumeHL)||0),0);
-    const rows = vAnnee.map(v=>`
-      <tr>
+    const kgMaison = vAnnee.reduce((s,v)=>{
+      if(!v.destinationMarc||v.destinationMarc==="maison") return s+(parseFloat(v.poidsMarcKg)||0);
+      if(v.destinationMarc==="negoce_partiel") return s+(parseFloat(v.poidsMarcKg)||0)-(parseFloat(v.kgVendusNegoce)||0);
+      return s;
+    },0);
+    const kgNegoce = vAnnee.reduce((s,v)=>{
+      if(v.destinationMarc==="negoce_total") return s+(parseFloat(v.poidsMarcKg)||0);
+      if(v.destinationMarc==="negoce_partiel") return s+(parseFloat(v.kgVendusNegoce)||0);
+      return s;
+    },0);
+    const rows = vAnnee.map(v=>{
+      const bio = isBio(v);
+      const dest = v.destinationMarc==="negoce_total"?"Negoce total":v.destinationMarc==="negoce_partiel"?`Negoce partiel (${parseInt(v.kgVendusNegoce)||0} kg negoce / ${(parseFloat(v.poidsMarcKg)||0)-(parseFloat(v.kgVendusNegoce)||0)} kg maison)`:"Maison";
+      return `<tr>
         <td>${fmt(v.date)}${v.heure?" "+v.heure:""}</td>
-        <td>${parcsNom(v)}</td>
+        <td>${parcsNom(v)}${bio?' <span style="background:#2d6a00;color:#fff;border-radius:3px;padding:1px 4px;font-size:9px">🌿 BIO</span>':""}</td>
         <td>${v.cuveeCreee||"-"}</td>
         <td>${v.numeroMarc||"-"}</td>
         <td>${v.poidsMarcKg?parseInt(v.poidsMarcKg).toLocaleString()+" kg":"-"}</td>
         <td>${v.volumeHL||"-"} HL</td>
+        <td>${dest}</td>
         <td>${v.degreePotentiel?v.degreePotentiel+"%":"-"}</td>
         <td>${v.acidite?v.acidite+" g/L":"-"}</td>
         <td>${v.so2?v.so2+" mg/L":"-"}</td>
         <td>${v.ph||"-"}</td>
         <td>${cuvesCuverie.find(c=>c.id===v.cuveTailleId)?.nom||"-"}${v.volumeTaille?" ("+v.volumeTaille+" HL)":""}</td>
         <td>${cuvesCuverie.find(c=>c.id===v.cuveCuveeId)?.nom||"-"}${v.volumeCuvee?" ("+v.volumeCuvee+" HL)":""}</td>
-      </tr>`).join("");
+      </tr>`;
+    }).join("");
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
     <style>body{font-family:Georgia,serif;margin:20px;color:#1a1205}h1{color:#7a5200;border-bottom:1px solid #d4c4a0;padding-bottom:8px}
-    table{width:100%;border-collapse:collapse;font-size:11px}th{background:#f5e8cc;color:#7a5200;padding:6px;text-align:left;border:0.5px solid #d4c4a0}
-    td{padding:5px 6px;border:0.5px solid #ede5d4}.total{background:#f5f5f0;font-weight:bold}</style></head>
+    table{width:100%;border-collapse:collapse;font-size:10px}th{background:#f5e8cc;color:#7a5200;padding:5px;text-align:left;border:0.5px solid #d4c4a0}
+    td{padding:4px 5px;border:0.5px solid #ede5d4}tr:nth-child(even){background:#fffdf7}.total{background:#f5f5f0;font-weight:bold}</style></head>
     <body><h1>Champagne Nowack — Campagne ${annee}</h1>
-    <p style="color:#9a8870;font-size:12px">${vAnnee.length} apport(s) — Total : ${kgTotal.toLocaleString()} kg / ${hlTotal.toFixed(2)} HL</p>
-    <table><thead><tr><th>Date</th><th>Parcelles</th><th>Cuvee</th><th>Marc</th><th>Kg</th><th>HL</th><th>Degre</th><th>Acidite</th><th>SO2</th><th>pH</th><th>Cuve Taille</th><th>Cuve Cuvee A</th></tr></thead>
-    <tbody>${rows}<tr class="total"><td colspan="4">TOTAL</td><td>${kgTotal.toLocaleString()} kg</td><td>${hlTotal.toFixed(2)} HL</td><td colspan="6"></td></tr></tbody></table>
+    <p style="color:#9a8870;font-size:12px">${vAnnee.length} apport(s) — Total : ${kgTotal.toLocaleString()} kg / ${hlTotal.toFixed(2)} HL — Maison : ${kgMaison.toLocaleString()} kg — Negoce : ${kgNegoce.toLocaleString()} kg</p>
+    <table><thead><tr><th>Date</th><th>Parcelles</th><th>Cuvee</th><th>Marc</th><th>Kg</th><th>HL</th><th>Destination</th><th>Degre</th><th>Acidite</th><th>SO2</th><th>pH</th><th>Cuve Taille</th><th>Cuve Cuvee A</th></tr></thead>
+    <tbody>${rows}<tr class="total"><td colspan="4">TOTAL</td><td>${kgTotal.toLocaleString()} kg</td><td>${hlTotal.toFixed(2)} HL</td><td>Maison: ${kgMaison.toLocaleString()} kg / Negoce: ${kgNegoce.toLocaleString()} kg</td><td colspan="6"></td></tr></tbody></table>
     </body></html>`;
     const w = window.open("","_blank");
     w.document.write(html);
