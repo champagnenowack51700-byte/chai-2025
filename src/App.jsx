@@ -603,6 +603,7 @@ export default function App() {
     cuvee: "",
     millesime: "",
     futsSources: [],
+    futsSourcesVolumes: {},
     volumeTotal: "",
     levainEau: "",
     levainVin: "",
@@ -1166,7 +1167,7 @@ export default function App() {
   const openEditTirage = (t) => {
     setTirageForm({
       date:t.date||"", operateur:t.operateur||"", typeProduit:t.typeProduit||"champagne", cuvee:t.cuvee||"",
-      millesime:t.millesime||"", futsSources:t.futsSources||[],
+      millesime:t.millesime||"", futsSources:t.futsSources||[], futsSourcesVolumes:t.futsSourcesVolumes||{},
       volumeTotal:t.volumeTotal||"", levainEau:t.levainEau||"",
       levainVin:t.levainVin||"", levainLevure:t.levainLevure||"",
       levainLevureNom:t.levainLevureNom||"", levainLot:t.levainLot||"",
@@ -1211,16 +1212,25 @@ export default function App() {
       const volAssemble = calcTotalAssemble(tirageForm);
       let updatedTonneaux = [...tonneaux];
       if(tirageForm.futsSources.length > 0) {
-        const volParFut = (parseFloat(tirageForm.volumeTotal)||0) / tirageForm.futsSources.length;
-        updatedTonneaux = updatedTonneaux.map(t=>
-          tirageForm.futsSources.includes(t.id)
-            ? {...t, contenuActuel:Math.max(0,t.contenuActuel-volParFut), statut:"vide"} : t
-        );
+        updatedTonneaux = updatedTonneaux.map(t=>{
+          if(tirageForm.futsSources.includes(t.id)) {
+            const volPris = parseFloat(tirageForm.futsSourcesVolumes[t.id])||t.contenuActuel||0;
+            const reste = Math.max(0,(t.contenuActuel||0)-volPris);
+            return {...t, contenuActuel:reste, statut:reste<=0?"vide":t.statut};
+          }
+          return t;
+        });
       }
       if(tirageForm.cuveDestMode==="existante" && tirageForm.cuveDestId) {
-        updatedTonneaux = updatedTonneaux.map(t=>
-          t.id===tirageForm.cuveDestId ? {...t, contenuActuel:Math.min(t.volume,t.contenuActuel+volAssemble)} : t
-        );
+        const volAssembleHL = volAssemble/100;
+        setCuvesCuverie(prev=>prev.map(c=>{
+          if(c.id===tirageForm.cuveDestId) {
+            const updated = {...c, contenuActuelHL:String(Math.round(((parseFloat(c.contenuActuelHL)||0)+volAssembleHL)*100)/100)};
+            fbSave("cuvesCuverie", c.id, updated);
+            return updated;
+          }
+          return c;
+        }));
       } else if(tirageForm.cuveDestMode==="nouvelle" && tirageForm.nouvelleCuveId.trim()) {
         updatedTonneaux = [...updatedTonneaux, {
           id:tirageForm.nouvelleCuveId.trim(),
@@ -6275,17 +6285,32 @@ export default function App() {
                 <div style={{display:"grid",gridTemplateColumns:"1fr 140px",gap:"12px"}}>
                   <div>
                     <span style={s.lbl}>Futs sources (selection multiple)</span>
-                    <div style={{maxHeight:"130px",overflowY:"auto",border:"0.5px solid #d4c4a0",borderRadius:"6px",padding:"6px",background:"#fffdf7"}}>
+                    <div style={{maxHeight:"180px",overflowY:"auto",border:"0.5px solid #d4c4a0",borderRadius:"6px",padding:"6px",background:"#fffdf7"}}>
                       {tonneaux.filter(t=>t.contenuActuel>0).map(t=>(
-                        <label key={t.id} style={{display:"flex",alignItems:"center",gap:"7px",padding:"3px",cursor:"pointer",fontSize:"12px"}}>
+                        <div key={t.id} style={{display:"flex",alignItems:"center",gap:"7px",padding:"3px",fontSize:"12px"}}>
                           <input type="checkbox" checked={tirageForm.futsSources.includes(t.id)}
-                            onChange={()=>setTirageForm(f=>({...f,futsSources:f.futsSources.includes(t.id)?f.futsSources.filter(x=>x!==t.id):[...f.futsSources,t.id]}))}/>
+                            onChange={()=>setTirageForm(f=>({
+                              ...f,
+                              futsSources:f.futsSources.includes(t.id)?f.futsSources.filter(x=>x!==t.id):[...f.futsSources,t.id],
+                              futsSourcesVolumes:{...f.futsSourcesVolumes,[t.id]:f.futsSourcesVolumes[t.id]||t.contenuActuel}
+                            }))}/>
                           <span style={{color:"#b8860b",minWidth:"54px",fontFamily:"monospace"}}>{t.id}</span>
-                          <span style={{color:"#6a5838"}}>{t.denomination}</span>
-                          <span style={{marginLeft:"auto",color:"#9a8870"}}>{t.contenuActuel}L</span>
-                        </label>
+                          <span style={{color:"#6a5838",flex:1}}>{t.denomination}</span>
+                          <span style={{color:"#9a8870",fontSize:"10px"}}>{t.contenuActuel}L</span>
+                          {tirageForm.futsSources.includes(t.id)&&(
+                            <input type="number" style={{...s.inp,width:"75px",padding:"2px 6px",fontSize:"11px"}}
+                              placeholder={String(t.contenuActuel)}
+                              value={tirageForm.futsSourcesVolumes[t.id]||""}
+                              onChange={e=>setTirageForm(f=>({...f,futsSourcesVolumes:{...f.futsSourcesVolumes,[t.id]:e.target.value}}))}/>
+                          )}
+                        </div>
                       ))}
                     </div>
+                    {tirageForm.futsSources.length>0&&(
+                      <div style={{fontSize:"11px",color:"#533AB7",marginTop:"4px"}}>
+                        Total sélectionné : {tirageForm.futsSources.reduce((s,id)=>s+(parseFloat(tirageForm.futsSourcesVolumes[id])||getTonneau(id)?.contenuActuel||0),0).toLocaleString()} L
+                      </div>
+                    )}
                   </div>
                   <div>
                     <span style={s.lbl}>Volume vin (L)</span>
@@ -6338,8 +6363,8 @@ export default function App() {
                     <span style={s.lbl}>Selectionner la cuve de destination</span>
                     <select style={s.sel} value={tirageForm.cuveDestId} onChange={e=>setTirageForm(f=>({...f,cuveDestId:e.target.value}))}>
                       <option value="">-- Aucune --</option>
-                      {tonneaux.filter(t=>!tirageForm.futsSources.includes(t.id)).map(t=>(
-                        <option key={t.id} value={t.id}>{t.id} -- {t.denomination} ({t.contenuActuel}L/{t.volume}L)</option>
+                      {cuvesCuverie.filter(c=>c.type!=="bourbes").map(c=>(
+                        <option key={c.id} value={c.id}>{c.nom} - {c.type} (dispo: {Math.max(0,(parseFloat(c.volumeHL)||0)-(parseFloat(c.contenuActuelHL)||0)).toFixed(1)} HL)</option>
                       ))}
                     </select>
                   </div>
