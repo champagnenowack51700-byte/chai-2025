@@ -2934,7 +2934,7 @@ export default function App() {
                     <tbody>
                       {lotsFusionnes.map((l,i)=>(
                         <tr key={l.id} style={{borderBottom:"1px solid #ede5d4",background:l.mois>=14&&!l.passage15?"#fff8e8":i%2===0?"#ffffff":"#fffbf5"}}>
-                          <td style={{padding:"10px 12px",fontWeight:500,color:"#1a1205"}}>{l.cuvee}</td>
+                          <td style={{padding:"10px 12px",fontWeight:500,color:"#1a1205"}}>{l.cuvee}{l.isBio&&<span style={{marginLeft:"6px",fontSize:"10px",background:"#2d6a00",color:"#fff",borderRadius:"3px",padding:"1px 5px",fontWeight:600}}>🌿</span>}</td>
                           <td style={{padding:"10px 12px",color:"#6a5838",fontFamily:"monospace"}}>{l.millesime||"-"}</td>
                           <td style={{padding:"10px 12px",color:"#9a8870",fontFamily:"monospace",fontSize:"11px"}}>{l.lot||"-"}</td>
                           <td style={{padding:"10px 12px",color:"#6a5838"}}>{l.format}</td>
@@ -3100,7 +3100,7 @@ export default function App() {
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:"16px"}}>
                     {/* Identite */}
                     <div>
-                      <div style={{fontFamily:"Georgia,serif",fontSize:"16px",fontWeight:500,color:"#7a5200",marginBottom:"2px"}}>{t.cuvee}</div>
+                      <div style={{fontFamily:"Georgia,serif",fontSize:"16px",fontWeight:500,color:"#7a5200",marginBottom:"2px"}}>{t.cuvee}{t.isBio&&<span style={{marginLeft:"8px",fontSize:"11px",background:"#2d6a00",color:"#fff",borderRadius:"4px",padding:"2px 7px",fontWeight:600}}>🌿 BIO</span>}</div>
                       <div style={{fontSize:"12px",color:"#9a8870",marginBottom:"8px"}}>{fmt(t.date)} - {t.operateur}</div>
                       {t.millesime&&<div style={{fontSize:"11px",color:"#6a5838"}}>Millésime : <strong>{t.millesime}</strong></div>}
                       {t.futsSources?.length>0&&(
@@ -4320,7 +4320,7 @@ export default function App() {
                     <tbody>
                       {lotsFusionnes.map((l,i)=>(
                         <tr key={l.id} style={{borderBottom:"1px solid #ede5d4",background:l.mois>=14&&!l.passage15?"#fff8e8":i%2===0?"#ffffff":"#fffbf5"}}>
-                          <td style={{padding:"10px 12px",fontWeight:500,color:"#1a1205"}}>{l.cuvee}</td>
+                          <td style={{padding:"10px 12px",fontWeight:500,color:"#1a1205"}}>{l.cuvee}{l.isBio&&<span style={{marginLeft:"6px",fontSize:"10px",background:"#2d6a00",color:"#fff",borderRadius:"3px",padding:"1px 5px",fontWeight:600}}>🌿</span>}</td>
                           <td style={{padding:"10px 12px",color:"#6a5838",fontFamily:"monospace"}}>{l.millesime||"-"}</td>
                           <td style={{padding:"10px 12px",color:"#9a8870",fontFamily:"monospace",fontSize:"11px"}}>{l.lot||"-"}</td>
                           <td style={{padding:"10px 12px",color:"#6a5838"}}>{l.format}</td>
@@ -4486,7 +4486,7 @@ export default function App() {
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:"16px"}}>
                     {/* Identite */}
                     <div>
-                      <div style={{fontFamily:"Georgia,serif",fontSize:"16px",fontWeight:500,color:"#7a5200",marginBottom:"2px"}}>{t.cuvee}</div>
+                      <div style={{fontFamily:"Georgia,serif",fontSize:"16px",fontWeight:500,color:"#7a5200",marginBottom:"2px"}}>{t.cuvee}{t.isBio&&<span style={{marginLeft:"8px",fontSize:"11px",background:"#2d6a00",color:"#fff",borderRadius:"4px",padding:"2px 7px",fontWeight:600}}>🌿 BIO</span>}</div>
                       <div style={{fontSize:"12px",color:"#9a8870",marginBottom:"8px"}}>{t.date} - {t.operateur}</div>
                       {t.millesime&&<div style={{fontSize:"11px",color:"#6a5838"}}>Millésime : <strong>{t.millesime}</strong></div>}
                       {t.futsSources?.length>0&&(
