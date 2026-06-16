@@ -1695,7 +1695,11 @@ export default function App() {
         <div>
           {srcs.length>0&&<div style={{marginBottom:"3px"}}><span style={{color:"#8a7248",marginRight:"4px"}}>De :</span>{srcs.map(f=><span key={f.id} style={{color:"#b8860b",marginRight:"6px"}}>{f.id}<span style={{color:"#7a6840"}}> ({f.denomination})</span></span>)}</div>}
           {dest&&<div><span style={{color:"#8a7248",marginRight:"4px"}}>Vers :</span><span style={{color:"#b8860b"}}>{dest.id}<span style={{color:"#7a6840"}}> ({dest.denomination})</span></span></div>}
-          {m.volume&&<div style={{color:"#6a5838",marginTop:"2px"}}>Vol : <strong style={{color:"#1a1205"}}>{m.volume}L</strong></div>}
+          {m.type==="entonnage"?(
+            <div style={{color:"#6a5838",marginTop:"2px"}}>Vol : <strong style={{color:"#1a1205"}}>{(m.entonnageFuts||[]).reduce((s,ef)=>s+(parseFloat(ef.volume)||0),0).toFixed(1)} HL</strong></div>
+          ):(
+            m.volume&&<div style={{color:"#6a5838",marginTop:"2px"}}>Vol : <strong style={{color:"#1a1205"}}>{m.volume}L</strong></div>
+          )}
           {m.produit&&<div style={{color:"#6a5838",marginTop:"2px"}}>{m.produit}{m.dosage&&` - ${m.dosage}`}{m.numeroLot&&<span style={{marginLeft:"6px",fontSize:"10px",background:"#fff8ee",border:"1px solid #d4c4a0",borderRadius:"3px",padding:"1px 5px",color:"#7a5200",fontFamily:"monospace"}}>Lot: {m.numeroLot}</span>}</div>}
         </div>
         <div style={{color:"#6a5838",fontStyle:"italic",fontSize:"11px"}}>{m.notes}</div>
