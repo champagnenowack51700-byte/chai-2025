@@ -640,7 +640,7 @@ export default function App() {
   // Mouvement form
   const [mvtForm, setMvtForm] = useState({
     type:"ouillage", date:new Date().toISOString().slice(0,16),
-    operateur:"", futSource:[], futDest:"", volume:"", notes:"", produit:"", dosage:"", numeroLot:"", entonnageMarcId:"", entonnageCuveId:"", entonnageVendangeId:"", entonnageFuts:[{futId:"",volume:""}], assemblageVolumes:{}, perteVolumes:{}, mutageCuveId:"", mutageBourbesHL:"", mutageAlcoolHL:"", mutageDegreAlcool:"", mutageDestId:"",
+    operateur:"", futSource:[], futDest:"", volume:"", notes:"", produit:"", dosage:"", numeroLot:"", entonnageMarcId:"", entonnageCuveId:"", entonnageVendangeId:"", entonnageFuts:[{futId:"",volume:""}], assemblageVolumes:{}, perteVolumes:{}, ouillageDestFuts:[{futId:"",volume:""}], mutageCuveId:"", mutageBourbesHL:"", mutageAlcoolHL:"", mutageDegreAlcool:"", mutageDestId:"",
   });
   // Dégustation form - une ligne par dégustateur
   const [degForm, setDegForm] = useState({
@@ -1686,7 +1686,15 @@ export default function App() {
       upd=upd.map(t=>t.id===mvtForm.futSource[0]?{...t,contenuActuel:Math.max(0,t.contenuActuel-vol)}:t);
     } else if(mvtForm.type==="vidange"){
       upd=upd.map(t=>mvtForm.futSource.includes(t.id)?{...t,contenuActuel:0,statut:"vide"}:t);
-    } else if(["remplissage","ouillage"].includes(mvtForm.type) && mvtForm.futDest){
+    } else if(mvtForm.type==="ouillage" && mvtForm.futSource[0]){
+      const volTotalOuillage = (mvtForm.ouillageDestFuts||[]).reduce((s,ef)=>s+(parseFloat(ef.volume)||0),0);
+      upd=upd.map(t=>{
+        if(t.id===mvtForm.futSource[0]) return {...t,contenuActuel:Math.max(0,(t.contenuActuel||0)-volTotalOuillage)};
+        const ef=(mvtForm.ouillageDestFuts||[]).find(ef=>ef.futId===t.id);
+        if(ef&&parseFloat(ef.volume)>0) return {...t,contenuActuel:Math.min(t.volume,(t.contenuActuel||0)+(parseFloat(ef.volume)||0))};
+        return t;
+      });
+    } else if(mvtForm.type==="remplissage" && mvtForm.futDest){
       upd=upd.map(t=>t.id===mvtForm.futDest?{...t,contenuActuel:Math.min(t.volume,t.contenuActuel+vol)}:t);
     }
     setTonneaux(upd);
@@ -1945,7 +1953,7 @@ export default function App() {
 
   const needsSource = ["soutirage","ecoulage","perte","vidange","batonnage","assemblage"].includes(mvtForm.type);
   const needsDest   = ["soutirage","assemblage","remplissage","ouillage"].includes(mvtForm.type);
-  const needsVol    = ["soutirage","ecoulage","perte","remplissage","ouillage"].includes(mvtForm.type);
+  const needsVol    = ["soutirage","ecoulage","perte","remplissage"].includes(mvtForm.type);
 
   const selectedT   = selectedFut ? getTonneau(selectedFut) : null;
   const selectedP   = selectedT ? Math.round((selectedT.contenuActuel/selectedT.volume)*100) : 0;
@@ -4908,6 +4916,39 @@ export default function App() {
                     ))}
                   </div>
                   {mvtForm.futSource.length>0&&<div style={{fontSize:"11px",color:"#cc2222",marginTop:"4px"}}>Total perte : {mvtForm.futSource.reduce((s,id)=>s+(parseFloat(mvtForm.perteVolumes[id])||0),0).toLocaleString()} L</div>}
+                </div>
+              )}
+              {mvtForm.type==="ouillage"&&(
+                <div style={{display:"grid",gap:"10px"}}>
+                  <div>
+                    <span style={s.lbl}>Fut source (fournit le vin) *</span>
+                    <select style={s.sel} value={mvtForm.futSource[0]||""} onChange={e=>setMvtForm(f=>({...f,futSource:[e.target.value]}))}>
+                      <option value="">Selectionner...</option>
+                      {tonneaux.filter(t=>t.contenuActuel>0).map(t=><option key={t.id} value={t.id}>{t.id} - {t.denomination} ({t.contenuActuel}L)</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"4px"}}>
+                      <span style={s.lbl}>Futs a oullier</span>
+                      <button style={s.ghostSm} onClick={()=>setMvtForm(f=>({...f,ouillageDestFuts:[...(f.ouillageDestFuts||[]),{futId:"",volume:""}]}))}>+ Ajouter</button>
+                    </div>
+                    {(mvtForm.ouillageDestFuts||[{futId:"",volume:""}]).map((ef,i)=>(
+                      <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 80px auto",gap:"6px",marginBottom:"6px",alignItems:"end"}}>
+                        <select style={s.sel} value={ef.futId} onChange={e=>setMvtForm(f=>({...f,ouillageDestFuts:f.ouillageDestFuts.map((x,j)=>j===i?{...x,futId:e.target.value}:x)}))}>
+                          <option value="">Selectionner...</option>
+                          {tonneaux.filter(t=>t.id!==mvtForm.futSource[0]).map(t=><option key={t.id} value={t.id}>{t.id} - {t.denomination} ({t.contenuActuel}L/{t.volume}L)</option>)}
+                        </select>
+                        <input type="number" style={s.inp} placeholder="L" value={ef.volume} onChange={e=>setMvtForm(f=>({...f,ouillageDestFuts:f.ouillageDestFuts.map((x,j)=>j===i?{...x,volume:e.target.value}:x)}))}/>
+                        {i>0&&<button style={{...s.ghostSm,color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>setMvtForm(f=>({...f,ouillageDestFuts:f.ouillageDestFuts.filter((_,j)=>j!==i)}))}>x</button>}
+                        {i===0&&<div/>}
+                      </div>
+                    ))}
+                    {(mvtForm.ouillageDestFuts||[]).length>0&&(
+                      <div style={{fontSize:"11px",color:"#185FA5",marginTop:"4px"}}>
+                        Total ouillage : {(mvtForm.ouillageDestFuts||[]).reduce((s,ef)=>s+(parseFloat(ef.volume)||0),0).toLocaleString()} L
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
               {needsSource&&mvtForm.type!=="perte"&&(
