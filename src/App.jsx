@@ -1696,7 +1696,7 @@ export default function App() {
           {srcs.length>0&&<div style={{marginBottom:"3px"}}><span style={{color:"#8a7248",marginRight:"4px"}}>De :</span>{srcs.map(f=><span key={f.id} style={{color:"#b8860b",marginRight:"6px"}}>{f.id}<span style={{color:"#7a6840"}}> ({f.denomination})</span></span>)}</div>}
           {dest&&<div><span style={{color:"#8a7248",marginRight:"4px"}}>Vers :</span><span style={{color:"#b8860b"}}>{dest.id}<span style={{color:"#7a6840"}}> ({dest.denomination})</span></span></div>}
           {m.type==="entonnage"?(
-            <div style={{color:"#6a5838",marginTop:"2px"}}>Vol : <strong style={{color:"#1a1205"}}>{(m.entonnageFuts||[]).reduce((s,ef)=>s+(parseFloat(ef.volume)||0),0).toFixed(1)} HL</strong></div>
+            <div style={{color:"#6a5838",marginTop:"2px"}}>Vol : <strong style={{color:"#1a1205"}}>{(m.entonnageFuts||[]).reduce((s,ef)=>s+(parseFloat(ef.volume)||0),0).toFixed(2)} HL</strong></div>
           ):(
             m.volume&&<div style={{color:"#6a5838",marginTop:"2px"}}>Vol : <strong style={{color:"#1a1205"}}>{m.volume}L</strong></div>
           )}
@@ -1819,8 +1819,8 @@ export default function App() {
                 const totalCap = tonneaux.reduce((s,t)=>s+(t.volume||0),0);
                 const totalTirable = tonneaux.reduce((s,t)=>{ if(t.statut==="vide") return s; if(t.appellation==="ri") return s+Math.max(0,((t.contenuActuel||0)/100)-((parseFloat(t.volumeRI)||0)/100)); return s+Math.max(0,((t.contenuActuel||0)/100)-((parseFloat(t.volumeRI)||0)/100)); },0);
                 return [
-                  {lbl:"Volume total",val:(totalVin/100).toFixed(1)+" HL",sub:`cap. ${(totalCap/100).toFixed(0)} HL`},
-                  {lbl:"Volume tirable",val:totalTirable.toFixed(1)+" HL",sub:"~"+Math.floor(totalTirable*100/0.75).toLocaleString("fr-FR")+" btl 75cl",col:"#1a7a40"},
+                  {lbl:"Volume total",val:(totalVin/100).toFixed(2)+" HL",sub:`cap. ${(totalCap/100).toFixed(0)} HL`},
+                  {lbl:"Volume tirable",val:totalTirable.toFixed(2)+" HL",sub:"~"+Math.floor(totalTirable*100/0.75).toLocaleString("fr-FR")+" btl 75cl",col:"#1a7a40"},
                 ].map((k,i)=>(
                   <div key={i} style={s.card}>
                     <div style={s.lbl}>{k.lbl}</div>
@@ -1838,7 +1838,7 @@ export default function App() {
               return (
                 <div style={{...s.card,marginBottom:"12px",padding:"10px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",background:riOk?"#fff":"#fde8e8",border:riOk?"0.5px solid #d4c4a0":"1px solid #f0b4b4"}}>
                   <div style={{display:"flex",gap:"24px",alignItems:"center"}}>
-                    <div><div style={{fontSize:"10px",color:"#9a8870",textTransform:"uppercase",letterSpacing:"0.05em"}}>RI actuelle</div><div style={{fontSize:"18px",fontWeight:600,color:riOk?"#8B0000":"#cc2222"}}>{totalRI.toFixed(1)} <span style={{fontSize:"11px"}}>HL</span></div></div>
+                    <div><div style={{fontSize:"10px",color:"#9a8870",textTransform:"uppercase",letterSpacing:"0.05em"}}>RI actuelle</div><div style={{fontSize:"18px",fontWeight:600,color:riOk?"#8B0000":"#cc2222"}}>{totalRI.toFixed(2)} <span style={{fontSize:"11px"}}>HL</span></div></div>
                     <div><div style={{fontSize:"10px",color:"#9a8870",textTransform:"uppercase",letterSpacing:"0.05em"}}>RI requise {annee}</div><div style={{fontSize:"18px",fontWeight:600,color:"#9a8870"}}>{riRequisAnnee?.volumeHL||"-"} <span style={{fontSize:"11px"}}>HL</span></div></div>
                     {!riOk&&<div style={{fontSize:"12px",color:"#cc2222",fontWeight:500}}>RI insuffisante</div>}
                   </div>
@@ -1859,7 +1859,7 @@ export default function App() {
                         <span style={{fontSize:"10px",color:"#9a8870"}}>{vinsClairs.length} futs</span>
                       </div>
                       <div style={{display:"flex",gap:"16px"}}>
-                        <div><div style={{fontSize:"10px",color:"#9a8870",textTransform:"uppercase",letterSpacing:"0.05em"}}>Tirable</div><div style={{fontSize:"18px",fontWeight:600,color:"#1a7a40"}}>{calcTirable(vinsClairs).toFixed(1)} <span style={{fontSize:"11px"}}>HL</span></div></div>
+                        <div><div style={{fontSize:"10px",color:"#9a8870",textTransform:"uppercase",letterSpacing:"0.05em"}}>Tirable</div><div style={{fontSize:"18px",fontWeight:600,color:"#1a7a40"}}>{calcTirable(vinsClairs).toFixed(2)} <span style={{fontSize:"11px"}}>HL</span></div></div>
                         <div><div style={{fontSize:"10px",color:"#9a8870",textTransform:"uppercase",letterSpacing:"0.05em"}}>~Bouteilles</div><div style={{fontSize:"18px",fontWeight:600,color:"#1a7a40"}}>{Math.floor(calcTirable(vinsClairs)*100/0.75).toLocaleString("fr-FR")} <span style={{fontSize:"11px"}}>btl</span></div></div>
                       </div>
                     </div>
@@ -1870,7 +1870,7 @@ export default function App() {
                         <span style={{fontSize:"10px",color:"#9a8870"}}>{vinsReserve.length} futs</span>
                       </div>
                       <div style={{display:"flex",gap:"16px"}}>
-                        <div><div style={{fontSize:"10px",color:"#9a8870",textTransform:"uppercase",letterSpacing:"0.05em"}}>Tirable</div><div style={{fontSize:"18px",fontWeight:600,color:"#1a7a40"}}>{calcTirable(vinsReserve).toFixed(1)} <span style={{fontSize:"11px"}}>HL</span></div></div>
+                        <div><div style={{fontSize:"10px",color:"#9a8870",textTransform:"uppercase",letterSpacing:"0.05em"}}>Tirable</div><div style={{fontSize:"18px",fontWeight:600,color:"#1a7a40"}}>{calcTirable(vinsReserve).toFixed(2)} <span style={{fontSize:"11px"}}>HL</span></div></div>
                         <div><div style={{fontSize:"10px",color:"#9a8870",textTransform:"uppercase",letterSpacing:"0.05em"}}>~Bouteilles</div><div style={{fontSize:"18px",fontWeight:600,color:"#1a7a40"}}>{Math.floor(calcTirable(vinsReserve)*100/0.75).toLocaleString("fr-FR")} <span style={{fontSize:"11px"}}>btl</span></div></div>
                       </div>
                     </div>
@@ -4816,7 +4816,7 @@ export default function App() {
                     ))}
                     {(mvtForm.entonnageFuts||[]).length>0&&(
                       <div style={{fontSize:"11px",color:"#9a8870",marginTop:"4px"}}>
-                        Total : {(mvtForm.entonnageFuts||[]).reduce((s,ef)=>s+(parseFloat(ef.volume)||0),0).toFixed(1)} HL
+                        Total : {(mvtForm.entonnageFuts||[]).reduce((s,ef)=>s+(parseFloat(ef.volume)||0),0).toFixed(2)} HL
                       </div>
                     )}
                   </div>
