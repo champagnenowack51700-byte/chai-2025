@@ -6124,6 +6124,10 @@ export default function App() {
                       <option value="coteaux_rouge">Coteaux Champenois Rouge</option>
                       <option value="ratafia">Ratafia</option>
                     </select></div>
+                  <div style={{display:"flex",alignItems:"center",gap:"8px",paddingTop:"18px"}}>
+                    <input type="checkbox" id="tirageIsBio" checked={tirageForm.isBio||false} onChange={e=>setTirageForm(f=>({...f,isBio:e.target.checked}))} style={{width:"16px",height:"16px",cursor:"pointer"}}/>
+                    <label htmlFor="tirageIsBio" style={{fontSize:"12px",color:"#2d6a00",fontWeight:500,cursor:"pointer"}}>🌿 Certification BIO</label>
+                  </div>
                   <div><span style={s.lbl}>Date *</span>
                     <input type="date" style={s.inp} value={tirageForm.date} onChange={e=>setTirageForm(f=>({...f,date:e.target.value}))}/></div>
                   <div><span style={s.lbl}>Operateur *</span>
