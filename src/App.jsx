@@ -1994,7 +1994,7 @@ export default function App() {
   };
 
   const needsSource = ["soutirage","ecoulage","perte","vidange","batonnage","assemblage"].includes(mvtForm.type);
-  const needsDest   = ["soutirage","assemblage","remplissage","ouillage"].includes(mvtForm.type);
+  const needsDest   = ["soutirage","remplissage"].includes(mvtForm.type);
   const needsVol    = ["soutirage","ecoulage","perte","remplissage"].includes(mvtForm.type);
 
   const selectedT   = selectedFut ? getTonneau(selectedFut) : null;
