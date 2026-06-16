@@ -1653,9 +1653,21 @@ export default function App() {
           const reste = Math.max(0,(t.contenuActuel||0)-volPris);
           return {...t, contenuActuel:reste, statut:reste<=0?"vide":t.statut};
         }
-        if(t.id===mvtForm.futDest) return{...t,contenuActuel:Math.min(t.volume,(t.contenuActuel||0)+tot)};
+        if(t.id===mvtForm.futDest && mvtForm.type!=="assemblage") return{...t,contenuActuel:Math.min(t.volume,(t.contenuActuel||0)+tot)};
         return t;
       });
+      // For assemblage, update cuverie destination
+      if(mvtForm.type==="assemblage" && mvtForm.futDest) {
+        const totHL = tot/100;
+        setCuvesCuverie(prev=>prev.map(c=>{
+          if(c.id===mvtForm.futDest) {
+            const updated = {...c, contenuActuelHL:String(Math.round(((parseFloat(c.contenuActuelHL)||0)+totHL)*100)/100)};
+            fbSave("cuvesCuverie", c.id, updated);
+            return updated;
+          }
+          return c;
+        }));
+      }
     } else if(["ecoulage","perte"].includes(mvtForm.type) && mvtForm.futSource[0]){
       upd=upd.map(t=>t.id===mvtForm.futSource[0]?{...t,contenuActuel:Math.max(0,t.contenuActuel-vol)}:t);
     } else if(mvtForm.type==="vidange"){
@@ -4898,10 +4910,13 @@ export default function App() {
                 </div>
               )}
               {needsDest&&(
-                <div><span style={s.lbl}>Fût destination *</span>
+                <div><span style={s.lbl}>{mvtForm.type==="assemblage"?"Cuve destination (Cuverie)":"Fût destination"} *</span>
                   <select style={s.sel} value={mvtForm.futDest} onChange={e=>setMvtForm(f=>({...f,futDest:e.target.value}))}>
                     <option value="">Sélectionner...</option>
-                    {tonneaux.filter(t=>!mvtForm.futSource.includes(t.id)).map(t=><option key={t.id} value={t.id}>{t.id} - {t.denomination} ({t.contenuActuel}L/{t.volume}L)</option>)}
+                    {mvtForm.type==="assemblage"
+                      ? cuvesCuverie.filter(c=>c.type!=="bourbes").map(c=><option key={c.id} value={c.id}>{c.nom} - {c.type} (dispo: {Math.max(0,(parseFloat(c.volumeHL)||0)-(parseFloat(c.contenuActuelHL)||0)).toFixed(1)} HL)</option>)
+                      : tonneaux.filter(t=>!mvtForm.futSource.includes(t.id)).map(t=><option key={t.id} value={t.id}>{t.id} - {t.denomination} ({t.contenuActuel}L/{t.volume}L)</option>)
+                    }
                   </select>
                 </div>
               )}
