@@ -1502,6 +1502,8 @@ export default function App() {
         <td>${cuvesCuverie.find(c=>c.id===v.cuveTailleId)?.nom||"-"}${v.volumeTaille?" ("+v.volumeTaille+" HL)":""}</td>
         <td>${cuvesCuverie.find(c=>c.id===v.cuveCuveeId)?.nom||"-"}${v.volumeCuvee?" ("+v.volumeCuvee+" HL)":""}</td>
         <td>${cuvesCuverie.find(c=>c.id===v.cuveCuveeBId)?.nom||"-"}${v.volumeCuveeB?" ("+v.volumeCuveeB+" HL)":""}</td>
+        <td>${v.produitsAjoutes&&v.produitsAjoutes.length>0?v.produitsAjoutes.map(p=>p.nom+(p.dose?" "+p.dose:"")+(p.lot?" (Lot:"+p.lot+")":"")).join(", "):"-"}</td>
+        <td style="font-style:italic;color:#6a5838">${v.observations||"-"}</td>
       </tr>`;
     }).join("");
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
@@ -1510,8 +1512,8 @@ export default function App() {
     td{padding:4px 5px;border:0.5px solid #ede5d4}tr:nth-child(even){background:#fffdf7}.total{background:#f5f5f0;font-weight:bold}</style></head>
     <body><h1>Champagne Nowack — Campagne ${annee}</h1>
     <p style="color:#9a8870;font-size:12px">${vAnnee.length} apport(s) — Total : ${kgTotal.toLocaleString()} kg / ${hlTotal.toFixed(2)} HL — Maison : ${kgMaison.toLocaleString()} kg — Negoce : ${kgNegoce.toLocaleString()} kg</p>
-    <table><thead><tr><th>Date</th><th>Parcelles</th><th>Cuvee</th><th>Marc</th><th>Kg</th><th>HL</th><th>Destination</th><th>Degre</th><th>Acidite</th><th>SO2</th><th>pH</th><th>Cuve Taille</th><th>Cuve Cuvee A</th><th>Cuve Cuvee B</th></tr></thead>
-    <tbody>${rows}<tr class="total"><td colspan="4">TOTAL</td><td>${kgTotal.toLocaleString()} kg</td><td>${hlTotal.toFixed(2)} HL</td><td>Maison: ${kgMaison.toLocaleString()} kg / Negoce: ${kgNegoce.toLocaleString()} kg</td><td colspan="6"></td></tr></tbody></table>
+    <table><thead><tr><th>Date</th><th>Parcelles</th><th>Cuvee</th><th>Marc</th><th>Kg</th><th>HL</th><th>Destination</th><th>Degre</th><th>Acidite</th><th>SO2</th><th>pH</th><th>Cuve Taille</th><th>Cuve Cuvee A</th><th>Cuve Cuvee B</th><th>Produits ajoutes</th><th>Observations</th></tr></thead>
+    <tbody>${rows}<tr class="total"><td colspan="4">TOTAL</td><td>${kgTotal.toLocaleString()} kg</td><td>${hlTotal.toFixed(2)} HL</td><td>Maison: ${kgMaison.toLocaleString()} kg / Negoce: ${kgNegoce.toLocaleString()} kg</td><td colspan="8"></td></tr></tbody></table>
     </body></html>`;
     const w = window.open("","_blank");
     w.document.write(html);
