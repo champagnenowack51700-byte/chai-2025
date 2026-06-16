@@ -492,7 +492,7 @@ export default function App() {
   const [editingTrait,     setEditingTrait]      = useState(null);
   const [filterTraitAn,    setFilterTraitAn]     = useState(new Date().getFullYear().toString());
   const [vigneTab,         setVigneTab]          = useState("traitements");
-  const [campagnesClosees, setCampagnesClosees]  = useState(()=>{ try{ const s=localStorage.getItem("chai_campagnes_closees"); return s?JSON.parse(s):[]; }catch{return [];} });
+  const [campagnesClosees, setCampagnesClosees]  = useState([]);
   const [pdfDocs,          setPdfDocs]          = useState([]);
   const [uploadingPdf,     setUploadingPdf]     = useState(false);
   const [pdfFactures,      setPdfFactures]      = useState([]);
@@ -868,12 +868,15 @@ export default function App() {
 
   const cloturerCampagne = (campagne) => {
     if(!window.confirm(`Cloture la campagne ${campagne} ? Les traitements ne pourront plus etre modifies.`)) return;
-    setCampagnesClosees(prev=>[...new Set([...prev, String(campagne)])]);
+    const newList = [...new Set([...campagnesClosees, String(campagne)])];
+    setCampagnesClosees(newList);
+    fbSave("campagnesClosees", String(campagne), {campagne: String(campagne), closedAt: new Date().toISOString()});
   };
 
   const rouvrirCampagne = (campagne) => {
     if(!window.confirm(`Rouvrir la campagne ${campagne} ?`)) return;
     setCampagnesClosees(prev=>prev.filter(c=>c!==String(campagne)));
+    fbDelete("campagnesClosees", String(campagne));
   };
 
   const submitBiody = () => {
@@ -1048,6 +1051,7 @@ export default function App() {
     ["pdfFactures",  setPdfFactures],
     ["amendements",  setAmendements],
     ["clotures",     setClotures],
+    ["campagnesClosees", (data)=>setCampagnesClosees(data.filter(d=>d.campagne).map(d=>d.campagne))],
       ["coiffes",        setCoiffesStock],
     ["traitements",  setTraitements],
     ["cuvesCuverie",  setCuvesCuverie],
