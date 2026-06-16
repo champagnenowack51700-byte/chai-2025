@@ -1322,6 +1322,23 @@ export default function App() {
     setEditingVendange(v); setShowVendangeForm(true);
   };
 
+  const exportTonneauxCSV = () => {
+    const headers = ["ID","Appellation","Denomination","Millesime","Volume (L)","Contenu (L)","Volume RI (L)","Tirable (L)","Marc","Tonnelier","Certif","Statut"];
+    const rows = tonneaux.map(t=>[t.id,getApc(t.appellation).label||t.appellation||"",t.denomination||"",t.millesime||"",t.volume||0,t.contenuActuel||0,parseFloat(t.volumeRI)||0,Math.max(0,(t.contenuActuel||0)-(parseFloat(t.volumeRI)||0)),t.marc||"",t.tonnelier||"",t.certif||"",t.statut||""]);
+    const csv = [headers,...rows].map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(";")).join("\n");
+    const blob = new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href=url; a.download="tonneaux.csv"; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportTonneauxPDF = () => {
+    const totalVin = tonneaux.filter(t=>t.statut!=="vide").reduce((s,t)=>s+(t.contenuActuel||0),0);
+    const rows = tonneaux.map(t=>`<tr><td><strong>${t.id}</strong></td><td>${getApc(t.appellation).label||t.appellation||"-"}</td><td>${t.denomination||"-"}</td><td>${t.millesime||"-"}</td><td>${t.volume||0} L</td><td>${t.contenuActuel||0} L</td><td>${parseFloat(t.volumeRI)||0} L</td><td>${t.certif||"-"}</td><td>${t.statut||"-"}</td></tr>`).join("");
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:Georgia,serif;margin:20px}h1{color:#7a5200}table{width:100%;border-collapse:collapse;font-size:11px}th{background:#f5e8cc;color:#7a5200;padding:6px;text-align:left;border:0.5px solid #d4c4a0}td{padding:5px 6px;border:0.5px solid #ede5d4}</style></head><body><h1>Champagne Nowack — Inventaire Chai</h1><p>${tonneaux.length} futs — ${(totalVin/100).toFixed(2)} HL</p><table><thead><tr><th>ID</th><th>Appellation</th><th>Denomination</th><th>Millesime</th><th>Capacite</th><th>Contenu</th><th>RI</th><th>Certif</th><th>Statut</th></tr></thead><tbody>${rows}</tbody></table></body></html>`;
+    const w = window.open("","_blank"); w.document.write(html); w.document.close(); setTimeout(()=>w.print(),500);
+  };
+
   const exportVendangeCSV = (annee, vAnnee) => {
     const headers = ["Date","Heure","Parcelles","Cuvee creee","Marc","Kg","HL","Degre","Acidite","SO2","pH","Dest. Marc","Cuve Taille","Vol Taille","Cuve Cuvee A","Vol Cuvee A","Cuve Cuvee B","Vol Cuvee B","Operateur","Observations"];
     const rows = vAnnee.map(v=>{
@@ -2445,6 +2462,8 @@ export default function App() {
           <div style={{display:"grid",gridTemplateColumns:"clamp(200px,1fr,1fr) clamp(200px,260px,30vw)",gap:"16px",alignItems:"start"}}>
 
             {/* Colonne principale */}
+              <button style={{...s.ghostSm,fontSize:"10px",color:"#8B0000",borderColor:"#c85050"}} onClick={exportTonneauxPDF}>↓ PDF</button>
+              <button style={{...s.ghostSm,fontSize:"10px",color:"#2d6a00",borderColor:"#7ab848"}} onClick={exportTonneauxCSV}>↓ CSV</button>
             <div>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px"}}>
                 <div style={{fontSize:"13px",color:"#7a6840"}}>{vendanges.length} entree(s) de vendange</div>
