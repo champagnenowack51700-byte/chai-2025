@@ -2486,6 +2486,12 @@ export default function App() {
                     <div style={{display:"flex",alignItems:"center",gap:"10px",marginBottom:"10px"}}>
                       <div style={{fontFamily:"Georgia,serif",fontSize:"16px",fontWeight:500,color:"#7a5200"}}>Campagne {annee}</div>
                       <div style={{flex:1,height:"0.5px",background:"#d4c4a0"}}/>
+                      {isCampagneClosed(annee)?(
+                        <span style={{fontSize:"10px",background:"#fde8e8",color:"#cc2222",border:"0.5px solid #f0b4b4",borderRadius:"4px",padding:"2px 8px",fontWeight:500}}>Clôturée</span>
+                      ):(
+                        <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>cloturerCampagne(annee)}>Clôturer</button>
+                      )}
+                      {isCampagneClosed(annee)&&<button style={{...s.ghostSm,fontSize:"10px"}} onClick={()=>rouvrirCampagne(annee)}>Rouvrir</button>}
                       <button style={{...s.ghostSm,fontSize:"10px",color:"#2d6a00",borderColor:"#7ab848"}} onClick={()=>exportVendangeCSV(annee,vAnnee)}>↓ CSV</button>
                       <button style={{...s.ghostSm,fontSize:"10px",color:"#8B0000",borderColor:"#c85050"}} onClick={()=>exportVendangePDF(annee,vAnnee)}>↓ PDF</button>
                       <div style={{display:"flex",gap:"12px",fontSize:"11px",color:"#9a8870",fontFamily:"monospace"}}>
