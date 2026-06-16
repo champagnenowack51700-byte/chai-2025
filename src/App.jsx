@@ -457,6 +457,7 @@ export default function App() {
   const [filterDegCuvee,   setFilterDegCuvee]   = useState("");
   const [filterDegFabric,  setFilterDegFabric]  = useState("");
   const [filterFut,   setFilterFut]   = useState("");
+  const [filterMvtType, setFilterMvtType] = useState('');
   const [showMvtForm, setShowMvtForm] = useState(false);
   const [showDegForm, setShowDegForm] = useState(false);
   const [showImport,  setShowImport]  = useState(false);
