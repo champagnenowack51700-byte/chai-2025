@@ -1746,15 +1746,28 @@ export default function App() {
       mvts.forEach(m=>saveMouvement(m));
     } else if(mvtForm.type==="ouillage" && (mvtForm.ouillageDestFuts||[]).length>0) {
       const volTotal = (mvtForm.ouillageDestFuts||[]).reduce((s,ef)=>s+(parseFloat(ef.volume)||0),0);
-      // Un mouvement pour la source
-      const mvtSrc = {id:Date.now().toString(),...mvtForm,volume:String(volTotal),timestamp:new Date().toISOString()};
-      // Un mouvement par fut destination
+      // Mouvement perte pour le fut source
+      const mvtSrc = {
+        id:Date.now().toString(),
+        type:"perte",
+        date:mvtForm.date,
+        operateur:mvtForm.operateur,
+        futSource:mvtForm.futSource,
+        futDest:"",
+        volume:String(volTotal),
+        notes:"Ouillage - perte de "+volTotal+"L",
+        timestamp:new Date().toISOString()
+      };
+      // Un mouvement ouillage par fut destination
       const mvtsDest = (mvtForm.ouillageDestFuts||[]).filter(ef=>ef.futId&&parseFloat(ef.volume)>0).map((ef,i)=>({
         id:(Date.now()+i+1).toString(),
-        ...mvtForm,
-        futSource:mvtForm.futSource,
+        type:"ouillage",
+        date:mvtForm.date,
+        operateur:mvtForm.operateur,
+        futSource:[],
         futDest:ef.futId,
         volume:ef.volume,
+        notes:"Ouillage depuis "+mvtForm.futSource[0],
         timestamp:new Date().toISOString()
       }));
       const allMvts = [mvtSrc,...mvtsDest];
