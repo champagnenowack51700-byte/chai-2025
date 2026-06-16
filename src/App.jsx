@@ -1332,6 +1332,59 @@ export default function App() {
     setEditingVendange(v); setShowVendangeForm(true);
   };
 
+  const exportStockCSV = () => {
+    const now = new Date();
+    const lots = stockBouteilles.map(l=>({...l, mois:l.dateTirage?Math.floor((now-new Date(l.dateTirage))/(1000*60*60*24*30.5)):0}));
+    const headers = ["Cuvee","BIO","Millesime","N° Lot","Format","Date tirage","Age (mois)","Statut","Lieu","Qte actuelle"];
+    const rows = lots.sort((a,b)=>new Date(a.dateTirage)-new Date(b.dateTirage)).map(l=>[
+      l.cuvee||"", l.isBio?"OUI":"NON", l.millesime||"", l.lot||"",
+      l.format||"75cl", fmt(l.dateTirage)||"", l.mois,
+      l.statut||"", l.lieu||"", l.qteActuelle||0
+    ]);
+    const csv = [headers,...rows].map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(";")).join("\n");
+    const blob = new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href=url; a.download="stock_bouteilles.csv"; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportStockPDF = () => {
+    const now = new Date();
+    const lots = [...stockBouteilles].sort((a,b)=>new Date(a.dateTirage)-new Date(b.dateTirage))
+      .map(l=>({...l, mois:l.dateTirage?Math.floor((now-new Date(l.dateTirage))/(1000*60*60*24*30.5)):0}));
+    const total = lots.reduce((s,l)=>s+(parseInt(l.qteActuelle)||0),0);
+    const rows = lots.map(l=>`<tr>
+      <td><strong>${l.cuvee||"-"}</strong>${l.isBio?' <span style="background:#2d6a00;color:#fff;border-radius:3px;padding:1px 4px;font-size:9px">🌿</span>':""}</td>
+      <td>${l.millesime||"-"}</td>
+      <td style="font-family:monospace">${l.lot||"-"}</td>
+      <td>${l.format||"75cl"}</td>
+      <td>${fmt(l.dateTirage)||"-"}</td>
+      <td>${l.mois} mois</td>
+      <td>${l.statut||"-"}</td>
+      <td>${l.lieu||"-"}</td>
+      <td style="font-weight:bold;text-align:right">${l.qteActuelle||0}</td>
+    </tr>`).join("");
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+    <style>body{font-family:Georgia,serif;margin:20px;color:#1a1205}
+    h1{color:#7a5200;border-bottom:1px solid #d4c4a0;padding-bottom:8px}
+    p{color:#9a8870;font-size:12px}
+    table{width:100%;border-collapse:collapse;font-size:10px}
+    th{background:#f5e8cc;color:#7a5200;padding:5px;text-align:left;border:0.5px solid #d4c4a0}
+    td{padding:4px 5px;border:0.5px solid #ede5d4}
+    tr:nth-child(even){background:#fffdf7}
+    </style></head>
+    <body>
+    <h1>Champagne Nowack — Stock Bouteilles</h1>
+    <p>${lots.length} lots — Total : ${total.toLocaleString("fr-FR")} bouteilles — Date : ${new Date().toLocaleDateString("fr-FR")}</p>
+    <table><thead><tr>
+      <th>Cuvee</th><th>Millesime</th><th>N° Lot</th><th>Format</th>
+      <th>Date tirage</th><th>Age</th><th>Statut</th><th>Lieu</th><th>Qte</th>
+    </tr></thead>
+    <tbody>${rows}</tbody></table>
+    </body></html>`;
+    const w = window.open("","_blank"); w.document.write(html); w.document.close(); setTimeout(()=>w.print(),500);
+  };
+
   const exportTonneauxCSV = () => {
     const headers = ["ID","Appellation","Denomination","Millesime","Volume (L)","Contenu (L)","Volume RI (L)","Tirable (L)","Marc","Tonnelier","Certif","Statut"];
     const rows = [...tonneaux].sort((a,b)=>{
@@ -2853,6 +2906,10 @@ export default function App() {
                 ))}
               </div>
 
+              <div style={{display:"flex",gap:"8px",marginBottom:"12px",justifyContent:"flex-end"}}>
+                <button style={{...s.ghostSm,fontSize:"10px",color:"#2d6a00",borderColor:"#7ab848"}} onClick={exportStockCSV}>↓ CSV</button>
+                <button style={{...s.ghostSm,fontSize:"10px",color:"#8B0000",borderColor:"#c85050"}} onClick={exportStockPDF}>↓ PDF</button>
+              </div>
               {/* Onglets type produit */}
               <div style={{display:"flex",gap:"4px",marginBottom:"16px",borderBottom:"1px solid #d4c4a0",paddingBottom:"0"}}>
                 {[["champagne","Champagne"],["coteaux_blanc","Coteaux Blanc"],["coteaux_rouge","Coteaux Rouge"],["ratafia","Ratafia"]].map(([key,lbl])=>(
