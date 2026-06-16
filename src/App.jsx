@@ -640,7 +640,7 @@ export default function App() {
   // Mouvement form
   const [mvtForm, setMvtForm] = useState({
     type:"ouillage", date:new Date().toISOString().slice(0,16),
-    operateur:"", futSource:[], futDest:"", volume:"", notes:"", produit:"", dosage:"", numeroLot:"", entonnageMarcId:"", entonnageCuveId:"", entonnageVendangeId:"", entonnageFuts:[{futId:"",volume:""}], assemblageVolumes:{}, mutageCuveId:"", mutageBourbesHL:"", mutageAlcoolHL:"", mutageDegreAlcool:"", mutageDestId:"",
+    operateur:"", futSource:[], futDest:"", volume:"", notes:"", produit:"", dosage:"", numeroLot:"", entonnageMarcId:"", entonnageCuveId:"", entonnageVendangeId:"", entonnageFuts:[{futId:"",volume:""}], assemblageVolumes:{}, perteVolumes:{}, mutageCuveId:"", mutageBourbesHL:"", mutageAlcoolHL:"", mutageDegreAlcool:"", mutageDestId:"",
   });
   // Dégustation form - une ligne par dégustateur
   const [degForm, setDegForm] = useState({
@@ -1677,7 +1677,12 @@ export default function App() {
           return c;
         }));
       }
-    } else if(["ecoulage","perte"].includes(mvtForm.type) && mvtForm.futSource[0]){
+    } else if(mvtForm.type==="perte" && mvtForm.futSource.length>0){
+      upd=upd.map(t=>{
+        if(mvtForm.futSource.includes(t.id)) { const volPerte=parseFloat(mvtForm.perteVolumes[t.id])||0; return {...t,contenuActuel:Math.max(0,(t.contenuActuel||0)-volPerte)}; }
+        return t;
+      });
+    } else if(mvtForm.type==="ecoulage" && mvtForm.futSource[0]){
       upd=upd.map(t=>t.id===mvtForm.futSource[0]?{...t,contenuActuel:Math.max(0,t.contenuActuel-vol)}:t);
     } else if(mvtForm.type==="vidange"){
       upd=upd.map(t=>mvtForm.futSource.includes(t.id)?{...t,contenuActuel:0,statut:"vide"}:t);
@@ -4886,7 +4891,26 @@ export default function App() {
                   </select>
                 </div>
               </div>
-              {needsSource&&(
+              {needsSource&&mvtForm.type==="perte"&&(
+                <div>
+                  <span style={s.lbl}>Futs concernes (volumes a deduire)</span>
+                  <div style={{maxHeight:"200px",overflowY:"auto",border:"0.5px solid #d4c4a0",borderRadius:"6px",padding:"6px",background:"#fffdf7"}}>
+                    {tonneaux.filter(t=>t.contenuActuel>0).map(t=>(
+                      <div key={t.id} style={{display:"flex",alignItems:"center",gap:"7px",padding:"3px",fontSize:"12px"}}>
+                        <input type="checkbox" checked={mvtForm.futSource.includes(t.id)} onChange={()=>setMvtForm(f=>({...f,futSource:f.futSource.includes(t.id)?f.futSource.filter(x=>x!==t.id):[...f.futSource,t.id]}))}/>
+                        <span style={{color:"#b8860b",minWidth:"54px",fontFamily:"monospace"}}>{t.id}</span>
+                        <span style={{color:"#6a5838",flex:1}}>{t.denomination}</span>
+                        <span style={{color:"#9a8870",fontSize:"10px"}}>{t.contenuActuel}L</span>
+                        {mvtForm.futSource.includes(t.id)&&(
+                          <input type="number" style={{...s.inp,width:"75px",padding:"2px 6px",fontSize:"11px"}} placeholder="vol L" value={mvtForm.perteVolumes[t.id]||""} onChange={e=>setMvtForm(f=>({...f,perteVolumes:{...f.perteVolumes,[t.id]:e.target.value}}))}/>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  {mvtForm.futSource.length>0&&<div style={{fontSize:"11px",color:"#cc2222",marginTop:"4px"}}>Total perte : {mvtForm.futSource.reduce((s,id)=>s+(parseFloat(mvtForm.perteVolumes[id])||0),0).toLocaleString()} L</div>}
+                </div>
+              )}
+              {needsSource&&mvtForm.type!=="perte"&&(
                 <div>
                   <span style={s.lbl}>Fût(s) source {mvtForm.type==="assemblage"?"(multi)":""} *</span>
                   <div style={{maxHeight:"220px",overflowY:"auto",border:"1px solid #cfc0a0",borderRadius:"4px",padding:"7px"}}>
