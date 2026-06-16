@@ -1733,9 +1733,38 @@ export default function App() {
     }
 
     if(mvtForm.type==="ajout_produit" && !mvtForm.numeroLot.trim()) return alert("Le numéro de lot est obligatoire pour un ajout de produit.");
-    const newMvt = {id:Date.now().toString(),...mvtForm,timestamp:new Date().toISOString()};
-    setMouvements(prev=>[newMvt,...prev]);
-    saveMouvement(newMvt);
+    // Créer un mouvement par fut pour perte et ouillage
+    if(mvtForm.type==="perte" && mvtForm.futSource.length>0) {
+      const mvts = mvtForm.futSource.map((futId,i)=>({
+        id:(Date.now()+i).toString(),
+        ...mvtForm,
+        futSource:[futId],
+        volume:mvtForm.perteVolumes[futId]||"0",
+        timestamp:new Date().toISOString()
+      }));
+      setMouvements(prev=>[...mvts,...prev]);
+      mvts.forEach(m=>saveMouvement(m));
+    } else if(mvtForm.type==="ouillage" && (mvtForm.ouillageDestFuts||[]).length>0) {
+      const volTotal = (mvtForm.ouillageDestFuts||[]).reduce((s,ef)=>s+(parseFloat(ef.volume)||0),0);
+      // Un mouvement pour la source
+      const mvtSrc = {id:Date.now().toString(),...mvtForm,volume:String(volTotal),timestamp:new Date().toISOString()};
+      // Un mouvement par fut destination
+      const mvtsDest = (mvtForm.ouillageDestFuts||[]).filter(ef=>ef.futId&&parseFloat(ef.volume)>0).map((ef,i)=>({
+        id:(Date.now()+i+1).toString(),
+        ...mvtForm,
+        futSource:mvtForm.futSource,
+        futDest:ef.futId,
+        volume:ef.volume,
+        timestamp:new Date().toISOString()
+      }));
+      const allMvts = [mvtSrc,...mvtsDest];
+      setMouvements(prev=>[...allMvts,...prev]);
+      allMvts.forEach(m=>saveMouvement(m));
+    } else {
+      const newMvt = {id:Date.now().toString(),...mvtForm,timestamp:new Date().toISOString()};
+      setMouvements(prev=>[newMvt,...prev]);
+      saveMouvement(newMvt);
+    }
 
     setMvtForm({type:"ouillage",date:new Date().toISOString().slice(0,16),operateur:"",futSource:[],futDest:"",volume:"",notes:"",produit:"",dosage:"",numeroLot:""});
     setShowMvtForm(false);
