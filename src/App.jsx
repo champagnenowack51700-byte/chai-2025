@@ -1324,7 +1324,7 @@ export default function App() {
 
   const exportTonneauxCSV = () => {
     const headers = ["ID","Appellation","Denomination","Millesime","Volume (L)","Contenu (L)","Volume RI (L)","Tirable (L)","Marc","Tonnelier","Certif","Statut"];
-    const rows = tonneaux.map(t=>[t.id,getApc(t.appellation).label||t.appellation||"",t.denomination||"",t.millesime||"",t.volume||0,t.contenuActuel||0,(t.appellation==="ri"?(t.contenuActuel||0):parseFloat(t.volumeRI)||0),Math.max(0,(t.contenuActuel||0)-(t.appellation==="ri"?(t.contenuActuel||0):parseFloat(t.volumeRI)||0)),t.marc||"",t.tonnelier||"",t.certif||"",t.statut||""]);
+    const rows = tonneaux.map(t=>[t.id,getApc(t.appellation).label||t.appellation||"",t.denomination||"",t.millesime||"",t.volume||0,t.contenuActuel||0,(t.appellation==="ri"&&!(parseFloat(t.volumeRI)||0)?(t.contenuActuel||0):(parseFloat(t.volumeRI)||0)),Math.max(0,(t.contenuActuel||0)-(t.appellation==="ri"&&!(parseFloat(t.volumeRI)||0)?(t.contenuActuel||0):(parseFloat(t.volumeRI)||0))),t.marc||"",t.tonnelier||"",t.certif||"",t.statut||""]);
     const csv = [headers,...rows].map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(";")).join("\n");
     const blob = new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"});
     const url = URL.createObjectURL(blob);
@@ -1344,7 +1344,7 @@ export default function App() {
         <td>${t.marc?t.marc:"-"}</td>
         <td>${t.volume||0} L</td>
         <td>${t.contenuActuel||0} L</td>
-        <td>${t.appellation==="ri"?(t.contenuActuel||0):parseFloat(t.volumeRI)||0} L</td>
+        <td>${t.appellation==="ri"&&!(parseFloat(t.volumeRI)||0)?(t.contenuActuel||0):(parseFloat(t.volumeRI)||0)} L</td>
         <td>${t.tonnelier||"-"}</td>
         <td>${t.grain||"-"}</td>
         <td>${t.chauffe||"-"}</td>
