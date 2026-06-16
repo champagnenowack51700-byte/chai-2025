@@ -1178,6 +1178,7 @@ export default function App() {
       cuveDestId:t.cuveDestId||"",
       nouvelleCuveId:t.nouvelleCuveId||"",
       nouvelleCuveVolume:t.nouvelleCuveVolume||"",
+      isBio:t.isBio||false,
     });
     setEditingTirage(t); setShowTirageForm(true);
   };
@@ -1196,6 +1197,15 @@ export default function App() {
     };
     if(editingTirage) {
       setTirages(prev=>prev.map(t=>t.id===editingTirage.id ? updated : t));
+      // Update isBio in stock bouteilles
+      setStockBouteilles(prev=>prev.map(lot=>{
+        if(lot.tirageId===editingTirage.id) {
+          const updatedLot = {...lot, isBio:updated.isBio||false};
+          fbSave("stockBouteilles", lot.id, updatedLot);
+          return updatedLot;
+        }
+        return lot;
+      }));
     } else {
       setTirages(prev=>[updated, ...prev]);
       const volAssemble = calcTotalAssemble(tirageForm);
