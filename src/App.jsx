@@ -1871,6 +1871,7 @@ export default function App() {
     return true;
   });
   const filteredMouvements = mouvements.filter(m=>{
+    if(filterMvtType && m.type!==filterMvtType) return false;
     if(filterOp && m.operateur!==filterOp) return false;
     if(filterFut && !m.futSource?.includes(filterFut) && m.futDest!==filterFut) return false;
     return true;
@@ -4749,6 +4750,10 @@ export default function App() {
             <div style={{display:"flex",gap:"10px",marginBottom:"18px",alignItems:"center"}}>
               <button style={s.btn} onClick={()=>setShowMvtForm(true)}>+ Ajouter un mouvement</button>
               <input style={{...s.inp,maxWidth:"180px"}} placeholder="N° fût..." value={filterFut} onChange={e=>setFilterFut(e.target.value)}/>
+              <select style={{...s.sel,maxWidth:"160px"}} value={filterMvtType} onChange={e=>setFilterMvtType(e.target.value)}>
+                <option value="">Tous les types</option>
+                {TYPES_MOUVEMENT.map(t=><option key={t.value} value={t.value}>{t.label}</option>)}
+              </select>
               <select style={{...s.sel,maxWidth:"160px"}} value={filterOp} onChange={e=>setFilterOp(e.target.value)}>
                 <option value="">Tous opérateurs</option>
                 {degustateurs.map(d=><option key={d.nom} value={d.nom}>{d.nom}{!d.actif?" (absent)":""}</option>)}
