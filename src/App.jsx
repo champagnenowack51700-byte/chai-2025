@@ -2445,6 +2445,8 @@ export default function App() {
                 ))}
               </div>
               <span style={{color:"#8a7248",fontSize:"11px",marginLeft:"auto"}}>{filteredTonneaux.length} fûts</span>
+              <button style={{...s.ghostSm,fontSize:"10px",color:"#8B0000",borderColor:"#c85050"}} onClick={exportTonneauxPDF}>↓ PDF</button>
+              <button style={{...s.ghostSm,fontSize:"10px",color:"#2d6a00",borderColor:"#7ab848"}} onClick={exportTonneauxCSV}>↓ CSV</button>
               <button style={s.btnSm} onClick={()=>{setFutForm(EMPTY_FUT);setEditingFut(null);setShowFutForm(true);}}>
                 <i className="ti ti-plus" style={{marginRight:"3px"}}/>Ajouter
               </button>
