@@ -1334,8 +1334,43 @@ export default function App() {
 
   const exportTonneauxPDF = () => {
     const totalVin = tonneaux.filter(t=>t.statut!=="vide").reduce((s,t)=>s+(t.contenuActuel||0),0);
-    const rows = tonneaux.map(t=>`<tr><td><strong>${t.id}</strong></td><td>${getApc(t.appellation).label||t.appellation||"-"}</td><td>${t.denomination||"-"}</td><td>${t.millesime||"-"}</td><td>${t.volume||0} L</td><td>${t.contenuActuel||0} L</td><td>${parseFloat(t.volumeRI)||0} L</td><td>${t.certif||"-"}</td><td>${t.statut||"-"}</td></tr>`).join("");
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:Georgia,serif;margin:20px}h1{color:#7a5200}table{width:100%;border-collapse:collapse;font-size:11px}th{background:#f5e8cc;color:#7a5200;padding:6px;text-align:left;border:0.5px solid #d4c4a0}td{padding:5px 6px;border:0.5px solid #ede5d4}</style></head><body><h1>Champagne Nowack — Inventaire Chai</h1><p>${tonneaux.length} futs — ${(totalVin/100).toFixed(2)} HL</p><table><thead><tr><th>ID</th><th>Appellation</th><th>Denomination</th><th>Millesime</th><th>Capacite</th><th>Contenu</th><th>RI</th><th>Certif</th><th>Statut</th></tr></thead><tbody>${rows}</tbody></table></body></html>`;
+    const rows = tonneaux.map(t=>{
+      const noteG = avgNoteG(t.id);
+      return `<tr>
+        <td><strong>${t.id}</strong></td>
+        <td>${getApc(t.appellation).label||t.appellation||"-"}</td>
+        <td>${t.denomination||"-"}</td>
+        <td>${t.millesime||"-"}</td>
+        <td>${t.marc?t.marc:"-"}</td>
+        <td>${t.volume||0} L</td>
+        <td>${t.contenuActuel||0} L</td>
+        <td>${parseFloat(t.volumeRI)||0} L</td>
+        <td>${t.tonnelier||"-"}</td>
+        <td>${t.grain||"-"}</td>
+        <td>${t.chauffe||"-"}</td>
+        <td>${t.certif||"-"}</td>
+        <td>${noteG?noteG.toFixed(1)+"/5":"-"}</td>
+      </tr>`;
+    }).join("");
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+    <style>body{font-family:Georgia,serif;margin:20px;color:#1a1205}
+    h1{color:#7a5200;border-bottom:1px solid #d4c4a0;padding-bottom:8px}
+    p{color:#9a8870;font-size:12px}
+    table{width:100%;border-collapse:collapse;font-size:10px}
+    th{background:#f5e8cc;color:#7a5200;padding:5px;text-align:left;border:0.5px solid #d4c4a0}
+    td{padding:4px 5px;border:0.5px solid #ede5d4}
+    tr:nth-child(even){background:#fffdf7}
+    </style></head>
+    <body>
+    <h1>Champagne Nowack — Inventaire Chai</h1>
+    <p>${tonneaux.length} futs — Volume total : ${(totalVin/100).toFixed(2)} HL — Date : ${new Date().toLocaleDateString("fr-FR")}</p>
+    <table><thead><tr>
+      <th>ID</th><th>Appellation</th><th>Denomination</th><th>Millesime</th><th>Marc</th>
+      <th>Capacite</th><th>Contenu</th><th>RI</th>
+      <th>Tonnelier</th><th>Grain</th><th>Chauffe</th><th>Certif</th><th>Note deg.</th>
+    </tr></thead>
+    <tbody>${rows}</tbody></table>
+    </body></html>`;
     const w = window.open("","_blank"); w.document.write(html); w.document.close(); setTimeout(()=>w.print(),500);
   };
 
