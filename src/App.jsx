@@ -1324,7 +1324,12 @@ export default function App() {
 
   const exportTonneauxCSV = () => {
     const headers = ["ID","Appellation","Denomination","Millesime","Volume (L)","Contenu (L)","Volume RI (L)","Tirable (L)","Marc","Tonnelier","Certif","Statut"];
-    const rows = tonneaux.map(t=>[t.id,getApc(t.appellation).label||t.appellation||"",t.denomination||"",t.millesime||"",t.volume||0,t.contenuActuel||0,(t.appellation==="ri"&&!(parseFloat(t.volumeRI)||0)?(t.contenuActuel||0):(parseFloat(t.volumeRI)||0)),Math.max(0,(t.contenuActuel||0)-(t.appellation==="ri"&&!(parseFloat(t.volumeRI)||0)?(t.contenuActuel||0):(parseFloat(t.volumeRI)||0))),t.marc||"",t.tonnelier||"",t.certif||"",t.statut||""]);
+    const rows = [...tonneaux].sort((a,b)=>{
+      const appA = getApc(a.appellation).label||a.appellation||"";
+      const appB = getApc(b.appellation).label||b.appellation||"";
+      if(appA!==appB) return appA.localeCompare(appB);
+      return (a.denomination||"").localeCompare(b.denomination||"");
+    }).map(t=>[t.id,getApc(t.appellation).label||t.appellation||"",t.denomination||"",t.millesime||"",t.volume||0,t.contenuActuel||0,(t.appellation==="ri"&&!(parseFloat(t.volumeRI)||0)?(t.contenuActuel||0):(parseFloat(t.volumeRI)||0)),Math.max(0,(t.contenuActuel||0)-(t.appellation==="ri"&&!(parseFloat(t.volumeRI)||0)?(t.contenuActuel||0):(parseFloat(t.volumeRI)||0))),t.marc||"",t.tonnelier||"",t.certif||"",t.statut||""]);
     const csv = [headers,...rows].map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(";")).join("\n");
     const blob = new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"});
     const url = URL.createObjectURL(blob);
@@ -1334,7 +1339,14 @@ export default function App() {
 
   const exportTonneauxPDF = () => {
     const totalVin = tonneaux.filter(t=>t.statut!=="vide").reduce((s,t)=>s+(t.contenuActuel||0),0);
-    const rows = tonneaux.map(t=>{
+    const rows = [...tonneaux].sort((a,b)=>{
+      const appA = getApc(a.appellation).label||a.appellation||"";
+      const appB = getApc(b.appellation).label||b.appellation||"";
+      if(appA!==appB) return appA.localeCompare(appB);
+      const denA = a.denomination||"";
+      const denB = b.denomination||"";
+      return denA.localeCompare(denB);
+    }).map(t=>{
       const noteG = avgNoteG(t.id);
       return `<tr>
         <td><strong>${t.id}</strong></td>
