@@ -640,7 +640,7 @@ export default function App() {
   // Mouvement form
   const [mvtForm, setMvtForm] = useState({
     type:"ouillage", date:new Date().toISOString().slice(0,16),
-    operateur:"", futSource:[], futDest:"", volume:"", notes:"", produit:"", dosage:"", numeroLot:"", entonnageMarcId:"", entonnageCuveId:"", entonnageVendangeId:"", entonnageFuts:[{futId:"",volume:""}], mutageCuveId:"", mutageBourbesHL:"", mutageAlcoolHL:"", mutageDegreAlcool:"", mutageDestId:"",
+    operateur:"", futSource:[], futDest:"", volume:"", notes:"", produit:"", dosage:"", numeroLot:"", entonnageMarcId:"", entonnageCuveId:"", entonnageVendangeId:"", entonnageFuts:[{futId:"",volume:""}], assemblageVolumes:{}, mutageCuveId:"", mutageBourbesHL:"", mutageAlcoolHL:"", mutageDegreAlcool:"", mutageDestId:"",
   });
   // Dégustation form - une ligne par dégustateur
   const [degForm, setDegForm] = useState({
@@ -1646,8 +1646,16 @@ export default function App() {
     if(mvtForm.type==="soutirage" && mvtForm.futSource[0] && mvtForm.futDest){
       upd=upd.map(t=>{ if(t.id===mvtForm.futSource[0]) return{...t,contenuActuel:Math.max(0,t.contenuActuel-vol)}; if(t.id===mvtForm.futDest) return{...t,contenuActuel:Math.min(t.volume,t.contenuActuel+vol)}; return t; });
     } else if(mvtForm.type==="assemblage" && mvtForm.futDest){
-      const tot=mvtForm.futSource.reduce((s,id)=>s+(getTonneau(id)?.contenuActuel||0),0);
-      upd=upd.map(t=>{ if(mvtForm.futSource.includes(t.id)) return{...t,contenuActuel:0,statut:"vide"}; if(t.id===mvtForm.futDest) return{...t,contenuActuel:Math.min(t.volume,tot)}; return t; });
+      const tot=mvtForm.futSource.reduce((s,id)=>s+(parseFloat(mvtForm.assemblageVolumes[id])||getTonneau(id)?.contenuActuel||0),0);
+      upd=upd.map(t=>{
+        if(mvtForm.futSource.includes(t.id)) {
+          const volPris = parseFloat(mvtForm.assemblageVolumes[t.id])||t.contenuActuel||0;
+          const reste = Math.max(0,(t.contenuActuel||0)-volPris);
+          return {...t, contenuActuel:reste, statut:reste<=0?"vide":t.statut};
+        }
+        if(t.id===mvtForm.futDest) return{...t,contenuActuel:Math.min(t.volume,(t.contenuActuel||0)+tot)};
+        return t;
+      });
     } else if(["ecoulage","perte"].includes(mvtForm.type) && mvtForm.futSource[0]){
       upd=upd.map(t=>t.id===mvtForm.futSource[0]?{...t,contenuActuel:Math.max(0,t.contenuActuel-vol)}:t);
     } else if(mvtForm.type==="vidange"){
@@ -4860,17 +4868,33 @@ export default function App() {
               {needsSource&&(
                 <div>
                   <span style={s.lbl}>Fût(s) source {mvtForm.type==="assemblage"?"(multi)":""} *</span>
-                  <div style={{maxHeight:"180px",overflowY:"auto",border:"1px solid #cfc0a0",borderRadius:"4px",padding:"7px"}}>
+                  <div style={{maxHeight:"220px",overflowY:"auto",border:"1px solid #cfc0a0",borderRadius:"4px",padding:"7px"}}>
                     {tonneaux.filter(t=>t.contenuActuel>0).map(t=>(
-                      <label key={t.id} style={{display:"flex",alignItems:"center",gap:"8px",padding:"4px",cursor:"pointer",fontSize:"12px"}}>
+                      <div key={t.id} style={{display:"flex",alignItems:"center",gap:"8px",padding:"4px",fontSize:"12px"}}>
                         <input type={mvtForm.type==="assemblage"?"checkbox":"radio"} name="src" checked={mvtForm.futSource.includes(t.id)}
-                          onChange={()=>setMvtForm(f=>({...f,futSource:mvtForm.type==="assemblage"?(f.futSource.includes(t.id)?f.futSource.filter(x=>x!==t.id):[...f.futSource,t.id]):[t.id]}))}/>
+                          onChange={()=>setMvtForm(f=>({
+                            ...f,
+                            futSource:mvtForm.type==="assemblage"?(f.futSource.includes(t.id)?f.futSource.filter(x=>x!==t.id):[...f.futSource,t.id]):[t.id],
+                            assemblageVolumes:mvtForm.type==="assemblage"?{...f.assemblageVolumes,[t.id]:f.assemblageVolumes[t.id]||t.contenuActuel}:{}
+                          }))}/>
                         <span style={{color:"#b8860b",minWidth:"52px"}}>{t.id}</span>
-                        <span style={{color:"#7a6840"}}>{t.denomination}</span>
-                        <span style={{marginLeft:"auto",color:"#6a5838"}}>{t.contenuActuel}L</span>
-                      </label>
+                        <span style={{color:"#7a6840",flex:1}}>{t.denomination}</span>
+                        <span style={{color:"#9a8870",fontSize:"10px"}}>{t.contenuActuel}L dispo</span>
+                        {mvtForm.type==="assemblage"&&mvtForm.futSource.includes(t.id)&&(
+                          <input type="number" style={{...s.inp,width:"80px",padding:"2px 6px",fontSize:"11px"}}
+                            placeholder={String(t.contenuActuel)}
+                            value={mvtForm.assemblageVolumes[t.id]||""}
+                            onChange={e=>setMvtForm(f=>({...f,assemblageVolumes:{...f.assemblageVolumes,[t.id]:e.target.value}}))}/>
+                        )}
+                        {mvtForm.type!=="assemblage"&&<span style={{color:"#6a5838"}}>{t.contenuActuel}L</span>}
+                      </div>
                     ))}
                   </div>
+                  {mvtForm.type==="assemblage"&&mvtForm.futSource.length>0&&(
+                    <div style={{fontSize:"11px",color:"#7a5200",marginTop:"4px"}}>
+                      Total assemblage : {mvtForm.futSource.reduce((s,id)=>s+(parseFloat(mvtForm.assemblageVolumes[id])||getTonneau(id)?.contenuActuel||0),0).toLocaleString()} L
+                    </div>
+                  )}
                 </div>
               )}
               {needsDest&&(
