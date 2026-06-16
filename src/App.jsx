@@ -2462,8 +2462,6 @@ export default function App() {
           <div style={{display:"grid",gridTemplateColumns:"clamp(200px,1fr,1fr) clamp(200px,260px,30vw)",gap:"16px",alignItems:"start"}}>
 
             {/* Colonne principale */}
-              <button style={{...s.ghostSm,fontSize:"10px",color:"#8B0000",borderColor:"#c85050"}} onClick={exportTonneauxPDF}>↓ PDF</button>
-              <button style={{...s.ghostSm,fontSize:"10px",color:"#2d6a00",borderColor:"#7ab848"}} onClick={exportTonneauxCSV}>↓ CSV</button>
             <div>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px"}}>
                 <div style={{fontSize:"13px",color:"#7a6840"}}>{vendanges.length} entree(s) de vendange</div>
