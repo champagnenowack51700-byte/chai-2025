@@ -5310,6 +5310,7 @@ export default function App() {
                       setFutForm(f=>({...f,appellation:v}));
                     }
                   }}>
+                    <option value="">-- Vide --</option>
                     <optgroup label="Vins clairs (par millésime)">
                       {/* années déjà présentes */}
                       {vinsClairsAnnes.map(k=>{
