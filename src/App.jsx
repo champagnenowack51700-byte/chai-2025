@@ -2970,7 +2970,31 @@ export default function App() {
                           <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",marginTop:"8px"}}>
                             <button style={{...s.ghostSm}} onClick={()=>openEditVendange(v)}>Modifier</button>
                             <button style={{...s.ghostSm,color:"#cc2222",borderColor:"#f0b4b4"}}
-                              onClick={()=>{if(window.confirm("Supprimer cet apport ?")) { setVendanges(prev=>prev.filter(x=>x.id!==v.id)); deleteVendangeFb(v.id); }}}>
+                              onClick={()=>{if(window.confirm("Supprimer cet apport ?")) {
+  setVendanges(prev=>prev.filter(x=>x.id!==v.id));
+  deleteVendangeFb(v.id);
+  // Deduire les volumes des cuves cuverie
+  const updates = [
+    {id:v.cuveTailleId, vol:v.volumeTaille},
+    {id:v.cuveCuveeId, vol:v.volumeCuvee},
+    {id:v.cuveCuveeBId, vol:v.volumeCuveeB},
+    {id:v.cuveBourbesId, vol:v.volumeBourbes},
+  ].filter(u=>u.id&&u.vol&&parseFloat(u.vol)>0);
+  if(updates.length>0) {
+    setCuvesCuverie(prev=>{
+      const next = prev.map(c=>{
+        const u = updates.find(u=>u.id===c.id);
+        if(u) {
+          const updated = {...c, contenuActuelHL:String(Math.max(0,Math.round(((parseFloat(c.contenuActuelHL)||0)-(parseFloat(u.vol)||0))*100)/100))};
+          fbSave("cuvesCuverie", c.id, updated);
+          return updated;
+        }
+        return c;
+      });
+      return next;
+    });
+  }
+}}}>
                               Supprimer
                             </button>
                           </div>
@@ -4387,7 +4411,31 @@ export default function App() {
                           <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",marginTop:"8px"}}>
                             <button style={{...s.ghostSm}} onClick={()=>openEditVendange(v)}>Modifier</button>
                             <button style={{...s.ghostSm,color:"#cc2222",borderColor:"#f0b4b4"}}
-                              onClick={()=>{if(window.confirm("Supprimer cet apport ?")) { setVendanges(prev=>prev.filter(x=>x.id!==v.id)); deleteVendangeFb(v.id); }}}>
+                              onClick={()=>{if(window.confirm("Supprimer cet apport ?")) {
+  setVendanges(prev=>prev.filter(x=>x.id!==v.id));
+  deleteVendangeFb(v.id);
+  // Deduire les volumes des cuves cuverie
+  const updates = [
+    {id:v.cuveTailleId, vol:v.volumeTaille},
+    {id:v.cuveCuveeId, vol:v.volumeCuvee},
+    {id:v.cuveCuveeBId, vol:v.volumeCuveeB},
+    {id:v.cuveBourbesId, vol:v.volumeBourbes},
+  ].filter(u=>u.id&&u.vol&&parseFloat(u.vol)>0);
+  if(updates.length>0) {
+    setCuvesCuverie(prev=>{
+      const next = prev.map(c=>{
+        const u = updates.find(u=>u.id===c.id);
+        if(u) {
+          const updated = {...c, contenuActuelHL:String(Math.max(0,Math.round(((parseFloat(c.contenuActuelHL)||0)-(parseFloat(u.vol)||0))*100)/100))};
+          fbSave("cuvesCuverie", c.id, updated);
+          return updated;
+        }
+        return c;
+      });
+      return next;
+    });
+  }
+}}}>
                               Supprimer
                             </button>
                           </div>
