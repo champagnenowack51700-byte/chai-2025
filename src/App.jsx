@@ -1592,6 +1592,38 @@ export default function App() {
     const v = { id:editingVendange?editingVendange.id:`vend_${Date.now()}`, ...vendangeForm, timestamp:new Date().toISOString() };
     if(editingVendange) {
       setVendanges(prev=>prev.map(x=>x.id===editingVendange.id?v:x));
+      // Recalculer la difference de volumes pour les cuves cuverie
+      const cuveIds = [...new Set([
+        editingVendange.cuveTailleId, editingVendange.cuveCuveeId, editingVendange.cuveCuveeBId, editingVendange.cuveBourbesId,
+        v.cuveTailleId, v.cuveCuveeId, v.cuveCuveeBId, v.cuveBourbesId
+      ].filter(Boolean))];
+      if(cuveIds.length>0) {
+        setCuvesCuverie(prev=>{
+          const next = prev.map(c=>{
+            if(!cuveIds.includes(c.id)) return c;
+            // Volume ancien
+            const oldVol = [
+              {id:editingVendange.cuveTailleId, vol:editingVendange.volumeTaille},
+              {id:editingVendange.cuveCuveeId, vol:editingVendange.volumeCuvee},
+              {id:editingVendange.cuveCuveeBId, vol:editingVendange.volumeCuveeB},
+              {id:editingVendange.cuveBourbesId, vol:editingVendange.volumeBourbes},
+            ].filter(u=>u.id===c.id).reduce((s,u)=>s+(parseFloat(u.vol)||0),0);
+            // Volume nouveau
+            const newVol = [
+              {id:v.cuveTailleId, vol:v.volumeTaille},
+              {id:v.cuveCuveeId, vol:v.volumeCuvee},
+              {id:v.cuveCuveeBId, vol:v.volumeCuveeB},
+              {id:v.cuveBourbesId, vol:v.volumeBourbes},
+            ].filter(u=>u.id===c.id).reduce((s,u)=>s+(parseFloat(u.vol)||0),0);
+            const diff = newVol - oldVol;
+            if(diff===0) return c;
+            const updated = {...c, contenuActuelHL:String(Math.max(0,Math.round(((parseFloat(c.contenuActuelHL)||0)+diff)*100)/100))};
+            fbSave("cuvesCuverie", c.id, updated);
+            return updated;
+          });
+          return next;
+        });
+      }
     } else {
       setVendanges(prev=>[v,...prev]);
       const vol = parseFloat(vendangeForm.volumeRecolte)||0;
