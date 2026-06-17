@@ -1751,6 +1751,7 @@ export default function App() {
         volume:String(Math.round(parseFloat(ef.volume)*100)),
         notes:`Entonnage depuis ${cuveSrc?.nom||mvtForm.entonnageCuveId}${vendangeSource?" - Marc "+vendangeSource.numeroMarc+" - "+vendangeSource.cuveeCreee:""}`,
         cuveeCreee:vendangeSource?.cuveeCreee||"",
+        denominationFut:(()=>{ const fut=tonneaux.find(t=>t.id===ef.futId); return fut?.denomination||""; })(),
         entonnageCuveId:mvtForm.entonnageCuveId,
         timestamp:new Date().toISOString()
       }));
@@ -3710,7 +3711,7 @@ export default function App() {
                                       {srcIds.map(id=>{ const t=getTonneau(id); return t?<span key={id} style={{color:"#b8860b",cursor:"pointer",textDecoration:"underline",marginRight:"4px"}} onClick={()=>{setSelectedFut(id);setFicheTab("historique");}}>{id}</span>:null; })}
                                       {destId&&!srcIds.includes(destId)&&getTonneau(destId)&&<span style={{color:"#185FA5",cursor:"pointer",textDecoration:"underline",marginRight:"4px"}} onClick={()=>{setSelectedFut(destId);setFicheTab("historique");}}>→ {destId}</span>}
                                       {marcNum&&<span style={{background:"#7a5200",color:"#fff",borderRadius:"4px",padding:"1px 7px",fontSize:"10px",fontWeight:600,cursor:"pointer",marginRight:"4px"}} onClick={()=>setView("vendanges")}>Marc {marcNum}</span>}
-                                      {(cuveeNom||vendangeSrc?.cuveeCreee||selectedT?.denomination)&&<span style={{color:"#7a5200",fontWeight:600,marginRight:"4px",fontSize:"12px"}}>{cuveeNom||vendangeSrc?.cuveeCreee||selectedT?.denomination}</span>}
+                                      {(m.denominationFut||cuveeNom||vendangeSrc?.cuveeCreee)&&<span style={{color:"#7a5200",fontWeight:600,marginRight:"4px",fontSize:"12px"}}>{m.denominationFut||cuveeNom||vendangeSrc?.cuveeCreee}</span>}
                                       {m.volume&&<span style={{color:"#b8860b",fontFamily:"monospace",marginLeft:"4px",fontWeight:500}}>{m.type==="entonnage"?(parseInt(m.volume)/100).toFixed(2)+" HL":m.volume+"L"}</span>}
                                     </>);
                                   })()}
