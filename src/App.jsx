@@ -1216,7 +1216,7 @@ export default function App() {
           if(tirageForm.futsSources.includes(t.id)) {
             const volPris = parseFloat(tirageForm.futsSourcesVolumes[t.id])||t.contenuActuel||0;
             const reste = Math.max(0,(t.contenuActuel||0)-volPris);
-            return {...t, contenuActuel:reste, statut:reste<=0?"vide":t.statut, appellation:reste<=0?"":t.appellation, denomination:reste<=0?"":t.denomination, millesime:reste<=0?null:t.millesime};
+            return {...t, contenuActuel:reste, statut:reste<=0?"vide":t.statut, appellation:reste<=0?"":t.appellation, denomination:reste<=0?"":t.denomination, millesime:reste<=0?null:t.millesime, marc:reste<=0?"":t.marc};
           }
           return t;
         });
@@ -1654,7 +1654,7 @@ export default function App() {
     const vol = parseFloat(mvtForm.volume)||0;
     let upd = [...tonneaux];
     if(mvtForm.type==="soutirage" && mvtForm.futSource[0] && mvtForm.futDest){
-      upd=upd.map(t=>{ if(t.id===mvtForm.futSource[0]){ const c=Math.max(0,t.contenuActuel-vol); return{...t,contenuActuel:c,statut:c<=0?"vide":t.statut,appellation:c<=0?"":t.appellation,denomination:c<=0?"":t.denomination,millesime:c<=0?null:t.millesime}; } if(t.id===mvtForm.futDest) return{...t,contenuActuel:Math.min(t.volume,t.contenuActuel+vol),statut:"actif"}; return t; });
+      upd=upd.map(t=>{ if(t.id===mvtForm.futSource[0]){ const c=Math.max(0,t.contenuActuel-vol); return{...t,contenuActuel:c,statut:c<=0?"vide":t.statut,appellation:c<=0?"":t.appellation,denomination:c<=0?"":t.denomination,millesime:c<=0?null:t.millesime,marc:c<=0?"":t.marc}; } if(t.id===mvtForm.futDest) return{...t,contenuActuel:Math.min(t.volume,t.contenuActuel+vol),statut:"actif"}; return t; });
     } else if(mvtForm.type==="assemblage" && mvtForm.futDest){
       const tot=mvtForm.futSource.reduce((s,id)=>s+(parseFloat(mvtForm.assemblageVolumes[id])||getTonneau(id)?.contenuActuel||0),0);
       upd=upd.map(t=>{
@@ -1680,13 +1680,13 @@ export default function App() {
       }
     } else if(mvtForm.type==="perte" && mvtForm.futSource.length>0){
       upd=upd.map(t=>{
-        if(mvtForm.futSource.includes(t.id)) { const volPerte=parseFloat(mvtForm.perteVolumes[t.id])||0; const c=Math.max(0,(t.contenuActuel||0)-volPerte); return {...t,contenuActuel:c,statut:c<=0?"vide":t.statut,appellation:c<=0?"":t.appellation,denomination:c<=0?"":t.denomination,millesime:c<=0?null:t.millesime}; }
+        if(mvtForm.futSource.includes(t.id)) { const volPerte=parseFloat(mvtForm.perteVolumes[t.id])||0; const c=Math.max(0,(t.contenuActuel||0)-volPerte); return {...t,contenuActuel:c,statut:c<=0?"vide":t.statut,appellation:c<=0?"":t.appellation,denomination:c<=0?"":t.denomination,millesime:c<=0?null:t.millesime,marc:c<=0?"":t.marc}; }
         return t;
       });
     } else if(mvtForm.type==="ecoulage" && mvtForm.futSource[0]){
-      upd=upd.map(t=>{ if(t.id===mvtForm.futSource[0]){ const c=Math.max(0,t.contenuActuel-vol); return {...t,contenuActuel:c,statut:c<=0?"vide":t.statut,appellation:c<=0?"":t.appellation,denomination:c<=0?"":t.denomination,millesime:c<=0?null:t.millesime}; } return t; });
+      upd=upd.map(t=>{ if(t.id===mvtForm.futSource[0]){ const c=Math.max(0,t.contenuActuel-vol); return {...t,contenuActuel:c,statut:c<=0?"vide":t.statut,appellation:c<=0?"":t.appellation,denomination:c<=0?"":t.denomination,millesime:c<=0?null:t.millesime,marc:c<=0?"":t.marc}; } return t; });
     } else if(mvtForm.type==="vidange"){
-      upd=upd.map(t=>mvtForm.futSource.includes(t.id)?{...t,contenuActuel:0,statut:"vide",appellation:"",denomination:"",millesime:null}:t);
+      upd=upd.map(t=>mvtForm.futSource.includes(t.id)?{...t,contenuActuel:0,statut:"vide",appellation:"",denomination:"",millesime:null,marc:""}:t);
     } else if(mvtForm.type==="ouillage" && mvtForm.futSource[0]){
       const volTotalOuillage = (mvtForm.ouillageDestFuts||[]).reduce((s,ef)=>s+(parseFloat(ef.volume)||0),0);
       upd=upd.map(t=>{
