@@ -3836,9 +3836,7 @@ export default function App() {
                   {ficheTab==="historique"&&(()=>{
                     const mvtsParAn = {};
                     selectedMvts.forEach(m=>{ const y=m.date?m.date.slice(0,4):"?"; if(!mvtsParAn[y]) mvtsParAn[y]=[]; mvtsParAn[y].push(m); });
-                    const notesParAn = {};
-                    notesForFut(selectedT.id).forEach(n=>{ const y=n.date?n.date.slice(0,4):"?"; if(!notesParAn[y]) notesParAn[y]=[]; notesParAn[y].push(n); });
-                    const allYears=[...new Set([...Object.keys(mvtsParAn),...Object.keys(notesParAn)])].sort().reverse();
+                    const allYears=[...new Set(Object.keys(mvtsParAn))].sort().reverse();
                     return (
                       <div>
                         {allYears.length===0&&<div style={{color:"#9a8870",fontStyle:"italic",padding:"12px 0"}}>Aucun historique.</div>}
@@ -3885,17 +3883,6 @@ export default function App() {
                                     </>);
                                   })()}
                                   {m.notes&&<div style={{color:"#9a8870",fontStyle:"italic",fontSize:"11px"}}>{m.notes}</div>}
-                                </div>
-                              </div>
-                            ))}
-                            {(notesParAn[year]||[]).map((n,i)=>(
-                              <div key={i} style={{display:"flex",gap:"8px",padding:"5px 0",borderBottom:"0.5px solid #ede5d4",fontSize:"12px"}}>
-                                <div style={{width:"80px",color:"#9a8870",flexShrink:0}}>{n.date}</div>
-                                <div style={{flex:1}}>
-                                  <span style={{background:"#f0e8f8",color:"#6a2d6a",borderRadius:"3px",padding:"1px 6px",fontSize:"10px",marginRight:"6px"}}>Degustation</span>
-                                  <span style={{color:"#6a5838"}}>{n.degustateur}</span>
-                                  {n.noteG&&<span style={{background:"#fde8b8",color:"#7a5200",borderRadius:"3px",padding:"1px 6px",fontSize:"10px",marginLeft:"6px"}}>{n.noteG}/5</span>}
-                                  {n.commentaire&&<div style={{color:"#9a8870",fontStyle:"italic",fontSize:"11px"}}>{n.commentaire}</div>}
                                 </div>
                               </div>
                             ))}
