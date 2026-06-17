@@ -458,6 +458,7 @@ export default function App() {
   const [filterDegFabric,  setFilterDegFabric]  = useState("");
   const [filterFut,   setFilterFut]   = useState("");
   const [filterMvtType, setFilterMvtType] = useState('');
+  const [filterMvtAnnee, setFilterMvtAnnee] = useState(() => new Date().getFullYear().toString());
   const [showMvtForm, setShowMvtForm] = useState(false);
   const [showDegForm, setShowDegForm] = useState(false);
   const [showImport,  setShowImport]  = useState(false);
@@ -1898,6 +1899,7 @@ export default function App() {
     return true;
   });
   const filteredMouvements = mouvements.filter(m=>{
+    if(filterMvtAnnee && m.date?.slice(0,4)!==filterMvtAnnee) return false;
     if(filterMvtType && m.type!==filterMvtType) return false;
     if(filterOp && m.operateur!==filterOp) return false;
     if(filterFut && !m.futSource?.includes(filterFut) && m.futDest!==filterFut) return false;
@@ -4801,7 +4803,21 @@ export default function App() {
         {/* -- MOUVEMENTS -- */}
         {view==="mouvements"&&(
           <div>
-            <div style={{display:"flex",gap:"10px",marginBottom:"18px",alignItems:"center"}}>
+            {/* Onglets campagnes */}
+            {(()=>{
+              const annees = [...new Set(mouvements.map(m=>m.date?.slice(0,4)||"?"))].sort().reverse();
+              return (
+                <div style={{display:"flex",gap:"0",marginBottom:"20px",borderBottom:"1px solid #d4c4a0",flexWrap:"wrap"}}>
+                  {annees.map(a=>(
+                    <button key={a} onClick={()=>setFilterMvtAnnee(a)} style={{padding:"8px 16px",border:"none",borderBottom:filterMvtAnnee===a?"2px solid #b8860b":"2px solid transparent",background:"transparent",color:filterMvtAnnee===a?"#7a5200":"#9a8870",fontWeight:filterMvtAnnee===a?500:400,fontSize:"13px",cursor:"pointer",fontFamily:"Georgia,serif"}}>
+                      {a} <span style={{fontSize:"10px",color:"#9a8870"}}>({mouvements.filter(m=>m.date?.slice(0,4)===a).length})</span>
+                    </button>
+                  ))}
+                </div>
+              );
+            })()}
+            {/* Filtres */}
+            <div style={{display:"flex",gap:"10px",marginBottom:"18px",alignItems:"center",flexWrap:"wrap"}}>
               <button style={s.btn} onClick={()=>setShowMvtForm(true)}>+ Ajouter un mouvement</button>
               <input style={{...s.inp,maxWidth:"180px"}} placeholder="N° fût..." value={filterFut} onChange={e=>setFilterFut(e.target.value)}/>
               <select style={{...s.sel,maxWidth:"160px"}} value={filterMvtType} onChange={e=>setFilterMvtType(e.target.value)}>
@@ -4815,7 +4831,7 @@ export default function App() {
               <span style={{color:"#8a7248",fontSize:"11px",marginLeft:"auto"}}>{filteredMouvements.length} mouvements</span>
             </div>
             <div style={s.card}>
-              {filteredMouvements.length===0&&<div style={{color:"#8a7248",fontSize:"13px"}}>Aucun mouvement. Créez-en un avec le bouton "Mouvement".</div>}
+              {filteredMouvements.length===0&&<div style={{color:"#8a7248",fontSize:"13px"}}>Aucun mouvement pour cette campagne.</div>}
               {filteredMouvements.map(m=><MvtRow key={m.id} m={m}/>)}
             </div>
           </div>
