@@ -1699,7 +1699,11 @@ export default function App() {
       upd=upd.map(t=>t.id===mvtForm.futDest?{...t,contenuActuel:Math.min(t.volume,t.contenuActuel+vol)}:t);
     }
     setTonneaux(upd);
-    upd.forEach(t => saveTonneau(t));
+    // Sauvegarder uniquement les tonneaux modifies
+    upd.forEach((t,i) => {
+      const orig = tonneaux[i];
+      if(!orig || JSON.stringify(t) !== JSON.stringify(orig)) saveTonneau(t);
+    });
 
     // Entonnage: mettre a jour la cuve cuverie source et les futs destination
     if(mvtForm.type==="entonnage" && mvtForm.entonnageCuveId) {
