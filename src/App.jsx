@@ -1843,6 +1843,7 @@ export default function App() {
         cuveeCreee:allCuvees.join(" + ")||"",
         denominationFut:(()=>{ const fut=tonneaux.find(t=>t.id===ef.futId); return fut?.denomination||""; })(),
         entonnageCuveId:mvtForm.entonnageCuveId,
+        marcsSources:cuvesSrc.filter(ec=>ec.cuveId&&parseFloat(ec.volume)>0).map(ec=>({ cuveId:ec.cuveId, cuveNom:cuvesCuverie.find(c=>c.id===ec.cuveId)?.nom||ec.cuveId, volumeHL:parseFloat(ec.volume)||0, marc:vendanges.find(v=>v.id===ec.vendangeId)?.numeroMarc||"", cuveeCreee:vendanges.find(v=>v.id===ec.vendangeId)?.cuveeCreee||"" })),
         timestamp:new Date().toISOString()
       }));
       // Creer un mouvement par cuve source
@@ -2053,6 +2054,13 @@ export default function App() {
           <div style={{fontSize:"13px",fontWeight:600,color:"#1a1205",marginBottom:"1px",paddingLeft:"6px"}}>{t.id}</div>
           <div style={{fontSize:"10px",color:"#6a5838",marginBottom:"2px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",paddingLeft:"6px"}}>{t.denomination}</div>
           {t.certif==="BIO"&&<div style={{paddingLeft:"6px",marginBottom:"4px"}}><span style={{fontSize:"10px",background:"#2d6a00",color:"#fff",borderRadius:"3px",padding:"1px 6px",fontWeight:600}}>🌿 BIO</span></div>}
+          {t.marc&&t.marc.includes(" + ")&&(
+            <div style={{paddingLeft:"6px",marginBottom:"4px"}}>
+              {t.marc.split(" + ").map((m,i)=>(
+                <span key={i} style={{fontSize:"9px",background:"#7a5200",color:"#fff",borderRadius:"3px",padding:"1px 4px",fontWeight:600,marginRight:"3px"}}>M{m}</span>
+              ))}
+            </div>
+          )}
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingLeft:"6px"}}>
             <span style={{fontSize:"10px",color:"#7a6840"}}>{t.marc?"Marc "+t.marc+" · ":""}{t.millesime||"-"} · {t.volume}L</span>
             <div style={{display:"flex",alignItems:"center",gap:"5px"}}>
@@ -3861,6 +3869,18 @@ export default function App() {
                                       {destId&&!srcIds.includes(destId)&&getTonneau(destId)&&<span style={{color:"#185FA5",cursor:"pointer",textDecoration:"underline",marginRight:"4px"}} onClick={()=>{setSelectedFut(destId);setFicheTab("historique");}}>→ {destId}</span>}
                                       {marcNum&&<span style={{background:"#7a5200",color:"#fff",borderRadius:"4px",padding:"1px 7px",fontSize:"10px",fontWeight:600,cursor:"pointer",marginRight:"4px"}} onClick={()=>setView("vendanges")}>Marc {marcNum}</span>}
                                       {(m.denominationFut||cuveeNom||vendangeSrc?.cuveeCreee)&&<span style={{color:"#7a5200",fontWeight:600,marginRight:"4px",fontSize:"12px"}}>{m.denominationFut||cuveeNom||vendangeSrc?.cuveeCreee}</span>}
+                                      {m.marcsSources&&m.marcsSources.length>1&&(
+                                        <div style={{marginTop:"4px",display:"flex",flexDirection:"column",gap:"2px"}}>
+                                          {m.marcsSources.map((ms,i)=>(
+                                            <div key={i} style={{fontSize:"10px",display:"flex",alignItems:"center",gap:"4px"}}>
+                                              <span style={{background:"#7a5200",color:"#fff",borderRadius:"3px",padding:"1px 5px",fontWeight:600}}>Marc {ms.marc}</span>
+                                              <span style={{color:"#9a8870"}}>{ms.cuveNom}</span>
+                                              <span style={{color:"#b8860b",fontFamily:"monospace",fontWeight:500}}>{ms.volumeHL} HL</span>
+                                              {ms.cuveeCreee&&<span style={{color:"#7a5200"}}>{ms.cuveeCreee}</span>}
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
                                       {m.volume&&<span style={{color:"#b8860b",fontFamily:"monospace",marginLeft:"4px",fontWeight:500}}>{m.type==="entonnage"?(parseInt(m.volume)/100).toFixed(2)+" HL":m.volume+"L"}</span>}
                                     </>);
                                   })()}
