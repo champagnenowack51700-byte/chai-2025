@@ -2812,13 +2812,13 @@ export default function App() {
                         <div key={v.id} style={{...s.card,marginBottom:"10px",borderLeft:`3px solid ${v.destinationMarc&&v.destinationMarc!=="maison"?"#c47800":"#2d6a00"}`}}>
                           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:"12px",marginBottom:"8px"}}>
                             <div>
+                              <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"4px"}}>
+                                {v.numeroMarc&&<span style={{background:"#7a5200",color:"#fff",borderRadius:"5px",padding:"2px 10px",fontSize:"13px",fontWeight:700,fontFamily:"monospace",letterSpacing:"0.03em"}}>Marc {v.numeroMarc}</span>}
+                                {v.isBio&&<span style={{fontSize:"11px",background:"#2d6a00",color:"#fff",borderRadius:"4px",padding:"2px 8px",fontWeight:600}}>🌿 BIO</span>}
+                              </div>
                               {v.cuveeCreee&&<div style={{fontWeight:600,color:"#7a5200",fontSize:"14px",marginBottom:"2px"}}>{v.cuveeCreee}</div>}
-                              {v.isBio&&<div style={{marginBottom:"4px"}}><span style={{fontSize:"11px",background:"#2d6a00",color:"#fff",borderRadius:"4px",padding:"2px 8px",fontWeight:600}}>🌿 BIO</span></div>}
                               <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"2px"}}>
                                 <div style={{fontWeight:500,color:"#1a1205",fontSize:"13px"}}>{parcs.length>0?parcs.map(p=>p.nom).join(" + "):"Parcelle inconnue"}</div>
-                                {v.numeroMarc&&(
-                                  <span style={{background:"#f5e8cc",color:"#7a5200",border:"0.5px solid #e0c050",borderRadius:"4px",padding:"1px 8px",fontSize:"11px",fontWeight:500,fontFamily:"monospace"}}>Marc {v.numeroMarc}</span>
-                                )}
                               </div>
                               <div style={{display:"flex",alignItems:"center",gap:"5px",marginBottom:"2px"}}>
                                 {parc?.certification&&(
