@@ -1713,17 +1713,22 @@ export default function App() {
         }
         return c;
       }));
-      // Ajouter dans les futs destination (en L) + reporter le marc
+      // Ajouter dans les futs destination (en L) + reporter le marc + appellation
       const vendangeSource = mvtForm.entonnageVendangeId ? vendanges.find(v=>v.id===mvtForm.entonnageVendangeId) : null;
+      const anneeVendange = vendangeSource?.annee || new Date().getFullYear().toString();
+      const cuveSrc = cuvesCuverie.find(c=>c.id===mvtForm.entonnageCuveId);
       const updFuts = tonneaux.map(t=>{
         const ef = (mvtForm.entonnageFuts||[]).find(ef=>ef.futId===t.id);
         if(ef && parseFloat(ef.volume)>0) {
           const volL = Math.round(parseFloat(ef.volume)*100);
-          const updated = {...t, 
-            contenuActuel:Math.min(t.volume, (t.contenuActuel||0)+volL), 
+          const updated = {...t,
+            contenuActuel:Math.min(t.volume, (t.contenuActuel||0)+volL),
             statut:"actif",
             marc: vendangeSource?.numeroMarc||t.marc||"",
-            denomination: t.denomination||vendangeSource?.cuveeCreee||t.denomination,
+            denomination: t.denomination||vendangeSource?.cuveeCreee||"Vin clair "+anneeVendange,
+            appellation: t.appellation||("vins_clairs_"+anneeVendange),
+            millesime: t.millesime||parseInt(anneeVendange)||null,
+            certif: vendangeSource?.isBio?"BIO":t.certif||"",
           };
           saveTonneau(updated);
           return updated;
@@ -1731,6 +1736,21 @@ export default function App() {
         return t;
       });
       setTonneaux(updFuts);
+      // Creer un mouvement par fut destination pour tracabilite
+      const mvtsEntonnage = (mvtForm.entonnageFuts||[]).filter(ef=>ef.futId&&parseFloat(ef.volume)>0).map((ef,i)=>({
+        id:(Date.now()+i+100).toString(),
+        type:"entonnage",
+        date:mvtForm.date,
+        operateur:mvtForm.operateur,
+        futSource:[],
+        futDest:ef.futId,
+        volume:String(Math.round(parseFloat(ef.volume)*100)),
+        notes:`Entonnage depuis ${cuveSrc?.nom||mvtForm.entonnageCuveId}${vendangeSource?" - Marc "+vendangeSource.numeroMarc+" - "+vendangeSource.cuveeCreee:""}`,
+        entonnageCuveId:mvtForm.entonnageCuveId,
+        timestamp:new Date().toISOString()
+      }));
+      setMouvements(prev=>[...mvtsEntonnage,...prev]);
+      mvtsEntonnage.forEach(m=>saveMouvement(m));
     }
 
     if(mvtForm.type==="ajout_produit" && !mvtForm.numeroLot.trim()) return alert("Le numéro de lot est obligatoire pour un ajout de produit.");
