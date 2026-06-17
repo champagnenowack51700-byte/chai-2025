@@ -1804,13 +1804,13 @@ export default function App() {
         return c;
       }));
       // Ajouter dans les futs destination (en L) + reporter le marc + appellation
-      const cuves = mvtForm.entonnageCuves||[];
+      const cuvesSrc = mvtForm.entonnageCuves||[];
       // Tous les marcs et cuvees des cuves sources
-      const allMarcs = cuves.map(ec=>{ const vd=vendanges.find(v=>v.id===ec.vendangeId); return vd?.numeroMarc||null; }).filter(Boolean);
-      const allCuvees = cuves.map(ec=>{ const vd=vendanges.find(v=>v.id===ec.vendangeId); return vd?.cuveeCreee||null; }).filter(Boolean);
-      const vendangeSource = cuves[0]?.vendangeId ? vendanges.find(v=>v.id===cuves[0].vendangeId) : null;
+      const allMarcs = cuvesSrc.map(ec=>{ const vd=vendanges.find(v=>v.id===ec.vendangeId); return vd?.numeroMarc||null; }).filter(Boolean);
+      const allCuvees = cuvesSrc.map(ec=>{ const vd=vendanges.find(v=>v.id===ec.vendangeId); return vd?.cuveeCreee||null; }).filter(Boolean);
+      const vendangeSource = cuvesSrc[0]?.vendangeId ? vendanges.find(v=>v.id===cuvesSrc[0].vendangeId) : null;
       const anneeVendange = vendangeSource?.annee || new Date().getFullYear().toString();
-      const cuveSrc = cuves.length>0 ? cuvesCuverie.find(c=>c.id===cuves[0].cuveId) : null;
+      const cuveSrc = cuvesSrc.length>0 ? cuvesCuverie.find(c=>c.id===cuvesSrc[0].cuveId) : null;
       const updFuts = tonneaux.map(t=>{
         const ef = (mvtForm.entonnageFuts||[]).find(ef=>ef.futId===t.id);
         if(ef && parseFloat(ef.volume)>0) {
@@ -1839,14 +1839,14 @@ export default function App() {
         futSource:[],
         futDest:ef.futId,
         volume:String(Math.round(parseFloat(ef.volume)*100)),
-        notes:`Entonnage depuis ${cuves.map(ec=>cuvesCuverie.find(c=>c.id===ec.cuveId)?.nom||ec.cuveId).join(" + ")}${allMarcs.length>0?" - Marc "+allMarcs.join(" + "):""}${allCuvees.length>0?" - "+allCuvees.join(" + "):""}`,
+        notes:`Entonnage depuis ${cuvesSrc.map(ec=>cuvesCuverie.find(c=>c.id===ec.cuveId)?.nom||ec.cuveId).join(" + ")}${allMarcs.length>0?" - Marc "+allMarcs.join(" + "):""}${allCuvees.length>0?" - "+allCuvees.join(" + "):""}`,
         cuveeCreee:allCuvees.join(" + ")||"",
         denominationFut:(()=>{ const fut=tonneaux.find(t=>t.id===ef.futId); return fut?.denomination||""; })(),
         entonnageCuveId:mvtForm.entonnageCuveId,
         timestamp:new Date().toISOString()
       }));
       // Creer un mouvement par cuve source
-      const mvtsCuveSrc = cuves.filter(ec=>ec.cuveId&&parseFloat(ec.volume)>0).map((ec,i)=>{
+      const mvtsCuveSrc = cuvesSrc.filter(ec=>ec.cuveId&&parseFloat(ec.volume)>0).map((ec,i)=>{
         const vd = vendanges.find(v=>v.id===ec.vendangeId);
         return {
           id:(Date.now()+200+i).toString(),
