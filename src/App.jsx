@@ -3840,7 +3840,13 @@ export default function App() {
                     return (
                       <div>
                         {allYears.length===0&&<div style={{color:"#9a8870",fontStyle:"italic",padding:"12px 0"}}>Aucun historique.</div>}
-                        {allYears.map(year=>(
+                        {allYears.length>1&&<div style={{marginBottom:"12px"}}>
+                          <select style={{...s.sel,maxWidth:"160px",fontSize:"12px"}} value={ficheHistoAnnee} onChange={e=>setFicheHistoAnnee(e.target.value)}>
+                            <option value="">Toutes les campagnes</option>
+                            {allYears.map(y=><option key={y} value={y}>Campagne {y} ({(mvtsParAn[y]||[]).length} mvt)</option>)}
+                          </select>
+                        </div>}
+                        {(ficheHistoAnnee?[ficheHistoAnnee]:allYears).map(year=>(
                           <div key={year} style={{marginBottom:"16px"}}>
                             <div style={{fontFamily:"Georgia,serif",fontSize:"15px",color:"#b8860b",borderBottom:"0.5px solid #d4c4a0",paddingBottom:"6px",marginBottom:"8px"}}>
                               Campagne {year}
