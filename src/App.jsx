@@ -1810,8 +1810,24 @@ export default function App() {
         entonnageCuveId:mvtForm.entonnageCuveId,
         timestamp:new Date().toISOString()
       }));
-      setMouvements(prev=>[...mvtsEntonnage,...prev]);
+      // Creer un mouvement pour la cuve source
+      const volTotalHL = (mvtForm.entonnageFuts||[]).filter(ef=>ef.futId&&parseFloat(ef.volume)>0).reduce((s,ef)=>s+(parseFloat(ef.volume)||0),0);
+      const mvtCuveSrc = {
+        id:(Date.now()+200).toString(),
+        type:"entonnage",
+        date:mvtForm.date,
+        operateur:mvtForm.operateur,
+        futSource:[mvtForm.entonnageCuveId],
+        futDest:"",
+        volume:String(Math.round(volTotalHL*100)),
+        notes:`Entonnage vers ${(mvtForm.entonnageFuts||[]).filter(ef=>ef.futId).map(ef=>ef.futId).join(", ")}`,
+        entonnageCuveId:mvtForm.entonnageCuveId,
+        isCuveSrc:true,
+        timestamp:new Date().toISOString()
+      };
+      setMouvements(prev=>[...mvtsEntonnage, mvtCuveSrc,...prev]);
       mvtsEntonnage.forEach(m=>saveMouvement(m));
+      saveMouvement(mvtCuveSrc);
     }
 
     // Si modification d'un mouvement existant
