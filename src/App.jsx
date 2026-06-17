@@ -3770,7 +3770,7 @@ export default function App() {
                         <span style={{color:"#8a7248"}}>{k}</span><span style={{color:"#1a1205"}}>{v}</span>
                       </div>
                     ))}
-                    {avgNoteG(selectedT.id)!=null&&(
+                    {selectedT.statut!=="vide"&&avgNoteG(selectedT.id)!=null&&(
                       <div style={{marginTop:"14px",padding:"10px",background:"#fffbf3",borderRadius:"6px"}}>
                         <div style={{fontSize:"10px",color:"#8a7248",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:"6px"}}>Note dégustation</div>
                         <div style={{display:"flex",gap:"16px"}}>
