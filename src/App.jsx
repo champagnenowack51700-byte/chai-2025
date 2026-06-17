@@ -1727,7 +1727,7 @@ export default function App() {
             marc: vendangeSource?.numeroMarc||t.marc||"",
             denomination: t.denomination||vendangeSource?.cuveeCreee||"Vin clair "+anneeVendange,
             appellation: t.appellation||("vins_clairs_"+anneeVendange),
-            millesime: t.millesime||parseInt(anneeVendange)||null,
+            millesime: parseInt(anneeVendange)||t.millesime||null,
             certif: vendangeSource?.isBio?"BIO":t.certif||"",
           };
           saveTonneau(updated);
