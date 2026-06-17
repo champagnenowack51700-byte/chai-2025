@@ -644,7 +644,7 @@ export default function App() {
   // Mouvement form
   const [mvtForm, setMvtForm] = useState({
     type:"ouillage", date:new Date().toISOString().slice(0,16),
-    operateur:"", futSource:[], futDest:"", volume:"", notes:"", produit:"", dosage:"", numeroLot:"", entonnageMarcId:"", entonnageCuveId:"", entonnageVendangeId:"", entonnageFuts:[{futId:"",volume:""}], assemblageVolumes:{}, perteVolumes:{}, ouillageDestFuts:[{futId:"",volume:""}], mutageCuveId:"", mutageBourbesHL:"", mutageAlcoolHL:"", mutageDegreAlcool:"", mutageDestId:"",
+    operateur:"", futSource:[], futDest:"", volume:"", notes:"", produit:"", dosage:"", numeroLot:"", entonnageMarcId:"", entonnageCuveId:"", entonnageCuves:[{cuveId:"",volume:"",vendangeId:""}], entonnageVendangeId:"", entonnageFuts:[{futId:"",volume:""}], assemblageVolumes:{}, perteVolumes:{}, ouillageDestFuts:[{futId:"",volume:""}], mutageCuveId:"", mutageBourbesHL:"", mutageAlcoolHL:"", mutageDegreAlcool:"", mutageDestId:"",
   });
   // Dégustation form - une ligne par dégustateur
   const [degForm, setDegForm] = useState({
@@ -1790,22 +1790,27 @@ export default function App() {
       if(!orig || JSON.stringify(t) !== JSON.stringify(orig)) saveTonneau(t);
     });
 
-    // Entonnage: mettre a jour la cuve cuverie source et les futs destination
-    if(mvtForm.type==="entonnage" && mvtForm.entonnageCuveId) {
-      const volTotal = (mvtForm.entonnageFuts||[]).reduce((s,ef)=>s+(parseFloat(ef.volume)||0),0);
-      // Deduire de la cuve cuverie
+    // Entonnage: mettre a jour les cuves cuverie sources et les futs destination
+    if(mvtForm.type==="entonnage" && (mvtForm.entonnageCuves||[]).some(ec=>ec.cuveId)) {
+      const cuves = mvtForm.entonnageCuves||[];
+      // Deduire de chaque cuve source
       setCuvesCuverie(prev=>prev.map(c=>{
-        if(c.id===mvtForm.entonnageCuveId) {
-          const updated = {...c, contenuActuelHL:String(Math.max(0,Math.round(((parseFloat(c.contenuActuelHL)||0)-(volTotal))*100)/100))};
+        const ec = cuves.find(ec=>ec.cuveId===c.id);
+        if(ec && parseFloat(ec.volume)>0) {
+          const updated = {...c, contenuActuelHL:String(Math.max(0,Math.round(((parseFloat(c.contenuActuelHL)||0)-(parseFloat(ec.volume)||0))*100)/100))};
           fbSave("cuvesCuverie", c.id, updated);
           return updated;
         }
         return c;
       }));
       // Ajouter dans les futs destination (en L) + reporter le marc + appellation
-      const vendangeSource = mvtForm.entonnageVendangeId ? vendanges.find(v=>v.id===mvtForm.entonnageVendangeId) : null;
+      const cuves = mvtForm.entonnageCuves||[];
+      // Tous les marcs et cuvees des cuves sources
+      const allMarcs = cuves.map(ec=>{ const vd=vendanges.find(v=>v.id===ec.vendangeId); return vd?.numeroMarc||null; }).filter(Boolean);
+      const allCuvees = cuves.map(ec=>{ const vd=vendanges.find(v=>v.id===ec.vendangeId); return vd?.cuveeCreee||null; }).filter(Boolean);
+      const vendangeSource = cuves[0]?.vendangeId ? vendanges.find(v=>v.id===cuves[0].vendangeId) : null;
       const anneeVendange = vendangeSource?.annee || new Date().getFullYear().toString();
-      const cuveSrc = cuvesCuverie.find(c=>c.id===mvtForm.entonnageCuveId);
+      const cuveSrc = cuves.length>0 ? cuvesCuverie.find(c=>c.id===cuves[0].cuveId) : null;
       const updFuts = tonneaux.map(t=>{
         const ef = (mvtForm.entonnageFuts||[]).find(ef=>ef.futId===t.id);
         if(ef && parseFloat(ef.volume)>0) {
@@ -1813,8 +1818,8 @@ export default function App() {
           const updated = {...t,
             contenuActuel:Math.min(t.volume, (t.contenuActuel||0)+volL),
             statut:"actif",
-            marc: vendangeSource?.numeroMarc||t.marc||"",
-            denomination: t.denomination||vendangeSource?.cuveeCreee||"Vin clair "+anneeVendange,
+            marc: allMarcs.length>0?allMarcs.join(" + "):t.marc||"",
+            denomination: t.denomination||(allCuvees.length>0?allCuvees.join(" + "):"Vin clair "+anneeVendange),
             appellation: t.appellation||("vins_clairs_"+anneeVendange),
             millesime: parseInt(anneeVendange)||t.millesime||null,
             certif: vendangeSource?.isBio?"BIO":t.certif||"",
@@ -1834,30 +1839,32 @@ export default function App() {
         futSource:[],
         futDest:ef.futId,
         volume:String(Math.round(parseFloat(ef.volume)*100)),
-        notes:`Entonnage depuis ${cuveSrc?.nom||mvtForm.entonnageCuveId}${vendangeSource?" - Marc "+vendangeSource.numeroMarc+" - "+vendangeSource.cuveeCreee:""}`,
-        cuveeCreee:vendangeSource?.cuveeCreee||"",
+        notes:`Entonnage depuis ${cuves.map(ec=>cuvesCuverie.find(c=>c.id===ec.cuveId)?.nom||ec.cuveId).join(" + ")}${allMarcs.length>0?" - Marc "+allMarcs.join(" + "):""}${allCuvees.length>0?" - "+allCuvees.join(" + "):""}`,
+        cuveeCreee:allCuvees.join(" + ")||"",
         denominationFut:(()=>{ const fut=tonneaux.find(t=>t.id===ef.futId); return fut?.denomination||""; })(),
         entonnageCuveId:mvtForm.entonnageCuveId,
         timestamp:new Date().toISOString()
       }));
-      // Creer un mouvement pour la cuve source
-      const volTotalHL = (mvtForm.entonnageFuts||[]).filter(ef=>ef.futId&&parseFloat(ef.volume)>0).reduce((s,ef)=>s+(parseFloat(ef.volume)||0),0);
-      const mvtCuveSrc = {
-        id:(Date.now()+200).toString(),
-        type:"entonnage",
-        date:mvtForm.date,
-        operateur:mvtForm.operateur,
-        futSource:[mvtForm.entonnageCuveId],
-        futDest:"",
-        volume:String(Math.round(volTotalHL*100)),
-        notes:`Entonnage vers ${(mvtForm.entonnageFuts||[]).filter(ef=>ef.futId).map(ef=>ef.futId).join(", ")}`,
-        entonnageCuveId:mvtForm.entonnageCuveId,
-        isCuveSrc:true,
-        timestamp:new Date().toISOString()
-      };
-      setMouvements(prev=>[...mvtsEntonnage, mvtCuveSrc,...prev]);
+      // Creer un mouvement par cuve source
+      const mvtsCuveSrc = cuves.filter(ec=>ec.cuveId&&parseFloat(ec.volume)>0).map((ec,i)=>{
+        const vd = vendanges.find(v=>v.id===ec.vendangeId);
+        return {
+          id:(Date.now()+200+i).toString(),
+          type:"entonnage",
+          date:mvtForm.date,
+          operateur:mvtForm.operateur,
+          futSource:[ec.cuveId],
+          futDest:"",
+          volume:String(Math.round(parseFloat(ec.volume)*100)),
+          notes:`Entonnage vers ${(mvtForm.entonnageFuts||[]).filter(ef=>ef.futId).map(ef=>ef.futId).join(", ")}${vd?" - Marc "+vd.numeroMarc:""}`,
+          entonnageCuveId:ec.cuveId,
+          isCuveSrc:true,
+          timestamp:new Date().toISOString()
+        };
+      });
+      setMouvements(prev=>[...mvtsEntonnage,...mvtsCuveSrc,...prev]);
       mvtsEntonnage.forEach(m=>saveMouvement(m));
-      saveMouvement(mvtCuveSrc);
+      mvtsCuveSrc.forEach(m=>saveMouvement(m));
     }
 
     // Si modification d'un mouvement existant
@@ -5334,31 +5341,42 @@ export default function App() {
               {mvtForm.type==="entonnage"&&(
                 <div style={{borderTop:"0.5px solid #d4c4a0",paddingTop:"12px",display:"grid",gap:"10px"}}>
                   <div style={{fontFamily:"Georgia,serif",fontSize:"13px",color:"#7a5200",marginBottom:"4px"}}>Details entonnage</div>
-                  <div><span style={s.lbl}>Cuve source (Cuverie)</span>
-                    <select style={s.sel} value={mvtForm.entonnageCuveId||""} onChange={e=>setMvtForm(f=>({...f,entonnageCuveId:e.target.value}))}>
-                      <option value="">Selectionner une cuve...</option>
-                      {cuvesCuverie.filter(c=>parseFloat(c.contenuActuelHL)||0>0).map(c=>(
-                        <option key={c.id} value={c.id}>{c.nom} - {c.type} ({c.contenuActuelHL||0} HL dispo)</option>
-                      ))}
-                    </select>
+                  <div>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"4px"}}>
+                      <span style={s.lbl}>Cuves sources (Cuverie)</span>
+                      <button style={s.ghostSm} onClick={()=>setMvtForm(f=>({...f,entonnageCuves:[...(f.entonnageCuves||[{cuveId:"",volume:"",vendangeId:""}]),{cuveId:"",volume:"",vendangeId:""}]}))}>+ Ajouter cuve</button>
+                    </div>
+                    {(mvtForm.entonnageCuves||[{cuveId:"",volume:"",vendangeId:""}]).map((ec,i)=>(
+                      <div key={i} style={{background:"#fffdf7",border:"0.5px solid #d4c4a0",borderRadius:"6px",padding:"8px",marginBottom:"8px"}}>
+                        <div style={{display:"grid",gridTemplateColumns:"1fr 80px auto",gap:"6px",marginBottom:"6px",alignItems:"end"}}>
+                          <select style={s.sel} value={ec.cuveId} onChange={e=>setMvtForm(f=>({...f,entonnageCuves:f.entonnageCuves.map((x,j)=>j===i?{...x,cuveId:e.target.value,vendangeId:""}:x)}))}>
+                            <option value="">Cuve source...</option>
+                            {cuvesCuverie.filter(c=>(parseFloat(c.contenuActuelHL)||0)>0).map(c=>(
+                              <option key={c.id} value={c.id}>{c.nom} ({c.contenuActuelHL||0} HL dispo)</option>
+                            ))}
+                          </select>
+                          <input type="number" step="0.01" style={s.inp} placeholder="HL" value={ec.volume} onChange={e=>setMvtForm(f=>({...f,entonnageCuves:f.entonnageCuves.map((x,j)=>j===i?{...x,volume:e.target.value}:x)}))}/>
+                          {i>0&&<button style={{...s.ghostSm,color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>setMvtForm(f=>({...f,entonnageCuves:f.entonnageCuves.filter((_,j)=>j!==i)}))}>x</button>}
+                          {i===0&&<div/>}
+                        </div>
+                        {ec.cuveId&&<div>
+                          <select style={{...s.sel,fontSize:"11px"}} value={ec.vendangeId} onChange={e=>setMvtForm(f=>({...f,entonnageCuves:f.entonnageCuves.map((x,j)=>j===i?{...x,vendangeId:e.target.value}:x)}))}>
+                            <option value="">Vendange associee (Marc)...</option>
+                            {vendanges.filter(v=>v.cuveTailleId===ec.cuveId||v.cuveCuveeId===ec.cuveId||v.cuveCuveeBId===ec.cuveId).map(v=>(
+                              <option key={v.id} value={v.id}>{fmt(v.date)} - Marc {v.numeroMarc}{v.cuveeCreee?" - "+v.cuveeCreee:""}</option>
+                            ))}
+                            {vendanges.filter(v=>v.cuveTailleId===ec.cuveId||v.cuveCuveeId===ec.cuveId||v.cuveCuveeBId===ec.cuveId).length===0&&vendanges.map(v=>(
+                              <option key={v.id} value={v.id}>{fmt(v.date)} - Marc {v.numeroMarc}{v.cuveeCreee?" - "+v.cuveeCreee:""}</option>
+                            ))}
+                          </select>
+                          {ec.vendangeId&&(()=>{ const vd=vendanges.find(v=>v.id===ec.vendangeId); return vd?.numeroMarc?<div style={{fontSize:"10px",color:"#7a5200",marginTop:"2px"}}>🏷 Marc {vd.numeroMarc} sera reporté</div>:null; })()}
+                        </div>}
+                      </div>
+                    ))}
+                    <div style={{fontSize:"11px",color:"#533AB7",fontWeight:500}}>
+                      Total cuves : {(mvtForm.entonnageCuves||[]).reduce((s,ec)=>s+(parseFloat(ec.volume)||0),0).toFixed(2)} HL
+                    </div>
                   </div>
-                  <div><span style={s.lbl}>Vendange associee (pour n° Marc)</span>
-                    <select style={s.sel} value={mvtForm.entonnageVendangeId||""} onChange={e=>setMvtForm(f=>({...f,entonnageVendangeId:e.target.value}))}>
-                      <option value="">Selectionner...</option>
-                      {vendanges.filter(v=>v.cuveTailleId===mvtForm.entonnageCuveId||v.cuveCuveeId===mvtForm.entonnageCuveId||v.cuveCuveeBId===mvtForm.entonnageCuveId).map(v=>(
-                        <option key={v.id} value={v.id}>{fmt(v.date)} - {v.cuveeCreee||"Marc "+v.numeroMarc} - Marc {v.numeroMarc}</option>
-                      ))}
-                      {vendanges.filter(v=>v.cuveTailleId===mvtForm.entonnageCuveId||v.cuveCuveeId===mvtForm.entonnageCuveId||v.cuveCuveeBId===mvtForm.entonnageCuveId).length===0&&
-                        vendanges.map(v=><option key={v.id} value={v.id}>{fmt(v.date)} - {v.cuveeCreee||"Marc "+v.numeroMarc} - Marc {v.numeroMarc}</option>)
-                      }
-                    </select>
-                    {mvtForm.entonnageVendangeId&&(()=>{
-                      const vd = vendanges.find(v=>v.id===mvtForm.entonnageVendangeId);
-                      return vd?.numeroMarc&&<div style={{fontSize:"11px",color:"#7a5200",marginTop:"3px"}}>Marc {vd.numeroMarc} sera reporté sur les futs destination</div>;
-                    })()}
-                  </div>
-                  <div><span style={s.lbl}>Volume a entonner (HL)</span>
-                    <input type="number" step="0.1" style={s.inp} placeholder="0" value={mvtForm.volume||""} onChange={e=>setMvtForm(f=>({...f,volume:e.target.value}))}/></div>
                   <div>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"4px"}}>
                       <span style={s.lbl}>Futs destination</span>
