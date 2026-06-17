@@ -459,6 +459,8 @@ export default function App() {
   const [filterFut,   setFilterFut]   = useState("");
   const [filterMvtType, setFilterMvtType] = useState('');
   const [filterMvtAnnee, setFilterMvtAnnee] = useState(() => new Date().getFullYear().toString());
+  const [mouvementsClotures, setMouvementsClotures] = useState([]);
+  const [editingMvt, setEditingMvt] = useState(null);
   const [showMvtForm, setShowMvtForm] = useState(false);
   const [showDegForm, setShowDegForm] = useState(false);
   const [showImport,  setShowImport]  = useState(false);
@@ -1054,6 +1056,7 @@ export default function App() {
     ["amendements",  setAmendements],
     ["clotures",     setClotures],
     ["campagnesClosees", (data)=>setCampagnesClosees(data.filter(d=>d.campagne).map(d=>d.campagne))],
+    ["mouvementsClotures", (data)=>setMouvementsClotures(data.filter(d=>d.annee).map(d=>d.annee))],
       ["coiffes",        setCoiffesStock],
     ["traitements",  setTraitements],
     ["cuvesCuverie",  setCuvesCuverie],
@@ -1342,6 +1345,18 @@ export default function App() {
     setVendangeForm({...VENDANGE_EMPTY,...v});
     setEditingVendange(v); setShowVendangeForm(true);
   };
+
+  const cloturerMvtCampagne = (annee) => {
+    if(!window.confirm(`Cloturer la campagne ${annee} ? Les mouvements ne pourront plus etre modifies.`)) return;
+    setMouvementsClotures(prev=>[...new Set([...prev, String(annee)])]);
+    fbSave("mouvementsClotures", String(annee), {annee: String(annee), closedAt: new Date().toISOString()});
+  };
+  const rouvrirMvtCampagne = (annee) => {
+    if(!window.confirm(`Rouvrir la campagne ${annee} ?`)) return;
+    setMouvementsClotures(prev=>prev.filter(a=>a!==String(annee)));
+    fbDelete("mouvementsClotures", String(annee));
+  };
+  const isMvtCampagneClosed = (annee) => mouvementsClotures.includes(String(annee));
 
   const exportMouvementsCSV = (annee) => {
     const mvts = [...mouvements].sort((a,b)=>new Date(b.date)-new Date(a.date)).filter(m=>m.date?.slice(0,4)===annee);
@@ -1799,6 +1814,16 @@ export default function App() {
       mvtsEntonnage.forEach(m=>saveMouvement(m));
     }
 
+    // Si modification d'un mouvement existant
+    if(editingMvt) {
+      const updated = {...editingMvt, ...mvtForm, id:editingMvt.id};
+      setMouvements(prev=>prev.map(m=>m.id===editingMvt.id?updated:m));
+      saveMouvement(updated);
+      setEditingMvt(null);
+      setShowMvtForm(false);
+      setMvtForm({type:"ouillage",date:new Date().toISOString().slice(0,16),operateur:"",futSource:[],futDest:"",volume:"",notes:"",produit:"",dosage:"",numeroLot:""});
+      return;
+    }
     if(mvtForm.type==="ajout_produit" && !mvtForm.numeroLot.trim()) return alert("Le numéro de lot est obligatoire pour un ajout de produit.");
     // Créer un mouvement par fut pour perte et ouillage
     if(mvtForm.type==="perte" && mvtForm.futSource.length>0) {
@@ -2021,12 +2046,18 @@ export default function App() {
         </div>
         <div style={{color:"#6a5838",fontStyle:"italic",fontSize:"11px"}}>{m.notes}</div>
         <div style={{color:"#8a7248",fontSize:"11px"}}>{m.operateur}</div>
-        <div style={{textAlign:"right"}}>
-          <button title="Annuler ce mouvement"
+        <div style={{textAlign:"right",display:"flex",flexDirection:"column",gap:"4px"}}>
+          {!isMvtCampagneClosed(m.date?.slice(0,4))&&<button title="Modifier"
+            style={{background:"#f5e8cc",color:"#7a5200",border:"1px solid #d4c4a0",borderRadius:"4px",padding:"4px 7px",fontSize:"10px",cursor:"pointer",fontFamily:"monospace",fontWeight:600}}
+            onClick={()=>{setEditingMvt(m);setMvtForm({...m});setShowMvtForm(true);}}>
+            Modifier
+          </button>}
+          {!isMvtCampagneClosed(m.date?.slice(0,4))&&<button title="Annuler ce mouvement"
             style={{background:"#fce8e8",color:"#cc2222",border:"1px solid #f0b4b4",borderRadius:"4px",padding:"4px 7px",fontSize:"10px",cursor:"pointer",fontFamily:"monospace",fontWeight:600,whiteSpace:"nowrap"}}
             onClick={()=>annulerMouvement(m)}>
-            Annuler
-          </button>
+            Supprimer
+          </button>}
+          {isMvtCampagneClosed(m.date?.slice(0,4))&&<span style={{fontSize:"9px",color:"#9a8870",fontStyle:"italic"}}>Clôturé</span>}
         </div>
       </div>
     );
@@ -4848,9 +4879,12 @@ export default function App() {
               return (
                 <div style={{display:"flex",gap:"0",marginBottom:"20px",borderBottom:"1px solid #d4c4a0",flexWrap:"wrap"}}>
                   {annees.map(a=>(
-                    <button key={a} onClick={()=>setFilterMvtAnnee(a)} style={{padding:"8px 16px",border:"none",borderBottom:filterMvtAnnee===a?"2px solid #b8860b":"2px solid transparent",background:"transparent",color:filterMvtAnnee===a?"#7a5200":"#9a8870",fontWeight:filterMvtAnnee===a?500:400,fontSize:"13px",cursor:"pointer",fontFamily:"Georgia,serif"}}>
-                      {a} <span style={{fontSize:"10px",color:"#9a8870"}}>({mouvements.filter(m=>m.date?.slice(0,4)===a).length})</span>
-                    </button>
+                    <div key={a} style={{display:"flex",alignItems:"center"}}>
+                      <button onClick={()=>setFilterMvtAnnee(a)} style={{padding:"8px 12px",border:"none",borderBottom:filterMvtAnnee===a?"2px solid #b8860b":"2px solid transparent",background:"transparent",color:filterMvtAnnee===a?"#7a5200":"#9a8870",fontWeight:filterMvtAnnee===a?500:400,fontSize:"13px",cursor:"pointer",fontFamily:"Georgia,serif"}}>
+                        {a} <span style={{fontSize:"10px",color:"#9a8870"}}>({mouvements.filter(m=>m.date?.slice(0,4)===a).length})</span>
+                        {isMvtCampagneClosed(a)&&<span style={{fontSize:"9px",color:"#cc2222",marginLeft:"4px"}}>🔒</span>}
+                      </button>
+                    </div>
                   ))}
                 </div>
               );
@@ -4867,6 +4901,10 @@ export default function App() {
                 <option value="">Tous opérateurs</option>
                 {degustateurs.map(d=><option key={d.nom} value={d.nom}>{d.nom}{!d.actif?" (absent)":""}</option>)}
               </select>
+              {!isMvtCampagneClosed(filterMvtAnnee)
+                ? <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>cloturerMvtCampagne(filterMvtAnnee)}>Clôturer</button>
+                : <button style={{...s.ghostSm,fontSize:"10px"}} onClick={()=>rouvrirMvtCampagne(filterMvtAnnee)}>Rouvrir</button>
+              }
               <button style={{...s.ghostSm,fontSize:"10px",color:"#2d6a00",borderColor:"#7ab848"}} onClick={()=>exportMouvementsCSV(filterMvtAnnee)}>↓ CSV</button>
               <button style={{...s.ghostSm,fontSize:"10px",color:"#8B0000",borderColor:"#c85050"}} onClick={()=>exportMouvementsPDF(filterMvtAnnee)}>↓ PDF</button>
               <span style={{color:"#8a7248",fontSize:"11px",marginLeft:"auto"}}>{filteredMouvements.length} mouvements</span>
