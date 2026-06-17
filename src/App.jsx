@@ -1953,9 +1953,21 @@ export default function App() {
         <div>
           {srcs.length>0&&<div style={{marginBottom:"3px"}}><span style={{color:"#8a7248",marginRight:"4px"}}>De :</span>{srcs.map(f=><span key={f.id} style={{color:"#b8860b",marginRight:"6px",cursor:"pointer",textDecoration:"underline"}} onClick={()=>{setSelectedFut(f.id);setView("fiche");setFicheTab("degustations");}}>{f.id}<span style={{color:"#7a6840",textDecoration:"none"}}> ({f.denomination})</span></span>)}</div>}
           {dest&&<div><span style={{color:"#8a7248",marginRight:"4px"}}>Vers :</span><span style={{color:"#b8860b",cursor:"pointer",textDecoration:"underline"}} onClick={()=>{setSelectedFut(dest.id);setView("fiche");setFicheTab("degustations");}}>{dest.id}<span style={{color:"#7a6840",textDecoration:"none"}}> ({dest.denomination})</span></span></div>}
-          {m.type==="entonnage"?(
-            <div style={{color:"#6a5838",marginTop:"2px"}}>Vol : <strong style={{color:"#1a1205"}}>{(m.entonnageFuts||[]).reduce((s,ef)=>s+(parseFloat(ef.volume)||0),0).toFixed(2)} HL</strong></div>
-          ):(
+          {m.type==="entonnage"&&(()=>{
+            const cuveSrc = cuvesCuverie.find(c=>c.id===m.entonnageCuveId);
+            // Find vendange from notes
+            const marcMatch = m.notes&&m.notes.match(/Marc (\d+)/);
+            const marcNum = marcMatch?marcMatch[1]:null;
+            const vendangeSrc = marcNum ? vendanges.find(v=>v.numeroMarc===marcNum) : null;
+            return (
+              <div style={{marginTop:"2px"}}>
+                {cuveSrc&&<div style={{color:"#6a5838"}}>De : <strong style={{color:"#7a5200"}}>{cuveSrc.nom}</strong></div>}
+                {marcNum&&<div style={{color:"#6a5838"}}>Marc : <span style={{color:"#2d6a00",cursor:"pointer",textDecoration:"underline",fontWeight:500}} onClick={()=>{if(vendangeSrc){setView("vendanges");}}}>{marcNum}{vendangeSrc?" - "+vendangeSrc.cuveeCreee:""}</span></div>}
+                <div style={{color:"#6a5838"}}>Vol : <strong style={{color:"#1a1205"}}>{m.volume?(parseInt(m.volume)/100).toFixed(2)+" HL":""}</strong></div>
+              </div>
+            );
+          })()}
+          {m.type!=="entonnage"&&(
             m.volume&&<div style={{color:"#6a5838",marginTop:"2px"}}>Vol : <strong style={{color:"#1a1205"}}>{m.volume}L</strong></div>
           )}
           {m.produit&&<div style={{color:"#6a5838",marginTop:"2px"}}>{m.produit}{m.dosage&&` - ${m.dosage}`}{m.numeroLot&&<span style={{marginLeft:"6px",fontSize:"10px",background:"#fff8ee",border:"1px solid #d4c4a0",borderRadius:"3px",padding:"1px 5px",color:"#7a5200",fontFamily:"monospace"}}>Lot: {m.numeroLot}</span>}</div>}
