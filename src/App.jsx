@@ -3702,12 +3702,14 @@ export default function App() {
                                     const marcMatch = m.notes&&m.notes.match(/Marc (\d+)/);
                                     const marcNum = marcMatch?marcMatch[1]:null;
                                     const vendangeSrc = marcNum ? vendanges.find(v=>v.numeroMarc===marcNum) : null;
+                                    // Extract cuvee from notes "Entonnage depuis X - Marc Y - CuveeName"
+                                    const cuveeMatch = m.notes&&m.notes.match(/Marc \d+ - (.+)$/);
+                                    const cuveeNom = cuveeMatch?cuveeMatch[1]:null;
                                     return (<>
                                       {srcIds.map(id=>{ const t=getTonneau(id); return t?<span key={id} style={{color:"#b8860b",cursor:"pointer",textDecoration:"underline",marginRight:"4px"}} onClick={()=>{setSelectedFut(id);setFicheTab("historique");}}>{id}</span>:null; })}
                                       {destId&&!srcIds.includes(destId)&&getTonneau(destId)&&<span style={{color:"#185FA5",cursor:"pointer",textDecoration:"underline",marginRight:"4px"}} onClick={()=>{setSelectedFut(destId);setFicheTab("historique");}}>→ {destId}</span>}
                                       {marcNum&&<span style={{background:"#7a5200",color:"#fff",borderRadius:"4px",padding:"1px 7px",fontSize:"10px",fontWeight:600,cursor:"pointer",marginRight:"4px"}} onClick={()=>setView("vendanges")}>Marc {marcNum}</span>}
-                                      {vendangeSrc?.cuveeCreee&&<span style={{color:"#7a5200",fontWeight:500,marginRight:"4px"}}>{vendangeSrc.cuveeCreee}</span>}
-                                      {!vendangeSrc&&selectedT?.denomination&&<span style={{color:"#7a5200",fontWeight:500,marginRight:"4px"}}>{selectedT.denomination}</span>}
+                                      {(cuveeNom||vendangeSrc?.cuveeCreee)&&<span style={{color:"#7a5200",fontWeight:600,marginRight:"4px",fontSize:"12px"}}>{cuveeNom||vendangeSrc.cuveeCreee}</span>}
                                       {m.volume&&<span style={{color:"#b8860b",fontFamily:"monospace",marginLeft:"4px",fontWeight:500}}>{m.type==="entonnage"?(parseInt(m.volume)/100).toFixed(2)+" HL":m.volume+"L"}</span>}
                                     </>);
                                   })()}
