@@ -3845,7 +3845,6 @@ export default function App() {
                             <div style={{fontFamily:"Georgia,serif",fontSize:"15px",color:"#b8860b",borderBottom:"0.5px solid #d4c4a0",paddingBottom:"6px",marginBottom:"8px"}}>
                               Campagne {year}
                               {mvtsParAn[year]&&<span style={{fontSize:"11px",color:"#9a8870",fontWeight:400,marginLeft:"8px"}}>{mvtsParAn[year].length} mvt(s)</span>}
-                              {notesParAn[year]&&<span style={{fontSize:"11px",color:"#9a8870",fontWeight:400,marginLeft:"8px"}}>{notesParAn[year].length} deg.</span>}
                             </div>
                             {(mvtsParAn[year]||[]).map((m,i)=>(
                               <div key={i} style={{display:"flex",gap:"8px",padding:"5px 0",borderBottom:"0.5px solid #ede5d4",fontSize:"12px"}}>
