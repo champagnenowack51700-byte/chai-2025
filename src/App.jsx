@@ -3694,10 +3694,21 @@ export default function App() {
                               <div key={i} style={{display:"flex",gap:"8px",padding:"5px 0",borderBottom:"0.5px solid #ede5d4",fontSize:"12px"}}>
                                 <div style={{width:"80px",color:"#9a8870",flexShrink:0}}>{m.date}</div>
                                 <div style={{flex:1}}>
-                                  <span style={{background:"#e8f0e8",color:"#2d6a00",borderRadius:"3px",padding:"1px 6px",fontSize:"10px",marginRight:"6px"}}>{m.type}</span>
-                                  {m.lieuDepart&&<span style={{color:"#6a5838"}}>{m.lieuDepart}</span>}
-                                  {m.lieuArrivee&&<span style={{color:"#9a8870"}}> -> {m.lieuArrivee}</span>}
-                                  {m.volume&&<span style={{color:"#b8860b",fontFamily:"monospace",marginLeft:"6px",fontWeight:500}}>{m.volume}L</span>}
+                                  <span style={{background:"#e8f0e8",color:"#2d6a00",borderRadius:"3px",padding:"1px 6px",fontSize:"10px",marginRight:"6px"}}>{typeLabel(m.type)}</span>
+                                  {/* Cuvee */}
+                                  {(()=>{
+                                    const srcIds = m.futSource||[];
+                                    const destId = m.futDest||m.entonnageCuveId;
+                                    const marcMatch = m.notes&&m.notes.match(/Marc (\d+)/);
+                                    const marcNum = marcMatch?marcMatch[1]:null;
+                                    const vendangeSrc = marcNum ? vendanges.find(v=>v.numeroMarc===marcNum) : null;
+                                    return (<>
+                                      {srcIds.map(id=>{ const t=getTonneau(id); return t?<span key={id} style={{color:"#b8860b",cursor:"pointer",textDecoration:"underline",marginRight:"4px"}} onClick={()=>{setSelectedFut(id);setFicheTab("historique");}}>{id}</span>:null; })}
+                                      {destId&&!srcIds.includes(destId)&&getTonneau(destId)&&<span style={{color:"#185FA5",cursor:"pointer",textDecoration:"underline",marginRight:"4px"}} onClick={()=>{setSelectedFut(destId);setFicheTab("historique");}}>→ {destId}</span>}
+                                      {marcNum&&<span style={{background:"#7a5200",color:"#fff",borderRadius:"4px",padding:"1px 7px",fontSize:"10px",fontWeight:600,cursor:"pointer",marginRight:"4px"}} onClick={()=>setView("vendanges")}>Marc {marcNum}{vendangeSrc?" - "+vendangeSrc.cuveeCreee:""}</span>}
+                                      {m.volume&&<span style={{color:"#b8860b",fontFamily:"monospace",marginLeft:"4px",fontWeight:500}}>{m.type==="entonnage"?(parseInt(m.volume)/100).toFixed(2)+" HL":m.volume+"L"}</span>}
+                                    </>);
+                                  })()}
                                   {m.notes&&<div style={{color:"#9a8870",fontStyle:"italic",fontSize:"11px"}}>{m.notes}</div>}
                                 </div>
                               </div>
