@@ -1593,7 +1593,7 @@ export default function App() {
     const vol = parseFloat(mvt.volume)||0;
     let upd = [...tonneaux];
     if(mvt.type==="soutirage" && mvt.futSource?.[0] && mvt.futDest){
-      upd=upd.map(t=>{ if(t.id===mvt.futSource[0]) return{...t,contenuActuel:Math.min(t.volume,t.contenuActuel+vol)}; if(t.id===mvt.futDest) return{...t,contenuActuel:Math.max(0,t.contenuActuel-vol)}; return t; });
+      upd=upd.map(t=>{ if(t.id===mvt.futSource[0]) return{...t,contenuActuel:Math.min(t.volume,t.contenuActuel+vol),statut:"actif"}; if(t.id===mvt.futDest){ const c=Math.max(0,t.contenuActuel-vol); return{...t,contenuActuel:c,statut:c<=0?"vide":t.statut}; } return t; });
     } else if(["ecoulage","perte"].includes(mvt.type) && mvt.futSource?.[0]){
       upd=upd.map(t=>t.id===mvt.futSource[0]?{...t,contenuActuel:Math.min(t.volume,t.contenuActuel+vol)}:t);
     } else if(["remplissage","ouillage"].includes(mvt.type) && mvt.futDest){
@@ -1654,7 +1654,7 @@ export default function App() {
     const vol = parseFloat(mvtForm.volume)||0;
     let upd = [...tonneaux];
     if(mvtForm.type==="soutirage" && mvtForm.futSource[0] && mvtForm.futDest){
-      upd=upd.map(t=>{ if(t.id===mvtForm.futSource[0]) return{...t,contenuActuel:Math.max(0,t.contenuActuel-vol)}; if(t.id===mvtForm.futDest) return{...t,contenuActuel:Math.min(t.volume,t.contenuActuel+vol)}; return t; });
+      upd=upd.map(t=>{ if(t.id===mvtForm.futSource[0]){ const c=Math.max(0,t.contenuActuel-vol); return{...t,contenuActuel:c,statut:c<=0?"vide":t.statut}; } if(t.id===mvtForm.futDest) return{...t,contenuActuel:Math.min(t.volume,t.contenuActuel+vol),statut:"actif"}; return t; });
     } else if(mvtForm.type==="assemblage" && mvtForm.futDest){
       const tot=mvtForm.futSource.reduce((s,id)=>s+(parseFloat(mvtForm.assemblageVolumes[id])||getTonneau(id)?.contenuActuel||0),0);
       upd=upd.map(t=>{
@@ -1684,7 +1684,7 @@ export default function App() {
         return t;
       });
     } else if(mvtForm.type==="ecoulage" && mvtForm.futSource[0]){
-      upd=upd.map(t=>t.id===mvtForm.futSource[0]?{...t,contenuActuel:Math.max(0,t.contenuActuel-vol)}:t);
+      upd=upd.map(t=>{ if(t.id===mvtForm.futSource[0]){ const c=Math.max(0,t.contenuActuel-vol); return {...t,contenuActuel:c,statut:c<=0?"vide":t.statut}; } return t; });
     } else if(mvtForm.type==="vidange"){
       upd=upd.map(t=>mvtForm.futSource.includes(t.id)?{...t,contenuActuel:0,statut:"vide"}:t);
     } else if(mvtForm.type==="ouillage" && mvtForm.futSource[0]){
