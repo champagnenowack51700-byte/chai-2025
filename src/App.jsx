@@ -1343,6 +1343,45 @@ export default function App() {
     setEditingVendange(v); setShowVendangeForm(true);
   };
 
+  const exportMouvementsCSV = (annee) => {
+    const mvts = [...mouvements].sort((a,b)=>new Date(b.date)-new Date(a.date)).filter(m=>m.date?.slice(0,4)===annee);
+    const headers = ["Date","Type","Fut source","Fut destination","Volume","Operateur","Notes"];
+    const rows = mvts.map(m=>[
+      m.date||"", typeLabel(m.type),
+      (m.futSource||[]).join(", ")||"",
+      m.futDest||"",
+      m.type==="entonnage"?(m.entonnageFuts||[]).reduce((s,ef)=>s+(parseFloat(ef.volume)||0),0).toFixed(2)+" HL":(m.volume?m.volume+"L":""),
+      m.operateur||"", m.notes||""
+    ]);
+    const csv = [headers,...rows].map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(";")).join("\n");
+    const blob = new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href=url; a.download=`mouvements_${annee}.csv`; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportMouvementsPDF = (annee) => {
+    const mvts = [...mouvements].sort((a,b)=>new Date(b.date)-new Date(a.date)).filter(m=>m.date?.slice(0,4)===annee);
+    const rows = mvts.map(m=>`<tr>
+      <td>${m.date||"-"}</td>
+      <td><span style="background:#e8f0e8;color:#2d6a00;border-radius:3px;padding:1px 5px;font-size:10px">${typeLabel(m.type)}</span></td>
+      <td style="color:#b8860b">${(m.futSource||[]).join(", ")||"-"}</td>
+      <td style="color:#185FA5">${m.futDest||"-"}</td>
+      <td style="font-family:monospace;font-weight:500">${m.type==="entonnage"?(m.entonnageFuts||[]).reduce((s,ef)=>s+(parseFloat(ef.volume)||0),0).toFixed(2)+" HL":(m.volume?m.volume+"L":"-")}</td>
+      <td>${m.operateur||"-"}</td>
+      <td style="font-style:italic;color:#6a5838;font-size:10px">${m.notes||""}</td>
+    </tr>`).join("");
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+    <style>body{font-family:Georgia,serif;margin:20px;color:#1a1205}h1{color:#7a5200;border-bottom:1px solid #d4c4a0;padding-bottom:8px}
+    table{width:100%;border-collapse:collapse;font-size:10px}th{background:#f5e8cc;color:#7a5200;padding:5px;text-align:left;border:0.5px solid #d4c4a0}
+    td{padding:4px 5px;border:0.5px solid #ede5d4}tr:nth-child(even){background:#fffdf7}</style></head>
+    <body><h1>Champagne Nowack — Mouvements ${annee}</h1>
+    <p style="color:#9a8870;font-size:12px">${mvts.length} mouvement(s) — Campagne ${annee}</p>
+    <table><thead><tr><th>Date</th><th>Type</th><th>Source</th><th>Destination</th><th>Volume</th><th>Operateur</th><th>Notes</th></tr></thead>
+    <tbody>${rows}</tbody></table></body></html>`;
+    const w = window.open("","_blank"); w.document.write(html); w.document.close(); setTimeout(()=>w.print(),500);
+  };
+
   const exportStockCSV = () => {
     const now = new Date();
     const lots = stockBouteilles.map(l=>({...l, mois:l.dateTirage?Math.floor((now-new Date(l.dateTirage))/(1000*60*60*24*30.5)):0}));
@@ -1898,7 +1937,7 @@ export default function App() {
     if(searchFut && !t.id.toLowerCase().includes(searchFut.toLowerCase()) && !t.denomination.toLowerCase().includes(searchFut.toLowerCase())) return false;
     return true;
   });
-  const filteredMouvements = mouvements.filter(m=>{
+  const filteredMouvements = [...mouvements].sort((a,b)=>new Date(b.date)-new Date(a.date)).filter(m=>{
     if(filterMvtAnnee && m.date?.slice(0,4)!==filterMvtAnnee) return false;
     if(filterMvtType && m.type!==filterMvtType) return false;
     if(filterOp && m.operateur!==filterOp) return false;
@@ -4828,6 +4867,8 @@ export default function App() {
                 <option value="">Tous opérateurs</option>
                 {degustateurs.map(d=><option key={d.nom} value={d.nom}>{d.nom}{!d.actif?" (absent)":""}</option>)}
               </select>
+              <button style={{...s.ghostSm,fontSize:"10px",color:"#2d6a00",borderColor:"#7ab848"}} onClick={()=>exportMouvementsCSV(filterMvtAnnee)}>↓ CSV</button>
+              <button style={{...s.ghostSm,fontSize:"10px",color:"#8B0000",borderColor:"#c85050"}} onClick={()=>exportMouvementsPDF(filterMvtAnnee)}>↓ PDF</button>
               <span style={{color:"#8a7248",fontSize:"11px",marginLeft:"auto"}}>{filteredMouvements.length} mouvements</span>
             </div>
             <div style={s.card}>
