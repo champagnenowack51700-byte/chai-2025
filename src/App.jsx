@@ -1927,7 +1927,7 @@ export default function App() {
             <i className="ti ti-trash"/>
           </button>
         </div>
-        <div style={{cursor:"pointer"}} onClick={()=>{setSelectedFut(t.id);setView("fiche");setFicheTab("degustations");}}>
+        <div style={{cursor:"pointer"}} onClick={()=>{setSelectedFut(t.id);setView("fiche");setFicheTab("historique");}}>
           {t.statut==="surveillance"&&<div style={{fontSize:"9px",background:"#c47800",color:"#fff",padding:"1px 6px",marginBottom:"3px",borderRadius:"3px",display:"inline-block",fontWeight:600,letterSpacing:"0.05em"}}>SURVEILLANCE</div>}
           <div style={{fontSize:"13px",fontWeight:600,color:"#1a1205",marginBottom:"1px",paddingLeft:"6px"}}>{t.id}</div>
           <div style={{fontSize:"10px",color:"#6a5838",marginBottom:"2px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",paddingLeft:"6px"}}>{t.denomination}</div>
@@ -1955,8 +1955,8 @@ export default function App() {
           <div style={{color:"#8a7248",fontSize:"10px",marginTop:"3px"}}>{fmtDate(m.timestamp)}</div>
         </div>
         <div>
-          {srcs.length>0&&<div style={{marginBottom:"3px"}}><span style={{color:"#8a7248",marginRight:"4px"}}>De :</span>{srcs.map(f=><span key={f.id} style={{color:"#b8860b",marginRight:"6px",cursor:"pointer",textDecoration:"underline"}} onClick={()=>{setSelectedFut(f.id);setView("fiche");setFicheTab("degustations");}}>{f.id}<span style={{color:"#7a6840",textDecoration:"none"}}> ({f.denomination})</span></span>)}</div>}
-          {dest&&<div><span style={{color:"#8a7248",marginRight:"4px"}}>Vers :</span><span style={{color:"#b8860b",cursor:"pointer",textDecoration:"underline"}} onClick={()=>{setSelectedFut(dest.id);setView("fiche");setFicheTab("degustations");}}>{dest.id}<span style={{color:"#7a6840",textDecoration:"none"}}> ({dest.denomination})</span></span></div>}
+          {srcs.length>0&&<div style={{marginBottom:"3px"}}><span style={{color:"#8a7248",marginRight:"4px"}}>De :</span>{srcs.map(f=><span key={f.id} style={{color:"#b8860b",marginRight:"6px",cursor:"pointer",textDecoration:"underline"}} onClick={()=>{setSelectedFut(f.id);setView("fiche");setFicheTab("historique");}}>{f.id}<span style={{color:"#7a6840",textDecoration:"none"}}> ({f.denomination})</span></span>)}</div>}
+          {dest&&<div><span style={{color:"#8a7248",marginRight:"4px"}}>Vers :</span><span style={{color:"#b8860b",cursor:"pointer",textDecoration:"underline"}} onClick={()=>{setSelectedFut(dest.id);setView("fiche");setFicheTab("historique");}}>{dest.id}<span style={{color:"#7a6840",textDecoration:"none"}}> ({dest.denomination})</span></span></div>}
           {m.type==="entonnage"&&(()=>{
             const cuveSrc = cuvesCuverie.find(c=>c.id===m.entonnageCuveId);
             // Find vendange from notes
@@ -3453,7 +3453,7 @@ export default function App() {
                         return (
                           <tr key={t.id}
                             style={{borderBottom:"1px solid #e8dcc6",cursor:"pointer",background:i%2===0?"transparent":"#fffbf3",transition:"background 0.1s"}}
-                            onClick={()=>{setSelectedFut(t.id);setView("fiche");setFicheTab("degustations");}}>
+                            onClick={()=>{setSelectedFut(t.id);setView("fiche");setFicheTab("historique");}}>
                             <td style={{padding:"9px 10px",color:"#b8860b",fontWeight:700,fontFamily:"'IBM Plex Mono',monospace"}}>{t.id}</td>
                             <td style={{padding:"9px 10px",color:"#1a1205",fontWeight:500,maxWidth:"160px"}}>
                               <div style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.denomination}</div>
