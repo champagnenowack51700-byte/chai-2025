@@ -1750,6 +1750,7 @@ export default function App() {
         futDest:ef.futId,
         volume:String(Math.round(parseFloat(ef.volume)*100)),
         notes:`Entonnage depuis ${cuveSrc?.nom||mvtForm.entonnageCuveId}${vendangeSource?" - Marc "+vendangeSource.numeroMarc+" - "+vendangeSource.cuveeCreee:""}`,
+        cuveeCreee:vendangeSource?.cuveeCreee||"",
         entonnageCuveId:mvtForm.entonnageCuveId,
         timestamp:new Date().toISOString()
       }));
@@ -1962,7 +1963,7 @@ export default function App() {
             // Find vendange from notes
             const marcMatch = m.notes&&m.notes.match(/Marc (\d+)/);
             const marcNum = marcMatch?marcMatch[1]:null;
-            const vendangeSrc = marcNum ? vendanges.find(v=>v.numeroMarc===marcNum) : null;
+            const vendangeSrc = marcNum ? vendanges.find(v=>String(v.numeroMarc)===String(marcNum)) : null;
             return (
               <div style={{marginTop:"2px"}}>
                 {cuveSrc&&<div style={{color:"#6a5838"}}>De : <strong style={{color:"#7a5200"}}>{cuveSrc.nom}</strong></div>}
@@ -3701,10 +3702,10 @@ export default function App() {
                                     const destId = m.futDest||m.entonnageCuveId;
                                     const marcMatch = m.notes&&m.notes.match(/Marc (\d+)/);
                                     const marcNum = marcMatch?marcMatch[1]:null;
-                                    const vendangeSrc = marcNum ? vendanges.find(v=>v.numeroMarc===marcNum) : null;
+                                    const vendangeSrc = marcNum ? vendanges.find(v=>String(v.numeroMarc)===String(marcNum)) : null;
                                     // Extract cuvee from notes "Entonnage depuis X - Marc Y - CuveeName"
                                     const cuveeMatch = m.notes&&m.notes.match(/Marc \d+ - (.+)$/);
-                                    const cuveeNom = cuveeMatch?cuveeMatch[1]:null;
+                                    const cuveeNom = m.cuveeCreee||cuveeMatch?.[1]||null;
                                     return (<>
                                       {srcIds.map(id=>{ const t=getTonneau(id); return t?<span key={id} style={{color:"#b8860b",cursor:"pointer",textDecoration:"underline",marginRight:"4px"}} onClick={()=>{setSelectedFut(id);setFicheTab("historique");}}>{id}</span>:null; })}
                                       {destId&&!srcIds.includes(destId)&&getTonneau(destId)&&<span style={{color:"#185FA5",cursor:"pointer",textDecoration:"underline",marginRight:"4px"}} onClick={()=>{setSelectedFut(destId);setFicheTab("historique");}}>→ {destId}</span>}
