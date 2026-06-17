@@ -2054,9 +2054,9 @@ export default function App() {
           <div style={{fontSize:"13px",fontWeight:600,color:"#1a1205",marginBottom:"1px",paddingLeft:"6px"}}>{t.id}</div>
           <div style={{fontSize:"10px",color:"#6a5838",marginBottom:"2px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",paddingLeft:"6px"}}>{t.denomination}</div>
           {t.certif==="BIO"&&<div style={{paddingLeft:"6px",marginBottom:"4px"}}><span style={{fontSize:"10px",background:"#2d6a00",color:"#fff",borderRadius:"3px",padding:"1px 6px",fontWeight:600}}>🌿 BIO</span></div>}
-          {t.marc&&t.marc.includes(" + ")&&(
+          {t.marc&&String(t.marc).includes(" + ")&&(
             <div style={{paddingLeft:"6px",marginBottom:"4px"}}>
-              {t.marc.split(" + ").map((m,i)=>(
+              {String(t.marc).split(" + ").map((m,i)=>(
                 <span key={i} style={{fontSize:"9px",background:"#7a5200",color:"#fff",borderRadius:"3px",padding:"1px 4px",fontWeight:600,marginRight:"3px"}}>M{m}</span>
               ))}
             </div>
