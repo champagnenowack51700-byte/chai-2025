@@ -429,7 +429,7 @@ export default function App() {
 
   const [view,        setView]        = useState("dashboard");
   const [selectedFut, setSelectedFut] = useState(null);
-  const [ficheTab,    setFicheTab]    = useState("infos"); // infos | mouvements | degustations
+  const [ficheTab,    setFicheTab]    = useState("historique");
   const [searchFut,   setSearchFut]   = useState("");
   const [filterDenom,      setFilterDenom]      = useState("");
   const [filterStatut,     setFilterStatut]     = useState("");
@@ -3661,7 +3661,7 @@ export default function App() {
                 {/* Colonne droite - onglets */}
                 <div style={s.card}>
                   <div style={{display:"flex",borderBottom:"1px solid #cfc0a0",marginBottom:"16px",gap:"0"}}>
-                    {[["degustations",`Degustations (${notesForFut(selectedT.id).length})`],["mouvements",`Mouvements (${selectedMvts.length})`],["historique","Historique"]].map(([tab,lbl])=>(
+                    {[["historique","Historique"],["degustations",`Degustations (${notesForFut(selectedT.id).length})` ]].map(([tab,lbl])=>(
                       <button key={tab} style={s.tabBtn(ficheTab===tab)} onClick={()=>setFicheTab(tab)}>{lbl}</button>
                     ))}
                   </div>
