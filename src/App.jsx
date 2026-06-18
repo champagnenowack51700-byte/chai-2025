@@ -3713,6 +3713,28 @@ export default function App() {
             </div>
 
             {/* Colonne droite - gestion des dégustateurs */}
+            {/* Palmarès */}
+            <div style={{...s.card,marginBottom:"16px"}}>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#7a5200",marginBottom:"12px"}}>🏆 Palmarès</div>
+              {(()=>{
+                const allFuts = tonneaux.filter(t=>notesForFut(t.id).length>0);
+                const ranked = allFuts.map(t=>({
+                  t,
+                  ng: (notesForFut(t.id).map(d=>d.noteG).filter(Boolean).reduce((a,b)=>a+b,0)/notesForFut(t.id).map(d=>d.noteG).filter(Boolean).length)||0,
+                  nb: notesForFut(t.id).length
+                })).filter(r=>r.ng>0).sort((a,b)=>b.ng-a.ng).slice(0,5);
+                return ranked.map((r,i)=>(
+                  <div key={r.t.id} style={{display:"flex",alignItems:"center",gap:"8px",padding:"6px 0",borderBottom:"0.5px solid #ede5d4",cursor:"pointer"}} onClick={()=>{setSelectedFut(r.t.id);setView("fiche");setFicheTab("degustations");}}>
+                    <span style={{fontSize:"16px",width:"24px",textAlign:"center"}}>{["🥇","🥈","🥉","4️⃣","5️⃣"][i]}</span>
+                    <div style={{flex:1,overflow:"hidden"}}>
+                      <div style={{fontSize:"12px",fontWeight:600,color:"#1a1205",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.t.denomination||r.t.id}</div>
+                      <div style={{fontSize:"10px",color:"#9a8870"}}>{r.t.id} · {r.t.millesime||"-"} · {r.nb} note{r.nb>1?"s":""}</div>
+                    </div>
+                    <span style={{fontSize:"15px",fontWeight:700,color:r.ng>=4?"#1a7a40":r.ng>=3?"#b8860b":"#888"}}>{r.ng.toFixed(1)}</span>
+                  </div>
+                ));
+              })()}
+            </div>
             <div style={s.card}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px"}}>
                 <span style={{...s.lbl,marginBottom:0}}>Dégustateurs</span>
