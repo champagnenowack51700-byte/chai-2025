@@ -6118,6 +6118,7 @@ export default function App() {
                       <option value="maison">Vinification maison</option>
                       <option value="negoce_total">Vente negoce (total)</option>
                       <option value="negoce_partiel">Vente negoce (partiel)</option>
+                      <option value="prestation">Prestation de pressurage</option>
                     </select></div>
                   {(vendangeForm.destinationMarc==="negoce_total"||vendangeForm.destinationMarc==="negoce_partiel")&&(
                     <div><span style={s.lbl}>N° DAE</span>
