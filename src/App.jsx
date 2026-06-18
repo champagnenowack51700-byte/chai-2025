@@ -1808,6 +1808,7 @@ export default function App() {
       // Tous les marcs et cuvees des cuves sources
       const allMarcs = cuvesSrc.map(ec=>{ const vd=vendanges.find(v=>v.id===ec.vendangeId); return vd?.numeroMarc||null; }).filter(Boolean);
       const allCuvees = cuvesSrc.map(ec=>{ const vd=vendanges.find(v=>v.id===ec.vendangeId); return vd?.cuveeCreee||null; }).filter(Boolean);
+      const allCepages = [...new Set(cuvesSrc.flatMap(ec=>{ const vd=vendanges.find(v=>v.id===ec.vendangeId); const ids=vd?.parcelleIds&&vd.parcelleIds.length>0?vd.parcelleIds:(vd?.parcelleId?[vd.parcelleId]:[]); return ids.map(id=>parcelles.find(p=>p.id===id)?.cepage).filter(Boolean); }))];
       const vendangeSource = cuvesSrc[0]?.vendangeId ? vendanges.find(v=>v.id===cuvesSrc[0].vendangeId) : null;
       const anneeVendange = vendangeSource?.annee || new Date().getFullYear().toString();
       const cuveSrc = cuvesSrc.length>0 ? cuvesCuverie.find(c=>c.id===cuvesSrc[0].cuveId) : null;
@@ -1823,6 +1824,7 @@ export default function App() {
             appellation: t.appellation||("vins_clairs_"+anneeVendange),
             millesime: parseInt(anneeVendange)||t.millesime||null,
             certif: vendangeSource?.isBio?"BIO":t.certif||"",
+            cepage: allCepages.length>0?allCepages.join(" + "):t.cepage||"",
           };
           saveTonneau(updated);
           return updated;
@@ -2053,6 +2055,7 @@ export default function App() {
           {t.statut==="surveillance"&&<div style={{fontSize:"9px",background:"#c47800",color:"#fff",padding:"1px 6px",marginBottom:"3px",borderRadius:"3px",display:"inline-block",fontWeight:600,letterSpacing:"0.05em"}}>SURVEILLANCE</div>}
           <div style={{fontSize:"13px",fontWeight:600,color:"#1a1205",marginBottom:"1px",paddingLeft:"6px"}}>{t.id}</div>
           <div style={{fontSize:"10px",color:"#6a5838",marginBottom:"2px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",paddingLeft:"6px"}}>{t.denomination}</div>
+          {t.cepage&&<div style={{fontSize:"9px",color:"#9a8870",paddingLeft:"6px",marginBottom:"2px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.cepage}</div>}
           {t.certif==="BIO"&&<div style={{paddingLeft:"6px",marginBottom:"4px"}}><span style={{fontSize:"10px",background:"#2d6a00",color:"#fff",borderRadius:"3px",padding:"1px 6px",fontWeight:600}}>🌿 BIO</span></div>}
           {t.marc&&(
             <div style={{paddingLeft:"6px",marginBottom:"4px"}}>
@@ -3777,7 +3780,7 @@ export default function App() {
                         </div>
                       </div>
                     )}
-                    {[["N Marc",selectedT.statut==="vide"?"-":selectedT.marc||"-"],["Millesime vin",selectedT.statut==="vide"?"-":selectedT.millesime||"-"],["Certification",selectedT.statut==="vide"?"-":selectedT.certif==="BIO"?"🌿 BIO":selectedT.certif||"-"],["Tonnelier",selectedT.tonnelier||"-"],["Grain",selectedT.grain||"-"],["Chauffe",selectedT.chauffe||"-"],["Capacite",`${selectedT.volume} L`]].map(([k,v])=>(
+                    {[["Cepage",selectedT.cepage||"-"],["N Marc",selectedT.statut==="vide"?"-":selectedT.marc||"-"],["Millesime vin",selectedT.statut==="vide"?"-":selectedT.millesime||"-"],["Certification",selectedT.statut==="vide"?"-":selectedT.certif==="BIO"?"🌿 BIO":selectedT.certif||"-"],["Tonnelier",selectedT.tonnelier||"-"],["Grain",selectedT.grain||"-"],["Chauffe",selectedT.chauffe||"-"],["Capacite",`${selectedT.volume} L`]].map(([k,v])=>(
                       <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:"1px solid #d0c4a0",fontSize:"12px"}}>
                         <span style={{color:"#8a7248"}}>{k}</span><span style={{color:"#1a1205"}}>{v}</span>
                       </div>
