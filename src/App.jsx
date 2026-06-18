@@ -2270,7 +2270,8 @@ export default function App() {
                 return [
                   {lbl:"Volume Champagne",val:(totalVin/100).toFixed(2)+" HL",sub:`cap. ${(totalCap/100).toFixed(0)} HL`},
                   {lbl:"Volume tirable",val:totalTirable.toFixed(2)+" HL",sub:"~"+Math.floor(totalTirable*100/0.75).toLocaleString("fr-FR")+" btl 75cl",col:"#1a7a40"},
-                  ...(totalAutres>0?[{lbl:"Autres appellations",val:(totalAutres/100).toFixed(2)+" HL",sub:"Coteaux + Ratafia",col:"#8B0000"}]:[]),
+                  ...(futsActifs.filter(t=>t.appellation==="coteaux").reduce((s,t)=>s+(t.contenuActuel||0),0)>0?[{lbl:"Coteaux Champenois",val:(futsActifs.filter(t=>t.appellation==="coteaux").reduce((s,t)=>s+(t.contenuActuel||0),0)/100).toFixed(2)+" HL",sub:"",col:"#8B0000"}]:[]),
+                  ...(futsActifs.filter(t=>t.appellation==="ratafia").reduce((s,t)=>s+(t.contenuActuel||0),0)>0?[{lbl:"Ratafia",val:(futsActifs.filter(t=>t.appellation==="ratafia").reduce((s,t)=>s+(t.contenuActuel||0),0)/100).toFixed(2)+" HL",sub:"",col:"#5c2a08"}]:[]),
                 ].map((k,i)=>(
                   <div key={i} style={s.card}>
                     <div style={s.lbl}>{k.lbl}</div>
