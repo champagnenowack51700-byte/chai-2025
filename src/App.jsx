@@ -2143,14 +2143,27 @@ export default function App() {
 
   const NoteResume = ({futId}) => {
     const notes=notesForFut(futId); if(!notes.length) return <div style={{color:"#8a7248",fontSize:"13px",padding:"8px 0"}}>Aucune note de dégustation.</div>;
-    const ng=avgNoteG(futId); const nb=avgBoise(futId); const nl=avgLong(futId);
-    const sessionsUniques=[...new Set(notes.map(d=>d.session))];
+    const allYears=[...new Set(notes.map(d=>d.date?.slice(0,4)||"?"))].sort().reverse();
+    const [degAnnee, setDegAnnee] = React.useState(()=>new Date().getFullYear().toString());
+    const activeYear = allYears.includes(degAnnee)?degAnnee:allYears[0];
+    const notesAnnee = notes.filter(d=>(d.date?.slice(0,4)||"?")=== activeYear);
+    const ngVals=notesAnnee.map(d=>d.noteG).filter(Boolean); const ngAvg=ngVals.length?ngVals.reduce((a,b)=>a+b,0)/ngVals.length:null;
+    const nbVals=notesAnnee.map(d=>d.boise).filter(Boolean); const nbAvg=nbVals.length?nbVals.reduce((a,b)=>a+b,0)/nbVals.length:null;
+    const nlVals=notesAnnee.map(d=>d.longueur).filter(Boolean); const nlAvg=nlVals.length?nlVals.reduce((a,b)=>a+b,0)/nlVals.length:null;
+    const sessionsUniques=[...new Set(notesAnnee.map(d=>d.session))];
     return (
       <div>
+        <div style={{display:"flex",gap:"0",marginBottom:"16px",borderBottom:"1px solid #d4c4a0",flexWrap:"wrap"}}>
+          {allYears.map(y=>(
+            <button key={y} onClick={()=>setDegAnnee(y)} style={{padding:"6px 12px",border:"none",borderBottom:activeYear===y?"2px solid #b8860b":"2px solid transparent",background:"transparent",color:activeYear===y?"#7a5200":"#9a8870",fontWeight:activeYear===y?500:400,fontSize:"12px",cursor:"pointer"}}>
+              {y} <span style={{fontSize:"10px",color:"#9a8870"}}>({notes.filter(d=>(d.date?.slice(0,4)||"?")===y).length})</span>
+            </button>
+          ))}
+        </div>
         <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:"10px",marginBottom:"16px"}}>
-          {[["Note globale moy.", ng?.toFixed(2)||"-", ng>=4?"#1a7a40":ng>=3?"#b8860b":"#888"],
-            ["Boisé moyen",      nb?.toFixed(2)||"-", "#888"],
-            ["Longueur moy.",    nl?.toFixed(2)||"-", "#888"]].map(([lbl,val,col],i)=>(
+          {[["Note globale moy.", ngAvg?.toFixed(2)||"-", ngAvg>=4?"#1a7a40":ngAvg>=3?"#b8860b":"#888"],
+            ["Boisé moyen", nbAvg?.toFixed(2)||"-", "#888"],
+            ["Longueur moy.", nlAvg?.toFixed(2)||"-", "#888"]].map(([lbl,val,col],i)=>(
             <div key={i} style={{background:"#fffbf3",borderRadius:"6px",padding:"10px 14px"}}>
               <div style={{fontSize:"10px",color:"#8a7248",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:"4px"}}>{lbl}</div>
               <div style={{fontSize:"20px",fontWeight:600,color:col}}>{val}</div>
@@ -2160,7 +2173,7 @@ export default function App() {
         {sessionsUniques.map(sess=>(
           <div key={sess} style={{marginBottom:"16px"}}>
             <div style={{fontSize:"10px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7a6840",marginBottom:"8px",paddingBottom:"6px",borderBottom:"1px solid #e8dcc6"}}>{sess}</div>
-            {notes.filter(d=>d.session===sess).map(d=><DegRow key={d.id} d={d}/>)}
+            {notesAnnee.filter(d=>d.session===sess).map(d=><DegRow key={d.id} d={d}/>)}
           </div>
         ))}
       </div>
