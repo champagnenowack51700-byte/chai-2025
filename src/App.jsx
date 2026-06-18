@@ -2234,7 +2234,7 @@ export default function App() {
       {/* NAV */}
       <nav style={{...s.nav, flexWrap:"nowrap", overflowX:"auto", WebkitOverflowScrolling:"touch"}} className="nav-scroll">
         <div style={s.brand}>Nowack</div>
-        {[["dashboard","Vue d'ensemble"],["vigne","Vigne"],["vendanges","Vendange"],["rendement","Rendement"],["mouvements","Mouvements"],["tonneaux","Vinification"],["degustations","Dégustations"],["tirages","Tirage"],["stock","Stock"]].map(([v,l])=>(
+        {[["dashboard","Vue d'ensemble"],["parcelles","Parcelles"],["vigne","Vigne"],["vendanges","Vendange"],["rendement","Rendement"],["mouvements","Mouvements"],["tonneaux","Vinification"],["degustations","Dégustations"],["tirages","Tirage"],["stock","Stock"]].map(([v,l])=>(
           <button key={v} style={s.navBtn(view===v)} onClick={()=>{setView(v);refreshFromFirebase();}}>{l}</button>
         ))}
         <div style={{flex:1}}/>
@@ -4002,6 +4002,55 @@ export default function App() {
                 );
               })}
               {vendanges.length===0&&<div style={{...s.card,color:"#9a8870",fontStyle:"italic"}}>Aucune donnée de vendange.</div>}
+            </div>
+          </div>
+        )}
+
+        {view==="parcelles"&&(
+          <div>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
+              <div>
+                <div style={{fontFamily:"Georgia,serif",fontSize:"20px",color:"#7a5200"}}>Parcelles</div>
+                {(()=>{
+                  const totalHa = parcelles.reduce((s,p)=>s+(parseFloat(p.surface)||0),0);
+                  const ha = Math.floor(totalHa);
+                  const ares = Math.floor((totalHa-ha)*100);
+                  const ca = Math.round(((totalHa-ha)*100-ares)*100);
+                  return <div style={{fontSize:"12px",color:"#7a5200",fontWeight:500,marginTop:"4px"}}>{parcelles.length} parcelle(s) — {ha}ha {String(ares).padStart(2,"0")}a {String(ca).padStart(2,"0")}ca</div>;
+                })()}
+              </div>
+              <button style={s.btn} onClick={()=>{setParcelleForm({nom:"",cepage:"",certification:"BIO",surface:"",commune:"",observations:""});setEditingParcelle(null);setShowParcelleForm(true);}}>+ Ajouter</button>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:"16px"}}>
+              {parcelles.length===0&&<div style={{...s.card,color:"#9a8870",fontStyle:"italic"}}>Aucune parcelle. Ajoutez-en une pour commencer.</div>}
+              {parcelles.map(p=>(
+                <div key={p.id} style={{...s.card}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
+                    <div style={{flex:1}}>
+                      <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"6px"}}>
+                        <div style={{fontFamily:"Georgia,serif",fontSize:"16px",fontWeight:500,color:"#1a1205"}}>{p.nom}</div>
+                        {p.certification&&(
+                          <span style={{fontSize:"10px",padding:"1px 6px",borderRadius:"3px",fontFamily:"monospace",fontWeight:500,
+                            background:p.certification==="BIO"?"#d4edc0":p.certification==="NON BIO"?"#ede5d4":p.certification==="C1"?"#fde8b8":p.certification==="C2"?"#fce8a8":"#fad4a0",
+                            color:p.certification==="BIO"?"#2d6a00":p.certification==="NON BIO"?"#5f5e5a":p.certification==="C1"?"#8b5e0a":p.certification==="C2"?"#7a4800":"#6b3a00"}}>
+                            {p.certification}
+                          </span>
+                        )}
+                      </div>
+                      {p.cepage&&<div style={{fontSize:"12px",color:"#6a5838",marginBottom:"4px"}}>🍇 {p.cepage}</div>}
+                      {p.commune&&<div style={{fontSize:"12px",color:"#9a8870",marginBottom:"4px"}}>📍 {p.commune}</div>}
+                      {p.surface&&<div style={{fontSize:"12px",color:"#7a5200",fontWeight:500,marginBottom:"4px"}}>📐 {p.surface} ha</div>}
+                      {p.observations&&<div style={{fontSize:"11px",color:"#7a6840",fontStyle:"italic",marginTop:"6px",padding:"6px",background:"#fffbf3",borderRadius:"4px"}}>{p.observations}</div>}
+                      <div style={{fontSize:"11px",color:"#9a8870",marginTop:"8px"}}>{vendanges.filter(v=>v.parcelleId===p.id||(v.parcelleIds||[]).includes(p.id)).length} apport(s)</div>
+                    </div>
+                    <div style={{display:"flex",gap:"4px",flexShrink:0}}>
+                      <button style={{...s.ghostSm,fontSize:"10px"}} onClick={()=>{setParcelleForm({nom:p.nom,cepage:p.cepage||"",certification:p.certification||"BIO",surface:p.surface||"",commune:p.commune||"",observations:p.observations||""});setEditingParcelle(p);setShowParcelleForm(true);}}>Mod.</button>
+                      <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
+                        onClick={()=>{if(window.confirm("Supprimer cette parcelle ?")) { setParcelles(prev=>prev.filter(x=>x.id!==p.id)); deleteParcelleFb(p.id); }}}>Sup.</button>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
