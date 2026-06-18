@@ -460,6 +460,7 @@ export default function App() {
   const [filterMvtType, setFilterMvtType] = useState('');
   const [filterMvtAnnee, setFilterMvtAnnee] = useState(() => new Date().getFullYear().toString());
   const [ficheHistoAnnee, setFicheHistoAnnee] = useState(()=>new Date().getFullYear().toString());
+  const [ficheDegAnnee, setFicheDegAnnee] = useState(()=>new Date().getFullYear().toString());
   const [mouvementsClotures, setMouvementsClotures] = useState([]);
   const [editingMvt, setEditingMvt] = useState(null);
   const [showMvtForm, setShowMvtForm] = useState(false);
@@ -2144,8 +2145,7 @@ export default function App() {
   const NoteResume = ({futId}) => {
     const notes=notesForFut(futId); if(!notes.length) return <div style={{color:"#8a7248",fontSize:"13px",padding:"8px 0"}}>Aucune note de dégustation.</div>;
     const allYears=[...new Set(notes.map(d=>d.date?.slice(0,4)||"?"))].sort().reverse();
-    const [degAnnee, setDegAnnee] = React.useState(()=>new Date().getFullYear().toString());
-    const activeYear = allYears.includes(degAnnee)?degAnnee:allYears[0];
+    const activeYear = allYears.includes(ficheDegAnnee)?ficheDegAnnee:allYears[0];
     const notesAnnee = notes.filter(d=>(d.date?.slice(0,4)||"?")=== activeYear);
     const ngVals=notesAnnee.map(d=>d.noteG).filter(Boolean); const ngAvg=ngVals.length?ngVals.reduce((a,b)=>a+b,0)/ngVals.length:null;
     const nbVals=notesAnnee.map(d=>d.boise).filter(Boolean); const nbAvg=nbVals.length?nbVals.reduce((a,b)=>a+b,0)/nbVals.length:null;
@@ -2155,7 +2155,7 @@ export default function App() {
       <div>
         <div style={{display:"flex",gap:"0",marginBottom:"16px",borderBottom:"1px solid #d4c4a0",flexWrap:"wrap"}}>
           {allYears.map(y=>(
-            <button key={y} onClick={()=>setDegAnnee(y)} style={{padding:"6px 12px",border:"none",borderBottom:activeYear===y?"2px solid #b8860b":"2px solid transparent",background:"transparent",color:activeYear===y?"#7a5200":"#9a8870",fontWeight:activeYear===y?500:400,fontSize:"12px",cursor:"pointer"}}>
+            <button key={y} onClick={()=>setFicheDegAnnee(y)} style={{padding:"6px 12px",border:"none",borderBottom:activeYear===y?"2px solid #b8860b":"2px solid transparent",background:"transparent",color:activeYear===y?"#7a5200":"#9a8870",fontWeight:activeYear===y?500:400,fontSize:"12px",cursor:"pointer"}}>
               {y} <span style={{fontSize:"10px",color:"#9a8870"}}>({notes.filter(d=>(d.date?.slice(0,4)||"?")===y).length})</span>
             </button>
           ))}
