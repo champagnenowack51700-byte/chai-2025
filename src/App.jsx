@@ -459,7 +459,7 @@ export default function App() {
   const [filterFut,   setFilterFut]   = useState("");
   const [filterMvtType, setFilterMvtType] = useState('');
   const [filterMvtAnnee, setFilterMvtAnnee] = useState(() => new Date().getFullYear().toString());
-  const [ficheHistoAnnee, setFicheHistoAnnee] = useState('');
+  const [ficheHistoAnnee, setFicheHistoAnnee] = useState(()=>new Date().getFullYear().toString());
   const [mouvementsClotures, setMouvementsClotures] = useState([]);
   const [editingMvt, setEditingMvt] = useState(null);
   const [showMvtForm, setShowMvtForm] = useState(false);
