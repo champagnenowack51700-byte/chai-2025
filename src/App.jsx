@@ -3715,22 +3715,45 @@ export default function App() {
             {/* Colonne droite - gestion des dégustateurs */}
             {/* Palmarès */}
             <div style={{...s.card,marginBottom:"16px"}}>
-              <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#7a5200",marginBottom:"12px"}}>🏆 Palmarès</div>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#7a5200",marginBottom:"12px"}}>🏆 Palmarès tonneliers</div>
               {(()=>{
-                const allFuts = tonneaux.filter(t=>notesForFut(t.id).length>0);
-                const ranked = allFuts.map(t=>({
-                  t,
-                  ng: (notesForFut(t.id).map(d=>d.noteG).filter(Boolean).reduce((a,b)=>a+b,0)/notesForFut(t.id).map(d=>d.noteG).filter(Boolean).length)||0,
-                  nb: notesForFut(t.id).length
-                })).filter(r=>r.ng>0).sort((a,b)=>b.ng-a.ng).slice(0,5);
+                const tonneliers = [...new Set(tonneaux.map(t=>t.tonnelier).filter(Boolean))];
+                const ranked = tonneliers.map(tn=>{
+                  const futs = tonneaux.filter(t=>t.tonnelier===tn&&notesForFut(t.id).length>0);
+                  const allNotes = futs.flatMap(t=>notesForFut(t.id).map(d=>d.noteG).filter(Boolean));
+                  const avg = allNotes.length ? allNotes.reduce((a,b)=>a+b,0)/allNotes.length : 0;
+                  return {tn, avg, nb:allNotes.length, nbFuts:futs.length};
+                }).filter(r=>r.avg>0).sort((a,b)=>b.avg-a.avg).slice(0,5);
+                if(!ranked.length) return <div style={{fontSize:"11px",color:"#9a8870",fontStyle:"italic"}}>Pas encore de données.</div>;
                 return ranked.map((r,i)=>(
-                  <div key={r.t.id} style={{display:"flex",alignItems:"center",gap:"8px",padding:"6px 0",borderBottom:"0.5px solid #ede5d4",cursor:"pointer"}} onClick={()=>{setSelectedFut(r.t.id);setView("fiche");setFicheTab("degustations");}}>
-                    <span style={{fontSize:"16px",width:"24px",textAlign:"center"}}>{["🥇","🥈","🥉","4️⃣","5️⃣"][i]}</span>
-                    <div style={{flex:1,overflow:"hidden"}}>
-                      <div style={{fontSize:"12px",fontWeight:600,color:"#1a1205",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.t.denomination||r.t.id}</div>
-                      <div style={{fontSize:"10px",color:"#9a8870"}}>{r.t.id} · {r.t.millesime||"-"} · {r.nb} note{r.nb>1?"s":""}</div>
+                  <div key={r.tn} style={{display:"flex",alignItems:"center",gap:"8px",padding:"6px 0",borderBottom:"0.5px solid #ede5d4"}}>
+                    <span style={{fontSize:"15px",width:"24px",textAlign:"center"}}>{["🥇","🥈","🥉","4️⃣","5️⃣"][i]}</span>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:"12px",fontWeight:600,color:"#1a1205"}}>{r.tn}</div>
+                      <div style={{fontSize:"10px",color:"#9a8870"}}>{r.nbFuts} fût{r.nbFuts>1?"s":""} · {r.nb} note{r.nb>1?"s":""}</div>
                     </div>
-                    <span style={{fontSize:"15px",fontWeight:700,color:r.ng>=4?"#1a7a40":r.ng>=3?"#b8860b":"#888"}}>{r.ng.toFixed(1)}</span>
+                    <span style={{fontSize:"15px",fontWeight:700,color:r.avg>=4?"#1a7a40":r.avg>=3?"#b8860b":"#888"}}>{r.avg.toFixed(1)}</span>
+                  </div>
+                ));
+              })()}
+              <div style={{fontFamily:"Georgia,serif",fontSize:"13px",color:"#7a5200",margin:"14px 0 10px"}}>🏆 Palmarès grain</div>
+              {(()=>{
+                const grains = [...new Set(tonneaux.map(t=>t.grain).filter(Boolean))];
+                const ranked = grains.map(g=>{
+                  const futs = tonneaux.filter(t=>t.grain===g&&notesForFut(t.id).length>0);
+                  const allNotes = futs.flatMap(t=>notesForFut(t.id).map(d=>d.noteG).filter(Boolean));
+                  const avg = allNotes.length ? allNotes.reduce((a,b)=>a+b,0)/allNotes.length : 0;
+                  return {g, avg, nb:allNotes.length, nbFuts:futs.length};
+                }).filter(r=>r.avg>0).sort((a,b)=>b.avg-a.avg).slice(0,5);
+                if(!ranked.length) return <div style={{fontSize:"11px",color:"#9a8870",fontStyle:"italic"}}>Pas encore de données.</div>;
+                return ranked.map((r,i)=>(
+                  <div key={r.g} style={{display:"flex",alignItems:"center",gap:"8px",padding:"6px 0",borderBottom:"0.5px solid #ede5d4"}}>
+                    <span style={{fontSize:"15px",width:"24px",textAlign:"center"}}>{["🥇","🥈","🥉","4️⃣","5️⃣"][i]}</span>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:"12px",fontWeight:600,color:"#1a1205"}}>{r.g}</div>
+                      <div style={{fontSize:"10px",color:"#9a8870"}}>{r.nbFuts} fût{r.nbFuts>1?"s":""} · {r.nb} note{r.nb>1?"s":""}</div>
+                    </div>
+                    <span style={{fontSize:"15px",fontWeight:700,color:r.avg>=4?"#1a7a40":r.avg>=3?"#b8860b":"#888"}}>{r.avg.toFixed(1)}</span>
                   </div>
                 ));
               })()}
