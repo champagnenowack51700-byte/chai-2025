@@ -459,6 +459,7 @@ export default function App() {
   const [filterMvtAnnee, setFilterMvtAnnee] = useState(() => new Date().getFullYear().toString());
   const [ficheHistoAnnee, setFicheHistoAnnee] = useState(()=>new Date().getFullYear().toString());
   const [ficheDegAnnee, setFicheDegAnnee] = useState(()=>new Date().getFullYear().toString());
+  const [ficheDegSession, setFicheDegSession] = useState("");
   const [mouvementsClotures, setMouvementsClotures] = useState([]);
   const [editingMvt, setEditingMvt] = useState(null);
   const [showMvtForm, setShowMvtForm] = useState(false);
@@ -2172,12 +2173,21 @@ export default function App() {
             </div>
           ))}
         </div>
-        {sessionsUniques.map(sess=>(
-          <div key={sess} style={{marginBottom:"16px"}}>
-            <div style={{fontSize:"10px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#7a6840",marginBottom:"8px",paddingBottom:"6px",borderBottom:"1px solid #e8dcc6"}}>{sess}</div>
-            {notesAnnee.filter(d=>d.session===sess).map(d=><DegRow key={d.id} d={d}/>)}
-          </div>
-        ))}
+        {sessionsUniques.length>0&&(()=>{
+          const activeSess = sessionsUniques.includes(ficheDegSession)?ficheDegSession:sessionsUniques[0];
+          return (
+            <div>
+              <div style={{display:"flex",gap:"0",marginBottom:"12px",borderBottom:"1px solid #e8dcc6",flexWrap:"wrap"}}>
+                {sessionsUniques.map(sess=>(
+                  <button key={sess} onClick={()=>setFicheDegSession(sess)} style={{padding:"5px 10px",border:"none",borderBottom:activeSess===sess?"2px solid #b8860b":"2px solid transparent",background:"transparent",color:activeSess===sess?"#7a5200":"#9a8870",fontWeight:activeSess===sess?500:400,fontSize:"11px",cursor:"pointer"}}>
+                    {sess} <span style={{fontSize:"10px",color:"#9a8870"}}>({notesAnnee.filter(d=>d.session===sess).length})</span>
+                  </button>
+                ))}
+              </div>
+              {notesAnnee.filter(d=>d.session===activeSess).map(d=><DegRow key={d.id} d={d}/>)}
+            </div>
+          );
+        })()}
       </div>
     );
   };
