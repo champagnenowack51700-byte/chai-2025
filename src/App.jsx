@@ -2343,11 +2343,18 @@ export default function App() {
                 const moins15 = lots.filter(l=>l.mois<15).reduce((s,l)=>s+(parseInt(l.qteActuelle)||0),0);
                 const plus15 = lots.filter(l=>l.mois>=15).reduce((s,l)=>s+(parseInt(l.qteActuelle)||0),0);
                 const alertes = lots.filter(l=>l.mois>=14&&!l.passage15).length;
+                const champagne = lots.filter(l=>!l.typeProduit||l.typeProduit==="champagne").reduce((s,l)=>s+(parseInt(l.qteActuelle)||0),0);
+                const coteauxBlanc = lots.filter(l=>l.typeProduit==="coteaux_blanc").reduce((s,l)=>s+(parseInt(l.qteActuelle)||0),0);
+                const coteauxRouge = lots.filter(l=>l.typeProduit==="coteaux_rouge").reduce((s,l)=>s+(parseInt(l.qteActuelle)||0),0);
+                const ratafia = lots.filter(l=>l.typeProduit==="ratafia").reduce((s,l)=>s+(parseInt(l.qteActuelle)||0),0);
                 return [
-                  {lbl:"Total en stock",val:total+" btl",sub:"tous formats",col:"#b8860b"},
+                  {lbl:"Champagne",val:champagne+" btl",sub:moins15+" < 15 mois",col:"#b8860b"},
                   {lbl:"< 15 mois",val:moins15+" btl",sub:"non commercialisables",col:"#cc2222"},
                   {lbl:"> 15 mois",val:plus15+" btl",sub:"commercialisables",col:"#1a7a40"},
                   {lbl:"Alertes 15 mois",val:alertes+" lot(s)",sub:"a confirmer",col:"#c47800"},
+                  ...(coteauxBlanc>0?[{lbl:"Coteaux Blanc",val:coteauxBlanc+" btl",sub:"",col:"#8B0000"}]:[]),
+                  ...(coteauxRouge>0?[{lbl:"Coteaux Rouge",val:coteauxRouge+" btl",sub:"",col:"#8B0000"}]:[]),
+                  ...(ratafia>0?[{lbl:"Ratafia",val:ratafia+" btl",sub:"",col:"#5c2a08"}]:[]),
                 ].map((k,i)=>(
                   <div key={i} style={s.card}>
                     <div style={s.lbl}>{k.lbl}</div>
