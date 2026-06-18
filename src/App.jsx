@@ -2979,7 +2979,7 @@ export default function App() {
                                     {parc.certification}
                                   </span>
                                 )}
-                                <span style={{fontSize:"11px",color:"#9a8870"}}>{parc?.cepage||""}{parc?.commune?` - ${parc.commune}`:""}</span>
+                                <span style={{fontSize:"11px",color:"#9a8870"}}>{(()=>{ const ids=v.parcelleIds&&v.parcelleIds.length>0?v.parcelleIds:[v.parcelleId]; const cepages=[...new Set(ids.map(id=>parcelles.find(p=>p.id===id)?.cepage).filter(Boolean))].join(" + "); return cepages||(parc?.cepage||""); })()}{parc?.commune?` - ${parc.commune}`:""}</span>
                               </div>
                               <div style={{fontSize:"11px",color:"#7a6840",marginTop:"3px"}}>{fmt(v.date)}{v.heure?" - "+v.heure:""} - {v.operateur}</div>
                             </div>
@@ -4425,7 +4425,7 @@ export default function App() {
                                     {parc.certification}
                                   </span>
                                 )}
-                                <span style={{fontSize:"11px",color:"#9a8870"}}>{parc?.cepage||""}{parc?.commune?` - ${parc.commune}`:""}</span>
+                                <span style={{fontSize:"11px",color:"#9a8870"}}>{(()=>{ const ids=v.parcelleIds&&v.parcelleIds.length>0?v.parcelleIds:[v.parcelleId]; const cepages=[...new Set(ids.map(id=>parcelles.find(p=>p.id===id)?.cepage).filter(Boolean))].join(" + "); return cepages||(parc?.cepage||""); })()}{parc?.commune?` - ${parc.commune}`:""}</span>
                               </div>
                               <div style={{fontSize:"11px",color:"#7a6840",marginTop:"3px"}}>{fmt(v.date)}{v.heure?" - "+v.heure:""} - {v.operateur}</div>
                             </div>
@@ -5797,8 +5797,9 @@ export default function App() {
                   </select></div>
               </div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:"12px"}}>
-                <div><span style={s.lbl}>Cepage</span>
-                  <input style={s.inp} placeholder="ex. Chardonnay..." value={parcelleForm.cepage} onChange={e=>setParcelleForm(f=>({...f,cepage:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Cépage(s)</span>
+                  <input style={s.inp} placeholder="ex. Chardonnay + Pinot Noir..." value={parcelleForm.cepage} onChange={e=>setParcelleForm(f=>({...f,cepage:e.target.value}))}/>
+                  <div style={{fontSize:"10px",color:"#9a8870",marginTop:"2px"}}>Séparer par " + " pour plusieurs cépages</div></div>
                 <div><span style={s.lbl}>Surface (ha)</span>
                   <input type="number" step="0.01" style={s.inp} placeholder="ex. 0.35" value={parcelleForm.surface} onChange={e=>setParcelleForm(f=>({...f,surface:e.target.value}))}/></div>
                 <div><span style={s.lbl}>Commune / Lieu-dit</span>
