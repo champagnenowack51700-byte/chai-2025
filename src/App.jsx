@@ -2234,7 +2234,7 @@ export default function App() {
       {/* NAV */}
       <nav style={{...s.nav, flexWrap:"nowrap", overflowX:"auto", WebkitOverflowScrolling:"touch"}} className="nav-scroll">
         <div style={s.brand}>Nowack</div>
-        {[["dashboard","Vue d'ensemble"],["vigne","Vigne"],["vendanges","Vendange"],["mouvements","Mouvements"],["tonneaux","Vinification"],["degustations","Dégustations"],["tirages","Tirage"],["stock","Stock"]].map(([v,l])=>(
+        {[["dashboard","Vue d'ensemble"],["vigne","Vigne"],["vendanges","Vendange"],["rendement","Rendement"],["mouvements","Mouvements"],["tonneaux","Vinification"],["degustations","Dégustations"],["tirages","Tirage"],["stock","Stock"]].map(([v,l])=>(
           <button key={v} style={s.navBtn(view===v)} onClick={()=>{setView(v);refreshFromFirebase();}}>{l}</button>
         ))}
         <div style={{flex:1}}/>
@@ -4008,6 +4008,57 @@ export default function App() {
           )}
 
         {/* -- VIGNE -- */}
+        {view==="rendement"&&(
+          <div>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"20px",color:"#7a5200"}}>Rendement</div>
+              <button style={s.btn} onClick={()=>setShowRendementForm(true)}>+ Saisir rendement</button>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:"16px"}}>
+              {[...new Set(vendanges.map(v=>v.annee))].sort().reverse().map(annee=>{
+                const vAnnee = vendanges.filter(v=>v.annee===annee);
+                const kgRecoltes = vAnnee.reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0);
+                const kgMaison = vAnnee.filter(v=>!v.destinationMarc||v.destinationMarc==="maison").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0)
+                  + vAnnee.filter(v=>v.destinationMarc==="negoce_partiel").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0)-(parseFloat(v.kgVendusNegoce)||0),0);
+                const kgNegoce = vAnnee.filter(v=>v.destinationMarc==="negoce_total").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0)
+                  + vAnnee.filter(v=>v.destinationMarc==="negoce_partiel").reduce((s,v)=>s+(parseFloat(v.kgVendusNegoce)||0),0);
+                const rendAnnee = rendementsAnnuels.find(r=>r.annee===annee);
+                const surfTotale = parcelles.reduce((s,p)=>s+(parseFloat(p.surface)||0),0);
+                const kgHaReel = surfTotale>0 ? Math.round(kgRecoltes/surfTotale) : 0;
+                const kgHaAutorise = rendAnnee ? parseFloat(rendAnnee.rendementAutorise)||0 : 0;
+                const enRI = kgHaAutorise>0 && kgHaReel>kgHaAutorise;
+                return (
+                  <div key={annee} style={{...s.card,borderLeft:enRI?"3px solid #cc2222":"3px solid #b8860b"}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
+                      <div style={{fontFamily:"Georgia,serif",fontSize:"16px",fontWeight:500,color:"#7a5200"}}>Campagne {annee}</div>
+                      {enRI&&<span style={{fontSize:"10px",background:"#fde8e8",color:"#cc2222",border:"1px solid #f0b4b4",borderRadius:"4px",padding:"2px 8px",fontWeight:600}}>⚠ Section RI</span>}
+                    </div>
+                    <div style={{display:"grid",gap:"8px",fontSize:"13px"}}>
+                      {[
+                        ["Total récolté", kgRecoltes.toLocaleString()+" kg", "#1a1205"],
+                        ["Conservé maison", Math.round(kgMaison).toLocaleString()+" kg", "#2d6a00"],
+                        ["Vendu négoce", Math.round(kgNegoce).toLocaleString()+" kg", "#c47800"],
+                        ...(surfTotale>0?[["kg/ha réel", kgHaReel.toLocaleString()+" kg/ha", enRI?"#cc2222":"#1a1205"]]:[]),
+                        ...(kgHaAutorise>0?[["Rendement autorisé", kgHaAutorise.toLocaleString()+" kg/ha", "#6a5838"]]:[]),
+                        ["Nbre apports", vAnnee.length+" apport(s)", "#6a5838"],
+                      ].map(([lbl,val,col])=>(
+                        <div key={lbl} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:"0.5px solid #ede5d4"}}>
+                          <span style={{color:"#9a8870"}}>{lbl}</span>
+                          <span style={{fontWeight:500,color:col}}>{val}</span>
+                        </div>
+                      ))}
+                      {enRI&&<div style={{marginTop:"4px",padding:"8px 12px",background:"#fde8e8",borderRadius:"4px",border:"1px solid #f0b4b4"}}>
+                        <div style={{fontSize:"12px",fontWeight:500,color:"#cc2222"}}>Dépassement : +{(kgHaReel-kgHaAutorise).toLocaleString()} kg/ha</div>
+                      </div>}
+                    </div>
+                  </div>
+                );
+              })}
+              {vendanges.length===0&&<div style={{...s.card,color:"#9a8870",fontStyle:"italic"}}>Aucune donnée de vendange.</div>}
+            </div>
+          </div>
+        )}
+
         {false&&view==="vigne" && (()=>{
           const allTraits = [...traitements].sort((a,b)=>new Date(b.date)-new Date(a.date));
           const campagnes = [...new Set(allTraits.map(t=>t.campagne))].sort().reverse();
