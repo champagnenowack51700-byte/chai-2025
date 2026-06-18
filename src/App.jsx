@@ -1540,8 +1540,9 @@ export default function App() {
       const ids = v.parcelleIds&&v.parcelleIds.length>0 ? v.parcelleIds : (v.parcelleId?[v.parcelleId]:[]);
       return ids.length>0 && ids.every(id=>parcelles.find(p=>p.id===id)?.certification==="BIO");
     };
-    const kgTotal = vAnnee.reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0);
-    const hlTotal = vAnnee.reduce((s,v)=>s+(parseFloat(v.volumeHL)||0),0);
+    const kgTotal = vAnnee.filter(v=>v.destinationMarc!=="prestation").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0);
+    const hlTotal = vAnnee.filter(v=>v.destinationMarc!=="prestation").reduce((s,v)=>s+(parseFloat(v.volumeHL)||0),0);
+    const kgPrestation = vAnnee.filter(v=>v.destinationMarc==="prestation").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0);
     const kgMaison = vAnnee.reduce((s,v)=>{
       if(!v.destinationMarc||v.destinationMarc==="maison") return s+(parseFloat(v.poidsMarcKg)||0);
       if(v.destinationMarc==="negoce_partiel") return s+(parseFloat(v.poidsMarcKg)||0)-(parseFloat(v.kgVendusNegoce)||0);
@@ -1554,7 +1555,7 @@ export default function App() {
     },0);
     const rows = vAnnee.map(v=>{
       const bio = isBio(v);
-      const dest = v.destinationMarc==="negoce_total"?"Negoce total":v.destinationMarc==="negoce_partiel"?`Negoce partiel (${parseInt(v.kgVendusNegoce)||0} kg negoce / ${(parseFloat(v.poidsMarcKg)||0)-(parseFloat(v.kgVendusNegoce)||0)} kg maison)`:"Maison";
+      const dest = v.destinationMarc==="prestation"?"🔄 Prestation pressurage"+(v.kgPrestation?" ("+parseInt(v.kgPrestation).toLocaleString()+" kg)":""):v.destinationMarc==="negoce_total"?"Negoce total":v.destinationMarc==="negoce_partiel"?`Negoce partiel (${parseInt(v.kgVendusNegoce)||0} kg negoce / ${(parseFloat(v.poidsMarcKg)||0)-(parseFloat(v.kgVendusNegoce)||0)} kg maison)`:"Maison";
       return `<tr>
         <td>${fmt(v.date)}${v.heure?" "+v.heure:""}</td>
         <td>${parcsNom(v)}${bio?' <span style="background:#2d6a00;color:#fff;border-radius:3px;padding:1px 4px;font-size:9px">🌿 BIO</span>':""}</td>
@@ -1579,7 +1580,7 @@ export default function App() {
     table{width:100%;border-collapse:collapse;font-size:10px}th{background:#f5e8cc;color:#7a5200;padding:5px;text-align:left;border:0.5px solid #d4c4a0}
     td{padding:4px 5px;border:0.5px solid #ede5d4}tr:nth-child(even){background:#fffdf7}.total{background:#f5f5f0;font-weight:bold}</style></head>
     <body><h1>Champagne Nowack — Campagne ${annee}</h1>
-    <p style="color:#9a8870;font-size:12px">${vAnnee.length} apport(s) — Total : ${kgTotal.toLocaleString()} kg / ${hlTotal.toFixed(2)} HL — Maison : ${kgMaison.toLocaleString()} kg — Negoce : ${kgNegoce.toLocaleString()} kg</p>
+    <p style="color:#9a8870;font-size:12px">${vAnnee.filter(v=>v.destinationMarc!=="prestation").length} apport(s) — Total : ${kgTotal.toLocaleString()} kg / ${hlTotal.toFixed(2)} HL — Maison : ${kgMaison.toLocaleString()} kg — Negoce : ${kgNegoce.toLocaleString()} kg${kgPrestation>0?" — Prestation : "+kgPrestation.toLocaleString()+" kg":""}</p>
     <table><thead><tr><th>Date</th><th>Parcelles</th><th>Cuvee</th><th>Marc</th><th>Kg</th><th>HL</th><th>Destination</th><th>Degre</th><th>Acidite</th><th>SO2</th><th>pH</th><th>Cuve Taille</th><th>Cuve Cuvee A</th><th>Cuve Cuvee B</th><th>Produits ajoutes</th><th>Observations</th></tr></thead>
     <tbody>${rows}<tr class="total"><td colspan="4">TOTAL</td><td>${kgTotal.toLocaleString()} kg</td><td>${hlTotal.toFixed(2)} HL</td><td>Maison: ${kgMaison.toLocaleString()} kg / Negoce: ${kgNegoce.toLocaleString()} kg</td><td colspan="8"></td></tr></tbody></table>
     </body></html>`;
