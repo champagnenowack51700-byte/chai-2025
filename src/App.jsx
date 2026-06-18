@@ -3090,59 +3090,6 @@ export default function App() {
             {/* Colonne droite */}
             <div style={{display:"grid",gap:"16px"}}>
 
-            {/* Tableau de bord rendement */}
-            <div style={s.card}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
-                <span style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#7a5200"}}>Rendement</span>
-                <button style={s.btnSm} onClick={()=>setShowRendementForm(true)}>+ Saisir</button>
-              </div>
-              {[...new Set(vendanges.map(v=>v.annee))].sort().reverse().map(annee=>{
-                const vAnnee = vendanges.filter(v=>v.annee===annee);
-                const kgRecoltes = vAnnee.reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0);
-                const kgMaison = vAnnee.filter(v=>!v.destinationMarc||v.destinationMarc==="maison").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0)
-                  + vAnnee.filter(v=>v.destinationMarc==="negoce_partiel").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0)-(parseFloat(v.kgVendusNegoce)||0),0);
-                const kgNegoce = vAnnee.filter(v=>v.destinationMarc==="negoce_total").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0)
-                  + vAnnee.filter(v=>v.destinationMarc==="negoce_partiel").reduce((s,v)=>s+(parseFloat(v.kgVendusNegoce)||0),0);
-                const rendAnnee = rendementsAnnuels.find(r=>r.annee===annee);
-                const surfTotale = parcelles.reduce((s,p)=>s+(parseFloat(p.surface)||0),0);
-                const kgHaReel = surfTotale>0 ? Math.round(kgRecoltes/surfTotale) : 0;
-                const kgHaAutorise = rendAnnee ? parseFloat(rendAnnee.rendementAutorise)||0 : 0;
-                const enRI = kgHaAutorise>0 && kgHaReel>kgHaAutorise;
-                return (
-                  <div key={annee} style={{borderBottom:"0.5px solid #ede5d4",paddingBottom:"10px",marginBottom:"10px"}}>
-                    <div style={{fontWeight:500,color:"#7a5200",fontSize:"13px",marginBottom:"6px"}}>Campagne {annee}</div>
-                    <div style={{display:"grid",gap:"4px",fontSize:"12px"}}>
-                      <div style={{display:"flex",justifyContent:"space-between"}}>
-                        <span style={{color:"#9a8870"}}>Total recolte</span>
-                        <span style={{fontWeight:500,color:"#1a1205"}}>{kgRecoltes.toLocaleString()} kg</span>
-                      </div>
-                      <div style={{display:"flex",justifyContent:"space-between"}}>
-                        <span style={{color:"#9a8870"}}>Conserve maison</span>
-                        <span style={{fontWeight:500,color:"#2d6a00"}}>{Math.round(kgMaison).toLocaleString()} kg</span>
-                      </div>
-                      <div style={{display:"flex",justifyContent:"space-between"}}>
-                        <span style={{color:"#9a8870"}}>Vendu negoce</span>
-                        <span style={{fontWeight:500,color:"#c47800"}}>{Math.round(kgNegoce).toLocaleString()} kg</span>
-                      </div>
-                      {surfTotale>0&&<div style={{display:"flex",justifyContent:"space-between"}}>
-                        <span style={{color:"#9a8870"}}>kg/ha reel</span>
-                        <span style={{fontWeight:500,color:enRI?"#cc2222":"#1a1205"}}>{kgHaReel.toLocaleString()} kg/ha</span>
-                      </div>}
-                      {kgHaAutorise>0&&<div style={{display:"flex",justifyContent:"space-between"}}>
-                        <span style={{color:"#9a8870"}}>Rendement autorise</span>
-                        <span style={{fontWeight:500,color:"#6a5838"}}>{kgHaAutorise.toLocaleString()} kg/ha</span>
-                      </div>}
-                      {enRI&&<div style={{marginTop:"6px",padding:"6px 10px",background:"#fde8e8",borderRadius:"4px",border:"1px solid #f0b4b4"}}>
-                        <div style={{fontSize:"11px",fontWeight:500,color:"#cc2222"}}>Depassement - Section RI</div>
-                        <div style={{fontSize:"11px",color:"#cc2222"}}>+{(kgHaReel-kgHaAutorise).toLocaleString()} kg/ha au-dela du rendement</div>
-                      </div>}
-                    </div>
-                  </div>
-                );
-              })}
-              {rendementsAnnuels.length===0&&vendanges.length===0&&<div style={{fontSize:"12px",color:"#9a8870",fontStyle:"italic"}}>Aucune donnee.</div>}
-            </div>
-
             {/* Colonne droite - Parcelles */}
             <div style={s.card}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:showParcellesList?"12px":"0"}}>
