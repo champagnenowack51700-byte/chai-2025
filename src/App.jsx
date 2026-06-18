@@ -3841,7 +3841,7 @@ export default function App() {
                     return (
                       <div>
                         {allYears.length===0&&<div style={{color:"#9a8870",fontStyle:"italic",padding:"12px 0"}}>Aucun historique.</div>}
-                        {allYears.length>1&&<div style={{marginBottom:"12px"}}>
+                        {allYears.length>0&&<div style={{marginBottom:"12px"}}>
                           <select style={{...s.sel,maxWidth:"160px",fontSize:"12px"}} value={ficheHistoAnnee} onChange={e=>setFicheHistoAnnee(e.target.value)}>
                             <option value="">Toutes les campagnes</option>
                             {allYears.map(y=><option key={y} value={y}>Campagne {y} ({(mvtsParAn[y]||[]).length} mvt)</option>)}
