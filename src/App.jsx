@@ -3087,12 +3087,6 @@ export default function App() {
               })}
             </div>
 
-            {/* Colonne droite */}
-            <div style={{display:"grid",gap:"16px"}}>
-
-          </div>
-          </div>
-          </div>
         )}
 
         {/* -- STOCK -- */}
