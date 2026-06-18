@@ -2983,7 +2983,7 @@ export default function App() {
                       const parc = parcelles.find(p=>p.id===v.parcelleId);
                       const parcs = (v.parcelleIds&&v.parcelleIds.length>0) ? v.parcelleIds.map(id=>parcelles.find(p=>p.id===id)).filter(Boolean) : (parc?[parc]:[]);
                       return (
-                        <div key={v.id} style={{...s.card,marginBottom:"10px",borderLeft:`3px solid ${v.destinationMarc==="prestation"?"#185FA5":v.destinationMarc&&v.destinationMarc!=="maison"?"#c47800":"#2d6a00"}`,background:v.destinationMarc==="prestation"?"#f0f4f8":"white"}}>
+                        <div key={v.id} style={{...s.card,marginBottom:"10px",borderLeft:`3px solid ${v.destinationMarc==="prestation"?"#185FA5":v.destinationMarc&&v.destinationMarc!=="maison"?"#c47800":"#2d6a00"}`,background:v.destinationMarc==="prestation"?"#dde4ed":"white"}}>
                           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:"12px",marginBottom:"8px"}}>
                             <div>
                               <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"4px"}}>
@@ -3937,7 +3937,7 @@ export default function App() {
                         ["Vendu négoce", Math.round(kgNegoce).toLocaleString()+" kg", "#c47800"],
                         ...(surfTotale>0?[["kg/ha réel", kgHaReel.toLocaleString()+" kg/ha", enRI?"#cc2222":"#1a1205"]]:[]),
                         ...(kgHaAutorise>0?[["Rendement autorisé", kgHaAutorise.toLocaleString()+" kg/ha", "#6a5838"]]:[]),
-                        ["Nbre apports", vAnnee.length+" apport(s)", "#6a5838"],
+                        ["Nbre apports", vAnnee.filter(v=>v.destinationMarc!=="prestation").length+" apport(s)", "#6a5838"],
                         ...(kgPrestation>0?[["🔄 Prestation pressurage", kgPrestation.toLocaleString()+" kg", "#185FA5"]]:[]),
                       ].map(([lbl,val,col])=>(
                         <div key={lbl} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:"0.5px solid #ede5d4"}}>
@@ -4520,7 +4520,7 @@ export default function App() {
                     {vAnnee.map(v=>{
                       const parc = parcelles.find(p=>p.id===v.parcelleId);
                       return (
-                        <div key={v.id} style={{...s.card,marginBottom:"10px",borderLeft:`3px solid ${v.destinationMarc==="prestation"?"#185FA5":v.destinationMarc&&v.destinationMarc!=="maison"?"#c47800":"#2d6a00"}`,background:v.destinationMarc==="prestation"?"#f0f4f8":"white"}}>
+                        <div key={v.id} style={{...s.card,marginBottom:"10px",borderLeft:`3px solid ${v.destinationMarc==="prestation"?"#185FA5":v.destinationMarc&&v.destinationMarc!=="maison"?"#c47800":"#2d6a00"}`,background:v.destinationMarc==="prestation"?"#dde4ed":"white"}}>
                           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:"12px",marginBottom:"8px"}}>
                             <div>
                               {v.cuveeCreee&&<div style={{fontWeight:600,color:"#7a5200",fontSize:"14px",marginBottom:"2px"}}>{v.cuveeCreee}</div>}
