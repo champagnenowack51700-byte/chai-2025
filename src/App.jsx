@@ -329,7 +329,7 @@ const INIT_DEGUSTATIONS = [
 
 const TYPES_MOUVEMENT = [
   { value:"ouillage",    label:"Ouillage",               icon:"ti-droplet",        color:"#185FA5" },
-  { value:"soutirage",   label:"Soutirage (fût &rarr; fût)",  icon:"ti-arrows-exchange",color:"#1a7a40" },
+  { value:"soutirage",   label:"Soutirage (fût → fût)",  icon:"ti-arrows-exchange",color:"#1a7a40" },
   { value:"perte",       label:"Perte de volume",         icon:"ti-droplet-off",    color:"#cc2222" },
   { value:"remplissage", label:"Remplissage cuve",        icon:"ti-droplet-filled", color:"#533AB7" },
   { value:"batonnage",   label:"Bâtonnage",               icon:"ti-refresh",        color:"#5F5E5A" },
