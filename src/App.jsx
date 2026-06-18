@@ -3090,54 +3090,6 @@ export default function App() {
             {/* Colonne droite */}
             <div style={{display:"grid",gap:"16px"}}>
 
-            {/* Colonne droite - Parcelles */}
-            <div style={s.card}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:showParcellesList?"12px":"0"}}>
-                <div style={{display:"flex",alignItems:"center",gap:"8px",cursor:"pointer"}} onClick={()=>setShowParcellesList(p=>!p)}>
-                  <span style={{...s.lbl,marginBottom:0}}>Parcelles ({parcelles.length})</span>
-                  <span style={{fontSize:"10px",color:"#9a8870"}}>{showParcellesList?"▲":"▼"}</span>
-                </div>
-                <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
-                  {(()=>{
-                    const totalHa = parcelles.reduce((s,p)=>s+(parseFloat(p.surface)||0),0);
-                    const ha = Math.floor(totalHa);
-                    const ares = Math.floor((totalHa-ha)*100);
-                    const ca = Math.round(((totalHa-ha)*100-ares)*100);
-                    return <span style={{fontSize:"11px",color:"#7a5200",fontWeight:500}}>{ha}ha {String(ares).padStart(2,"0")}a {String(ca).padStart(2,"0")}ca</span>;
-                  })()}
-                  <button style={s.btnSm} onClick={()=>{setParcelleForm({nom:"",cepage:"",surface:"",commune:""});setEditingParcelle(null);setShowParcelleForm(true);}}>+ Ajouter</button>
-                </div>
-              </div>
-              {showParcellesList&&parcelles.length===0&&<div style={{fontSize:"12px",color:"#9a8870",fontStyle:"italic"}}>Aucune parcelle. Ajoutez-en une pour commencer.</div>}
-              {showParcellesList&&parcelles.map(p=>(
-                <div key={p.id} style={{borderBottom:"0.5px solid #ede5d4",padding:"8px 0"}}>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
-                    <div style={{flex:1}}>
-                      <div style={{display:"flex",alignItems:"center",gap:"6px",marginBottom:"2px"}}>
-                        <div style={{fontSize:"13px",fontWeight:500,color:"#1a1205"}}>{p.nom}</div>
-                        {p.certification&&(
-                          <span style={{fontSize:"10px",padding:"1px 6px",borderRadius:"3px",fontFamily:"monospace",fontWeight:500,
-                            background:p.certification==="BIO"?"#d4edc0":p.certification==="NON BIO"?"#ede5d4":p.certification==="C1"?"#fde8b8":p.certification==="C2"?"#fce8a8":"#fad4a0",
-                            color:p.certification==="BIO"?"#2d6a00":p.certification==="NON BIO"?"#5f5e5a":p.certification==="C1"?"#8b5e0a":p.certification==="C2"?"#7a4800":"#6b3a00"}}>
-                            {p.certification}
-                          </span>
-                        )}
-                      </div>
-                      {p.cepage&&<div style={{fontSize:"11px",color:"#9a8870"}}>{p.cepage}</div>}
-                      <div style={{fontSize:"11px",color:"#9a8870"}}>{p.commune||""}{p.surface?` - ${p.surface} ha`:""}</div>
-                      {p.observations&&<div style={{fontSize:"10px",color:"#7a6840",fontStyle:"italic",marginTop:"2px"}}>{p.observations}</div>}
-                      <div style={{fontSize:"10px",color:"#a8987e",marginTop:"2px"}}>{vendanges.filter(v=>v.parcelleId===p.id).length} apport(s)</div>
-                    </div>
-                    <div style={{display:"flex",gap:"4px"}}>
-                      <button style={{...s.ghostSm,fontSize:"10px"}} onClick={()=>{setParcelleForm({nom:p.nom,cepage:p.cepage||"",certification:p.certification||"BIO",surface:p.surface||"",commune:p.commune||"",observations:p.observations||""});setEditingParcelle(p);setShowParcelleForm(true);}}>Mod.</button>
-                      <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
-                        onClick={()=>{if(window.confirm("Supprimer cette parcelle ?")) { setParcelles(prev=>prev.filter(x=>x.id!==p.id)); deleteParcelleFb(p.id); }}}>Sup.</button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            </div>
           </div>
         )}
 
