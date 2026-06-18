@@ -2057,7 +2057,7 @@ export default function App() {
           <div style={{fontSize:"13px",fontWeight:600,color:"#1a1205",marginBottom:"1px",paddingLeft:"6px"}}>{t.id}</div>
           <div style={{fontSize:"10px",color:"#6a5838",marginBottom:"2px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",paddingLeft:"6px"}}>{t.denomination}</div>
           {t.cepage&&<div style={{fontSize:"9px",color:"#9a8870",paddingLeft:"6px",marginBottom:"2px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.cepage}</div>}
-          {t.certif==="BIO"&&<div style={{paddingLeft:"6px",marginBottom:"4px"}}><span style={{fontSize:"10px",background:"#2d6a00",color:"#fff",borderRadius:"3px",padding:"1px 6px",fontWeight:600}}>🌿 BIO</span></div>}
+          {t.certif==="BIO"&&t.statut!=="vide"&&<div style={{paddingLeft:"6px",marginBottom:"4px"}}><span style={{fontSize:"10px",background:"#2d6a00",color:"#fff",borderRadius:"3px",padding:"1px 6px",fontWeight:600}}>🌿 BIO</span></div>}
           {t.marc&&(
             <div style={{paddingLeft:"6px",marginBottom:"4px"}}>
               {String(t.marc).split(" + ").map((m,i)=>(
@@ -3781,7 +3781,7 @@ export default function App() {
                         </div>
                       </div>
                     )}
-                    {[["Cepage",selectedT.cepage||"-"],["N Marc",selectedT.statut==="vide"?"-":selectedT.marc||"-"],["Millesime vin",selectedT.statut==="vide"?"-":selectedT.millesime||"-"],["Certification",selectedT.statut==="vide"?"-":selectedT.certif==="BIO"?"🌿 BIO":selectedT.certif||"-"],["Tonnelier",selectedT.tonnelier||"-"],["Grain",selectedT.grain||"-"],["Chauffe",selectedT.chauffe||"-"],["Capacite",`${selectedT.volume} L`]].map(([k,v])=>(
+                    {[["Cepage",selectedT.statut==="vide"?"-":selectedT.cepage||"-"],["N Marc",selectedT.statut==="vide"?"-":selectedT.marc||"-"],["Millesime vin",selectedT.statut==="vide"?"-":selectedT.millesime||"-"],["Certification",selectedT.statut==="vide"?"-":selectedT.certif==="BIO"?"🌿 BIO":selectedT.certif||"-"],["Tonnelier",selectedT.tonnelier||"-"],["Grain",selectedT.grain||"-"],["Chauffe",selectedT.chauffe||"-"],["Capacite",`${selectedT.volume} L`]].map(([k,v])=>(
                       <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:"1px solid #d0c4a0",fontSize:"12px"}}>
                         <span style={{color:"#8a7248"}}>{k}</span><span style={{color:"#1a1205"}}>{v}</span>
                       </div>
