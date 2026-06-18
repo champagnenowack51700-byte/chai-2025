@@ -460,6 +460,8 @@ export default function App() {
   const [ficheHistoAnnee, setFicheHistoAnnee] = useState(()=>new Date().getFullYear().toString());
   const [ficheDegAnnee, setFicheDegAnnee] = useState(()=>new Date().getFullYear().toString());
   const [ficheDegSession, setFicheDegSession] = useState("");
+  const [filterDegAnnee, setFilterDegAnnee] = useState(()=>new Date().getFullYear().toString());
+  const [filterDegSessionG, setFilterDegSessionG] = useState("");
   const [mouvementsClotures, setMouvementsClotures] = useState([]);
   const [editingMvt, setEditingMvt] = useState(null);
   const [showMvtForm, setShowMvtForm] = useState(false);
@@ -2202,7 +2204,13 @@ export default function App() {
   const futsAvecNotes = tonneaux.filter(t=>notesForFut(t.id).length>0);
   const cuveeOptions  = [...new Set(futsAvecNotes.map(t=>t.denomination))].sort();
   const fabricOptions = [...new Set(futsAvecNotes.map(t=>t.tonnelier).filter(Boolean))].sort();
-  const futsFiltres   = futsAvecNotes.filter(t=>{
+  const futsAvecNotesFiltres = futsAvecNotes.filter(t=>{
+    const notesT = notesForFut(t.id);
+    if(filterDegAnnee && !notesT.some(d=>d.date?.slice(0,4)===filterDegAnnee)) return false;
+    if(filterDegSessionG && !notesT.some(d=>d.session===filterDegSessionG)) return false;
+    return true;
+  });
+  const futsFiltres   = futsAvecNotesFiltres.filter(t=>{
     if(filterDegFut    && !t.id.toLowerCase().includes(filterDegFut.toLowerCase())) return false;
     if(filterDegCuvee  && t.denomination!==filterDegCuvee) return false;
     if(filterDegFabric && t.tonnelier!==filterDegFabric) return false;
@@ -3597,6 +3605,32 @@ export default function App() {
                 </div>
               </div>
 
+              {/* Onglets campagne */}
+              {(()=>{
+                const allYearsG = [...new Set(degustations.map(d=>d.date?.slice(0,4)||"?"))].sort().reverse();
+                const allSessionsG = [...new Set(degustations.filter(d=>d.date?.slice(0,4)===filterDegAnnee).map(d=>d.session))].sort().reverse();
+                return (
+                  <div>
+                    <div style={{display:"flex",gap:"0",marginBottom:"8px",borderBottom:"1px solid #d4c4a0",flexWrap:"wrap"}}>
+                      {allYearsG.map(y=>(
+                        <button key={y} onClick={()=>{setFilterDegAnnee(y);setFilterDegSessionG("");}} style={{padding:"6px 14px",border:"none",borderBottom:filterDegAnnee===y?"2px solid #b8860b":"2px solid transparent",background:"transparent",color:filterDegAnnee===y?"#7a5200":"#9a8870",fontWeight:filterDegAnnee===y?500:400,fontSize:"13px",cursor:"pointer",fontFamily:"Georgia,serif"}}>
+                          {y} <span style={{fontSize:"10px",color:"#9a8870"}}>({degustations.filter(d=>d.date?.slice(0,4)===y).length})</span>
+                        </button>
+                      ))}
+                    </div>
+                    {allSessionsG.length>0&&<div style={{display:"flex",gap:"0",marginBottom:"12px",borderBottom:"1px solid #ede5d4",flexWrap:"wrap"}}>
+                      <button onClick={()=>setFilterDegSessionG("")} style={{padding:"4px 10px",border:"none",borderBottom:filterDegSessionG===""?"2px solid #b8860b":"2px solid transparent",background:"transparent",color:filterDegSessionG===""?"#7a5200":"#9a8870",fontSize:"11px",cursor:"pointer"}}>
+                        Toutes les sessions
+                      </button>
+                      {allSessionsG.map(s=>(
+                        <button key={s} onClick={()=>setFilterDegSessionG(s)} style={{padding:"4px 10px",border:"none",borderBottom:filterDegSessionG===s?"2px solid #b8860b":"2px solid transparent",background:"transparent",color:filterDegSessionG===s?"#7a5200":"#9a8870",fontSize:"11px",cursor:"pointer"}}>
+                          {s} ({degustations.filter(d=>d.date?.slice(0,4)===filterDegAnnee&&d.session===s).length})
+                        </button>
+                      ))}
+                    </div>}
+                  </div>
+                );
+              })()}
               {/* Barre de filtres */}
               <div style={{display:"flex",gap:"8px",marginBottom:"14px",flexWrap:"wrap",alignItems:"center",padding:"10px 14px",background:"#fffbf3",border:"1px solid #cfc0a0",borderRadius:"8px"}}>
                 <i className="ti ti-filter" style={{fontSize:"14px",color:"#b8860b",flexShrink:0}}/>
