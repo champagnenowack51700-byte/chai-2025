@@ -334,14 +334,14 @@ const TYPES_MOUVEMENT = [
   { value:"remplissage", label:"Remplissage cuve",        icon:"ti-droplet-filled", color:"#533AB7" },
   { value:"batonnage",   label:"Bâtonnage",               icon:"ti-refresh",        color:"#5F5E5A" },
   { value:"ajout_produit",label:"Ajout produit",          icon:"ti-flask",          color:"#BA7517" },
-  { value:"entonnage",    label:"Entonnage",               icon:"ti-beer",           color:"#7a5200" },
+  { value:"entonnage",    label:"Entonnage",               icon:"ti-beer",           color:"#2C3E50" },
   { value:"mutage",       label:"Mutage (bourbes + alcool)", icon:"ti-flask",          color:"#8B0000" },
 ];
 
 
 // Appellations fixes (non liées au millésime)
 const APPELLATION_FIXED = {
-  vins_reserve: { label:"Vins de réserve", color:"#7a5200", bg:"#fde8b8", border:"#c89020" },
+  vins_reserve: { label:"Vins de réserve", color:"#2C3E50", bg:"#E8E0D0", border:"#c89020" },
   ri:           { label:"RI",              color:"#185FA5", bg:"#d4e8f8", border:"#4a90d9" },
   coteaux:      { label:"Coteaux",         color:"#8B0000", bg:"#fdd0d0", border:"#c85050" },
   ratafia:      { label:"Ratafia",         color:"#5c2a08", bg:"#ecd8c4", border:"#9a6040" },
@@ -533,7 +533,7 @@ export default function App() {
   const STATUTS_BOUTEILLES = ["Sur latte / Sur pointe", "En cours de degorgement", "Degorge", "Habille CRD", "Habille Export"];
   const STATUTS_AUTRES = ["En vieillissement", "Habille"];
   const getStatuts = (type) => ["coteaux_blanc","coteaux_rouge","ratafia"].includes(type) ? STATUTS_AUTRES : STATUTS_BOUTEILLES;
-  const LIEU_COLORS = {"Domaine":{bg:"#d4edda",color:"#1a7a40"},"Lorain Champagnisation":{bg:"#d4e8f8",color:"#185FA5"},"Epernay":{bg:"#fde8b8",color:"#c47800"}};
+  const LIEU_COLORS = {"Domaine":{bg:"#d4edda",color:"#1a7a40"},"Lorain Champagnisation":{bg:"#d4e8f8",color:"#185FA5"},"Epernay":{bg:"#E8E0D0",color:"#c47800"}};
   const STATUT_COLORS = {"Sur latte / Sur pointe":{bg:"#e8f0fb",color:"#185FA5"},"En cours de degorgement":{bg:"#fff3cd",color:"#c47800"},"Degorge":{bg:"#d4f0dd",color:"#1a7a40"},"Habille CRD":{bg:"#e8d4f8",color:"#6a2d8a"},"Habille Export":{bg:"#f8d4e8",color:"#8a2d6a"}};
   const DEGORGE_EMPTY = {
     lotId: "", date:"", operateur:"",
@@ -1996,20 +1996,20 @@ export default function App() {
   const s = {
     app:      { fontFamily:"'Lora','Georgia',serif", minHeight:"100vh", background:"#f0e9d6", color:"#1a1205" },
     nav:      { display:"flex", alignItems:"center", borderBottom:"2px solid #c8a850", padding:"0 28px", background:"#fffdf7", boxShadow:"0 1px 0 #d4c4a0" },
-    brand:    { fontFamily:"'Playfair Display',Georgia,serif", fontSize:"clamp(14px,2vw,19px)", fontWeight:700, color:"#7a5200", padding:"12px 16px 12px 0", marginRight:"12px", borderRight:"1px solid #d4c4a0", letterSpacing:"0.01em", whiteSpace:"nowrap" },
-    navBtn:   (a)=>({ padding:"13px 14px", fontSize:"12px", letterSpacing:"0.09em", textTransform:"uppercase", cursor:"pointer", color:a?"#7a5200":"#9a8c78", background:"none", border:"none", borderBottom:a?"2px solid #b8860b":"2px solid transparent", fontFamily:"'IBM Plex Mono',monospace", fontWeight:a?600:400, transition:"color 0.15s" }),
+    brand:    { fontFamily:"'Playfair Display',Georgia,serif", fontSize:"clamp(14px,2vw,19px)", fontWeight:700, color:"#2C3E50", padding:"12px 16px 12px 0", marginRight:"12px", borderRight:"1px solid #d4c4a0", letterSpacing:"0.01em", whiteSpace:"nowrap" },
+    navBtn:   (a)=>({ padding:"13px 14px", fontSize:"12px", letterSpacing:"0.09em", textTransform:"uppercase", cursor:"pointer", color:a?"#2C3E50":"#9a8c78", background:"none", border:"none", borderBottom:a?"2px solid #b8860b":"2px solid transparent", fontFamily:"'IBM Plex Mono',monospace", fontWeight:a?600:400, transition:"color 0.15s" }),
     main:     { padding:"clamp(12px, 3vw, 28px) clamp(12px, 3vw, 32px)" },
     card:     { background:"#fffdf7", border:"1px solid #d4c4a0", borderRadius:"10px", padding:"18px 22px", boxShadow:"0 1px 3px rgba(139,105,20,0.06)" },
     cardSm:   { background:"#fffdf7", border:"1px solid #cfc0a0", borderRadius:"8px", padding:"12px 14px", boxShadow:"0 1px 2px rgba(139,105,20,0.05)" },
-    btn:      { background:"#b8860b", color:"#1a1208", border:"none", borderRadius:"6px", padding:"8px 18px", fontSize:"12px", fontWeight:700, letterSpacing:"0.06em", textTransform:"uppercase", cursor:"pointer", fontFamily:"'IBM Plex Mono',monospace", boxShadow:"0 1px 3px rgba(139,105,20,0.25)", transition:"background 0.15s" },
-    btnSm:    { background:"#b8860b", color:"#1a1208", border:"none", borderRadius:"5px", padding:"5px 11px", fontSize:"11px", fontWeight:700, cursor:"pointer", fontFamily:"'IBM Plex Mono',monospace", letterSpacing:"0.04em" },
+    btn:      { background:"#8B7355", color:"#1a1208", border:"none", borderRadius:"6px", padding:"8px 18px", fontSize:"12px", fontWeight:700, letterSpacing:"0.06em", textTransform:"uppercase", cursor:"pointer", fontFamily:"'IBM Plex Mono',monospace", boxShadow:"0 1px 3px rgba(139,105,20,0.25)", transition:"background 0.15s" },
+    btnSm:    { background:"#8B7355", color:"#1a1208", border:"none", borderRadius:"5px", padding:"5px 11px", fontSize:"11px", fontWeight:700, cursor:"pointer", fontFamily:"'IBM Plex Mono',monospace", letterSpacing:"0.04em" },
     ghost:    { background:"none", color:"#5a4a30", border:"1px solid #c8b894", borderRadius:"6px", padding:"6px 13px", fontSize:"12px", cursor:"pointer", fontFamily:"'IBM Plex Mono',monospace", transition:"background 0.12s" },
     ghostSm:  { background:"none", color:"#6a5838", border:"1px solid #ccbe9a", borderRadius:"5px", padding:"4px 9px", fontSize:"11px", cursor:"pointer", fontFamily:"'IBM Plex Mono',monospace" },
     lbl:      { fontSize:"10px", letterSpacing:"0.12em", textTransform:"uppercase", color:"#7a6840", marginBottom:"5px", display:"block", fontFamily:"'IBM Plex Mono',monospace" },
-    inp:      { background:"#fffbf3", border:"1px solid #c8b894", borderRadius:"6px", padding:"8px 11px", fontSize:"13px", color:"#1a1205", width:"100%", fontFamily:"'Lora',serif", boxSizing:"border-box", outline:"none" },
-    sel:      { background:"#fffbf3", border:"1px solid #c8b894", borderRadius:"6px", padding:"8px 11px", fontSize:"13px", color:"#1a1205", width:"100%", fontFamily:"'Lora',serif", boxSizing:"border-box" },
+    inp:      { background:"#F8F6F2", border:"1px solid #c8b894", borderRadius:"6px", padding:"8px 11px", fontSize:"13px", color:"#1a1205", width:"100%", fontFamily:"'Lora',serif", boxSizing:"border-box", outline:"none" },
+    sel:      { background:"#F8F6F2", border:"1px solid #c8b894", borderRadius:"6px", padding:"8px 11px", fontSize:"13px", color:"#1a1205", width:"100%", fontFamily:"'Lora',serif", boxSizing:"border-box" },
     tag:      (c)=>({ display:"inline-flex", alignItems:"center", background:c+"18", color:c, border:`1px solid ${c}55`, borderRadius:"4px", padding:"2px 8px", fontSize:"10px", fontWeight:700, letterSpacing:"0.05em", fontFamily:"'IBM Plex Mono',monospace" }),
-    tabBtn:   (a)=>({ padding:"9px 16px", fontSize:"11px", letterSpacing:"0.07em", textTransform:"uppercase", cursor:"pointer", color:a?"#7a5200":"#7a6840", background:a?"#fffbf3":"none", border:"none", borderBottom:a?"2px solid #b8860b":"2px solid transparent", fontFamily:"'IBM Plex Mono',monospace", fontWeight:a?600:400 }),
+    tabBtn:   (a)=>({ padding:"9px 16px", fontSize:"11px", letterSpacing:"0.07em", textTransform:"uppercase", cursor:"pointer", color:a?"#2C3E50":"#7a6840", background:a?"#F8F6F2":"none", border:"none", borderBottom:a?"2px solid #b8860b":"2px solid transparent", fontFamily:"'IBM Plex Mono',monospace", fontWeight:a?600:400 }),
     modal:    { position:"fixed", inset:0, background:"rgba(30,20,5,0.78)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:1000, backdropFilter:"blur(2px)" },
     modalBox: { background:"#fffdf7", border:"1px solid #cfc0a0", borderRadius:"12px", padding:"30px", width:"640px", maxHeight:"92vh", overflowY:"auto", boxShadow:"0 8px 32px rgba(44,36,22,0.18)" },
   };
@@ -2065,7 +2065,7 @@ export default function App() {
           {t.marc&&(
             <div style={{paddingLeft:"6px",marginBottom:"4px"}}>
               {String(t.marc).split(" + ").map((m,i)=>(
-                <span key={i} style={{fontSize:"9px",background:"#7a5200",color:"#fff",borderRadius:"3px",padding:"1px 4px",fontWeight:600,marginRight:"3px"}}>M{m.trim()}</span>
+                <span key={i} style={{fontSize:"9px",background:"#2C3E50",color:"#fff",borderRadius:"3px",padding:"1px 4px",fontWeight:600,marginRight:"3px"}}>M{m.trim()}</span>
               ))}
             </div>
           )}
@@ -2092,8 +2092,8 @@ export default function App() {
           <div style={{color:"#8a7248",fontSize:"10px",marginTop:"3px"}}>{fmtDate(m.timestamp)}</div>
         </div>
         <div>
-          {srcs.length>0&&<div style={{marginBottom:"3px"}}><span style={{color:"#8a7248",marginRight:"4px"}}>De :</span>{srcs.map(f=><span key={f.id} style={{color:"#b8860b",marginRight:"6px",cursor:"pointer",textDecoration:"underline"}} onClick={()=>{setSelectedFut(f.id);setView("fiche");setFicheTab("historique");}}>{f.id}<span style={{color:"#7a6840",textDecoration:"none"}}> ({f.denomination})</span></span>)}</div>}
-          {dest&&<div><span style={{color:"#8a7248",marginRight:"4px"}}>Vers :</span><span style={{color:"#b8860b",cursor:"pointer",textDecoration:"underline"}} onClick={()=>{setSelectedFut(dest.id);setView("fiche");setFicheTab("historique");}}>{dest.id}<span style={{color:"#7a6840",textDecoration:"none"}}> ({dest.denomination})</span></span></div>}
+          {srcs.length>0&&<div style={{marginBottom:"3px"}}><span style={{color:"#8a7248",marginRight:"4px"}}>De :</span>{srcs.map(f=><span key={f.id} style={{color:"#8B7355",marginRight:"6px",cursor:"pointer",textDecoration:"underline"}} onClick={()=>{setSelectedFut(f.id);setView("fiche");setFicheTab("historique");}}>{f.id}<span style={{color:"#7a6840",textDecoration:"none"}}> ({f.denomination})</span></span>)}</div>}
+          {dest&&<div><span style={{color:"#8a7248",marginRight:"4px"}}>Vers :</span><span style={{color:"#8B7355",cursor:"pointer",textDecoration:"underline"}} onClick={()=>{setSelectedFut(dest.id);setView("fiche");setFicheTab("historique");}}>{dest.id}<span style={{color:"#7a6840",textDecoration:"none"}}> ({dest.denomination})</span></span></div>}
           {m.type==="entonnage"&&(()=>{
             const cuveSrc = cuvesCuverie.find(c=>c.id===m.entonnageCuveId);
             // Find vendange from notes
@@ -2102,7 +2102,7 @@ export default function App() {
             const vendangeSrc = marcNum ? vendanges.find(v=>String(v.numeroMarc)===String(marcNum)) : null;
             return (
               <div style={{marginTop:"2px"}}>
-                {cuveSrc&&<div style={{color:"#6a5838"}}>De : <strong style={{color:"#7a5200"}}>{cuveSrc.nom}</strong></div>}
+                {cuveSrc&&<div style={{color:"#6a5838"}}>De : <strong style={{color:"#2C3E50"}}>{cuveSrc.nom}</strong></div>}
                 {marcNum&&<div style={{color:"#6a5838"}}>Marc : <span style={{color:"#2d6a00",cursor:"pointer",textDecoration:"underline",fontWeight:500}} onClick={()=>{if(vendangeSrc){setView("vendanges");}}}>{marcNum}{vendangeSrc?" - "+vendangeSrc.cuveeCreee:""}</span></div>}
                 <div style={{color:"#6a5838"}}>Vol : <strong style={{color:"#1a1205"}}>{m.volume?(parseInt(m.volume)/100).toFixed(2)+" HL":""}</strong></div>
               </div>
@@ -2111,13 +2111,13 @@ export default function App() {
           {m.type!=="entonnage"&&(
             m.volume&&<div style={{color:"#6a5838",marginTop:"2px"}}>Vol : <strong style={{color:"#1a1205"}}>{m.volume}L</strong></div>
           )}
-          {m.produit&&<div style={{color:"#6a5838",marginTop:"2px"}}>{m.produit}{m.dosage&&` - ${m.dosage}`}{m.numeroLot&&<span style={{marginLeft:"6px",fontSize:"10px",background:"#fff8ee",border:"1px solid #d4c4a0",borderRadius:"3px",padding:"1px 5px",color:"#7a5200",fontFamily:"monospace"}}>Lot: {m.numeroLot}</span>}</div>}
+          {m.produit&&<div style={{color:"#6a5838",marginTop:"2px"}}>{m.produit}{m.dosage&&` - ${m.dosage}`}{m.numeroLot&&<span style={{marginLeft:"6px",fontSize:"10px",background:"#F0EDE8",border:"1px solid #d4c4a0",borderRadius:"3px",padding:"1px 5px",color:"#2C3E50",fontFamily:"monospace"}}>Lot: {m.numeroLot}</span>}</div>}
         </div>
         <div style={{color:"#6a5838",fontStyle:"italic",fontSize:"11px"}}>{m.notes}</div>
         <div style={{color:"#8a7248",fontSize:"11px"}}>{m.operateur}</div>
         <div style={{textAlign:"right",display:"flex",flexDirection:"column",gap:"4px"}}>
           {!isMvtCampagneClosed(m.date?.slice(0,4))&&<button title="Modifier"
-            style={{background:"#f5e8cc",color:"#7a5200",border:"1px solid #d4c4a0",borderRadius:"4px",padding:"4px 7px",fontSize:"10px",cursor:"pointer",fontFamily:"monospace",fontWeight:600}}
+            style={{background:"#f5e8cc",color:"#2C3E50",border:"1px solid #d4c4a0",borderRadius:"4px",padding:"4px 7px",fontSize:"10px",cursor:"pointer",fontFamily:"monospace",fontWeight:600}}
             onClick={()=>{setEditingMvt(m);setMvtForm({...m});setShowMvtForm(true);}}>
             Modifier
           </button>}
@@ -2134,13 +2134,13 @@ export default function App() {
 
   const DegRow = ({d}) => (
     <div style={{borderBottom:"1px solid #d0c4a0",padding:"8px 0",display:"grid",gridTemplateColumns:"100px 70px 70px 70px 1fr 64px",gap:"8px",fontSize:"12px",alignItems:"center"}}>
-      <div style={{color:"#b8860b",fontWeight:600}}>{d.degustateur}</div>
+      <div style={{color:"#8B7355",fontWeight:600}}>{d.degustateur}</div>
       <div style={{color:d.boise>=2.5?"#c47800":"#6a5838"}}>{d.boise!=null?`B: ${d.boise}`:"-"}</div>
       <div style={{color:"#6a5838"}}>{d.longueur!=null?`L: ${d.longueur}`:"-"}</div>
-      <div style={{fontWeight:600,color:d.noteG>=4?"#1a7a40":d.noteG>=3?"#b8860b":"#7a6840"}}>{d.noteG!=null?`${d.noteG}/5`:"-"}</div>
+      <div style={{fontWeight:600,color:d.noteG>=4?"#1a7a40":d.noteG>=3?"#8B7355":"#7a6840"}}>{d.noteG!=null?`${d.noteG}/5`:"-"}</div>
       <div style={{color:"#6a5838",fontStyle:"italic",fontSize:"11px"}}>{d.commentaire}</div>
       <div style={{display:"flex",gap:"3px",justifyContent:"flex-end"}}>
-        <button title="Modifier" style={{background:"#fff8ee",border:"1px solid #d4c4a0",borderRadius:"3px",padding:"3px 6px",cursor:"pointer",color:"#7a5200",fontSize:"11px"}}
+        <button title="Modifier" style={{background:"#F0EDE8",border:"1px solid #d4c4a0",borderRadius:"3px",padding:"3px 6px",cursor:"pointer",color:"#2C3E50",fontSize:"11px"}}
           onClick={()=>openEditNote(d)}>Mod.</button>
         <button title="Supprimer" style={{background:"#fce8e8",border:"1px solid #f0b4b4",borderRadius:"3px",padding:"3px 6px",cursor:"pointer",color:"#cc2222",fontSize:"11px"}}
           onClick={()=>deleteNote(d.id)}>Sup.</button>
@@ -2161,16 +2161,16 @@ export default function App() {
       <div>
         <div style={{display:"flex",gap:"0",marginBottom:"16px",borderBottom:"1px solid #d4c4a0",flexWrap:"wrap"}}>
           {allYears.map(y=>(
-            <button key={y} onClick={()=>setFicheDegAnnee(y)} style={{padding:"6px 12px",border:"none",borderBottom:activeYear===y?"2px solid #b8860b":"2px solid transparent",background:"transparent",color:activeYear===y?"#7a5200":"#9a8870",fontWeight:activeYear===y?500:400,fontSize:"12px",cursor:"pointer"}}>
+            <button key={y} onClick={()=>setFicheDegAnnee(y)} style={{padding:"6px 12px",border:"none",borderBottom:activeYear===y?"2px solid #b8860b":"2px solid transparent",background:"transparent",color:activeYear===y?"#2C3E50":"#9a8870",fontWeight:activeYear===y?500:400,fontSize:"12px",cursor:"pointer"}}>
               {y} <span style={{fontSize:"10px",color:"#9a8870"}}>({notes.filter(d=>(d.date?.slice(0,4)||"?")===y).length})</span>
             </button>
           ))}
         </div>
         <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:"10px",marginBottom:"16px"}}>
-          {[["Note globale moy.", ngAvg?.toFixed(2)||"-", ngAvg>=4?"#1a7a40":ngAvg>=3?"#b8860b":"#888"],
+          {[["Note globale moy.", ngAvg?.toFixed(2)||"-", ngAvg>=4?"#1a7a40":ngAvg>=3?"#8B7355":"#888"],
             ["Boisé moyen", nbAvg?.toFixed(2)||"-", "#888"],
             ["Longueur moy.", nlAvg?.toFixed(2)||"-", "#888"]].map(([lbl,val,col],i)=>(
-            <div key={i} style={{background:"#fffbf3",borderRadius:"6px",padding:"10px 14px"}}>
+            <div key={i} style={{background:"#F8F6F2",borderRadius:"6px",padding:"10px 14px"}}>
               <div style={{fontSize:"10px",color:"#8a7248",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:"4px"}}>{lbl}</div>
               <div style={{fontSize:"20px",fontWeight:600,color:col}}>{val}</div>
             </div>
@@ -2182,7 +2182,7 @@ export default function App() {
             <div>
               <div style={{display:"flex",gap:"0",marginBottom:"12px",borderBottom:"1px solid #e8dcc6",flexWrap:"wrap"}}>
                 {sessionsUniques.map(sess=>(
-                  <button key={sess} onClick={()=>setFicheDegSession(sess)} style={{padding:"5px 10px",border:"none",borderBottom:activeSess===sess?"2px solid #b8860b":"2px solid transparent",background:"transparent",color:activeSess===sess?"#7a5200":"#9a8870",fontWeight:activeSess===sess?500:400,fontSize:"11px",cursor:"pointer"}}>
+                  <button key={sess} onClick={()=>setFicheDegSession(sess)} style={{padding:"5px 10px",border:"none",borderBottom:activeSess===sess?"2px solid #b8860b":"2px solid transparent",background:"transparent",color:activeSess===sess?"#2C3E50":"#9a8870",fontWeight:activeSess===sess?500:400,fontSize:"11px",cursor:"pointer"}}>
                     {sess} <span style={{fontSize:"10px",color:"#9a8870"}}>({notesAnnee.filter(d=>d.session===sess).length})</span>
                   </button>
                 ))}
@@ -2254,7 +2254,7 @@ export default function App() {
 
             {/* SECTION 1 : STOCK CHAI */}
             <div style={{display:"flex",alignItems:"center",gap:"10px",marginBottom:"16px"}}>
-              <div style={{fontFamily:"Georgia,serif",fontSize:"18px",color:"#7a5200",fontWeight:500}}>Stock chai</div>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"18px",color:"#2C3E50",fontWeight:500}}>Stock chai</div>
               <div style={{flex:1,height:"1px",background:"linear-gradient(to right, #d4c4a0, transparent)"}}/>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(180px,1fr))",gap:"12px",marginBottom:"12px"}}>
@@ -2275,7 +2275,7 @@ export default function App() {
                 ].map((k,i)=>(
                   <div key={i} style={s.card}>
                     <div style={s.lbl}>{k.lbl}</div>
-                    <div style={{fontSize:"28px",fontWeight:700,color:k.col||"#b8860b",letterSpacing:"-0.5px"}}>{k.val}</div>
+                    <div style={{fontSize:"28px",fontWeight:700,color:k.col||"#8B7355",letterSpacing:"-0.5px"}}>{k.val}</div>
                     <div style={{fontSize:"11px",color:"#9a8870",marginTop:"4px"}}>{k.sub}</div>
                   </div>
                 ));
@@ -2317,7 +2317,7 @@ export default function App() {
                     <div style={{width:"1px",background:"#d4c4a0",alignSelf:"stretch"}}/>
                     <div style={{paddingLeft:"16px"}}>
                       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"6px"}}>
-                        <span style={{fontFamily:"Georgia,serif",fontSize:"13px",color:"#7a5200",fontWeight:500}}>Vins de Reserve AOC</span>
+                        <span style={{fontFamily:"Georgia,serif",fontSize:"13px",color:"#2C3E50",fontWeight:500}}>Vins de Reserve AOC</span>
                         <span style={{fontSize:"10px",color:"#9a8870"}}>{vinsReserve.length} futs</span>
                       </div>
                       <div style={{display:"flex",gap:"16px"}}>
@@ -2332,7 +2332,7 @@ export default function App() {
 
             {/* SECTION 2 : STOCK BOUTEILLES */}
             <div style={{display:"flex",alignItems:"center",gap:"10px",marginBottom:"16px"}}>
-              <div style={{fontFamily:"Georgia,serif",fontSize:"18px",color:"#7a5200",fontWeight:500}}>Stock bouteilles</div>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"18px",color:"#2C3E50",fontWeight:500}}>Stock bouteilles</div>
               <div style={{flex:1,height:"1px",background:"linear-gradient(to right, #d4c4a0, transparent)"}}/>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:"12px",marginBottom:"28px"}}>
@@ -2348,7 +2348,7 @@ export default function App() {
                 const coteauxRouge = lots.filter(l=>l.typeProduit==="coteaux_rouge").reduce((s,l)=>s+(parseInt(l.qteActuelle)||0),0);
                 const ratafia = lots.filter(l=>l.typeProduit==="ratafia").reduce((s,l)=>s+(parseInt(l.qteActuelle)||0),0);
                 return [
-                  {lbl:"Champagne",val:champagne+" btl",sub:moins15+" < 15 mois",col:"#b8860b"},
+                  {lbl:"Champagne",val:champagne+" btl",sub:moins15+" < 15 mois",col:"#8B7355"},
                   {lbl:"< 15 mois",val:moins15+" btl",sub:"non commercialisables",col:"#cc2222"},
                   {lbl:"> 15 mois",val:plus15+" btl",sub:"commercialisables",col:"#1a7a40"},
                   {lbl:"Alertes 15 mois",val:alertes+" lot(s)",sub:"a confirmer",col:"#c47800"},
@@ -2447,7 +2447,7 @@ export default function App() {
                     style={{padding:"4px 10px",borderRadius:"4px",border:`0.5px solid ${filterTraitAn===c?"#2d6a00":"#d4c4a0"}`,background:filterTraitAn===c?"#d4edc0":"transparent",color:filterTraitAn===c?"#2d6a00":"#9a8870",fontSize:"11px",cursor:"pointer",fontFamily:"monospace",display:"flex",alignItems:"center",gap:"4px"}}>
                     {c}
                     {isCampagneClosed(c)&&<span style={{fontSize:"9px",color:"#cc2222"}}>cloturee</span>}
-                    <span style={{background:cuivreParCampagne[c]>3000?"#fdd0d0":cuivreParCampagne[c]>2000?"#fde8b8":"#d4edc0",color:cuivreParCampagne[c]>3000?"#cc2222":cuivreParCampagne[c]>2000?"#c47800":"#2d6a00",borderRadius:"3px",padding:"0 4px",fontSize:"10px",fontWeight:500}}>
+                    <span style={{background:cuivreParCampagne[c]>3000?"#fdd0d0":cuivreParCampagne[c]>2000?"#E8E0D0":"#d4edc0",color:cuivreParCampagne[c]>3000?"#cc2222":cuivreParCampagne[c]>2000?"#c47800":"#2d6a00",borderRadius:"3px",padding:"0 4px",fontSize:"10px",fontWeight:500}}>
                       {(cuivreParCampagne[c]/1000).toFixed(2)}kg Cu
                     </span>
                   </button>
@@ -2470,7 +2470,7 @@ export default function App() {
                     ].map((k,i)=>(
                       <div key={i} style={{...s.card,padding:"10px 12px"}}>
                         <div style={s.lbl}>{k.lbl}</div>
-                        <div style={{fontSize:"16px",fontWeight:500,color:k.col||"#b8860b",lineHeight:1.2}}>{k.val}</div>
+                        <div style={{fontSize:"16px",fontWeight:500,color:k.col||"#8B7355",lineHeight:1.2}}>{k.val}</div>
                       </div>
                     ))}
                   </div>
@@ -2490,7 +2490,7 @@ export default function App() {
                   <div style={{overflowX:"auto"}}>
                     <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
                       <thead>
-                        <tr style={{borderBottom:"1px solid #d4c4a0",background:"#fff8ee"}}>
+                        <tr style={{borderBottom:"1px solid #d4c4a0",background:"#F0EDE8"}}>
                           {["N°","Date","Surface","Produits","Cu/ha",""].map(h=>(
                             <th key={h} style={{textAlign:"left",padding:"7px 10px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#9a8870",fontWeight:500}}>{h}</th>
                           ))}
@@ -2502,14 +2502,14 @@ export default function App() {
                           const isHist = t.campagne !== currentYear;
                           const canEdit = !closed && !isHist;
                           return (
-                            <tr key={t.id||i} style={{borderBottom:"1px solid #ede5d4",background:i%2===0?"transparent":"#fffbf3"}}>
-                              <td style={{padding:"8px 10px",fontFamily:"monospace",color:"#b8860b",fontWeight:500}}>N°{t.numero}</td>
+                            <tr key={t.id||i} style={{borderBottom:"1px solid #ede5d4",background:i%2===0?"transparent":"#F8F6F2"}}>
+                              <td style={{padding:"8px 10px",fontFamily:"monospace",color:"#8B7355",fontWeight:500}}>N°{t.numero}</td>
                               <td style={{padding:"8px 10px",color:"#6a5838"}}>{fmt(t.date)}</td>
                               <td style={{padding:"8px 10px",color:"#6a5838"}}>{t.surface}</td>
                               <td style={{padding:"8px 10px",maxWidth:"320px"}}>
                                 <div style={{display:"flex",gap:"3px",flexWrap:"wrap"}}>
                                   {(t.produits||[]).map((p,j)=>(
-                                    <span key={j} style={{background:p.matiereActive==="Cuivre"?"#fde8b8":p.matiereActive==="Soufre"?"#e6f0fb":"#ede5d4",color:p.matiereActive==="Cuivre"?"#7a5200":p.matiereActive==="Soufre"?"#185FA5":"#5f5e5a",borderRadius:"3px",padding:"1px 5px",fontSize:"10px",fontFamily:"monospace",whiteSpace:"nowrap"}}>
+                                    <span key={j} style={{background:p.matiereActive==="Cuivre"?"#E8E0D0":p.matiereActive==="Soufre"?"#e6f0fb":"#ede5d4",color:p.matiereActive==="Cuivre"?"#2C3E50":p.matiereActive==="Soufre"?"#185FA5":"#5f5e5a",borderRadius:"3px",padding:"1px 5px",fontSize:"10px",fontFamily:"monospace",whiteSpace:"nowrap"}}>
                                       {p.nom} {p.dose}
                                     </span>
                                   ))}
@@ -2542,7 +2542,7 @@ export default function App() {
               {vigneTab==="traitements" && filterTraitAn && (
                 <div style={{...s.card,marginTop:"14px"}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
-                    <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#7a5200"}}>Calendriers prestataires</div>
+                    <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#2C3E50"}}>Calendriers prestataires</div>
                     {!closed && (
                       <label style={{...s.btnSm,cursor:"pointer",display:"flex",alignItems:"center",gap:"5px"}}>
                         {uploadingPdf?"Chargement...":"+ Ajouter PDF"}
@@ -2562,7 +2562,7 @@ export default function App() {
                   )}
                   <div style={{display:"grid",gap:"8px"}}>
                     {pdfDocs.filter(p=>p.campagne===filterTraitAn).map(pdf=>(
-                      <div key={pdf.id} style={{display:"flex",alignItems:"center",gap:"12px",padding:"10px 12px",background:"#fff8ee",borderRadius:"6px",border:"0.5px solid #d4c4a0"}}>
+                      <div key={pdf.id} style={{display:"flex",alignItems:"center",gap:"12px",padding:"10px 12px",background:"#F0EDE8",borderRadius:"6px",border:"0.5px solid #d4c4a0"}}>
                         <div style={{width:"32px",height:"32px",background:"#fdd0d0",borderRadius:"4px",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
                           <span style={{fontSize:"10px",fontWeight:500,color:"#cc2222",fontFamily:"monospace"}}>PDF</span>
                         </div>
@@ -2598,7 +2598,7 @@ export default function App() {
                   {/* Actions */}
                   <div style={{display:"flex",gap:"8px",marginBottom:"14px",flexWrap:"wrap",alignItems:"center"}}>
                     <button style={s.btnSm} onClick={()=>{setProduitForm(PRODUIT_EMPTY);setEditingStockProd(null);setShowStockProdForm(true);}}>+ Ajouter un produit</button>
-                    <label style={{...s.btnSm,cursor:"pointer",background:"#fff8ee",color:"#7a5200",border:"0.5px solid #d4c4a0"}}>
+                    <label style={{...s.btnSm,cursor:"pointer",background:"#F0EDE8",color:"#2C3E50",border:"0.5px solid #d4c4a0"}}>
                       {uploadingPdf?"Chargement...":"+ Ajouter une facture (PDF)"}
                       <input type="file" accept=".pdf" style={{display:"none"}} onChange={e=>{
                         const file=e.target.files[0];
@@ -2612,7 +2612,7 @@ export default function App() {
                     <div style={s.card}>
                       <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
                         <thead>
-                          <tr style={{borderBottom:"1px solid #d4c4a0",background:"#fff8ee"}}>
+                          <tr style={{borderBottom:"1px solid #d4c4a0",background:"#F0EDE8"}}>
 
                         {["Produit","N°AMM","Substance active","Teneur Cu g/kg|L","Stock actuel","Actions"].map(h=>(
                               <th key={h} style={{textAlign:"left",padding:"7px 10px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#9a8870",fontWeight:500}}>{h}</th>
@@ -2625,7 +2625,7 @@ export default function App() {
                             const init  = parseFloat(p.stockInitial)||0;
                             const pct   = init>0 ? Math.round(stock/init*100) : 100;
                             return (
-                              <tr key={p.id} style={{borderBottom:"1px solid #ede5d4",background:i%2===0?"transparent":"#fffbf3"}}>
+                              <tr key={p.id} style={{borderBottom:"1px solid #ede5d4",background:i%2===0?"transparent":"#F8F6F2"}}>
                                 <td style={{padding:"8px 10px"}}>
                                   <div style={{fontWeight:500,color:"#1a1205"}}>{p.nom}</div>
                                   {p.fournisseur&&<div style={{fontSize:"10px",color:"#9a8870"}}>{p.fournisseur}</div>}
@@ -2633,7 +2633,7 @@ export default function App() {
                                 <td style={{padding:"8px 10px",fontFamily:"monospace",fontSize:"11px",color:"#9a8870"}}>{p.nAmm||"-"}</td>
                                 <td style={{padding:"8px 10px"}}>
                                   {(()=>{ const sa=p.substanceActive||p.matiereActive||"-";
-                                    return <span style={{background:sa==="Cuivre"?"#fde8b8":sa==="Soufre"?"#e6f0fb":"#ede5d4",color:sa==="Cuivre"?"#7a5200":sa==="Soufre"?"#185FA5":"#5f5e5a",borderRadius:"3px",padding:"1px 6px",fontSize:"10px",fontFamily:"monospace"}}>{sa}</span>;
+                                    return <span style={{background:sa==="Cuivre"?"#E8E0D0":sa==="Soufre"?"#e6f0fb":"#ede5d4",color:sa==="Cuivre"?"#2C3E50":sa==="Soufre"?"#185FA5":"#5f5e5a",borderRadius:"3px",padding:"1px 6px",fontSize:"10px",fontFamily:"monospace"}}>{sa}</span>;
                                   })()}
                                 </td>
                                 <td style={{padding:"8px 10px",fontFamily:"monospace",fontWeight:500}}>
@@ -2673,7 +2673,7 @@ export default function App() {
                       <div style={{...s.lbl,marginBottom:"8px"}}>Factures / BL</div>
                       <div style={{display:"grid",gap:"6px"}}>
                         {pdfFactures.map(pdf=>(
-                          <div key={pdf.id} style={{display:"flex",alignItems:"center",gap:"10px",padding:"8px 12px",background:"#fff8ee",borderRadius:"6px",border:"0.5px solid #d4c4a0"}}>
+                          <div key={pdf.id} style={{display:"flex",alignItems:"center",gap:"10px",padding:"8px 12px",background:"#F0EDE8",borderRadius:"6px",border:"0.5px solid #d4c4a0"}}>
                             <div style={{width:"28px",height:"28px",background:"#fdd0d0",borderRadius:"4px",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
                               <span style={{fontSize:"9px",fontWeight:500,color:"#cc2222",fontFamily:"monospace"}}>PDF</span>
                             </div>
@@ -2695,8 +2695,8 @@ export default function App() {
                       <div style={{display:"flex",gap:"6px",flexWrap:"wrap"}}>
                         {CATALOGUE_PRODUITS.filter(c=>!stockProduits.find(p=>p.nAmm===c.nAmm)).map((c,i)=>(
                           <button key={i} onClick={()=>addFromCatalogue(c)}
-                            style={{background:"#fff8ee",border:"0.5px solid #d4c4a0",borderRadius:"5px",padding:"6px 12px",fontSize:"11px",cursor:"pointer",color:"#7a5200",fontFamily:"monospace",display:"flex",alignItems:"center",gap:"5px"}}>
-                            <span style={{background:(c.substanceActive||c.matiereActive)==="Cuivre"?"#fde8b8":(c.substanceActive||c.matiereActive)==="Soufre"?"#e6f0fb":"#ede5d4",color:(c.substanceActive||c.matiereActive)==="Cuivre"?"#7a5200":"#185FA5",borderRadius:"3px",padding:"0 4px",fontSize:"9px"}}>{c.substanceActive||c.matiereActive}</span>
+                            style={{background:"#F0EDE8",border:"0.5px solid #d4c4a0",borderRadius:"5px",padding:"6px 12px",fontSize:"11px",cursor:"pointer",color:"#2C3E50",fontFamily:"monospace",display:"flex",alignItems:"center",gap:"5px"}}>
+                            <span style={{background:(c.substanceActive||c.matiereActive)==="Cuivre"?"#E8E0D0":(c.substanceActive||c.matiereActive)==="Soufre"?"#e6f0fb":"#ede5d4",color:(c.substanceActive||c.matiereActive)==="Cuivre"?"#2C3E50":"#185FA5",borderRadius:"3px",padding:"0 4px",fontSize:"9px"}}>{c.substanceActive||c.matiereActive}</span>
                             + {c.nom}
                           </button>
                         ))}
@@ -2712,7 +2712,7 @@ export default function App() {
                   {biodyFiltres.length>0&&(
                     <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
                       <thead>
-                        <tr style={{borderBottom:"1px solid #d4c4a0",background:"#fff8ee"}}>
+                        <tr style={{borderBottom:"1px solid #d4c4a0",background:"#F0EDE8"}}>
                           {["Date","Surface","Produit","Observations",""].map(h=>(
                             <th key={h} style={{textAlign:"left",padding:"7px 10px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#9a8870",fontWeight:500}}>{h}</th>
                           ))}
@@ -2720,7 +2720,7 @@ export default function App() {
                       </thead>
                       <tbody>
                         {biodyFiltres.sort((a,b)=>new Date(a.date)-new Date(b.date)).map((b,i)=>(
-                          <tr key={b.id} style={{borderBottom:"1px solid #ede5d4",background:i%2===0?"transparent":"#fffbf3"}}>
+                          <tr key={b.id} style={{borderBottom:"1px solid #ede5d4",background:i%2===0?"transparent":"#F8F6F2"}}>
                             <td style={{padding:"8px 10px",color:"#6a5838"}}>{fmt(b.date)}</td>
                             <td style={{padding:"8px 10px",color:"#6a5838"}}>{b.surface}</td>
                             <td style={{padding:"8px 10px"}}>
@@ -2753,7 +2753,7 @@ export default function App() {
                     <div style={{overflowX:"auto"}}>
                       <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
                         <thead>
-                          <tr style={{borderBottom:"1px solid #d4c4a0",background:"#fff8ee"}}>
+                          <tr style={{borderBottom:"1px solid #d4c4a0",background:"#F0EDE8"}}>
                             {["Parcelle","Surface","Produit","Quantite","N total","N/ha","Observations",""].map(h=>(
                               <th key={h} style={{textAlign:"left",padding:"7px 10px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#9a8870",fontWeight:500}}>{h}</th>
                             ))}
@@ -2761,11 +2761,11 @@ export default function App() {
                         </thead>
                         <tbody>
                           {amendFiltres.sort((a,b)=>a.parcelle.localeCompare(b.parcelle)).map((a,i)=>(
-                            <tr key={a.id} style={{borderBottom:"1px solid #ede5d4",background:i%2===0?"transparent":"#fffbf3"}}>
+                            <tr key={a.id} style={{borderBottom:"1px solid #ede5d4",background:i%2===0?"transparent":"#F8F6F2"}}>
                               <td style={{padding:"8px 10px",fontWeight:500,color:"#1a1205"}}>{a.parcelle}</td>
                               <td style={{padding:"8px 10px",color:"#6a5838",fontFamily:"monospace"}}>{a.surface} ha</td>
                               <td style={{padding:"8px 10px"}}>
-                                <span style={{background:"#fde8b8",color:"#7a5200",borderRadius:"3px",padding:"1px 7px",fontSize:"11px",fontFamily:"monospace"}}>{a.produit}</span>
+                                <span style={{background:"#E8E0D0",color:"#2C3E50",borderRadius:"3px",padding:"1px 7px",fontSize:"11px",fontFamily:"monospace"}}>{a.produit}</span>
                               </td>
                               <td style={{padding:"8px 10px",color:"#6a5838",fontFamily:"monospace"}}>{a.quantite}</td>
                               <td style={{padding:"8px 10px",color:"#6a5838",fontFamily:"monospace"}}>{a.nTotal}</td>
@@ -2799,7 +2799,7 @@ export default function App() {
             {/* Onglets principaux */}
             <div style={{display:"flex",gap:"0",marginBottom:"20px",borderBottom:"1px solid #d4c4a0"}}>
               {[["futscuves","Futs et Cuves"],["cuverie","Cuverie"]].map(([key,lbl])=>(
-                <button key={key} onClick={()=>setTonneauxTab(key)} style={{padding:"10px 20px",border:"none",borderBottom:tonneauxTab===key?"2px solid #b8860b":"2px solid transparent",background:"transparent",color:tonneauxTab===key?"#7a5200":"#9a8870",fontWeight:tonneauxTab===key?500:400,fontSize:"13px",cursor:"pointer",fontFamily:"Georgia,serif"}}>
+                <button key={key} onClick={()=>setTonneauxTab(key)} style={{padding:"10px 20px",border:"none",borderBottom:tonneauxTab===key?"2px solid #b8860b":"2px solid transparent",background:"transparent",color:tonneauxTab===key?"#2C3E50":"#9a8870",fontWeight:tonneauxTab===key?500:400,fontSize:"13px",cursor:"pointer",fontFamily:"Georgia,serif"}}>
                   {lbl}
                 </button>
               ))}
@@ -2834,7 +2834,7 @@ export default function App() {
                           </div>
                           <div>
                             <div style={s.lbl}>Contenu actuel</div>
-                            <div style={{fontWeight:500,color:parseFloat(c.contenuActuelHL)>0?"#b8860b":"#9a8870"}}>{c.contenuActuelHL||"0"} HL</div>
+                            <div style={{fontWeight:500,color:parseFloat(c.contenuActuelHL)>0?"#8B7355":"#9a8870"}}>{c.contenuActuelHL||"0"} HL</div>
                             {c.notes&&<div style={{fontSize:"11px",color:"#9a8870",fontStyle:"italic",marginTop:"2px"}}>{c.notes}</div>}
                           </div>
                           <div style={{display:"flex",gap:"6px"}}>
@@ -2853,7 +2853,7 @@ export default function App() {
             {/* Onglets appellation */}
             <div style={{display:"flex",gap:"6px",marginBottom:"16px",flexWrap:"wrap",overflowX:"auto"}}>
               <button onClick={()=>setFilterAppellation("")}
-                style={{padding:"5px 14px",borderRadius:"4px",border:`1px solid ${!filterAppellation?"#b8860b":"#2a2a2c"}`,background:!filterAppellation?"#fce8a8":"transparent",color:!filterAppellation?"#7a5200":"#7a6840",fontSize:"12px",cursor:"pointer",fontFamily:"inherit"}}>
+                style={{padding:"5px 14px",borderRadius:"4px",border:`1px solid ${!filterAppellation?"#8B7355":"#2a2a2c"}`,background:!filterAppellation?"#fce8a8":"transparent",color:!filterAppellation?"#2C3E50":"#7a6840",fontSize:"12px",cursor:"pointer",fontFamily:"inherit"}}>
                 Tous ({tonneaux.length})
               </button>
               {allAppellations.map(key=>{
@@ -2878,7 +2878,7 @@ export default function App() {
               </select>
               <div style={{display:"flex",gap:"4px"}}>
                 {[["","Tous"],["actif","Actifs"],["vide","Vides"]].map(([val,lbl])=>(
-                  <button key={val} onClick={()=>setFilterStatut(val)} style={{padding:"3px 10px",borderRadius:"4px",border:`0.5px solid ${filterStatut===val?"#b8860b":"#d4c4a0"}`,background:filterStatut===val?"#f5e8cc":"transparent",color:filterStatut===val?"#7a5200":"#9a8870",fontSize:"11px",cursor:"pointer"}}>{lbl}</button>
+                  <button key={val} onClick={()=>setFilterStatut(val)} style={{padding:"3px 10px",borderRadius:"4px",border:`0.5px solid ${filterStatut===val?"#8B7355":"#d4c4a0"}`,background:filterStatut===val?"#f5e8cc":"transparent",color:filterStatut===val?"#2C3E50":"#9a8870",fontSize:"11px",cursor:"pointer"}}>{lbl}</button>
                 ))}
               </div>
               <span style={{color:"#8a7248",fontSize:"11px",marginLeft:"auto"}}>{filteredTonneaux.length} fûts</span>
@@ -2914,7 +2914,7 @@ export default function App() {
                 <div style={{display:"flex",gap:"6px",marginBottom:"16px",flexWrap:"wrap",alignItems:"center"}}>
                   <span style={{fontSize:"10px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#9a8870",fontFamily:"monospace",marginRight:"4px"}}>Campagne :</span>
                   <button onClick={()=>setFilterVendangeAn("")}
-                    style={{padding:"4px 12px",borderRadius:"4px",border:`0.5px solid ${!filterVendangeAn?"#b8860b":"#d4c4a0"}`,background:!filterVendangeAn?"#f5e8cc":"transparent",color:!filterVendangeAn?"#7a5200":"#9a8870",fontSize:"11px",cursor:"pointer",fontFamily:"monospace"}}>
+                    style={{padding:"4px 12px",borderRadius:"4px",border:`0.5px solid ${!filterVendangeAn?"#8B7355":"#d4c4a0"}`,background:!filterVendangeAn?"#f5e8cc":"transparent",color:!filterVendangeAn?"#2C3E50":"#9a8870",fontSize:"11px",cursor:"pointer",fontFamily:"monospace"}}>
                     Toutes
                   </button>
                   {[...new Set(vendanges.map(v=>v.annee))].sort().reverse().map(an=>(
@@ -2940,7 +2940,7 @@ export default function App() {
                 return (
                   <div key={annee} style={{marginBottom:"20px"}}>
                     <div style={{display:"flex",alignItems:"center",gap:"10px",marginBottom:"10px"}}>
-                      <div style={{fontFamily:"Georgia,serif",fontSize:"16px",fontWeight:500,color:"#7a5200"}}>Campagne {annee}</div>
+                      <div style={{fontFamily:"Georgia,serif",fontSize:"16px",fontWeight:500,color:"#2C3E50"}}>Campagne {annee}</div>
                       <div style={{flex:1,height:"0.5px",background:"#d4c4a0"}}/>
                       {isCampagneClosed(annee)?(
                         <span style={{fontSize:"10px",background:"#fde8e8",color:"#cc2222",border:"0.5px solid #f0b4b4",borderRadius:"4px",padding:"2px 8px",fontWeight:500}}>Clôturée</span>
@@ -3002,17 +3002,17 @@ export default function App() {
                           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:"12px",marginBottom:"8px"}}>
                             <div>
                               <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"4px"}}>
-                                {v.numeroMarc&&<span style={{background:"#7a5200",color:"#fff",borderRadius:"5px",padding:"2px 10px",fontSize:"13px",fontWeight:700,fontFamily:"monospace",letterSpacing:"0.03em"}}>Marc {v.numeroMarc}</span>}
+                                {v.numeroMarc&&<span style={{background:"#2C3E50",color:"#fff",borderRadius:"5px",padding:"2px 10px",fontSize:"13px",fontWeight:700,fontFamily:"monospace",letterSpacing:"0.03em"}}>Marc {v.numeroMarc}</span>}
                                 {v.isBio&&<span style={{fontSize:"11px",background:"#2d6a00",color:"#fff",borderRadius:"4px",padding:"2px 8px",fontWeight:600}}>🌿 BIO</span>}
                               </div>
-                              {v.cuveeCreee&&<div style={{fontWeight:600,color:"#7a5200",fontSize:"14px",marginBottom:"2px"}}>{v.cuveeCreee}</div>}
+                              {v.cuveeCreee&&<div style={{fontWeight:600,color:"#2C3E50",fontSize:"14px",marginBottom:"2px"}}>{v.cuveeCreee}</div>}
                               <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"2px"}}>
                                 <div style={{fontWeight:500,color:"#1a1205",fontSize:"13px"}}>{parcs.length>0?parcs.map(p=>p.nom).join(" + "):"Parcelle inconnue"}</div>
                               </div>
                               <div style={{display:"flex",alignItems:"center",gap:"5px",marginBottom:"2px"}}>
                                 {parc?.certification&&(
                                   <span style={{fontSize:"10px",padding:"1px 5px",borderRadius:"3px",fontFamily:"monospace",fontWeight:500,
-                                    background:parc.certification==="BIO"?"#d4edc0":parc.certification==="NON BIO"?"#ede5d4":"#fde8b8",
+                                    background:parc.certification==="BIO"?"#d4edc0":parc.certification==="NON BIO"?"#ede5d4":"#E8E0D0",
                                     color:parc.certification==="BIO"?"#2d6a00":parc.certification==="NON BIO"?"#5f5e5a":"#8b5e0a"}}>
                                     {parc.certification}
                                   </span>
@@ -3056,7 +3056,7 @@ export default function App() {
                               <div style={{...s.lbl,marginBottom:"5px"}}>Produits ajoutes</div>
                               <div style={{display:"flex",gap:"6px",flexWrap:"wrap"}}>
                                 {v.produitsAjoutes.map(p=>(
-                                  <div key={p.id} style={{background:"#fff8ee",border:"0.5px solid #d4c4a0",borderRadius:"4px",padding:"3px 10px",fontSize:"11px",color:"#7a5200"}}>
+                                  <div key={p.id} style={{background:"#F0EDE8",border:"0.5px solid #d4c4a0",borderRadius:"4px",padding:"3px 10px",fontSize:"11px",color:"#2C3E50"}}>
                                     <strong>{p.nom}</strong>{p.dose?` - ${p.dose}`:""}{p.lot?` (Lot: ${p.lot})`:""}{p.date?` - ${fmt(p.date)}`:""}
                                   </div>
                                 ))}
@@ -3140,7 +3140,7 @@ export default function App() {
               {/* 1. KPIs */}
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:"12px",marginBottom:"20px"}}>
                 {[
-                  {lbl:"Total en stock",val:total+" btl",sub:"tous formats",col:"#b8860b"},
+                  {lbl:"Total en stock",val:total+" btl",sub:"tous formats",col:"#8B7355"},
                   {lbl:"< 15 mois",val:moins15+" btl",sub:"non commercialisables",col:"#cc2222"},
                   {lbl:"> 15 mois",val:plus15+" btl",sub:"commercialisables",col:"#1a7a40"},
                   {lbl:"Alertes 15 mois",val:alertes+" lot(s)",sub:"passent le cap ce mois",col:"#c47800"},
@@ -3160,7 +3160,7 @@ export default function App() {
               {/* Onglets type produit */}
               <div style={{display:"flex",gap:"4px",marginBottom:"16px",borderBottom:"1px solid #d4c4a0",paddingBottom:"0"}}>
                 {[["champagne","Champagne"],["coteaux_blanc","Coteaux Blanc"],["coteaux_rouge","Coteaux Rouge"],["ratafia","Ratafia"]].map(([key,lbl])=>(
-                  <button key={key} onClick={()=>{setStockTab(key);setFilterStockStatut("");}} style={{padding:"8px 14px",border:"none",borderBottom:stockTab===key?"2px solid #b8860b":"2px solid transparent",background:"transparent",color:stockTab===key?"#7a5200":"#9a8870",fontWeight:stockTab===key?500:400,fontSize:"12px",cursor:"pointer",fontFamily:"Georgia,serif"}}>{lbl}</button>
+                  <button key={key} onClick={()=>{setStockTab(key);setFilterStockStatut("");}} style={{padding:"8px 14px",border:"none",borderBottom:stockTab===key?"2px solid #b8860b":"2px solid transparent",background:"transparent",color:stockTab===key?"#2C3E50":"#9a8870",fontWeight:stockTab===key?500:400,fontSize:"12px",cursor:"pointer",fontFamily:"Georgia,serif"}}>{lbl}</button>
                 ))}
               </div>
 
@@ -3239,7 +3239,7 @@ export default function App() {
                 <div style={{...s.card,padding:0,overflow:"hidden",marginBottom:"24px"}}>
                   <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
                     <thead>
-                      <tr style={{background:"#fff8ee",borderBottom:"1px solid #d4c4a0"}}>
+                      <tr style={{background:"#F0EDE8",borderBottom:"1px solid #d4c4a0"}}>
                         {["Cuvee","Millesime","N° Lot","Format","Date tirage","Age","Statut","Lieu","Qte actuelle","Actions"].map(h=>(
                           <th key={h} style={{textAlign:"left",padding:"10px 12px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#9a8870",fontWeight:500}}>{h}</th>
                         ))}
@@ -3261,14 +3261,14 @@ export default function App() {
                             <span style={{background:(STATUT_COLORS[l.statut]||{bg:"#e8f0e8"}).bg,color:(STATUT_COLORS[l.statut]||{color:"#2d6a00"}).color,borderRadius:"4px",padding:"2px 8px",fontSize:"10px"}}>{l.statut}</span>
                           </td>
                           <td style={{padding:"10px 12px"}}><span style={{background:(LIEU_COLORS[l.lieu]||{bg:"#ede5d4"}).bg,color:(LIEU_COLORS[l.lieu]||{color:"#6a5838"}).color,borderRadius:"4px",padding:"2px 8px",fontSize:"10px"}}>{l.lieu}</span></td>
-                          <td style={{padding:"10px 12px",fontWeight:600,color:"#b8860b",fontFamily:"monospace",fontSize:"14px"}}>{l.qteActuelle}</td>
+                          <td style={{padding:"10px 12px",fontWeight:600,color:"#8B7355",fontFamily:"monospace",fontSize:"14px"}}>{l.qteActuelle}</td>
                           <td style={{padding:"10px 12px"}}>
                             <div style={{display:"flex",gap:"4px"}}>
                               <button style={{...s.ghostSm,fontSize:"10px",color:"#185FA5",borderColor:"#b4d0f0"}}
                                 onClick={()=>setLotAction({lot:l,action:"mouvement"})}>Mouvement</button>
                               <button style={{...s.ghostSm,fontSize:"10px",color:"#1a7a40",borderColor:"#b4d0b4"}}
                                 onClick={()=>{setSortieForm({lotId:l._ids?l._ids[0]:l.id,_ids:l._ids||[l.id],qteMax:parseInt(l.qteActuelle)||0,cuvee:l.cuvee,millesime:l.millesime,format:l.format,date:new Date().toISOString().slice(0,10),qte:"",notes:""});setShowSortieForm(true);}}>Sortie</button>
-                              <button style={{...s.ghostSm,fontSize:"10px",color:"#7a5200",borderColor:"#d4c4a0"}}
+                              <button style={{...s.ghostSm,fontSize:"10px",color:"#2C3E50",borderColor:"#d4c4a0"}}
                                 onClick={()=>setLotAction({lot:l,action:"diviser"})}>Diviser</button>
                               {l.mois>=14&&!l.passage15&&(
                                 <button style={{...s.ghostSm,fontSize:"10px",color:"#1a7a40",borderColor:"#b4d4b4",fontWeight:500}}
@@ -3297,7 +3297,7 @@ export default function App() {
                 return (
                   <div style={{...s.card,padding:"16px 20px",marginTop:"16px",marginBottom:"16px"}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
-                      <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#7a5200"}}>Stock coiffes</div>
+                      <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#2C3E50"}}>Stock coiffes</div>
                       <button style={s.btnSm} onClick={()=>setShowCoiffesForm(true)}>+ Achat coiffes</button>
                     </div>
                     <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:"8px"}}>
@@ -3331,7 +3331,7 @@ export default function App() {
               {clotures.filter(c=>c.type==="sortie").length>0&&(
                 <div style={{...s.card,padding:"16px 20px",marginTop:"16px"}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px",cursor:"pointer"}} onClick={()=>setShowHistSorties(p=>!p)}>
-                    <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#7a5200"}}>Historique des sorties {showHistSorties?"▲":"▼"}</div>
+                    <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#2C3E50"}}>Historique des sorties {showHistSorties?"▲":"▼"}</div>
                     <div style={{display:"flex",gap:"6px"}}>
                       {[...new Set(clotures.filter(c=>c.type==="sortie").map(c=>c.date.slice(0,7)))].sort().map(mois=>(
                         <button key={mois} style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
@@ -3357,7 +3357,7 @@ export default function App() {
                     const totExpMag = sorties.filter(c=>c.statut==="Habille Export"&&c.format==="Magnum").reduce((s,c)=>s+(parseInt(c.qte)||0),0);
                     const totExpJer = sorties.filter(c=>c.statut==="Habille Export"&&c.format==="Jeroboam").reduce((s,c)=>s+(parseInt(c.qte)||0),0);
                     return (
-                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px",marginBottom:"14px",padding:"10px",background:"#fff8ee",borderRadius:"6px"}}>
+                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px",marginBottom:"14px",padding:"10px",background:"#F0EDE8",borderRadius:"6px"}}>
                         {totCRD75+totCRDMag+totCRDJer>0&&<div>
                           <div style={{fontSize:"11px",fontWeight:500,color:"#6a2d8a",marginBottom:"4px"}}>CRD</div>
                           {totCRD75>0&&<div style={{fontSize:"11px",color:"#6a5838"}}>75cl : <strong>{totCRD75}</strong> btl</div>}
@@ -3378,7 +3378,7 @@ export default function App() {
                       <div>
                         <span style={{fontWeight:500,color:"#1a1205"}}>{fmt(c.date)}</span>
                         <span style={{color:"#6a5838",marginLeft:"8px"}}>{c.cuvee}</span>
-                        <span style={{color:"#b8860b",fontFamily:"monospace",marginLeft:"8px",fontWeight:500}}>{c.qte} {c.format==="Magnum"?"Magnums":c.format==="Jeroboam"?"Jeroboams":"btl"} sorties</span>
+                        <span style={{color:"#8B7355",fontFamily:"monospace",marginLeft:"8px",fontWeight:500}}>{c.qte} {c.format==="Magnum"?"Magnums":c.format==="Jeroboam"?"Jeroboams":"btl"} sorties</span>
                         {c.notes&&<span style={{color:"#9a8870",marginLeft:"8px",fontStyle:"italic"}}>{c.notes}</span>}
                       </div>
                       <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>{ if(!window.confirm("Annuler cette sortie ?")) return; const lot=stockBouteilles.find(x=>x.id===c.lotId); if(lot){const upd={...lot,qteActuelle:(lot.qteActuelle||0)+(parseInt(c.qte)||0)};setStockBouteilles(p=>p.map(x=>x.id===lot.id?upd:x));fbSave("stockBouteilles",lot.id,upd);} setClotures(p=>p.filter(x=>x.id!==c.id));fbDelete("clotures",c.id); }}>Annuler</button>
@@ -3414,7 +3414,7 @@ export default function App() {
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:"16px"}}>
                     {/* Identite */}
                     <div>
-                      <div style={{fontFamily:"Georgia,serif",fontSize:"16px",fontWeight:500,color:"#7a5200",marginBottom:"2px"}}>{t.cuvee}{t.isBio&&<span style={{marginLeft:"8px",fontSize:"11px",background:"#2d6a00",color:"#fff",borderRadius:"4px",padding:"2px 7px",fontWeight:600}}>🌿 BIO</span>}</div>
+                      <div style={{fontFamily:"Georgia,serif",fontSize:"16px",fontWeight:500,color:"#2C3E50",marginBottom:"2px"}}>{t.cuvee}{t.isBio&&<span style={{marginLeft:"8px",fontSize:"11px",background:"#2d6a00",color:"#fff",borderRadius:"4px",padding:"2px 7px",fontWeight:600}}>🌿 BIO</span>}</div>
                       <div style={{fontSize:"12px",color:"#9a8870",marginBottom:"8px"}}>{fmt(t.date)} - {t.operateur}</div>
                       {t.millesime&&<div style={{fontSize:"11px",color:"#6a5838"}}>Millésime : <strong>{t.millesime}</strong></div>}
                       {t.futsSources?.length>0&&(
@@ -3444,7 +3444,7 @@ export default function App() {
                       {t.levainLevureNom ? (
                         <div>
                           <div style={{fontSize:"13px",fontWeight:500,color:"#1a1205",marginBottom:"3px"}}>{t.levainLevureNom}</div>
-                          {t.levainLot&&<div style={{display:"inline-flex",alignItems:"center",background:"#fff8ee",border:"0.5px solid #d4c4a0",borderRadius:"3px",padding:"1px 7px",fontSize:"10px",color:"#7a5200",fontFamily:"monospace",marginBottom:"4px"}}>Lot: {t.levainLot}</div>}
+                          {t.levainLot&&<div style={{display:"inline-flex",alignItems:"center",background:"#F0EDE8",border:"0.5px solid #d4c4a0",borderRadius:"3px",padding:"1px 7px",fontSize:"10px",color:"#2C3E50",fontFamily:"monospace",marginBottom:"4px"}}>Lot: {t.levainLot}</div>}
                           <div style={{fontSize:"11px",color:"#9a8870"}}>
                             Eau: {t.levainEau||0}L · Vin: {t.levainVin||0}L · Lev: {t.levainLevure||0}L
                           </div>
@@ -3462,7 +3462,7 @@ export default function App() {
                           {t.qte75} bouteilles = {((parseFloat(t.qte75)||0)*0.75).toFixed(0)}L
                         </div>}
                         {(parseFloat(t.qteMagnum)||0)>0&&<div style={{fontSize:"11px",color:"#6a5838"}}>
-                          <span style={{display:"inline-block",width:"18px",height:"18px",background:"#fde8b8",borderRadius:"3px",textAlign:"center",lineHeight:"18px",fontSize:"10px",marginRight:"5px",color:"#7a5200",fontFamily:"monospace"}}>M</span>
+                          <span style={{display:"inline-block",width:"18px",height:"18px",background:"#E8E0D0",borderRadius:"3px",textAlign:"center",lineHeight:"18px",fontSize:"10px",marginRight:"5px",color:"#2C3E50",fontFamily:"monospace"}}>M</span>
                           {t.qteMagnum} magnums = {((parseFloat(t.qteMagnum)||0)*1.5).toFixed(0)}L
                         </div>}
                         {(parseFloat(t.qteJeroboam)||0)>0&&<div style={{fontSize:"11px",color:"#6a5838"}}>
@@ -3483,7 +3483,7 @@ export default function App() {
                   )}
                   {t.notes&&<div style={{marginTop:"12px",paddingTop:"10px",borderTop:"0.5px solid #ede5d4",fontSize:"12px",color:"#6a5838",fontStyle:"italic"}}>{t.notes}</div>}
                   <div style={{marginTop:"10px",display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #ede5d4",paddingTop:"10px"}}>
-                    <button style={{background:"#fff8ee",color:"#7a5200",border:"0.5px solid #d4c4a0",borderRadius:"4px",padding:"4px 12px",fontSize:"11px",cursor:"pointer",fontFamily:"monospace"}}
+                    <button style={{background:"#F0EDE8",color:"#2C3E50",border:"0.5px solid #d4c4a0",borderRadius:"4px",padding:"4px 12px",fontSize:"11px",cursor:"pointer",fontFamily:"monospace"}}
                       onClick={()=>openEditTirage(t)}>
                       Modifier
                     </button>
@@ -3524,17 +3524,17 @@ export default function App() {
                   <div>
                     <div style={{display:"flex",gap:"0",marginBottom:"8px",borderBottom:"1px solid #d4c4a0",flexWrap:"wrap"}}>
                       {allYearsG.map(y=>(
-                        <button key={y} onClick={()=>{setFilterDegAnnee(y);setFilterDegSessionG("");}} style={{padding:"6px 14px",border:"none",borderBottom:filterDegAnnee===y?"2px solid #b8860b":"2px solid transparent",background:"transparent",color:filterDegAnnee===y?"#7a5200":"#9a8870",fontWeight:filterDegAnnee===y?500:400,fontSize:"13px",cursor:"pointer",fontFamily:"Georgia,serif"}}>
+                        <button key={y} onClick={()=>{setFilterDegAnnee(y);setFilterDegSessionG("");}} style={{padding:"6px 14px",border:"none",borderBottom:filterDegAnnee===y?"2px solid #b8860b":"2px solid transparent",background:"transparent",color:filterDegAnnee===y?"#2C3E50":"#9a8870",fontWeight:filterDegAnnee===y?500:400,fontSize:"13px",cursor:"pointer",fontFamily:"Georgia,serif"}}>
                           {y} <span style={{fontSize:"10px",color:"#9a8870"}}>({degustations.filter(d=>d.date?.slice(0,4)===y).length})</span>
                         </button>
                       ))}
                     </div>
                     {allSessionsG.length>0&&<div style={{display:"flex",gap:"0",marginBottom:"12px",borderBottom:"1px solid #ede5d4",flexWrap:"wrap"}}>
-                      <button onClick={()=>setFilterDegSessionG("")} style={{padding:"4px 10px",border:"none",borderBottom:filterDegSessionG===""?"2px solid #b8860b":"2px solid transparent",background:"transparent",color:filterDegSessionG===""?"#7a5200":"#9a8870",fontSize:"11px",cursor:"pointer"}}>
+                      <button onClick={()=>setFilterDegSessionG("")} style={{padding:"4px 10px",border:"none",borderBottom:filterDegSessionG===""?"2px solid #b8860b":"2px solid transparent",background:"transparent",color:filterDegSessionG===""?"#2C3E50":"#9a8870",fontSize:"11px",cursor:"pointer"}}>
                         Toutes les sessions
                       </button>
                       {allSessionsG.map(s=>(
-                        <button key={s} onClick={()=>setFilterDegSessionG(s)} style={{padding:"4px 10px",border:"none",borderBottom:filterDegSessionG===s?"2px solid #b8860b":"2px solid transparent",background:"transparent",color:filterDegSessionG===s?"#7a5200":"#9a8870",fontSize:"11px",cursor:"pointer"}}>
+                        <button key={s} onClick={()=>setFilterDegSessionG(s)} style={{padding:"4px 10px",border:"none",borderBottom:filterDegSessionG===s?"2px solid #b8860b":"2px solid transparent",background:"transparent",color:filterDegSessionG===s?"#2C3E50":"#9a8870",fontSize:"11px",cursor:"pointer"}}>
                           {s} ({degustations.filter(d=>d.date?.slice(0,4)===filterDegAnnee&&d.session===s).length})
                         </button>
                       ))}
@@ -3543,8 +3543,8 @@ export default function App() {
                 );
               })()}
               {/* Barre de filtres */}
-              <div style={{display:"flex",gap:"8px",marginBottom:"14px",flexWrap:"wrap",alignItems:"center",padding:"10px 14px",background:"#fffbf3",border:"1px solid #cfc0a0",borderRadius:"8px"}}>
-                <i className="ti ti-filter" style={{fontSize:"14px",color:"#b8860b",flexShrink:0}}/>
+              <div style={{display:"flex",gap:"8px",marginBottom:"14px",flexWrap:"wrap",alignItems:"center",padding:"10px 14px",background:"#F8F6F2",border:"1px solid #cfc0a0",borderRadius:"8px"}}>
+                <i className="ti ti-filter" style={{fontSize:"14px",color:"#8B7355",flexShrink:0}}/>
                 <input style={{...s.inp,maxWidth:"150px",padding:"5px 9px",fontSize:"12px"}}
                   placeholder="N° fût..." value={filterDegFut}
                   onChange={e=>setFilterDegFut(e.target.value)}/>
@@ -3571,7 +3571,7 @@ export default function App() {
                 <div style={{overflowX:"auto"}}>
                   <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
                     <thead>
-                      <tr style={{borderBottom:"2px solid #d4c4a0",background:"#fff8ee"}}>
+                      <tr style={{borderBottom:"2px solid #d4c4a0",background:"#F0EDE8"}}>
                         {["N° Fût","Cuvée","Fabricant","Mill.","Moy. Note G","Moy. Boisé","Moy. Long.","Nb notes","Sessions"].map(h=>(
                           <th key={h} style={{textAlign:"left",padding:"8px 10px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#8a7248",fontWeight:600}}>{h}</th>
                         ))}
@@ -3582,15 +3582,15 @@ export default function App() {
                         const ng=avgNoteG(t.id); const nb=avgBoise(t.id); const nl=avgLong(t.id);
                         return (
                           <tr key={t.id}
-                            style={{borderBottom:"1px solid #e8dcc6",cursor:"pointer",background:i%2===0?"transparent":"#fffbf3",transition:"background 0.1s"}}
+                            style={{borderBottom:"1px solid #e8dcc6",cursor:"pointer",background:i%2===0?"transparent":"#F8F6F2",transition:"background 0.1s"}}
                             onClick={()=>{setSelectedFut(t.id);setView("fiche");setFicheTab("historique");}}>
-                            <td style={{padding:"9px 10px",color:"#b8860b",fontWeight:700,fontFamily:"'IBM Plex Mono',monospace"}}>{t.id}</td>
+                            <td style={{padding:"9px 10px",color:"#8B7355",fontWeight:700,fontFamily:"'IBM Plex Mono',monospace"}}>{t.id}</td>
                             <td style={{padding:"9px 10px",color:"#1a1205",fontWeight:500,maxWidth:"160px"}}>
                               <div style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.denomination}</div>
                             </td>
                             <td style={{padding:"9px 10px"}}>
                               {t.tonnelier
-                                ? <span style={{background:"#fce8a8",color:"#7a5200",border:"1px solid #e0c050",borderRadius:"3px",padding:"1px 7px",fontSize:"11px",fontWeight:600,whiteSpace:"nowrap"}}>{t.tonnelier}</span>
+                                ? <span style={{background:"#fce8a8",color:"#2C3E50",border:"1px solid #e0c050",borderRadius:"3px",padding:"1px 7px",fontSize:"11px",fontWeight:600,whiteSpace:"nowrap"}}>{t.tonnelier}</span>
                                 : <span style={{color:"#c0b090",fontSize:"11px"}}>-</span>
                               }
                             </td>
@@ -3598,9 +3598,9 @@ export default function App() {
                             <td style={{padding:"9px 10px"}}>
                               <div style={{display:"flex",alignItems:"center",gap:"6px"}}>
                                 <div style={{width:"44px",height:"5px",background:"#e8dcc6",borderRadius:"3px",overflow:"hidden"}}>
-                                  <div style={{width:`${((ng||0)/5)*100}%`,height:"100%",background:ng>=4?"#1a7a40":ng>=3?"#b8860b":"#cc6622",borderRadius:"3px"}}/>
+                                  <div style={{width:`${((ng||0)/5)*100}%`,height:"100%",background:ng>=4?"#1a7a40":ng>=3?"#8B7355":"#cc6622",borderRadius:"3px"}}/>
                                 </div>
-                                <span style={{fontWeight:700,color:ng>=4?"#1a7a40":ng>=3?"#b8860b":"#8a7248",fontFamily:"'IBM Plex Mono',monospace",minWidth:"28px"}}>{ng?.toFixed(1)||"-"}</span>
+                                <span style={{fontWeight:700,color:ng>=4?"#1a7a40":ng>=3?"#8B7355":"#8a7248",fontFamily:"'IBM Plex Mono',monospace",minWidth:"28px"}}>{ng?.toFixed(1)||"-"}</span>
                               </div>
                             </td>
                             <td style={{padding:"9px 10px",color:"#6a5838",fontFamily:"'IBM Plex Mono',monospace"}}>{nb?.toFixed(1)||"-"}</td>
@@ -3626,7 +3626,7 @@ export default function App() {
             {/* Colonne droite - gestion des dégustateurs */}
             {/* Palmarès */}
             <div style={{...s.card,marginBottom:"16px"}}>
-              <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#7a5200",marginBottom:"12px"}}>🏆 Palmarès tonneliers</div>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#2C3E50",marginBottom:"12px"}}>🏆 Palmarès tonneliers</div>
               {(()=>{
                 const tonneliers = [...new Set(tonneaux.map(t=>t.tonnelier).filter(Boolean))];
                 const ranked = tonneliers.map(tn=>{
@@ -3643,11 +3643,11 @@ export default function App() {
                       <div style={{fontSize:"12px",fontWeight:600,color:"#1a1205"}}>{r.tn}</div>
                       <div style={{fontSize:"10px",color:"#9a8870"}}>{r.nbFuts} fût{r.nbFuts>1?"s":""} · {r.nb} note{r.nb>1?"s":""}</div>
                     </div>
-                    <span style={{fontSize:"15px",fontWeight:700,color:r.avg>=4?"#1a7a40":r.avg>=3?"#b8860b":"#888"}}>{r.avg.toFixed(1)}</span>
+                    <span style={{fontSize:"15px",fontWeight:700,color:r.avg>=4?"#1a7a40":r.avg>=3?"#8B7355":"#888"}}>{r.avg.toFixed(1)}</span>
                   </div>
                 ));
               })()}
-              <div style={{fontFamily:"Georgia,serif",fontSize:"13px",color:"#7a5200",margin:"14px 0 10px"}}>🏆 Palmarès grain</div>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"13px",color:"#2C3E50",margin:"14px 0 10px"}}>🏆 Palmarès grain</div>
               {(()=>{
                 const grains = [...new Set(tonneaux.map(t=>t.grain).filter(Boolean))];
                 const ranked = grains.map(g=>{
@@ -3664,7 +3664,7 @@ export default function App() {
                       <div style={{fontSize:"12px",fontWeight:600,color:"#1a1205"}}>{r.g}</div>
                       <div style={{fontSize:"10px",color:"#9a8870"}}>{r.nbFuts} fût{r.nbFuts>1?"s":""} · {r.nb} note{r.nb>1?"s":""}</div>
                     </div>
-                    <span style={{fontSize:"15px",fontWeight:700,color:r.avg>=4?"#1a7a40":r.avg>=3?"#b8860b":"#888"}}>{r.avg.toFixed(1)}</span>
+                    <span style={{fontSize:"15px",fontWeight:700,color:r.avg>=4?"#1a7a40":r.avg>=3?"#8B7355":"#888"}}>{r.avg.toFixed(1)}</span>
                   </div>
                 ));
               })()}
@@ -3686,7 +3686,7 @@ export default function App() {
                 <div>
                   {degustateurs.map((d,i)=>(
                     <div key={i} style={{display:"flex",alignItems:"center",gap:"8px",padding:"7px 0",borderBottom:"1px solid #d0c4a0",opacity:d.actif?1:0.45}}>
-                      <div style={{width:"26px",height:"26px",borderRadius:"50%",background:d.actif?"#b8860b22":"#2a2a2c",border:`1px solid ${d.actif?"#b8860b33":"#3a3a3c"}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"11px",fontWeight:600,color:d.actif?"#b8860b":"#555",flexShrink:0}}>
+                      <div style={{width:"26px",height:"26px",borderRadius:"50%",background:d.actif?"#b8860b22":"#2a2a2c",border:`1px solid ${d.actif?"#b8860b33":"#3a3a3c"}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"11px",fontWeight:600,color:d.actif?"#8B7355":"#555",flexShrink:0}}>
                         {d.nom.charAt(0).toUpperCase()}
                       </div>
                       <span style={{fontSize:"13px",color:d.actif?"#e8e4d8":"#555",flex:1}}>{d.nom}</span>
@@ -3701,7 +3701,7 @@ export default function App() {
                       </button>
                     </div>
                   ))}
-                  <div style={{marginTop:"10px",padding:"8px",background:"#fffbf3",borderRadius:"5px",fontSize:"11px",color:"#8a7248"}}>
+                  <div style={{marginTop:"10px",padding:"8px",background:"#F8F6F2",borderRadius:"5px",fontSize:"11px",color:"#8a7248"}}>
                     {degustateurs.filter(d=>!d.actif).length===0
                       ? "Tous présents - les absents sont masqués du formulaire de saisie."
                       : `${degustateurs.filter(d=>!d.actif).length} absent(s) - masqué(s) du prochain formulaire.`
@@ -3747,7 +3747,7 @@ export default function App() {
                   <div style={s.card}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"start",marginBottom:"14px"}}>
                       <div>
-                        <div style={{fontFamily:"'Playfair Display',serif",fontSize:"22px",color:"#b8860b"}}>{selectedT.id}</div>
+                        <div style={{fontFamily:"'Playfair Display',serif",fontSize:"22px",color:"#8B7355"}}>{selectedT.id}</div>
                         <div style={{fontSize:"12px",color:"#6a5838",marginTop:"2px"}}>{selectedT.denomination}</div>
                         {selectedT.appellation && <div style={{marginTop:"6px",display:"inline-flex",alignItems:"center",gap:"5px",padding:"2px 8px",borderRadius:"3px",background:getApc(selectedT.appellation).bg,border:`1px solid ${getApc(selectedT.appellation).border}`,fontSize:"10px",color:getApc(selectedT.appellation).color,letterSpacing:"0.06em",textTransform:"uppercase"}}>
                             <span style={{width:"5px",height:"5px",borderRadius:"50%",background:getApc(selectedT.appellation).color}}/>
@@ -3760,10 +3760,10 @@ export default function App() {
                     </div>
                     <div style={{marginBottom:"14px"}}>
                       <div style={{display:"flex",justifyContent:"space-between",fontSize:"10px",color:"#7a6840",marginBottom:"5px"}}>
-                        <span>Niveau</span><span style={{color:"#b8860b",fontWeight:600}}>{selectedT.contenuActuel}L / {selectedT.volume}L ({selectedP}%)</span>
+                        <span>Niveau</span><span style={{color:"#8B7355",fontWeight:600}}>{selectedT.contenuActuel}L / {selectedT.volume}L ({selectedP}%)</span>
                       </div>
-                      <div style={{background:"#fffbf3",borderRadius:"2px",height:"6px",overflow:"hidden"}}>
-                        <div style={{width:`${selectedP}%`,height:"100%",background:selectedP<20?"#cc2222":"#b8860b",borderRadius:"2px"}}/>
+                      <div style={{background:"#F8F6F2",borderRadius:"2px",height:"6px",overflow:"hidden"}}>
+                        <div style={{width:`${selectedP}%`,height:"100%",background:selectedP<20?"#cc2222":"#8B7355",borderRadius:"2px"}}/>
                       </div>
                     </div>
                     {(parseFloat(selectedT.volumeRI)||0)>0&&(
@@ -3787,17 +3787,17 @@ export default function App() {
                       </div>
                     ))}
                     {selectedT.statut!=="vide"&&avgNoteG(selectedT.id)!=null&&(
-                      <div style={{marginTop:"14px",padding:"10px",background:"#fffbf3",borderRadius:"6px"}}>
+                      <div style={{marginTop:"14px",padding:"10px",background:"#F8F6F2",borderRadius:"6px"}}>
                         <div style={{fontSize:"10px",color:"#8a7248",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:"6px"}}>Note dégustation</div>
                         <div style={{display:"flex",gap:"16px"}}>
-                          <div><div style={{fontSize:"18px",fontWeight:600,color:avgNoteG(selectedT.id)>=4?"#1a7a40":"#b8860b"}}>{avgNoteG(selectedT.id)?.toFixed(1)}<span style={{fontSize:"11px",color:"#8a7248"}}>/5</span></div><div style={{fontSize:"10px",color:"#8a7248"}}>Note globale</div></div>
+                          <div><div style={{fontSize:"18px",fontWeight:600,color:avgNoteG(selectedT.id)>=4?"#1a7a40":"#8B7355"}}>{avgNoteG(selectedT.id)?.toFixed(1)}<span style={{fontSize:"11px",color:"#8a7248"}}>/5</span></div><div style={{fontSize:"10px",color:"#8a7248"}}>Note globale</div></div>
                           {avgBoise(selectedT.id)&&<div><div style={{fontSize:"18px",fontWeight:600,color:"#5a4a30"}}>{avgBoise(selectedT.id)?.toFixed(1)}</div><div style={{fontSize:"10px",color:"#8a7248"}}>Boisé</div></div>}
                           {avgLong(selectedT.id)&&<div><div style={{fontSize:"18px",fontWeight:600,color:"#5a4a30"}}>{avgLong(selectedT.id)?.toFixed(1)}</div><div style={{fontSize:"10px",color:"#8a7248"}}>Longueur</div></div>}
                         </div>
                       </div>
                     )}
                     {selectedT.commentaire&&(
-                        <div style={{margin:"8px 0 12px",padding:"9px 12px",background:"#fff8ee",borderRadius:"6px",border:"1px solid #d4c4a0"}}>
+                        <div style={{margin:"8px 0 12px",padding:"9px 12px",background:"#F0EDE8",borderRadius:"6px",border:"1px solid #d4c4a0"}}>
                           <div style={{fontSize:"10px",letterSpacing:"0.08em",textTransform:"uppercase",color:"#9a8870",marginBottom:"4px",fontFamily:"monospace"}}>Notes</div>
                           <div style={{color:"#1a1205",fontSize:"12px",lineHeight:"1.6"}}>{selectedT.commentaire}</div>
                         </div>
@@ -3864,7 +3864,7 @@ export default function App() {
                         </div>}
                         {(ficheHistoAnnee?[ficheHistoAnnee]:allYears).map(year=>(
                           <div key={year} style={{marginBottom:"16px"}}>
-                            <div style={{fontFamily:"Georgia,serif",fontSize:"15px",color:"#b8860b",borderBottom:"0.5px solid #d4c4a0",paddingBottom:"6px",marginBottom:"8px"}}>
+                            <div style={{fontFamily:"Georgia,serif",fontSize:"15px",color:"#8B7355",borderBottom:"0.5px solid #d4c4a0",paddingBottom:"6px",marginBottom:"8px"}}>
                               Campagne {year}
                               {mvtsParAn[year]&&<span style={{fontSize:"11px",color:"#9a8870",fontWeight:400,marginLeft:"8px"}}>{mvtsParAn[year].length} mvt(s)</span>}
                             </div>
@@ -3884,23 +3884,23 @@ export default function App() {
                                     const cuveeMatch = m.notes&&m.notes.match(/Marc \d+ - (.+)$/);
                                     const cuveeNom = m.cuveeCreee||cuveeMatch?.[1]||null;
                                     return (<>
-                                      {srcIds.map(id=>{ const t=getTonneau(id); return t?<span key={id} style={{color:"#b8860b",cursor:"pointer",textDecoration:"underline",marginRight:"4px"}} onClick={()=>{setSelectedFut(id);setFicheTab("historique");}}>{id}</span>:null; })}
+                                      {srcIds.map(id=>{ const t=getTonneau(id); return t?<span key={id} style={{color:"#8B7355",cursor:"pointer",textDecoration:"underline",marginRight:"4px"}} onClick={()=>{setSelectedFut(id);setFicheTab("historique");}}>{id}</span>:null; })}
                                       {destId&&!srcIds.includes(destId)&&getTonneau(destId)&&<span style={{color:"#185FA5",cursor:"pointer",textDecoration:"underline",marginRight:"4px"}} onClick={()=>{setSelectedFut(destId);setFicheTab("historique");}}>→ {destId}</span>}
-                                      {marcNum&&<span style={{background:"#7a5200",color:"#fff",borderRadius:"4px",padding:"1px 7px",fontSize:"10px",fontWeight:600,cursor:"pointer",marginRight:"4px"}} onClick={()=>setView("vendanges")}>Marc {marcNum}</span>}
-                                      {(m.denominationFut||cuveeNom||vendangeSrc?.cuveeCreee)&&<span style={{color:"#7a5200",fontWeight:600,marginRight:"4px",fontSize:"12px"}}>{m.denominationFut||cuveeNom||vendangeSrc?.cuveeCreee}</span>}
+                                      {marcNum&&<span style={{background:"#2C3E50",color:"#fff",borderRadius:"4px",padding:"1px 7px",fontSize:"10px",fontWeight:600,cursor:"pointer",marginRight:"4px"}} onClick={()=>setView("vendanges")}>Marc {marcNum}</span>}
+                                      {(m.denominationFut||cuveeNom||vendangeSrc?.cuveeCreee)&&<span style={{color:"#2C3E50",fontWeight:600,marginRight:"4px",fontSize:"12px"}}>{m.denominationFut||cuveeNom||vendangeSrc?.cuveeCreee}</span>}
                                       {m.marcsSources&&m.marcsSources.length>1&&(
                                         <div style={{marginTop:"4px",display:"flex",flexDirection:"column",gap:"2px"}}>
                                           {m.marcsSources.map((ms,i)=>(
                                             <div key={i} style={{fontSize:"10px",display:"flex",alignItems:"center",gap:"4px"}}>
-                                              <span style={{background:"#7a5200",color:"#fff",borderRadius:"3px",padding:"1px 5px",fontWeight:600}}>Marc {ms.marc}</span>
+                                              <span style={{background:"#2C3E50",color:"#fff",borderRadius:"3px",padding:"1px 5px",fontWeight:600}}>Marc {ms.marc}</span>
                                               <span style={{color:"#9a8870"}}>{ms.cuveNom}</span>
-                                              <span style={{color:"#b8860b",fontFamily:"monospace",fontWeight:500}}>{ms.volumeHL} HL</span>
-                                              {ms.cuveeCreee&&<span style={{color:"#7a5200"}}>{ms.cuveeCreee}</span>}
+                                              <span style={{color:"#8B7355",fontFamily:"monospace",fontWeight:500}}>{ms.volumeHL} HL</span>
+                                              {ms.cuveeCreee&&<span style={{color:"#2C3E50"}}>{ms.cuveeCreee}</span>}
                                             </div>
                                           ))}
                                         </div>
                                       )}
-                                      {m.volume&&<span style={{color:"#b8860b",fontFamily:"monospace",marginLeft:"4px",fontWeight:500}}>{m.type==="entonnage"?(parseInt(m.volume)/100).toFixed(2)+" HL":m.volume+"L"}</span>}
+                                      {m.volume&&<span style={{color:"#8B7355",fontFamily:"monospace",marginLeft:"4px",fontWeight:500}}>{m.type==="entonnage"?(parseInt(m.volume)/100).toFixed(2)+" HL":m.volume+"L"}</span>}
                                     </>);
                                   })()}
                                   {m.notes&&<div style={{color:"#9a8870",fontStyle:"italic",fontSize:"11px"}}>{m.notes}</div>}
@@ -3922,7 +3922,7 @@ export default function App() {
         {view==="rendement"&&(
           <div>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
-              <div style={{fontFamily:"Georgia,serif",fontSize:"20px",color:"#7a5200"}}>Rendement</div>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"20px",color:"#2C3E50"}}>Rendement</div>
               <button style={s.btn} onClick={()=>setShowRendementForm(true)}>+ Saisir rendement</button>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:"16px"}}>
@@ -3942,7 +3942,7 @@ export default function App() {
                 return (
                   <div key={annee} style={{...s.card,borderLeft:enRI?"3px solid #cc2222":"3px solid #b8860b"}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
-                      <div style={{fontFamily:"Georgia,serif",fontSize:"16px",fontWeight:500,color:"#7a5200"}}>Campagne {annee}</div>
+                      <div style={{fontFamily:"Georgia,serif",fontSize:"16px",fontWeight:500,color:"#2C3E50"}}>Campagne {annee}</div>
                       {enRI&&<span style={{fontSize:"10px",background:"#fde8e8",color:"#cc2222",border:"1px solid #f0b4b4",borderRadius:"4px",padding:"2px 8px",fontWeight:600}}>⚠ Section RI</span>}
                     </div>
                     <div style={{display:"grid",gap:"8px",fontSize:"13px"}}>
@@ -3976,13 +3976,13 @@ export default function App() {
           <div>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
               <div>
-                <div style={{fontFamily:"Georgia,serif",fontSize:"20px",color:"#7a5200"}}>Parcelles</div>
+                <div style={{fontFamily:"Georgia,serif",fontSize:"20px",color:"#2C3E50"}}>Parcelles</div>
                 {(()=>{
                   const totalHa = parcelles.reduce((s,p)=>s+(parseFloat(p.surface)||0),0);
                   const ha = Math.floor(totalHa);
                   const ares = Math.floor((totalHa-ha)*100);
                   const ca = Math.round(((totalHa-ha)*100-ares)*100);
-                  return <div style={{fontSize:"12px",color:"#7a5200",fontWeight:500,marginTop:"4px"}}>{parcelles.length} parcelle(s) — {ha}ha {String(ares).padStart(2,"0")}a {String(ca).padStart(2,"0")}ca</div>;
+                  return <div style={{fontSize:"12px",color:"#2C3E50",fontWeight:500,marginTop:"4px"}}>{parcelles.length} parcelle(s) — {ha}ha {String(ares).padStart(2,"0")}a {String(ca).padStart(2,"0")}ca</div>;
                 })()}
               </div>
               <button style={s.btn} onClick={()=>{setParcelleForm({nom:"",cepage:"",certification:"BIO",surface:"",commune:"",observations:""});setEditingParcelle(null);setShowParcelleForm(true);}}>+ Ajouter</button>
@@ -3997,7 +3997,7 @@ export default function App() {
                         <div style={{fontFamily:"Georgia,serif",fontSize:"16px",fontWeight:500,color:"#1a1205"}}>{p.nom}</div>
                         {p.certification&&(
                           <span style={{fontSize:"10px",padding:"1px 6px",borderRadius:"3px",fontFamily:"monospace",fontWeight:500,
-                            background:p.certification==="BIO"?"#d4edc0":p.certification==="NON BIO"?"#ede5d4":p.certification==="C1"?"#fde8b8":p.certification==="C2"?"#fce8a8":"#fad4a0",
+                            background:p.certification==="BIO"?"#d4edc0":p.certification==="NON BIO"?"#ede5d4":p.certification==="C1"?"#E8E0D0":p.certification==="C2"?"#fce8a8":"#fad4a0",
                             color:p.certification==="BIO"?"#2d6a00":p.certification==="NON BIO"?"#5f5e5a":p.certification==="C1"?"#8b5e0a":p.certification==="C2"?"#7a4800":"#6b3a00"}}>
                             {p.certification}
                           </span>
@@ -4005,8 +4005,8 @@ export default function App() {
                       </div>
                       {p.cepage&&<div style={{fontSize:"12px",color:"#6a5838",marginBottom:"4px"}}>🍇 {p.cepage}</div>}
                       {p.commune&&<div style={{fontSize:"12px",color:"#9a8870",marginBottom:"4px"}}>📍 {p.commune}</div>}
-                      {p.surface&&<div style={{fontSize:"12px",color:"#7a5200",fontWeight:500,marginBottom:"4px"}}>📐 {p.surface} ha</div>}
-                      {p.observations&&<div style={{fontSize:"11px",color:"#7a6840",fontStyle:"italic",marginTop:"6px",padding:"6px",background:"#fffbf3",borderRadius:"4px"}}>{p.observations}</div>}
+                      {p.surface&&<div style={{fontSize:"12px",color:"#2C3E50",fontWeight:500,marginBottom:"4px"}}>📐 {p.surface} ha</div>}
+                      {p.observations&&<div style={{fontSize:"11px",color:"#7a6840",fontStyle:"italic",marginTop:"6px",padding:"6px",background:"#F8F6F2",borderRadius:"4px"}}>{p.observations}</div>}
                       <div style={{marginTop:"8px"}}>
                         {(()=>{
                           const apports = vendanges.filter(v=>v.parcelleId===p.id||(v.parcelleIds||[]).includes(p.id));
@@ -4020,7 +4020,7 @@ export default function App() {
                                 const kgTotal = vAnnee.reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0);
                                 return (
                                   <div key={annee} style={{display:"flex",justifyContent:"space-between",fontSize:"11px",padding:"2px 0",borderBottom:"0.5px solid #ede5d4"}}>
-                                    <span style={{color:"#7a5200",fontWeight:500}}>Campagne {annee}</span>
+                                    <span style={{color:"#2C3E50",fontWeight:500}}>Campagne {annee}</span>
                                     <span style={{color:"#6a5838"}}>{vAnnee.length} apport{vAnnee.length>1?"s":""} — {kgTotal.toLocaleString()} kg</span>
                                   </div>
                                 );
@@ -4096,7 +4096,7 @@ export default function App() {
                     style={{padding:"4px 10px",borderRadius:"4px",border:`0.5px solid ${filterTraitAn===c?"#2d6a00":"#d4c4a0"}`,background:filterTraitAn===c?"#d4edc0":"transparent",color:filterTraitAn===c?"#2d6a00":"#9a8870",fontSize:"11px",cursor:"pointer",fontFamily:"monospace",display:"flex",alignItems:"center",gap:"4px"}}>
                     {c}
                     {isCampagneClosed(c)&&<span style={{fontSize:"9px",color:"#cc2222"}}>cloturee</span>}
-                    <span style={{background:cuivreParCampagne[c]>3000?"#fdd0d0":cuivreParCampagne[c]>2000?"#fde8b8":"#d4edc0",color:cuivreParCampagne[c]>3000?"#cc2222":cuivreParCampagne[c]>2000?"#c47800":"#2d6a00",borderRadius:"3px",padding:"0 4px",fontSize:"10px",fontWeight:500}}>
+                    <span style={{background:cuivreParCampagne[c]>3000?"#fdd0d0":cuivreParCampagne[c]>2000?"#E8E0D0":"#d4edc0",color:cuivreParCampagne[c]>3000?"#cc2222":cuivreParCampagne[c]>2000?"#c47800":"#2d6a00",borderRadius:"3px",padding:"0 4px",fontSize:"10px",fontWeight:500}}>
                       {(cuivreParCampagne[c]/1000).toFixed(2)}kg Cu
                     </span>
                   </button>
@@ -4119,7 +4119,7 @@ export default function App() {
                     ].map((k,i)=>(
                       <div key={i} style={{...s.card,padding:"10px 12px"}}>
                         <div style={s.lbl}>{k.lbl}</div>
-                        <div style={{fontSize:"16px",fontWeight:500,color:k.col||"#b8860b",lineHeight:1.2}}>{k.val}</div>
+                        <div style={{fontSize:"16px",fontWeight:500,color:k.col||"#8B7355",lineHeight:1.2}}>{k.val}</div>
                       </div>
                     ))}
                   </div>
@@ -4139,7 +4139,7 @@ export default function App() {
                   <div style={{overflowX:"auto"}}>
                     <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
                       <thead>
-                        <tr style={{borderBottom:"1px solid #d4c4a0",background:"#fff8ee"}}>
+                        <tr style={{borderBottom:"1px solid #d4c4a0",background:"#F0EDE8"}}>
                           {["N°","Date","Surface","Produits","Cu/ha",""].map(h=>(
                             <th key={h} style={{textAlign:"left",padding:"7px 10px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#9a8870",fontWeight:500}}>{h}</th>
                           ))}
@@ -4151,14 +4151,14 @@ export default function App() {
                           const isHist = t.campagne !== currentYear;
                           const canEdit = !closed && !isHist;
                           return (
-                            <tr key={t.id||i} style={{borderBottom:"1px solid #ede5d4",background:i%2===0?"transparent":"#fffbf3"}}>
-                              <td style={{padding:"8px 10px",fontFamily:"monospace",color:"#b8860b",fontWeight:500}}>N°{t.numero}</td>
+                            <tr key={t.id||i} style={{borderBottom:"1px solid #ede5d4",background:i%2===0?"transparent":"#F8F6F2"}}>
+                              <td style={{padding:"8px 10px",fontFamily:"monospace",color:"#8B7355",fontWeight:500}}>N°{t.numero}</td>
                               <td style={{padding:"8px 10px",color:"#6a5838"}}>{t.date}</td>
                               <td style={{padding:"8px 10px",color:"#6a5838"}}>{t.surface}</td>
                               <td style={{padding:"8px 10px",maxWidth:"320px"}}>
                                 <div style={{display:"flex",gap:"3px",flexWrap:"wrap"}}>
                                   {(t.produits||[]).map((p,j)=>(
-                                    <span key={j} style={{background:p.matiereActive==="Cuivre"?"#fde8b8":p.matiereActive==="Soufre"?"#e6f0fb":"#ede5d4",color:p.matiereActive==="Cuivre"?"#7a5200":p.matiereActive==="Soufre"?"#185FA5":"#5f5e5a",borderRadius:"3px",padding:"1px 5px",fontSize:"10px",fontFamily:"monospace",whiteSpace:"nowrap"}}>
+                                    <span key={j} style={{background:p.matiereActive==="Cuivre"?"#E8E0D0":p.matiereActive==="Soufre"?"#e6f0fb":"#ede5d4",color:p.matiereActive==="Cuivre"?"#2C3E50":p.matiereActive==="Soufre"?"#185FA5":"#5f5e5a",borderRadius:"3px",padding:"1px 5px",fontSize:"10px",fontFamily:"monospace",whiteSpace:"nowrap"}}>
                                       {p.nom} {p.dose}
                                     </span>
                                   ))}
@@ -4191,7 +4191,7 @@ export default function App() {
               {vigneTab==="traitements" && filterTraitAn && (
                 <div style={{...s.card,marginTop:"14px"}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
-                    <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#7a5200"}}>Calendriers prestataires</div>
+                    <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#2C3E50"}}>Calendriers prestataires</div>
                     {!closed && (
                       <label style={{...s.btnSm,cursor:"pointer",display:"flex",alignItems:"center",gap:"5px"}}>
                         {uploadingPdf?"Chargement...":"+ Ajouter PDF"}
@@ -4211,7 +4211,7 @@ export default function App() {
                   )}
                   <div style={{display:"grid",gap:"8px"}}>
                     {pdfDocs.filter(p=>p.campagne===filterTraitAn).map(pdf=>(
-                      <div key={pdf.id} style={{display:"flex",alignItems:"center",gap:"12px",padding:"10px 12px",background:"#fff8ee",borderRadius:"6px",border:"0.5px solid #d4c4a0"}}>
+                      <div key={pdf.id} style={{display:"flex",alignItems:"center",gap:"12px",padding:"10px 12px",background:"#F0EDE8",borderRadius:"6px",border:"0.5px solid #d4c4a0"}}>
                         <div style={{width:"32px",height:"32px",background:"#fdd0d0",borderRadius:"4px",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
                           <span style={{fontSize:"10px",fontWeight:500,color:"#cc2222",fontFamily:"monospace"}}>PDF</span>
                         </div>
@@ -4247,7 +4247,7 @@ export default function App() {
                   {/* Actions */}
                   <div style={{display:"flex",gap:"8px",marginBottom:"14px",flexWrap:"wrap",alignItems:"center"}}>
                     <button style={s.btnSm} onClick={()=>{setProduitForm(PRODUIT_EMPTY);setEditingStockProd(null);setShowStockProdForm(true);}}>+ Ajouter un produit</button>
-                    <label style={{...s.btnSm,cursor:"pointer",background:"#fff8ee",color:"#7a5200",border:"0.5px solid #d4c4a0"}}>
+                    <label style={{...s.btnSm,cursor:"pointer",background:"#F0EDE8",color:"#2C3E50",border:"0.5px solid #d4c4a0"}}>
                       {uploadingPdf?"Chargement...":"+ Ajouter une facture (PDF)"}
                       <input type="file" accept=".pdf" style={{display:"none"}} onChange={e=>{
                         const file=e.target.files[0];
@@ -4261,7 +4261,7 @@ export default function App() {
                     <div style={s.card}>
                       <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
                         <thead>
-                          <tr style={{borderBottom:"1px solid #d4c4a0",background:"#fff8ee"}}>
+                          <tr style={{borderBottom:"1px solid #d4c4a0",background:"#F0EDE8"}}>
 
                         {["Produit","N°AMM","Substance active","Teneur Cu g/kg|L","Stock actuel","Actions"].map(h=>(
                               <th key={h} style={{textAlign:"left",padding:"7px 10px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#9a8870",fontWeight:500}}>{h}</th>
@@ -4274,7 +4274,7 @@ export default function App() {
                             const init  = parseFloat(p.stockInitial)||0;
                             const pct   = init>0 ? Math.round(stock/init*100) : 100;
                             return (
-                              <tr key={p.id} style={{borderBottom:"1px solid #ede5d4",background:i%2===0?"transparent":"#fffbf3"}}>
+                              <tr key={p.id} style={{borderBottom:"1px solid #ede5d4",background:i%2===0?"transparent":"#F8F6F2"}}>
                                 <td style={{padding:"8px 10px"}}>
                                   <div style={{fontWeight:500,color:"#1a1205"}}>{p.nom}</div>
                                   {p.fournisseur&&<div style={{fontSize:"10px",color:"#9a8870"}}>{p.fournisseur}</div>}
@@ -4282,7 +4282,7 @@ export default function App() {
                                 <td style={{padding:"8px 10px",fontFamily:"monospace",fontSize:"11px",color:"#9a8870"}}>{p.nAmm||"-"}</td>
                                 <td style={{padding:"8px 10px"}}>
                                   {(()=>{ const sa=p.substanceActive||p.matiereActive||"-";
-                                    return <span style={{background:sa==="Cuivre"?"#fde8b8":sa==="Soufre"?"#e6f0fb":"#ede5d4",color:sa==="Cuivre"?"#7a5200":sa==="Soufre"?"#185FA5":"#5f5e5a",borderRadius:"3px",padding:"1px 6px",fontSize:"10px",fontFamily:"monospace"}}>{sa}</span>;
+                                    return <span style={{background:sa==="Cuivre"?"#E8E0D0":sa==="Soufre"?"#e6f0fb":"#ede5d4",color:sa==="Cuivre"?"#2C3E50":sa==="Soufre"?"#185FA5":"#5f5e5a",borderRadius:"3px",padding:"1px 6px",fontSize:"10px",fontFamily:"monospace"}}>{sa}</span>;
                                   })()}
                                 </td>
                                 <td style={{padding:"8px 10px",fontFamily:"monospace",fontWeight:500}}>
@@ -4322,7 +4322,7 @@ export default function App() {
                       <div style={{...s.lbl,marginBottom:"8px"}}>Factures / BL</div>
                       <div style={{display:"grid",gap:"6px"}}>
                         {pdfFactures.map(pdf=>(
-                          <div key={pdf.id} style={{display:"flex",alignItems:"center",gap:"10px",padding:"8px 12px",background:"#fff8ee",borderRadius:"6px",border:"0.5px solid #d4c4a0"}}>
+                          <div key={pdf.id} style={{display:"flex",alignItems:"center",gap:"10px",padding:"8px 12px",background:"#F0EDE8",borderRadius:"6px",border:"0.5px solid #d4c4a0"}}>
                             <div style={{width:"28px",height:"28px",background:"#fdd0d0",borderRadius:"4px",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
                               <span style={{fontSize:"9px",fontWeight:500,color:"#cc2222",fontFamily:"monospace"}}>PDF</span>
                             </div>
@@ -4344,8 +4344,8 @@ export default function App() {
                       <div style={{display:"flex",gap:"6px",flexWrap:"wrap"}}>
                         {CATALOGUE_PRODUITS.filter(c=>!stockProduits.find(p=>p.nAmm===c.nAmm)).map((c,i)=>(
                           <button key={i} onClick={()=>addFromCatalogue(c)}
-                            style={{background:"#fff8ee",border:"0.5px solid #d4c4a0",borderRadius:"5px",padding:"6px 12px",fontSize:"11px",cursor:"pointer",color:"#7a5200",fontFamily:"monospace",display:"flex",alignItems:"center",gap:"5px"}}>
-                            <span style={{background:(c.substanceActive||c.matiereActive)==="Cuivre"?"#fde8b8":(c.substanceActive||c.matiereActive)==="Soufre"?"#e6f0fb":"#ede5d4",color:(c.substanceActive||c.matiereActive)==="Cuivre"?"#7a5200":"#185FA5",borderRadius:"3px",padding:"0 4px",fontSize:"9px"}}>{c.substanceActive||c.matiereActive}</span>
+                            style={{background:"#F0EDE8",border:"0.5px solid #d4c4a0",borderRadius:"5px",padding:"6px 12px",fontSize:"11px",cursor:"pointer",color:"#2C3E50",fontFamily:"monospace",display:"flex",alignItems:"center",gap:"5px"}}>
+                            <span style={{background:(c.substanceActive||c.matiereActive)==="Cuivre"?"#E8E0D0":(c.substanceActive||c.matiereActive)==="Soufre"?"#e6f0fb":"#ede5d4",color:(c.substanceActive||c.matiereActive)==="Cuivre"?"#2C3E50":"#185FA5",borderRadius:"3px",padding:"0 4px",fontSize:"9px"}}>{c.substanceActive||c.matiereActive}</span>
                             + {c.nom}
                           </button>
                         ))}
@@ -4361,7 +4361,7 @@ export default function App() {
                   {biodyFiltres.length>0&&(
                     <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
                       <thead>
-                        <tr style={{borderBottom:"1px solid #d4c4a0",background:"#fff8ee"}}>
+                        <tr style={{borderBottom:"1px solid #d4c4a0",background:"#F0EDE8"}}>
                           {["Date","Surface","Produit","Observations",""].map(h=>(
                             <th key={h} style={{textAlign:"left",padding:"7px 10px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#9a8870",fontWeight:500}}>{h}</th>
                           ))}
@@ -4369,7 +4369,7 @@ export default function App() {
                       </thead>
                       <tbody>
                         {biodyFiltres.sort((a,b)=>new Date(a.date)-new Date(b.date)).map((b,i)=>(
-                          <tr key={b.id} style={{borderBottom:"1px solid #ede5d4",background:i%2===0?"transparent":"#fffbf3"}}>
+                          <tr key={b.id} style={{borderBottom:"1px solid #ede5d4",background:i%2===0?"transparent":"#F8F6F2"}}>
                             <td style={{padding:"8px 10px",color:"#6a5838"}}>{b.date}</td>
                             <td style={{padding:"8px 10px",color:"#6a5838"}}>{b.surface}</td>
                             <td style={{padding:"8px 10px"}}>
@@ -4402,7 +4402,7 @@ export default function App() {
                     <div style={{overflowX:"auto"}}>
                       <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
                         <thead>
-                          <tr style={{borderBottom:"1px solid #d4c4a0",background:"#fff8ee"}}>
+                          <tr style={{borderBottom:"1px solid #d4c4a0",background:"#F0EDE8"}}>
                             {["Parcelle","Surface","Produit","Quantite","N total","N/ha","Observations",""].map(h=>(
                               <th key={h} style={{textAlign:"left",padding:"7px 10px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#9a8870",fontWeight:500}}>{h}</th>
                             ))}
@@ -4410,11 +4410,11 @@ export default function App() {
                         </thead>
                         <tbody>
                           {amendFiltres.sort((a,b)=>a.parcelle.localeCompare(b.parcelle)).map((a,i)=>(
-                            <tr key={a.id} style={{borderBottom:"1px solid #ede5d4",background:i%2===0?"transparent":"#fffbf3"}}>
+                            <tr key={a.id} style={{borderBottom:"1px solid #ede5d4",background:i%2===0?"transparent":"#F8F6F2"}}>
                               <td style={{padding:"8px 10px",fontWeight:500,color:"#1a1205"}}>{a.parcelle}</td>
                               <td style={{padding:"8px 10px",color:"#6a5838",fontFamily:"monospace"}}>{a.surface} ha</td>
                               <td style={{padding:"8px 10px"}}>
-                                <span style={{background:"#fde8b8",color:"#7a5200",borderRadius:"3px",padding:"1px 7px",fontSize:"11px",fontFamily:"monospace"}}>{a.produit}</span>
+                                <span style={{background:"#E8E0D0",color:"#2C3E50",borderRadius:"3px",padding:"1px 7px",fontSize:"11px",fontFamily:"monospace"}}>{a.produit}</span>
                               </td>
                               <td style={{padding:"8px 10px",color:"#6a5838",fontFamily:"monospace"}}>{a.quantite}</td>
                               <td style={{padding:"8px 10px",color:"#6a5838",fontFamily:"monospace"}}>{a.nTotal}</td>
@@ -4460,7 +4460,7 @@ export default function App() {
                 <div style={{display:"flex",gap:"6px",marginBottom:"16px",flexWrap:"wrap",alignItems:"center"}}>
                   <span style={{fontSize:"10px",letterSpacing:"0.1em",textTransform:"uppercase",color:"#9a8870",fontFamily:"monospace",marginRight:"4px"}}>Campagne :</span>
                   <button onClick={()=>setFilterVendangeAn("")}
-                    style={{padding:"4px 12px",borderRadius:"4px",border:`0.5px solid ${!filterVendangeAn?"#b8860b":"#d4c4a0"}`,background:!filterVendangeAn?"#f5e8cc":"transparent",color:!filterVendangeAn?"#7a5200":"#9a8870",fontSize:"11px",cursor:"pointer",fontFamily:"monospace"}}>
+                    style={{padding:"4px 12px",borderRadius:"4px",border:`0.5px solid ${!filterVendangeAn?"#8B7355":"#d4c4a0"}`,background:!filterVendangeAn?"#f5e8cc":"transparent",color:!filterVendangeAn?"#2C3E50":"#9a8870",fontSize:"11px",cursor:"pointer",fontFamily:"monospace"}}>
                     Toutes
                   </button>
                   {[...new Set(vendanges.map(v=>v.annee))].sort().reverse().map(an=>(
@@ -4486,7 +4486,7 @@ export default function App() {
                 return (
                   <div key={annee} style={{marginBottom:"20px"}}>
                     <div style={{display:"flex",alignItems:"center",gap:"10px",marginBottom:"10px"}}>
-                      <div style={{fontFamily:"Georgia,serif",fontSize:"16px",fontWeight:500,color:"#7a5200"}}>Campagne {annee}</div>
+                      <div style={{fontFamily:"Georgia,serif",fontSize:"16px",fontWeight:500,color:"#2C3E50"}}>Campagne {annee}</div>
                       <div style={{flex:1,height:"0.5px",background:"#d4c4a0"}}/>
                       <div style={{display:"flex",gap:"12px",fontSize:"11px",color:"#9a8870",fontFamily:"monospace"}}>
                         <span>{vAnnee.length} apport(s)</span>
@@ -4538,17 +4538,17 @@ export default function App() {
                         <div key={v.id} style={{...s.card,marginBottom:"10px",borderLeft:`3px solid ${v.destinationMarc==="prestation"?"#185FA5":v.destinationMarc&&v.destinationMarc!=="maison"?"#c47800":"#2d6a00"}`,background:v.destinationMarc==="prestation"?"#dde4ed":"white"}}>
                           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:"12px",marginBottom:"8px"}}>
                             <div>
-                              {v.cuveeCreee&&<div style={{fontWeight:600,color:"#7a5200",fontSize:"14px",marginBottom:"2px"}}>{v.cuveeCreee}</div>}
+                              {v.cuveeCreee&&<div style={{fontWeight:600,color:"#2C3E50",fontSize:"14px",marginBottom:"2px"}}>{v.cuveeCreee}</div>}
                               <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"2px"}}>
                                 <div style={{fontWeight:500,color:"#1a1205",fontSize:"13px"}}>{parc?.nom||"Parcelle inconnue"}</div>
                                 {v.numeroMarc&&(
-                                  <span style={{background:"#f5e8cc",color:"#7a5200",border:"0.5px solid #e0c050",borderRadius:"4px",padding:"1px 8px",fontSize:"11px",fontWeight:500,fontFamily:"monospace"}}>Marc {v.numeroMarc}</span>
+                                  <span style={{background:"#f5e8cc",color:"#2C3E50",border:"0.5px solid #e0c050",borderRadius:"4px",padding:"1px 8px",fontSize:"11px",fontWeight:500,fontFamily:"monospace"}}>Marc {v.numeroMarc}</span>
                                 )}
                               </div>
                               <div style={{display:"flex",alignItems:"center",gap:"5px",marginBottom:"2px"}}>
                                 {parc?.certification&&(
                                   <span style={{fontSize:"10px",padding:"1px 5px",borderRadius:"3px",fontFamily:"monospace",fontWeight:500,
-                                    background:parc.certification==="BIO"?"#d4edc0":parc.certification==="NON BIO"?"#ede5d4":"#fde8b8",
+                                    background:parc.certification==="BIO"?"#d4edc0":parc.certification==="NON BIO"?"#ede5d4":"#E8E0D0",
                                     color:parc.certification==="BIO"?"#2d6a00":parc.certification==="NON BIO"?"#5f5e5a":"#8b5e0a"}}>
                                     {parc.certification}
                                   </span>
@@ -4591,7 +4591,7 @@ export default function App() {
                               <div style={{...s.lbl,marginBottom:"5px"}}>Produits ajoutes</div>
                               <div style={{display:"flex",gap:"6px",flexWrap:"wrap"}}>
                                 {v.produitsAjoutes.map(p=>(
-                                  <div key={p.id} style={{background:"#fff8ee",border:"0.5px solid #d4c4a0",borderRadius:"4px",padding:"3px 10px",fontSize:"11px",color:"#7a5200"}}>
+                                  <div key={p.id} style={{background:"#F0EDE8",border:"0.5px solid #d4c4a0",borderRadius:"4px",padding:"3px 10px",fontSize:"11px",color:"#2C3E50"}}>
                                     <strong>{p.nom}</strong>{p.dose?` - ${p.dose}`:""}{p.lot?` (Lot: ${p.lot})`:""}{p.date?` - ${p.date}`:""}
                                   </div>
                                 ))}
@@ -4644,7 +4644,7 @@ export default function App() {
             {/* Tableau de bord rendement */}
             <div style={s.card}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
-                <span style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#7a5200"}}>Rendement</span>
+                <span style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#2C3E50"}}>Rendement</span>
                 <button style={s.btnSm} onClick={()=>setShowRendementForm(true)}>+ Saisir</button>
               </div>
               {[...new Set(vendanges.map(v=>v.annee))].sort().reverse().map(annee=>{
@@ -4662,7 +4662,7 @@ export default function App() {
                 const enRI = kgHaAutorise>0 && kgHaReel>kgHaAutorise;
                 return (
                   <div key={annee} style={{borderBottom:"0.5px solid #ede5d4",paddingBottom:"10px",marginBottom:"10px"}}>
-                    <div style={{fontWeight:500,color:"#7a5200",fontSize:"13px",marginBottom:"6px"}}>Campagne {annee}</div>
+                    <div style={{fontWeight:500,color:"#2C3E50",fontSize:"13px",marginBottom:"6px"}}>Campagne {annee}</div>
                     <div style={{display:"grid",gap:"4px",fontSize:"12px"}}>
                       <div style={{display:"flex",justifyContent:"space-between"}}>
                         <span style={{color:"#9a8870"}}>Total recolte</span>
@@ -4714,7 +4714,7 @@ export default function App() {
                         <div style={{fontSize:"13px",fontWeight:500,color:"#1a1205"}}>{p.nom}</div>
                         {p.certification&&(
                           <span style={{fontSize:"10px",padding:"1px 6px",borderRadius:"3px",fontFamily:"monospace",fontWeight:500,
-                            background:p.certification==="BIO"?"#d4edc0":p.certification==="NON BIO"?"#ede5d4":p.certification==="C1"?"#fde8b8":p.certification==="C2"?"#fce8a8":"#fad4a0",
+                            background:p.certification==="BIO"?"#d4edc0":p.certification==="NON BIO"?"#ede5d4":p.certification==="C1"?"#E8E0D0":p.certification==="C2"?"#fce8a8":"#fad4a0",
                             color:p.certification==="BIO"?"#2d6a00":p.certification==="NON BIO"?"#5f5e5a":p.certification==="C1"?"#8b5e0a":p.certification==="C2"?"#7a4800":"#6b3a00"}}>
                             {p.certification}
                           </span>
@@ -4773,7 +4773,7 @@ export default function App() {
               {/* 1. KPIs */}
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:"12px",marginBottom:"20px"}}>
                 {[
-                  {lbl:"Total en stock",val:total+" btl",sub:"tous formats",col:"#b8860b"},
+                  {lbl:"Total en stock",val:total+" btl",sub:"tous formats",col:"#8B7355"},
                   {lbl:"< 15 mois",val:moins15+" btl",sub:"non commercialisables",col:"#cc2222"},
                   {lbl:"> 15 mois",val:plus15+" btl",sub:"commercialisables",col:"#1a7a40"},
                   {lbl:"Alertes 15 mois",val:alertes+" lot(s)",sub:"passent le cap ce mois",col:"#c47800"},
@@ -4789,7 +4789,7 @@ export default function App() {
               {/* Onglets type produit */}
               <div style={{display:"flex",gap:"4px",marginBottom:"16px",borderBottom:"1px solid #d4c4a0",paddingBottom:"0"}}>
                 {[["champagne","Champagne"],["coteaux_blanc","Coteaux Blanc"],["coteaux_rouge","Coteaux Rouge"],["ratafia","Ratafia"]].map(([key,lbl])=>(
-                  <button key={key} onClick={()=>{setStockTab(key);setFilterStockStatut("");}} style={{padding:"8px 14px",border:"none",borderBottom:stockTab===key?"2px solid #b8860b":"2px solid transparent",background:"transparent",color:stockTab===key?"#7a5200":"#9a8870",fontWeight:stockTab===key?500:400,fontSize:"12px",cursor:"pointer",fontFamily:"Georgia,serif"}}>{lbl}</button>
+                  <button key={key} onClick={()=>{setStockTab(key);setFilterStockStatut("");}} style={{padding:"8px 14px",border:"none",borderBottom:stockTab===key?"2px solid #b8860b":"2px solid transparent",background:"transparent",color:stockTab===key?"#2C3E50":"#9a8870",fontWeight:stockTab===key?500:400,fontSize:"12px",cursor:"pointer",fontFamily:"Georgia,serif"}}>{lbl}</button>
                 ))}
               </div>
 
@@ -4868,7 +4868,7 @@ export default function App() {
                 <div style={{...s.card,padding:0,overflow:"hidden",marginBottom:"24px"}}>
                   <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
                     <thead>
-                      <tr style={{background:"#fff8ee",borderBottom:"1px solid #d4c4a0"}}>
+                      <tr style={{background:"#F0EDE8",borderBottom:"1px solid #d4c4a0"}}>
                         {["Cuvee","Millesime","N° Lot","Format","Date tirage","Age","Statut","Lieu","Qte actuelle","Actions"].map(h=>(
                           <th key={h} style={{textAlign:"left",padding:"10px 12px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#9a8870",fontWeight:500}}>{h}</th>
                         ))}
@@ -4890,14 +4890,14 @@ export default function App() {
                             <span style={{background:(STATUT_COLORS[l.statut]||{bg:"#e8f0e8"}).bg,color:(STATUT_COLORS[l.statut]||{color:"#2d6a00"}).color,borderRadius:"4px",padding:"2px 8px",fontSize:"10px"}}>{l.statut}</span>
                           </td>
                           <td style={{padding:"10px 12px"}}><span style={{background:(LIEU_COLORS[l.lieu]||{bg:"#ede5d4"}).bg,color:(LIEU_COLORS[l.lieu]||{color:"#6a5838"}).color,borderRadius:"4px",padding:"2px 8px",fontSize:"10px"}}>{l.lieu}</span></td>
-                          <td style={{padding:"10px 12px",fontWeight:600,color:"#b8860b",fontFamily:"monospace",fontSize:"14px"}}>{l.qteActuelle}</td>
+                          <td style={{padding:"10px 12px",fontWeight:600,color:"#8B7355",fontFamily:"monospace",fontSize:"14px"}}>{l.qteActuelle}</td>
                           <td style={{padding:"10px 12px"}}>
                             <div style={{display:"flex",gap:"4px"}}>
                               <button style={{...s.ghostSm,fontSize:"10px",color:"#185FA5",borderColor:"#b4d0f0"}}
                                 onClick={()=>setLotAction({lot:l,action:"mouvement"})}>Mouvement</button>
                               <button style={{...s.ghostSm,fontSize:"10px",color:"#1a7a40",borderColor:"#b4d0b4"}}
                                 onClick={()=>{setSortieForm({lotId:l._ids?l._ids[0]:l.id,_ids:l._ids||[l.id],qteMax:parseInt(l.qteActuelle)||0,cuvee:l.cuvee,millesime:l.millesime,format:l.format,date:new Date().toISOString().slice(0,10),qte:"",notes:""});setShowSortieForm(true);}}>Sortie</button>
-                              <button style={{...s.ghostSm,fontSize:"10px",color:"#7a5200",borderColor:"#d4c4a0"}}
+                              <button style={{...s.ghostSm,fontSize:"10px",color:"#2C3E50",borderColor:"#d4c4a0"}}
                                 onClick={()=>setLotAction({lot:l,action:"diviser"})}>Diviser</button>
                               {l.mois>=14&&!l.passage15&&(
                                 <button style={{...s.ghostSm,fontSize:"10px",color:"#1a7a40",borderColor:"#b4d4b4",fontWeight:500}}
@@ -4926,7 +4926,7 @@ export default function App() {
                 return (
                   <div style={{...s.card,padding:"16px 20px",marginTop:"16px",marginBottom:"16px"}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
-                      <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#7a5200"}}>Stock coiffes</div>
+                      <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#2C3E50"}}>Stock coiffes</div>
                       <button style={s.btnSm} onClick={()=>setShowCoiffesForm(true)}>+ Achat coiffes</button>
                     </div>
                     <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:"8px"}}>
@@ -4960,7 +4960,7 @@ export default function App() {
               {clotures.filter(c=>c.type==="sortie").length>0&&(
                 <div style={{...s.card,padding:"16px 20px",marginTop:"16px"}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px",cursor:"pointer"}} onClick={()=>setShowHistSorties(p=>!p)}>
-                    <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#7a5200"}}>Historique des sorties {showHistSorties?"▲":"▼"}</div>
+                    <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#2C3E50"}}>Historique des sorties {showHistSorties?"▲":"▼"}</div>
                     <div style={{display:"flex",gap:"6px"}}>
                       {[...new Set(clotures.filter(c=>c.type==="sortie").map(c=>c.date.slice(0,7)))].sort().map(mois=>(
                         <button key={mois} style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
@@ -4986,7 +4986,7 @@ export default function App() {
                     const totExpMag = sorties.filter(c=>c.statut==="Habille Export"&&c.format==="Magnum").reduce((s,c)=>s+(parseInt(c.qte)||0),0);
                     const totExpJer = sorties.filter(c=>c.statut==="Habille Export"&&c.format==="Jeroboam").reduce((s,c)=>s+(parseInt(c.qte)||0),0);
                     return (
-                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px",marginBottom:"14px",padding:"10px",background:"#fff8ee",borderRadius:"6px"}}>
+                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px",marginBottom:"14px",padding:"10px",background:"#F0EDE8",borderRadius:"6px"}}>
                         {totCRD75+totCRDMag+totCRDJer>0&&<div>
                           <div style={{fontSize:"11px",fontWeight:500,color:"#6a2d8a",marginBottom:"4px"}}>CRD</div>
                           {totCRD75>0&&<div style={{fontSize:"11px",color:"#6a5838"}}>75cl : <strong>{totCRD75}</strong> btl</div>}
@@ -5007,7 +5007,7 @@ export default function App() {
                       <div>
                         <span style={{fontWeight:500,color:"#1a1205"}}>{fmt(c.date)}</span>
                         <span style={{color:"#6a5838",marginLeft:"8px"}}>{c.cuvee}</span>
-                        <span style={{color:"#b8860b",fontFamily:"monospace",marginLeft:"8px",fontWeight:500}}>{c.qte} {c.format==="Magnum"?"Magnums":c.format==="Jeroboam"?"Jeroboams":"btl"} sorties</span>
+                        <span style={{color:"#8B7355",fontFamily:"monospace",marginLeft:"8px",fontWeight:500}}>{c.qte} {c.format==="Magnum"?"Magnums":c.format==="Jeroboam"?"Jeroboams":"btl"} sorties</span>
                         {c.notes&&<span style={{color:"#9a8870",marginLeft:"8px",fontStyle:"italic"}}>{c.notes}</span>}
                       </div>
                       <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>{ if(!window.confirm("Annuler cette sortie ?")) return; const lot=stockBouteilles.find(x=>x.id===c.lotId); if(lot){const upd={...lot,qteActuelle:(lot.qteActuelle||0)+(parseInt(c.qte)||0)};setStockBouteilles(p=>p.map(x=>x.id===lot.id?upd:x));fbSave("stockBouteilles",lot.id,upd);} setClotures(p=>p.filter(x=>x.id!==c.id));fbDelete("clotures",c.id); }}>Annuler</button>
@@ -5043,7 +5043,7 @@ export default function App() {
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:"16px"}}>
                     {/* Identite */}
                     <div>
-                      <div style={{fontFamily:"Georgia,serif",fontSize:"16px",fontWeight:500,color:"#7a5200",marginBottom:"2px"}}>{t.cuvee}{t.isBio&&<span style={{marginLeft:"8px",fontSize:"11px",background:"#2d6a00",color:"#fff",borderRadius:"4px",padding:"2px 7px",fontWeight:600}}>🌿 BIO</span>}</div>
+                      <div style={{fontFamily:"Georgia,serif",fontSize:"16px",fontWeight:500,color:"#2C3E50",marginBottom:"2px"}}>{t.cuvee}{t.isBio&&<span style={{marginLeft:"8px",fontSize:"11px",background:"#2d6a00",color:"#fff",borderRadius:"4px",padding:"2px 7px",fontWeight:600}}>🌿 BIO</span>}</div>
                       <div style={{fontSize:"12px",color:"#9a8870",marginBottom:"8px"}}>{t.date} - {t.operateur}</div>
                       {t.millesime&&<div style={{fontSize:"11px",color:"#6a5838"}}>Millésime : <strong>{t.millesime}</strong></div>}
                       {t.futsSources?.length>0&&(
@@ -5073,7 +5073,7 @@ export default function App() {
                       {t.levainLevureNom ? (
                         <div>
                           <div style={{fontSize:"13px",fontWeight:500,color:"#1a1205",marginBottom:"3px"}}>{t.levainLevureNom}</div>
-                          {t.levainLot&&<div style={{display:"inline-flex",alignItems:"center",background:"#fff8ee",border:"0.5px solid #d4c4a0",borderRadius:"3px",padding:"1px 7px",fontSize:"10px",color:"#7a5200",fontFamily:"monospace",marginBottom:"4px"}}>Lot: {t.levainLot}</div>}
+                          {t.levainLot&&<div style={{display:"inline-flex",alignItems:"center",background:"#F0EDE8",border:"0.5px solid #d4c4a0",borderRadius:"3px",padding:"1px 7px",fontSize:"10px",color:"#2C3E50",fontFamily:"monospace",marginBottom:"4px"}}>Lot: {t.levainLot}</div>}
                           <div style={{fontSize:"11px",color:"#9a8870"}}>
                             Eau: {t.levainEau||0}L · Vin: {t.levainVin||0}L · Lev: {t.levainLevure||0}L
                           </div>
@@ -5091,7 +5091,7 @@ export default function App() {
                           {t.qte75} bouteilles = {((parseFloat(t.qte75)||0)*0.75).toFixed(0)}L
                         </div>}
                         {(parseFloat(t.qteMagnum)||0)>0&&<div style={{fontSize:"11px",color:"#6a5838"}}>
-                          <span style={{display:"inline-block",width:"18px",height:"18px",background:"#fde8b8",borderRadius:"3px",textAlign:"center",lineHeight:"18px",fontSize:"10px",marginRight:"5px",color:"#7a5200",fontFamily:"monospace"}}>M</span>
+                          <span style={{display:"inline-block",width:"18px",height:"18px",background:"#E8E0D0",borderRadius:"3px",textAlign:"center",lineHeight:"18px",fontSize:"10px",marginRight:"5px",color:"#2C3E50",fontFamily:"monospace"}}>M</span>
                           {t.qteMagnum} magnums = {((parseFloat(t.qteMagnum)||0)*1.5).toFixed(0)}L
                         </div>}
                         {(parseFloat(t.qteJeroboam)||0)>0&&<div style={{fontSize:"11px",color:"#6a5838"}}>
@@ -5112,7 +5112,7 @@ export default function App() {
                   )}
                   {t.notes&&<div style={{marginTop:"12px",paddingTop:"10px",borderTop:"0.5px solid #ede5d4",fontSize:"12px",color:"#6a5838",fontStyle:"italic"}}>{t.notes}</div>}
                   <div style={{marginTop:"10px",display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #ede5d4",paddingTop:"10px"}}>
-                    <button style={{background:"#fff8ee",color:"#7a5200",border:"0.5px solid #d4c4a0",borderRadius:"4px",padding:"4px 12px",fontSize:"11px",cursor:"pointer",fontFamily:"monospace"}}
+                    <button style={{background:"#F0EDE8",color:"#2C3E50",border:"0.5px solid #d4c4a0",borderRadius:"4px",padding:"4px 12px",fontSize:"11px",cursor:"pointer",fontFamily:"monospace"}}
                       onClick={()=>openEditTirage(t)}>
                       Modifier
                     </button>
@@ -5138,7 +5138,7 @@ export default function App() {
                 <div style={{display:"flex",gap:"0",marginBottom:"20px",borderBottom:"1px solid #d4c4a0",flexWrap:"wrap"}}>
                   {annees.map(a=>(
                     <div key={a} style={{display:"flex",alignItems:"center"}}>
-                      <button onClick={()=>setFilterMvtAnnee(a)} style={{padding:"8px 12px",border:"none",borderBottom:filterMvtAnnee===a?"2px solid #b8860b":"2px solid transparent",background:"transparent",color:filterMvtAnnee===a?"#7a5200":"#9a8870",fontWeight:filterMvtAnnee===a?500:400,fontSize:"13px",cursor:"pointer",fontFamily:"Georgia,serif"}}>
+                      <button onClick={()=>setFilterMvtAnnee(a)} style={{padding:"8px 12px",border:"none",borderBottom:filterMvtAnnee===a?"2px solid #b8860b":"2px solid transparent",background:"transparent",color:filterMvtAnnee===a?"#2C3E50":"#9a8870",fontWeight:filterMvtAnnee===a?500:400,fontSize:"13px",cursor:"pointer",fontFamily:"Georgia,serif"}}>
                         {a} <span style={{fontSize:"10px",color:"#9a8870"}}>({mouvements.filter(m=>m.date?.slice(0,4)===a).length})</span>
                         {isMvtCampagneClosed(a)&&<span style={{fontSize:"9px",color:"#cc2222",marginLeft:"4px"}}>🔒</span>}
                       </button>
@@ -5180,7 +5180,7 @@ export default function App() {
         <div style={s.modal}>
           <div style={{...s.modalBox,width:"420px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
-              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#7a5200"}}>Diviser le volume — {divisionFut.id}</div>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#2C3E50"}}>Diviser le volume — {divisionFut.id}</div>
               <button style={s.ghost} onClick={()=>setShowDivisionForm(false)}>x</button>
             </div>
             <div style={{fontSize:"12px",color:"#9a8870",marginBottom:"16px"}}>
@@ -5242,7 +5242,7 @@ export default function App() {
         <div style={s.modal}>
           <div style={{...s.modalBox,width:"440px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
-              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#7a5200"}}>{editingCuverie?"Modifier la cuve":"Nouvelle cuve de cuverie"}</div>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#2C3E50"}}>{editingCuverie?"Modifier la cuve":"Nouvelle cuve de cuverie"}</div>
               <button style={s.ghost} onClick={()=>setShowCuverieForm(false)}>x</button>
             </div>
             <div style={{display:"grid",gap:"12px"}}>
@@ -5292,7 +5292,7 @@ export default function App() {
         <div style={s.modal}>
           <div style={{...s.modalBox,width:"380px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
-              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#7a5200"}}>RI requis</div>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#2C3E50"}}>RI requis</div>
               <button style={s.ghost} onClick={()=>setShowRiForm(false)}>x</button>
             </div>
             <div style={{display:"grid",gap:"12px"}}>
@@ -5329,7 +5329,7 @@ export default function App() {
         <div style={s.modal}>
           <div style={s.modalBox}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"22px"}}>
-              <div style={{fontFamily:"'Playfair Display',serif",fontSize:"18px",color:"#b8860b"}}>Nouveau mouvement</div>
+              <div style={{fontFamily:"'Playfair Display',serif",fontSize:"18px",color:"#8B7355"}}>Nouveau mouvement</div>
               <button style={s.ghost} onClick={()=>setShowMvtForm(false)}>x</button>
             </div>
             <div style={{display:"grid",gap:"14px"}}>
@@ -5360,7 +5360,7 @@ export default function App() {
                     {tonneaux.filter(t=>t.contenuActuel>0).map(t=>(
                       <div key={t.id} style={{display:"flex",alignItems:"center",gap:"7px",padding:"3px",fontSize:"12px"}}>
                         <input type="checkbox" checked={mvtForm.futSource.includes(t.id)} onChange={()=>setMvtForm(f=>({...f,futSource:f.futSource.includes(t.id)?f.futSource.filter(x=>x!==t.id):[...f.futSource,t.id]}))}/>
-                        <span style={{color:"#b8860b",minWidth:"54px",fontFamily:"monospace"}}>{t.id}</span>
+                        <span style={{color:"#8B7355",minWidth:"54px",fontFamily:"monospace"}}>{t.id}</span>
                         <span style={{color:"#6a5838",flex:1}}>{t.denomination}</span>
                         <span style={{color:"#9a8870",fontSize:"10px"}}>{t.contenuActuel}L</span>
                         {mvtForm.futSource.includes(t.id)&&(
@@ -5417,7 +5417,7 @@ export default function App() {
                             futSource:mvtForm.type==="assemblage"?(f.futSource.includes(t.id)?f.futSource.filter(x=>x!==t.id):[...f.futSource,t.id]):[t.id],
                             assemblageVolumes:mvtForm.type==="assemblage"?{...f.assemblageVolumes,[t.id]:f.assemblageVolumes[t.id]||t.contenuActuel}:{}
                           }))}/>
-                        <span style={{color:"#b8860b",minWidth:"52px"}}>{t.id}</span>
+                        <span style={{color:"#8B7355",minWidth:"52px"}}>{t.id}</span>
                         <span style={{color:"#7a6840",flex:1}}>{t.denomination}</span>
                         <span style={{color:"#9a8870",fontSize:"10px"}}>{t.contenuActuel}L dispo</span>
                         {mvtForm.type==="assemblage"&&mvtForm.futSource.includes(t.id)&&(
@@ -5431,7 +5431,7 @@ export default function App() {
                     ))}
                   </div>
                   {mvtForm.type==="assemblage"&&mvtForm.futSource.length>0&&(
-                    <div style={{fontSize:"11px",color:"#7a5200",marginTop:"4px"}}>
+                    <div style={{fontSize:"11px",color:"#2C3E50",marginTop:"4px"}}>
                       Total assemblage : {mvtForm.futSource.reduce((s,id)=>s+(parseFloat(mvtForm.assemblageVolumes[id])||getTonneau(id)?.contenuActuel||0),0).toLocaleString()} L
                     </div>
                   )}
@@ -5458,7 +5458,7 @@ export default function App() {
                         <label key={t.id} style={{display:"flex",alignItems:"center",gap:"7px",padding:"3px",cursor:"pointer",fontSize:"12px"}}>
                           <input type="checkbox" checked={(mvtForm.futSource||[]).includes(t.id)}
                             onChange={()=>setMvtForm(f=>({...f,futSource:f.futSource.includes(t.id)?f.futSource.filter(x=>x!==t.id):[...f.futSource,t.id]}))}/>
-                          <span style={{color:"#b8860b",minWidth:"54px",fontFamily:"monospace"}}>{t.id}</span>
+                          <span style={{color:"#8B7355",minWidth:"54px",fontFamily:"monospace"}}>{t.id}</span>
                           <span style={{color:"#6a5838",flex:1}}>{t.denomination}</span>
                           <span style={{color:"#9a8870",fontSize:"10px"}}>{t.contenuActuel}L</span>
                         </label>
@@ -5511,7 +5511,7 @@ export default function App() {
               )}
               {mvtForm.type==="entonnage"&&(
                 <div style={{borderTop:"0.5px solid #d4c4a0",paddingTop:"12px",display:"grid",gap:"10px"}}>
-                  <div style={{fontFamily:"Georgia,serif",fontSize:"13px",color:"#7a5200",marginBottom:"4px"}}>Details entonnage</div>
+                  <div style={{fontFamily:"Georgia,serif",fontSize:"13px",color:"#2C3E50",marginBottom:"4px"}}>Details entonnage</div>
                   <div>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"4px"}}>
                       <span style={s.lbl}>Cuves sources (Cuverie)</span>
@@ -5540,7 +5540,7 @@ export default function App() {
                               <option key={v.id} value={v.id}>{fmt(v.date)} - Marc {v.numeroMarc}{v.cuveeCreee?" - "+v.cuveeCreee:""}</option>
                             ))}
                           </select>
-                          {ec.vendangeId&&(()=>{ const vd=vendanges.find(v=>v.id===ec.vendangeId); return vd?.numeroMarc?<div style={{fontSize:"10px",color:"#7a5200",marginTop:"2px"}}>🏷 Marc {vd.numeroMarc} sera reporté</div>:null; })()}
+                          {ec.vendangeId&&(()=>{ const vd=vendanges.find(v=>v.id===ec.vendangeId); return vd?.numeroMarc?<div style={{fontSize:"10px",color:"#2C3E50",marginTop:"2px"}}>🏷 Marc {vd.numeroMarc} sera reporté</div>:null; })()}
                         </div>}
                       </div>
                     ))}
@@ -5599,7 +5599,7 @@ export default function App() {
         <div style={s.modal}>
           <div style={{...s.modalBox,width:"720px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
-              <div style={{fontFamily:"'Playfair Display',serif",fontSize:"18px",color:"#b8860b"}}>Nouvelle dégustation</div>
+              <div style={{fontFamily:"'Playfair Display',serif",fontSize:"18px",color:"#8B7355"}}>Nouvelle dégustation</div>
               <button style={s.ghost} onClick={()=>setShowDegForm(false)}>x</button>
             </div>
             <div style={{display:"grid",gap:"14px"}}>
@@ -5618,12 +5618,12 @@ export default function App() {
               <div>
                 <span style={s.lbl}>Notes par dégustateur</span>
                 <div style={{border:"1px solid #cfc0a0",borderRadius:"6px",overflow:"hidden"}}>
-                  <div style={{display:"grid",gridTemplateColumns:"120px 80px 80px 80px 1fr",gap:"0",background:"#fffbf3",padding:"7px 10px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#8a7248"}}>
+                  <div style={{display:"grid",gridTemplateColumns:"120px 80px 80px 80px 1fr",gap:"0",background:"#F8F6F2",padding:"7px 10px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#8a7248"}}>
                     <div>Dégustateur</div><div>Boisé /3</div><div>Longueur /3</div><div>Note G /5</div><div>Commentaire</div>
                   </div>
                   {degForm.lignes.map((l,i)=>(<div key={i} style={{display:"contents"}}>
                     <div key={l.degustateur} style={{display:"grid",gridTemplateColumns:"120px 80px 80px 80px 1fr",gap:"0",borderTop:"1px solid #d0c4a0",padding:"5px 8px",alignItems:"center"}}>
-                      <div style={{fontSize:"12px",color:"#b8860b",padding:"0 2px"}}>{l.degustateur}</div>
+                      <div style={{fontSize:"12px",color:"#8B7355",padding:"0 2px"}}>{l.degustateur}</div>
                       <div style={{padding:"0 4px"}}><input type="number" min="0" max="3" step="0.5" style={{...s.inp,padding:"4px 6px",fontSize:"12px"}} placeholder="-" value={l.boise} onChange={e=>{const lg=[...degForm.lignes];lg[i]={...lg[i],boise:e.target.value};setDegForm(f=>({...f,lignes:lg}));}}/></div>
                       <div style={{padding:"0 4px"}}><input type="number" min="0" max="3" step="0.5" style={{...s.inp,padding:"4px 6px",fontSize:"12px"}} placeholder="-" value={l.longueur} onChange={e=>{const lg=[...degForm.lignes];lg[i]={...lg[i],longueur:e.target.value};setDegForm(f=>({...f,lignes:lg}));}}/></div>
                       <div style={{padding:"0 4px"}}><input type="number" min="0" max="5" step="0.5" style={{...s.inp,padding:"4px 6px",fontSize:"12px"}} placeholder="-" value={l.noteG} onChange={e=>{const lg=[...degForm.lignes];lg[i]={...lg[i],noteG:e.target.value};setDegForm(f=>({...f,lignes:lg}));}}/></div>
@@ -5646,13 +5646,13 @@ export default function App() {
         <div style={s.modal}>
           <div style={{...s.modalBox,width:"620px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
-              <div style={{fontFamily:"'Playfair Display',serif",fontSize:"18px",color:"#b8860b"}}>Importer des notes depuis Excel</div>
+              <div style={{fontFamily:"'Playfair Display',serif",fontSize:"18px",color:"#8B7355"}}>Importer des notes depuis Excel</div>
               <button style={s.ghost} onClick={()=>{setShowImport(false);setImportMsg("");}}>x</button>
             </div>
             <div style={{display:"grid",gap:"14px"}}>
-              <div style={{background:"#fffbf3",borderRadius:"6px",padding:"14px",fontSize:"12px",color:"#6a5838",lineHeight:"1.7"}}>
+              <div style={{background:"#F8F6F2",borderRadius:"6px",padding:"14px",fontSize:"12px",color:"#6a5838",lineHeight:"1.7"}}>
                 <div style={{color:"#5a4a30",marginBottom:"8px",fontWeight:600}}>Format attendu (CSV séparé par ;)</div>
-                <code style={{display:"block",color:"#b8860b",fontSize:"11px",marginBottom:"6px"}}>fut_id;session;date;degustateur;boise;longueur;note_g;commentaire</code>
+                <code style={{display:"block",color:"#8B7355",fontSize:"11px",marginBottom:"6px"}}>fut_id;session;date;degustateur;boise;longueur;note_g;commentaire</code>
                 <code style={{display:"block",color:"#7a6840",fontSize:"11px"}}>23.28;Avril 2026;2026-04-15;Flavien;1;1.5;3;Nez grillé net droit</code>
                 <code style={{display:"block",color:"#7a6840",fontSize:"11px"}}>23.28;Avril 2026;2026-04-15;Sébastien;1.5;2.5;4.5;Equilibré fruit/bois</code>
                 <div style={{marginTop:"8px",color:"#8a7248",fontSize:"11px"}}> Dans Excel : Fichier &rarr; Enregistrer sous &rarr; CSV (séparateur point-virgule). Les colonnes <em>boise</em>, <em>longueur</em> et <em>date</em> sont optionnelles.</div>
@@ -5676,7 +5676,7 @@ export default function App() {
         <div style={s.modal}>
           <div style={{...s.modalBox,width:"560px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"22px"}}>
-              <div style={{fontFamily:"'Playfair Display',serif",fontSize:"18px",color:"#b8860b"}}>
+              <div style={{fontFamily:"'Playfair Display',serif",fontSize:"18px",color:"#8B7355"}}>
                 {editingFut ? `Modifier - ${editingFut.id}` : "Nouveau fût / Cuve"}
               </div>
               <button style={s.ghost} onClick={()=>{setShowFutForm(false);setEditingFut(null);}}>x</button>
@@ -5808,12 +5808,12 @@ export default function App() {
 
               {/* Aperçu */}
               {futForm.id && futForm.volume && (
-                <div style={{background:"#fffbf3",borderRadius:"5px",padding:"10px 14px",fontSize:"12px",color:"#6a5838",display:"flex",alignItems:"center",gap:"10px"}}>
+                <div style={{background:"#F8F6F2",borderRadius:"5px",padding:"10px 14px",fontSize:"12px",color:"#6a5838",display:"flex",alignItems:"center",gap:"10px"}}>
                   {futForm.appellation && <span style={{width:"8px",height:"8px",borderRadius:"50%",background:getApc(futForm.appellation).color,flexShrink:0}}/>}
                   <span style={{color:"#1a1205",fontWeight:600}}>{futForm.id}</span>
                   <span>{futForm.denomination||"-"}</span>
                   {futForm.millesime && <span style={{color:"#7a6840"}}>· {futForm.millesime}</span>}
-                  <span style={{marginLeft:"auto",color:"#b8860b",fontWeight:600}}>{futForm.volume} L</span>
+                  <span style={{marginLeft:"auto",color:"#8B7355",fontWeight:600}}>{futForm.volume} L</span>
                 </div>
               )}
 
@@ -5845,13 +5845,13 @@ export default function App() {
         <div style={s.modal}>
           <div style={{...s.modalBox,width:"480px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
-              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#7a5200"}}>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#2C3E50"}}>
                 Modifier la note - {editingNote.degustateur}
               </div>
               <button style={s.ghost} onClick={()=>setShowEditDeg(false)}>x</button>
             </div>
-            <div style={{fontSize:"12px",color:"#7a6840",marginBottom:"16px",padding:"8px 12px",background:"#fff8ee",borderRadius:"6px",border:"0.5px solid #d4c4a0"}}>
-              Fut <strong style={{color:"#b8860b"}}>{editingNote.futId}</strong> - Session <strong>{editingNote.session}</strong>
+            <div style={{fontSize:"12px",color:"#7a6840",marginBottom:"16px",padding:"8px 12px",background:"#F0EDE8",borderRadius:"6px",border:"0.5px solid #d4c4a0"}}>
+              Fut <strong style={{color:"#8B7355"}}>{editingNote.futId}</strong> - Session <strong>{editingNote.session}</strong>
             </div>
             <div style={{display:"grid",gap:"12px"}}>
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:"12px"}}>
@@ -5885,7 +5885,7 @@ export default function App() {
         <div style={s.modal}>
           <div style={{...s.modalBox,width:"460px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
-              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#7a5200"}}>Nouvelle campagne - {campFutId}</div>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#2C3E50"}}>Nouvelle campagne - {campFutId}</div>
               <button style={s.ghost} onClick={()=>setShowCampForm(false)}>x</button>
             </div>
             <div style={{display:"grid",gap:"12px"}}>
@@ -5913,7 +5913,7 @@ export default function App() {
         <div style={s.modal}>
           <div style={{...s.modalBox,width:"560px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
-              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#7a5200"}}>{editingParcelle?"Modifier la parcelle":"Nouvelle parcelle"}</div>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#2C3E50"}}>{editingParcelle?"Modifier la parcelle":"Nouvelle parcelle"}</div>
               <button style={s.ghost} onClick={()=>setShowParcelleForm(false)}>x</button>
             </div>
             <div style={{display:"grid",gap:"12px"}}>
@@ -5954,7 +5954,7 @@ export default function App() {
         <div style={s.modal}>
           <div style={{...s.modalBox,width:"380px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
-              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#7a5200"}}>Rendement autorise</div>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#2C3E50"}}>Rendement autorise</div>
               <button style={s.ghost} onClick={()=>setShowRendementForm(false)}>x</button>
             </div>
             <div style={{display:"grid",gap:"12px"}}>
@@ -5991,11 +5991,11 @@ export default function App() {
         <div style={s.modal}>
           <div style={{...s.modalBox,width:"680px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
-              <div style={{fontFamily:"Georgia,serif",fontSize:"18px",color:"#7a5200"}}>{editingVendange?"Modifier l'entree":"Nouvelle entree de vendange"}</div>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"18px",color:"#2C3E50"}}>{editingVendange?"Modifier l'entree":"Nouvelle entree de vendange"}</div>
               <button style={s.ghost} onClick={()=>{setShowVendangeForm(false);setEditingVendange(null);}}>x</button>
             </div>
             <div style={{display:"grid",gap:"14px"}}>
-              <div style={{background:"#fff8ee",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
+              <div style={{background:"#F0EDE8",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
                 <div style={{...s.lbl,marginBottom:"10px"}}>Identification</div>
                 <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:"12px"}}>
                   <div><span style={s.lbl}>Annee *</span>
@@ -6038,7 +6038,7 @@ export default function App() {
                   </div>
                 </div>
               </div>
-              <div style={{background:"#fff8ee",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
+              <div style={{background:"#F0EDE8",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
                 <div style={{...s.lbl,marginBottom:"10px"}}>Volume et analyses</div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr",gap:"10px"}}>
                   <div><span style={s.lbl}>Volume (HL)</span>
@@ -6057,7 +6057,7 @@ export default function App() {
                     <input type="number" step="0.01" style={s.inp} placeholder="3.10" value={vendangeForm.ph||""} onChange={e=>setVendangeForm(f=>({...f,ph:e.target.value}))}/></div>
                 </div>
               </div>
-              <div style={{background:"#fff8ee",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
+              <div style={{background:"#F0EDE8",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
                 <div style={{marginTop:"10px"}}>
                   <div style={{...s.lbl,marginBottom:"8px"}}>Repartition en cuves</div>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px",marginBottom:"8px"}}>
@@ -6098,7 +6098,7 @@ export default function App() {
                   </div>
                 </div>
               </div>
-              <div style={{background:"#fff8ee",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
+              <div style={{background:"#F0EDE8",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"10px"}}>
                   <span style={s.lbl}>Produits ajoutes</span>
                   <button style={s.btnSm} onClick={()=>setShowProduitVendange(true)}>+ Ajouter</button>
@@ -6106,9 +6106,9 @@ export default function App() {
                 {vendangeForm.produitsAjoutes.length===0&&<div style={{fontSize:"12px",color:"#9a8870",fontStyle:"italic"}}>Aucun produit ajoute.</div>}
                 {vendangeForm.produitsAjoutes.map((p,i)=>(
                   <div key={p.id} style={{display:"flex",alignItems:"center",gap:"8px",padding:"5px 0",borderBottom:"0.5px solid #ede5d4",fontSize:"12px"}}>
-                    <span style={{fontWeight:500,color:"#7a5200",flex:1}}>{p.nom}</span>
+                    <span style={{fontWeight:500,color:"#2C3E50",flex:1}}>{p.nom}</span>
                     {p.dose&&<span style={{color:"#9a8870"}}>{p.dose}</span>}
-                    {p.lot&&<span style={{background:"#fff8ee",border:"0.5px solid #d4c4a0",borderRadius:"3px",padding:"1px 6px",fontSize:"10px",color:"#7a5200",fontFamily:"monospace"}}>Lot: {p.lot}</span>}
+                    {p.lot&&<span style={{background:"#F0EDE8",border:"0.5px solid #d4c4a0",borderRadius:"3px",padding:"1px 6px",fontSize:"10px",color:"#2C3E50",fontFamily:"monospace"}}>Lot: {p.lot}</span>}
                     <button style={{...s.ghostSm,color:"#cc2222",borderColor:"#f0b4b4",padding:"2px 6px"}}
                       onClick={()=>setVendangeForm(f=>({...f,produitsAjoutes:f.produitsAjoutes.filter((_,j)=>j!==i)}))}>x</button>
                   </div>
@@ -6134,7 +6134,7 @@ export default function App() {
               </div>
               <div><span style={s.lbl}>Observations</span>
                 <textarea style={{...s.inp,height:"64px",resize:"vertical"}} placeholder="Etat sanitaire, conditions..." value={vendangeForm.observations} onChange={e=>setVendangeForm(f=>({...f,observations:e.target.value}))}/></div>
-              <div style={{background:"#fff8ee",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
+              <div style={{background:"#F0EDE8",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
                 <div style={{...s.lbl,marginBottom:"10px"}}>Destination du marc</div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
                   <div><span style={s.lbl}>Destination</span>
@@ -6183,7 +6183,7 @@ export default function App() {
         <div style={s.modal}>
           <div style={{...s.modalBox,width:"580px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
-              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#7a5200"}}>{editingStockProd?"Modifier le produit":"Nouveau produit"}</div>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#2C3E50"}}>{editingStockProd?"Modifier le produit":"Nouveau produit"}</div>
               <button style={s.ghost} onClick={()=>{setShowStockProdForm(false);setEditingStockProd(null);}}>x</button>
             </div>
             <div style={{display:"grid",gap:"12px"}}>
@@ -6220,7 +6220,7 @@ export default function App() {
                    <input style={s.inp} placeholder="Notes..." value={produitForm.observations||""} onChange={e=>setProduitForm(f=>({...f,observations:e.target.value}))}/></div>
               </div>
               {parseFloat(produitForm.teneurCuivre)>0&&(
-                <div style={{background:"#fde8b8",borderRadius:"6px",padding:"10px 14px",fontSize:"12px",color:"#7a5200"}}>
+                <div style={{background:"#E8E0D0",borderRadius:"6px",padding:"10px 14px",fontSize:"12px",color:"#2C3E50"}}>
                   <strong>Exemple :</strong> 500g/ha x 9ha = 4500g produit x {Math.round(parseFloat(produitForm.teneurCuivre)/10)}% = <strong>{Math.round(500*(parseFloat(produitForm.teneurCuivre)/1000)*9)}g de cuivre total</strong>
                 </div>
               )}
@@ -6238,7 +6238,7 @@ export default function App() {
         <div style={s.modal}>
           <div style={{...s.modalBox,width:"500px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
-              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#7a5200"}}>{editingBiody?"Modifier le passage":"Nouveau passage biodynamique"}</div>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#2C3E50"}}>{editingBiody?"Modifier le passage":"Nouveau passage biodynamique"}</div>
               <button style={s.ghost} onClick={()=>{setShowBiodyForm(false);setEditingBiody(null);}}>x</button>
             </div>
             <div style={{display:"grid",gap:"12px"}}>
@@ -6275,7 +6275,7 @@ export default function App() {
         <div style={s.modal}>
           <div style={{...s.modalBox,width:"580px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
-              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#7a5200"}}>{editingAmend?"Modifier l'amendement":"Nouvel amendement"}</div>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#2C3E50"}}>{editingAmend?"Modifier l'amendement":"Nouvel amendement"}</div>
               <button style={s.ghost} onClick={()=>{setShowAmendForm(false);setEditingAmend(null);}}>x</button>
             </div>
             <div style={{display:"grid",gap:"12px"}}>
@@ -6329,7 +6329,7 @@ export default function App() {
         <div style={s.modal}>
           <div style={{...s.modalBox,width:"620px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
-              <div style={{fontFamily:"Georgia,serif",fontSize:"18px",color:"#7a5200"}}>{editingTrait?"Modifier le traitement":"Nouveau traitement"}</div>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"18px",color:"#2C3E50"}}>{editingTrait?"Modifier le traitement":"Nouveau traitement"}</div>
               <button style={s.ghost} onClick={()=>{setShowTraitForm(false);setEditingTrait(null);}}>x</button>
             </div>
             <div style={{display:"grid",gap:"12px"}}>
@@ -6357,7 +6357,7 @@ export default function App() {
               </div>
 
               {/* Produits */}
-              <div style={{background:"#fff8ee",borderRadius:"8px",padding:"12px",border:"0.5px solid #d4c4a0"}}>
+              <div style={{background:"#F0EDE8",borderRadius:"8px",padding:"12px",border:"0.5px solid #d4c4a0"}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"8px"}}>
                   <span style={s.lbl}>Produits utilises</span>
                   <button style={s.btnSm} onClick={()=>setShowTraitProduit(true)}>+ Ajouter</button>
@@ -6365,7 +6365,7 @@ export default function App() {
                 {traitForm.produits.length===0&&<div style={{fontSize:"12px",color:"#9a8870",fontStyle:"italic"}}>Aucun produit.</div>}
                 {traitForm.produits.map((p,i)=>(
                   <div key={p.id||i} style={{display:"flex",alignItems:"center",gap:"8px",padding:"5px 0",borderBottom:"0.5px solid #ede5d4",fontSize:"12px"}}>
-                    <span style={{background:p.matiereActive==="Cuivre"?"#fde8b8":p.matiereActive==="Soufre"?"#e6f0fb":"#ede5d4",color:p.matiereActive==="Cuivre"?"#7a5200":"#185FA5",borderRadius:"3px",padding:"1px 6px",fontSize:"10px",fontFamily:"monospace"}}>{p.matiereActive||"-"}</span>
+                    <span style={{background:p.matiereActive==="Cuivre"?"#E8E0D0":p.matiereActive==="Soufre"?"#e6f0fb":"#ede5d4",color:p.matiereActive==="Cuivre"?"#2C3E50":"#185FA5",borderRadius:"3px",padding:"1px 6px",fontSize:"10px",fontFamily:"monospace"}}>{p.matiereActive||"-"}</span>
                     <span style={{fontWeight:500,color:"#1a1205",flex:1}}>{p.nom}</span>
                     <span style={{color:"#9a8870",fontSize:"11px"}}>{p.dose}</span>
                     {(parseFloat(p.cuivre)||0)>0&&<span style={{color:"#c47800",fontFamily:"monospace",fontSize:"11px",fontWeight:500}}>{p.cuivre}g Cu/ha</span>}
@@ -6375,13 +6375,13 @@ export default function App() {
                 ))}
                 {/* Total cuivre calcule */}
                 {traitForm.produits.some(p=>(parseFloat(p.cuivre)||0)>0)&&(
-                  <div style={{marginTop:"8px",padding:"8px 10px",background:"#fde8b8",borderRadius:"5px",display:"flex",gap:"16px",flexWrap:"wrap",fontSize:"12px"}}>
-                    <span style={{color:"#7a5200",fontWeight:500}}>Total cuivre :</span>
+                  <div style={{marginTop:"8px",padding:"8px 10px",background:"#E8E0D0",borderRadius:"5px",display:"flex",gap:"16px",flexWrap:"wrap",fontSize:"12px"}}>
+                    <span style={{color:"#2C3E50",fontWeight:500}}>Total cuivre :</span>
                     <span style={{color:"#c47800",fontFamily:"monospace",fontWeight:500}}>
                       {traitForm.produits.reduce((s,p)=>s+(parseFloat(p.cuivre)||0),0)} g/ha
                     </span>
                     {traitForm.surface&&(
-                      <span style={{color:"#7a5200",fontFamily:"monospace"}}>
+                      <span style={{color:"#2C3E50",fontFamily:"monospace"}}>
                         sur {traitForm.surface} = {Math.round(traitForm.produits.reduce((s,p)=>s+(parseFloat(p.cuivre)||0),0)*(parseFloat(traitForm.surface)||0))} g total
                       </span>
                     )}
@@ -6393,7 +6393,7 @@ export default function App() {
                     {stockProduits.length>0&&(
                       <div style={{display:"flex",gap:"5px",flexWrap:"wrap",marginBottom:"10px"}}>
                         {stockProduits.map((sp,i)=>(
-                          <button key={i} style={{background:"#fff8ee",border:"0.5px solid #d4c4a0",borderRadius:"4px",padding:"4px 8px",fontSize:"10px",cursor:"pointer",color:"#7a5200",fontFamily:"monospace"}}
+                          <button key={i} style={{background:"#F0EDE8",border:"0.5px solid #d4c4a0",borderRadius:"4px",padding:"4px 8px",fontSize:"10px",cursor:"pointer",color:"#2C3E50",fontFamily:"monospace"}}
                             onClick={()=>setTraitProduit(f=>({...f,
                               nom:sp.nom,
                               matiereActive:sp.substanceActive||sp.matiereActive||"Cuivre",
@@ -6401,7 +6401,7 @@ export default function App() {
                               unite:sp.unite||"kg",
                               cuivre:"",  // sera calcule depuis dose*teneur
                             }))}>
-                            <span style={{background:(sp.substanceActive||sp.matiereActive)==="Cuivre"?"#fde8b8":"#e6f0fb",color:(sp.substanceActive||sp.matiereActive)==="Cuivre"?"#7a5200":"#185FA5",borderRadius:"2px",padding:"0 3px",fontSize:"9px",marginRight:"3px"}}>{sp.substanceActive||sp.matiereActive}</span>
+                            <span style={{background:(sp.substanceActive||sp.matiereActive)==="Cuivre"?"#E8E0D0":"#e6f0fb",color:(sp.substanceActive||sp.matiereActive)==="Cuivre"?"#2C3E50":"#185FA5",borderRadius:"2px",padding:"0 3px",fontSize:"9px",marginRight:"3px"}}>{sp.substanceActive||sp.matiereActive}</span>
                             {sp.nom}
                           </button>
                         ))}
@@ -6424,7 +6424,7 @@ export default function App() {
                         </select></div>
                       <div>
                         <span style={s.lbl}>Cu calcule (g/ha)</span>
-                        <input type="number" step="1" style={{...s.inp,background:parseFloat(traitProduit.teneurCuivre)>0?"#fff8ee":"white"}}
+                        <input type="number" step="1" style={{...s.inp,background:parseFloat(traitProduit.teneurCuivre)>0?"#F0EDE8":"white"}}
                           placeholder="auto ou manuel"
                           value={traitProduit.cuivre}
                           onChange={e=>setTraitProduit(f=>({...f,cuivre:e.target.value}))}/>
@@ -6461,7 +6461,7 @@ export default function App() {
         <div style={s.modal}>
           <div style={{...s.modalBox,width:"680px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
-              <div style={{fontFamily:"Georgia,serif",fontSize:"18px",color:"#7a5200"}}>{editingDegorge?"Modifier le mouvement":"Nouveau mouvement de lot"}</div>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"18px",color:"#2C3E50"}}>{editingDegorge?"Modifier le mouvement":"Nouveau mouvement de lot"}</div>
               <button style={s.ghost} onClick={()=>{setShowDegorgeForm(false);setEditingDegorge(null);}}>x</button>
             </div>
             <div style={{display:"grid",gap:"14px"}}>
@@ -6519,10 +6519,10 @@ export default function App() {
           <div style={s.modal}>
             <div style={{...s.modalBox,width:"440px"}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
-                <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#7a5200"}}>Sortie de stock / Vente</div>
+                <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#2C3E50"}}>Sortie de stock / Vente</div>
                 <button style={s.ghost} onClick={()=>setShowSortieForm(false)}>x</button>
               </div>
-              <div style={{...s.card,marginBottom:"16px",padding:"12px",background:"#fff8ee"}}>
+              <div style={{...s.card,marginBottom:"16px",padding:"12px",background:"#F0EDE8"}}>
                 <div style={{fontWeight:500,color:"#1a1205"}}>{sortieForm.cuvee} {sortieForm.millesime}</div>
                 <div style={{fontSize:"12px",color:"#9a8870"}}>{sortieForm.format} - Stock actuel: <strong>{sortieForm.qteMax}</strong> btl</div>
               </div>
@@ -6574,7 +6574,7 @@ export default function App() {
         <div style={s.modal}>
           <div style={{...s.modalBox,width:"400px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
-              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#7a5200"}}>Achat coiffes</div>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#2C3E50"}}>Achat coiffes</div>
               <button style={s.ghost} onClick={()=>setShowCoiffesForm(false)}>x</button>
             </div>
             <div style={{display:"grid",gap:"12px"}}>
@@ -6614,12 +6614,12 @@ export default function App() {
         <div style={s.modal}>
           <div style={{...s.modalBox,width:"500px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
-              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#7a5200"}}>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#2C3E50"}}>
                 {lotAction.action==="diviser"?"Diviser le lot":"Mouvement de lot"}
               </div>
               <button style={s.ghost} onClick={()=>setLotAction(null)}>x</button>
             </div>
-            <div style={{...s.card,marginBottom:"16px",padding:"12px",background:"#fff8ee"}}>
+            <div style={{...s.card,marginBottom:"16px",padding:"12px",background:"#F0EDE8"}}>
               <div style={{fontWeight:500,color:"#1a1205"}}>{lotAction.lot.cuvee} {lotAction.lot.millesime}</div>
               <div style={{fontSize:"12px",color:"#9a8870"}}>{lotAction.lot.format} - {lotAction.lot.qteActuelle} btl - {lotAction.lot.lieu} - {lotAction.lot.statut}</div>
             </div>
@@ -6726,7 +6726,7 @@ export default function App() {
         <div style={s.modal}>
           <div style={{...s.modalBox,width:"660px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
-              <div style={{fontFamily:"Georgia,serif",fontSize:"18px",color:"#7a5200"}}>Cloture mensuelle</div>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"18px",color:"#2C3E50"}}>Cloture mensuelle</div>
               <button style={s.ghost} onClick={()=>setShowCloture(false)}>x</button>
             </div>
             <div style={{display:"grid",gap:"14px"}}>
@@ -6741,7 +6741,7 @@ export default function App() {
               </div>
 
               {/* Saisie manuelle */}
-              <div style={{background:"#fff8ee",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
+              <div style={{background:"#F0EDE8",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"10px"}}>
                   <span style={s.lbl}>Ventes par reference</span>
                   <button style={s.btnSm} onClick={()=>setClotureForm(f=>({...f,lignes:[...f.lignes,{cuvee:"",millesime:"",format:"75",lieu:"Epernay",qte:0}]}))}>+ Ligne</button>
@@ -6764,7 +6764,7 @@ export default function App() {
               </div>
 
               {/* Import CSV */}
-              <div style={{background:"#fff8ee",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
+              <div style={{background:"#F0EDE8",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
                 <div style={{...s.lbl,marginBottom:"8px"}}>Import CSV (format: cuvee;millesime;format;lieu;qte)</div>
                 <textarea style={{...s.inp,height:"80px",resize:"vertical",fontSize:"12px"}} placeholder="cuvee;millesime;format;lieu;qte" value={clotureForm.importCsv} onChange={e=>setClotureForm(f=>({...f,importCsv:e.target.value}))}/>
                 <button style={{...s.ghostSm,marginTop:"6px"}} onClick={importCsvCloture}>Importer les lignes</button>
@@ -6793,11 +6793,11 @@ export default function App() {
         <div style={s.modal}>
           <div style={{...s.modalBox,width:"700px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"22px"}}>
-              <div style={{fontFamily:"Georgia,serif",fontSize:"18px",color:"#7a5200"}}>{editingTirage ? `Modifier tirage - ${editingTirage.cuvee}` : "Nouveau tirage"}</div>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"18px",color:"#2C3E50"}}>{editingTirage ? `Modifier tirage - ${editingTirage.cuvee}` : "Nouveau tirage"}</div>
               <button style={s.ghost} onClick={()=>{setShowTirageForm(false);setEditingTirage(null);setTirageForm(TIRAGE_EMPTY);}}>x</button>
             </div>
             <div style={{display:"grid",gap:"16px"}}>
-              <div style={{background:"#fff8ee",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
+              <div style={{background:"#F0EDE8",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
                 <div style={{...s.lbl,marginBottom:"10px",fontSize:"11px"}}>Identification du tirage</div>
                 <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:"12px"}}>
                   <div><span style={s.lbl}>Type de produit *</span>
@@ -6825,9 +6825,9 @@ export default function App() {
                   <span style={s.lbl}>Cuvee / Denomination *</span>
                   <input style={s.inp} placeholder="ex. FONTINETTE..." value={tirageForm.cuvee} onChange={e=>setTirageForm(f=>({...f,cuvee:e.target.value}))}/></div>
               </div>
-              <div style={{background:"#fff8ee",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
+              <div style={{background:"#F0EDE8",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
                 <div style={{...s.lbl,marginBottom:"10px",fontSize:"11px"}}>Assemblage - Volume vin (depuis les futs)</div>
-                {editingTirage&&<div style={{fontSize:"11px",color:"#c47800",background:"#fde8b8",border:"0.5px solid #e8c888",borderRadius:"4px",padding:"6px 10px",marginBottom:"10px"}}>En mode modification, les volumes des futs ne sont pas recalcules automatiquement.</div>}
+                {editingTirage&&<div style={{fontSize:"11px",color:"#c47800",background:"#E8E0D0",border:"0.5px solid #e8c888",borderRadius:"4px",padding:"6px 10px",marginBottom:"10px"}}>En mode modification, les volumes des futs ne sont pas recalcules automatiquement.</div>}
                 <div style={{display:"grid",gridTemplateColumns:"1fr 140px",gap:"12px"}}>
                   <div>
                     <span style={s.lbl}>Futs sources (selection multiple)</span>
@@ -6840,7 +6840,7 @@ export default function App() {
                               futsSources:f.futsSources.includes(t.id)?f.futsSources.filter(x=>x!==t.id):[...f.futsSources,t.id],
                               futsSourcesVolumes:{...f.futsSourcesVolumes,[t.id]:f.futsSourcesVolumes[t.id]||t.contenuActuel}
                             }))}/>
-                          <span style={{color:"#b8860b",minWidth:"54px",fontFamily:"monospace"}}>{t.id}</span>
+                          <span style={{color:"#8B7355",minWidth:"54px",fontFamily:"monospace"}}>{t.id}</span>
                           <span style={{color:"#6a5838",flex:1}}>{t.denomination}</span>
                           <span style={{color:"#9a8870",fontSize:"10px"}}>{t.contenuActuel}L</span>
                           {tirageForm.futsSources.includes(t.id)&&(
@@ -6864,7 +6864,7 @@ export default function App() {
                       value={tirageForm.volumeTotal} onChange={e=>setTirageForm(f=>({...f,volumeTotal:e.target.value}))}/></div>
                 </div>
               </div>
-              <div style={{background:"#fff8ee",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
+              <div style={{background:"#F0EDE8",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
                 <div style={{...s.lbl,marginBottom:"10px",fontSize:"11px"}}>Preparation du levain</div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px",marginBottom:"10px"}}>
                   <div><span style={s.lbl}>Nom de la levure</span>
@@ -6888,13 +6888,13 @@ export default function App() {
                 </div>
               </div>
               <div style={{background:"#f5e8cc",borderRadius:"8px",padding:"14px",border:"0.5px solid #e0c050"}}>
-                <div style={{...s.lbl,marginBottom:"8px",fontSize:"11px",color:"#7a5200"}}>Volume total assemble</div>
+                <div style={{...s.lbl,marginBottom:"8px",fontSize:"11px",color:"#2C3E50"}}>Volume total assemble</div>
                 <div style={{display:"flex",alignItems:"baseline",gap:"8px"}}>
-                  <div style={{fontSize:"28px",fontWeight:500,color:"#7a5200"}}>{calcTotalAssemble(tirageForm).toFixed(1)} L</div>
+                  <div style={{fontSize:"28px",fontWeight:500,color:"#2C3E50"}}>{calcTotalAssemble(tirageForm).toFixed(1)} L</div>
                   <div style={{fontSize:"12px",color:"#9a8870"}}>= {tirageForm.volumeTotal||0} L vin + {calcVolLevain(tirageForm).toFixed(1)} L levain</div>
                 </div>
               </div>
-              <div style={{background:"#fff8ee",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
+              <div style={{background:"#F0EDE8",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
                 <div style={{...s.lbl,marginBottom:"10px",fontSize:"11px"}}>Stockage apres assemblage</div>
                 <div style={{display:"flex",gap:"8px",marginBottom:"12px"}}>
                   {[["existante","Cuve existante"],["nouvelle","Creer une nouvelle cuve"]].map(([val,lbl])=>(
@@ -6924,7 +6924,7 @@ export default function App() {
                   </div>
                 )}
               </div>
-              <div style={{background:"#fff8ee",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
+              <div style={{background:"#F0EDE8",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
                 <div style={{...s.lbl,marginBottom:"10px",fontSize:"11px"}}>Mise en bouteilles - 1 numero de lot par format</div>
                 <div style={{display:"grid",gap:"10px"}}>
                   {[["Bouteilles 75cl","qte75","lot75","#2d6a00",0.75],["Magnums 1.5L","qteMagnum","lotMagnum","#8b5e0a",1.5],["Jeroboams 3L","qteJeroboam","lotJeroboam","#8B0000",3.0]].map(([lbl,qk,lk,col,vol])=>(
