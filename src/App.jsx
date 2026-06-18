@@ -2259,12 +2259,18 @@ export default function App() {
             </div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(180px,1fr))",gap:"12px",marginBottom:"12px"}}>
               {(()=>{
-                const totalVin = tonneaux.filter(t=>t.statut!=="vide").reduce((s,t)=>s+(t.contenuActuel||0),0);
-                const totalCap = tonneaux.reduce((s,t)=>s+(t.volume||0),0);
-                const totalTirable = tonneaux.reduce((s,t)=>{ if(t.statut==="vide") return s; if(t.appellation==="ri") return s+Math.max(0,((t.contenuActuel||0)/100)-((parseFloat(t.volumeRI)||0)/100)); return s+Math.max(0,((t.contenuActuel||0)/100)-((parseFloat(t.volumeRI)||0)/100)); },0);
+                const isChampagne = t => !t.appellation || t.appellation.startsWith("vins_clairs") || t.appellation==="vins_reserve" || t.appellation==="ri";
+                const isAutre = t => t.appellation==="coteaux" || t.appellation==="ratafia";
+                const futsActifs = tonneaux.filter(t=>t.statut!=="vide");
+                const totalVin = futsActifs.filter(isChampagne).reduce((s,t)=>s+(t.contenuActuel||0),0);
+                const totalAutres = futsActifs.filter(isAutre).reduce((s,t)=>s+(t.contenuActuel||0),0);
+                const totalCap = tonneaux.filter(isChampagne).reduce((s,t)=>s+(t.volume||0),0);
+                const totalRI = futsActifs.filter(isChampagne).reduce((s,t)=>{ if(t.appellation==="ri") return s+(t.contenuActuel||0)/100; return s+(parseFloat(t.volumeRI)||0)/100; },0);
+                const totalTirable = Math.max(0, (totalVin/100) - totalRI);
                 return [
-                  {lbl:"Volume total",val:(totalVin/100).toFixed(2)+" HL",sub:`cap. ${(totalCap/100).toFixed(0)} HL`},
+                  {lbl:"Volume Champagne",val:(totalVin/100).toFixed(2)+" HL",sub:`cap. ${(totalCap/100).toFixed(0)} HL`},
                   {lbl:"Volume tirable",val:totalTirable.toFixed(2)+" HL",sub:"~"+Math.floor(totalTirable*100/0.75).toLocaleString("fr-FR")+" btl 75cl",col:"#1a7a40"},
+                  ...(totalAutres>0?[{lbl:"Autres appellations",val:(totalAutres/100).toFixed(2)+" HL",sub:"Coteaux + Ratafia",col:"#8B0000"}]:[]),
                 ].map((k,i)=>(
                   <div key={i} style={s.card}>
                     <div style={s.lbl}>{k.lbl}</div>
