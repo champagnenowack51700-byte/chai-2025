@@ -3989,7 +3989,28 @@ export default function App() {
                       {p.commune&&<div style={{fontSize:"12px",color:"#9a8870",marginBottom:"4px"}}>📍 {p.commune}</div>}
                       {p.surface&&<div style={{fontSize:"12px",color:"#7a5200",fontWeight:500,marginBottom:"4px"}}>📐 {p.surface} ha</div>}
                       {p.observations&&<div style={{fontSize:"11px",color:"#7a6840",fontStyle:"italic",marginTop:"6px",padding:"6px",background:"#fffbf3",borderRadius:"4px"}}>{p.observations}</div>}
-                      <div style={{fontSize:"11px",color:"#9a8870",marginTop:"8px"}}>{vendanges.filter(v=>v.parcelleId===p.id||(v.parcelleIds||[]).includes(p.id)).length} apport(s)</div>
+                      <div style={{marginTop:"8px"}}>
+                        {(()=>{
+                          const apports = vendanges.filter(v=>v.parcelleId===p.id||(v.parcelleIds||[]).includes(p.id));
+                          const annees = [...new Set(apports.map(v=>v.annee))].sort().reverse();
+                          if(!apports.length) return <div style={{fontSize:"11px",color:"#9a8870",fontStyle:"italic"}}>Aucun apport</div>;
+                          return (
+                            <div>
+                              <div style={{fontSize:"11px",color:"#9a8870",marginBottom:"4px"}}>{apports.length} apport(s) total</div>
+                              {annees.map(annee=>{
+                                const vAnnee = apports.filter(v=>v.annee===annee);
+                                const kgTotal = vAnnee.reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0);
+                                return (
+                                  <div key={annee} style={{display:"flex",justifyContent:"space-between",fontSize:"11px",padding:"2px 0",borderBottom:"0.5px solid #ede5d4"}}>
+                                    <span style={{color:"#7a5200",fontWeight:500}}>Campagne {annee}</span>
+                                    <span style={{color:"#6a5838"}}>{vAnnee.length} apport{vAnnee.length>1?"s":""} — {kgTotal.toLocaleString()} kg</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          );
+                        })()}
+                      </div>
                     </div>
                     <div style={{display:"flex",gap:"4px",flexShrink:0}}>
                       <button style={{...s.ghostSm,fontSize:"10px"}} onClick={()=>{setParcelleForm({nom:p.nom,cepage:p.cepage||"",certification:p.certification||"BIO",surface:p.surface||"",commune:p.commune||"",observations:p.observations||""});setEditingParcelle(p);setShowParcelleForm(true);}}>Mod.</button>
