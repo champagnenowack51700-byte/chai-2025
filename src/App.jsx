@@ -1824,7 +1824,7 @@ export default function App() {
             denomination: t.denomination||(allCuvees.length>0?allCuvees.join(" + "):"Vin clair "+anneeVendange),
             appellation: t.appellation||("vins_clairs_"+anneeVendange),
             millesime: parseInt(anneeVendange)||t.millesime||null,
-            certif: vendangeSource?.isBio?"BIO":t.certif||"",
+            certif: cuvesSrc.every(ec=>{ const vd=vendanges.find(v=>v.id===ec.vendangeId); return vd?.isBio; })?"BIO":t.certif||"",
             cepage: allCepages.length>0?allCepages.join(" + "):t.cepage||"",
           };
           saveTonneau(updated);
