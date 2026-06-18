@@ -2945,7 +2945,8 @@ export default function App() {
                     </div>
                     {/* Recap rendement campagne */}
                     {(()=>{
-                      const kgRecoltes = vAnnee.reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0);
+                      const kgRecoltes = vAnnee.filter(v=>v.destinationMarc!=="prestation").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0);
+                const kgPrestation = vAnnee.filter(v=>v.destinationMarc==="prestation").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0);
                       const kgMaison = vAnnee.filter(v=>!v.destinationMarc||v.destinationMarc==="maison").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0)
                         + vAnnee.filter(v=>v.destinationMarc==="negoce_partiel").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0)-(parseFloat(v.kgVendusNegoce)||0),0);
                       const kgNegoce = vAnnee.filter(v=>v.destinationMarc==="negoce_total").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0)
@@ -3912,7 +3913,8 @@ export default function App() {
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:"16px"}}>
               {[...new Set(vendanges.map(v=>v.annee))].sort().reverse().map(annee=>{
                 const vAnnee = vendanges.filter(v=>v.annee===annee);
-                const kgRecoltes = vAnnee.reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0);
+                const kgRecoltes = vAnnee.filter(v=>v.destinationMarc!=="prestation").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0);
+                const kgPrestation = vAnnee.filter(v=>v.destinationMarc==="prestation").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0);
                 const kgMaison = vAnnee.filter(v=>!v.destinationMarc||v.destinationMarc==="maison").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0)
                   + vAnnee.filter(v=>v.destinationMarc==="negoce_partiel").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0)-(parseFloat(v.kgVendusNegoce)||0),0);
                 const kgNegoce = vAnnee.filter(v=>v.destinationMarc==="negoce_total").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0)
@@ -4480,7 +4482,8 @@ export default function App() {
                     </div>
                     {/* Recap rendement campagne */}
                     {(()=>{
-                      const kgRecoltes = vAnnee.reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0);
+                      const kgRecoltes = vAnnee.filter(v=>v.destinationMarc!=="prestation").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0);
+                const kgPrestation = vAnnee.filter(v=>v.destinationMarc==="prestation").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0);
                       const kgMaison = vAnnee.filter(v=>!v.destinationMarc||v.destinationMarc==="maison").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0)
                         + vAnnee.filter(v=>v.destinationMarc==="negoce_partiel").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0)-(parseFloat(v.kgVendusNegoce)||0),0);
                       const kgNegoce = vAnnee.filter(v=>v.destinationMarc==="negoce_total").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0)
@@ -4630,7 +4633,8 @@ export default function App() {
               </div>
               {[...new Set(vendanges.map(v=>v.annee))].sort().reverse().map(annee=>{
                 const vAnnee = vendanges.filter(v=>v.annee===annee);
-                const kgRecoltes = vAnnee.reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0);
+                const kgRecoltes = vAnnee.filter(v=>v.destinationMarc!=="prestation").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0);
+                const kgPrestation = vAnnee.filter(v=>v.destinationMarc==="prestation").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0);
                 const kgMaison = vAnnee.filter(v=>!v.destinationMarc||v.destinationMarc==="maison").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0)
                   + vAnnee.filter(v=>v.destinationMarc==="negoce_partiel").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0)-(parseFloat(v.kgVendusNegoce)||0),0);
                 const kgNegoce = vAnnee.filter(v=>v.destinationMarc==="negoce_total").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0)
@@ -4659,6 +4663,10 @@ export default function App() {
                       {surfTotale>0&&<div style={{display:"flex",justifyContent:"space-between"}}>
                         <span style={{color:"#9a8870"}}>kg/ha reel</span>
                         <span style={{fontWeight:500,color:enRI?"#cc2222":"#1a1205"}}>{kgHaReel.toLocaleString()} kg/ha</span>
+                      </div>}
+                      {kgPrestation>0&&<div style={{display:"flex",justifyContent:"space-between"}}>
+                        <span style={{color:"#9a8870"}}>Prestation pressurage</span>
+                        <span style={{fontWeight:500,color:"#185FA5"}}>{kgPrestation.toLocaleString()} kg</span>
                       </div>}
                       {kgHaAutorise>0&&<div style={{display:"flex",justifyContent:"space-between"}}>
                         <span style={{color:"#9a8870"}}>Rendement autorise</span>
