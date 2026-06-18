@@ -5318,6 +5318,20 @@ export default function App() {
               {needsVol&&<div><span style={s.lbl}>Volume (L)</span><input type="number" style={s.inp} placeholder="ex. 15" value={mvtForm.volume} onChange={e=>setMvtForm(f=>({...f,volume:e.target.value}))}/></div>}
               {mvtForm.type==="ajout_produit"&&(
                 <div style={{display:"grid",gap:"12px"}}>
+                  <div>
+                    <span style={s.lbl}>Tonneaux concernés *</span>
+                    <div style={{maxHeight:"160px",overflowY:"auto",border:"0.5px solid #d4c4a0",borderRadius:"6px",padding:"6px",background:"#fffdf7"}}>
+                      {tonneaux.filter(t=>t.statut!=="vide"&&t.contenuActuel>0).map(t=>(
+                        <label key={t.id} style={{display:"flex",alignItems:"center",gap:"7px",padding:"3px",cursor:"pointer",fontSize:"12px"}}>
+                          <input type="checkbox" checked={(mvtForm.futSource||[]).includes(t.id)}
+                            onChange={()=>setMvtForm(f=>({...f,futSource:f.futSource.includes(t.id)?f.futSource.filter(x=>x!==t.id):[...f.futSource,t.id]}))}/>
+                          <span style={{color:"#b8860b",minWidth:"54px",fontFamily:"monospace"}}>{t.id}</span>
+                          <span style={{color:"#6a5838",flex:1}}>{t.denomination}</span>
+                          <span style={{color:"#9a8870",fontSize:"10px"}}>{t.contenuActuel}L</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
                     <div><span style={s.lbl}>Produit</span><input style={s.inp} placeholder="SO2, ACT'O..." value={mvtForm.produit} onChange={e=>setMvtForm(f=>({...f,produit:e.target.value}))}/></div>
                     <div><span style={s.lbl}>Dosage</span><input style={s.inp} placeholder="2cl/HL..." value={mvtForm.dosage} onChange={e=>setMvtForm(f=>({...f,dosage:e.target.value}))}/></div>
