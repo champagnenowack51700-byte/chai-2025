@@ -552,7 +552,7 @@ export default function App() {
   };
   const [clotureForm, setClotureForm] = useState(CLOTURE_EMPTY);
   const [showVendangeForm,  setShowVendangeForm]  = useState(false);
-  const [filterVendangeAn,  setFilterVendangeAn]  = useState("");
+  const [filterVendangeAn,  setFilterVendangeAn]  = useState(()=>new Date().getFullYear().toString());
   const [editingVendange,  setEditingVendange]  = useState(null);
   const [vendanges,        setVendanges]        = useState([]);
   const [parcelles,        setParcelles]        = useState([]);
