@@ -2983,7 +2983,7 @@ export default function App() {
                       const parc = parcelles.find(p=>p.id===v.parcelleId);
                       const parcs = (v.parcelleIds&&v.parcelleIds.length>0) ? v.parcelleIds.map(id=>parcelles.find(p=>p.id===id)).filter(Boolean) : (parc?[parc]:[]);
                       return (
-                        <div key={v.id} style={{...s.card,marginBottom:"10px",borderLeft:`3px solid ${v.destinationMarc&&v.destinationMarc!=="maison"?"#c47800":"#2d6a00"}`}}>
+                        <div key={v.id} style={{...s.card,marginBottom:"10px",borderLeft:`3px solid ${v.destinationMarc==="prestation"?"#185FA5":v.destinationMarc&&v.destinationMarc!=="maison"?"#c47800":"#2d6a00"}`}}>
                           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:"12px",marginBottom:"8px"}}>
                             <div>
                               <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"4px"}}>
@@ -3010,7 +3010,7 @@ export default function App() {
                               <div style={s.lbl}>Volume recolte</div>
                               {v.poidsMarcKg&&<div style={{fontSize:"18px",fontWeight:500,color:"#2d6a00"}}>{parseInt(v.poidsMarcKg).toLocaleString()} kg</div>}
                               {v.volumeHL&&<div style={{fontSize:"13px",color:"#2d6a00"}}>{v.volumeHL} HL</div>}
-                              {v.destinationMarc&&v.destinationMarc!=="maison"&&<div style={{fontSize:"11px",color:"#c47800",marginTop:"3px"}}>Negoce{v.kgVendusNegoce?" - "+parseInt(v.kgVendusNegoce).toLocaleString()+" kg":""}{v.numeroDAE?" - DAE: "+v.numeroDAE:""}</div>}
+                              {v.destinationMarc&&v.destinationMarc!=="maison"&&<div style={{fontSize:"11px",color:v.destinationMarc==="prestation"?"#185FA5":"#c47800",fontWeight:v.destinationMarc==="prestation"?600:400,marginTop:"3px"}}>{v.destinationMarc==="prestation"?"🔄 Prestation pressurage":v.destinationMarc==="negoce_total"?"Negoce total":"Negoce partiel"}{v.kgVendusNegoce?" - "+parseInt(v.kgVendusNegoce).toLocaleString()+" kg":""}{v.kgPrestation?" - "+parseInt(v.kgPrestation).toLocaleString()+" kg":""}{v.numeroDAE?" - DAE: "+v.numeroDAE:""}</div>}
                             </div>
                             <div>
                               <div style={s.lbl}>Cuves destination</div>
@@ -4519,7 +4519,7 @@ export default function App() {
                     {vAnnee.map(v=>{
                       const parc = parcelles.find(p=>p.id===v.parcelleId);
                       return (
-                        <div key={v.id} style={{...s.card,marginBottom:"10px",borderLeft:`3px solid ${v.destinationMarc&&v.destinationMarc!=="maison"?"#c47800":"#2d6a00"}`}}>
+                        <div key={v.id} style={{...s.card,marginBottom:"10px",borderLeft:`3px solid ${v.destinationMarc==="prestation"?"#185FA5":v.destinationMarc&&v.destinationMarc!=="maison"?"#c47800":"#2d6a00"}`}}>
                           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:"12px",marginBottom:"8px"}}>
                             <div>
                               {v.cuveeCreee&&<div style={{fontWeight:600,color:"#7a5200",fontSize:"14px",marginBottom:"2px"}}>{v.cuveeCreee}</div>}
@@ -4545,7 +4545,7 @@ export default function App() {
                               <div style={s.lbl}>Volume recolte</div>
                               {v.poidsMarcKg&&<div style={{fontSize:"18px",fontWeight:500,color:"#2d6a00"}}>{parseInt(v.poidsMarcKg).toLocaleString()} kg</div>}
                               {v.volumeHL&&<div style={{fontSize:"13px",color:"#2d6a00"}}>{v.volumeHL} HL</div>}
-                              {v.destinationMarc&&v.destinationMarc!=="maison"&&<div style={{fontSize:"11px",color:"#c47800",marginTop:"3px"}}>Negoce{v.kgVendusNegoce?" - "+parseInt(v.kgVendusNegoce).toLocaleString()+" kg":""}{v.numeroDAE?" - DAE: "+v.numeroDAE:""}</div>}
+                              {v.destinationMarc&&v.destinationMarc!=="maison"&&<div style={{fontSize:"11px",color:v.destinationMarc==="prestation"?"#185FA5":"#c47800",fontWeight:v.destinationMarc==="prestation"?600:400,marginTop:"3px"}}>{v.destinationMarc==="prestation"?"🔄 Prestation pressurage":v.destinationMarc==="negoce_total"?"Negoce total":"Negoce partiel"}{v.kgVendusNegoce?" - "+parseInt(v.kgVendusNegoce).toLocaleString()+" kg":""}{v.kgPrestation?" - "+parseInt(v.kgPrestation).toLocaleString()+" kg":""}{v.numeroDAE?" - DAE: "+v.numeroDAE:""}</div>}
                             </div>
                             <div>
                               <div style={s.lbl}>Cuves destination</div>
