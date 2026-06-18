@@ -3086,7 +3086,7 @@ export default function App() {
                 );
               })}
             </div>
-
+          </div>
         )}
 
         {/* -- STOCK -- */}
