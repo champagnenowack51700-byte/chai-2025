@@ -363,6 +363,20 @@ const APPELLATION = {
   coteaux:      APPELLATION_FIXED.coteaux,
   ratafia:      APPELLATION_FIXED.ratafia,
 };
+const statutParcelle = (p) => {
+  if(!p.anneePlantation) return "production";
+  const annee = parseInt(p.anneePlantation);
+  const diff = new Date().getFullYear() - annee;
+  if(diff <= 0) return "1ere_feuille";
+  if(diff === 1) return "2eme_feuille";
+  return "production";
+};
+const labelStatutParcelle = (p) => {
+  const s = statutParcelle(p);
+  if(s==="1ere_feuille") return "1ère feuille";
+  if(s==="2eme_feuille") return "2ème feuille";
+  return "En production";
+};
 const fmtDate = (d) => new Date(d).toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
 const typeLabel = (v) => TYPES_MOUVEMENT.find(t=>t.value===v)?.label||v;
 const typeColor = (v) => TYPES_MOUVEMENT.find(t=>t.value===v)?.color||"#888";
@@ -558,7 +572,7 @@ export default function App() {
   const [parcelles,        setParcelles]        = useState([]);
   const [showParcelleForm, setShowParcelleForm] = useState(false);
   const [editingParcelle,  setEditingParcelle]  = useState(null);
-  const [parcelleForm,     setParcelleForm]     = useState({nom:"",cepage:"",certification:"BIO",surface:"",commune:"",observations:""});
+  const [parcelleForm,     setParcelleForm]     = useState({nom:"",cepage:"",certification:"BIO",surface:"",commune:"",observations:"",anneePlantation:""});
   const [cuvesCuverie,     setCuvesCuverie]     = useState([]);
   const [showCuverieForm,  setShowCuverieForm]  = useState(false);
   const [editingCuverie,   setEditingCuverie]   = useState(null);
@@ -2967,7 +2981,7 @@ export default function App() {
                       const kgNegoce = vAnnee.filter(v=>v.destinationMarc==="negoce_total").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0)
                         + vAnnee.filter(v=>v.destinationMarc==="negoce_partiel").reduce((s,v)=>s+(parseFloat(v.kgVendusNegoce)||0),0);
                       const rendAnnee = rendementsAnnuels.find(r=>r.annee===annee);
-                      const surfTotale = parcelles.reduce((s,p)=>s+(parseFloat(p.surface)||0),0);
+                      const surfTotale = parcelles.filter(p=>statutParcelle(p)==="production").reduce((s,p)=>s+(parseFloat(p.surface)||0),0);
                       const kgHaReel = surfTotale>0 ? Math.round(kgRecoltes/surfTotale) : 0;
                       const kgHaAutorise = rendAnnee ? parseFloat(rendAnnee.rendementAutorise)||0 : 0;
                       const enRI = kgHaAutorise>0 && kgHaReel>kgHaAutorise;
@@ -3935,7 +3949,7 @@ export default function App() {
                 const kgNegoce = vAnnee.filter(v=>v.destinationMarc==="negoce_total").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0)
                   + vAnnee.filter(v=>v.destinationMarc==="negoce_partiel").reduce((s,v)=>s+(parseFloat(v.kgVendusNegoce)||0),0);
                 const rendAnnee = rendementsAnnuels.find(r=>r.annee===annee);
-                const surfTotale = parcelles.reduce((s,p)=>s+(parseFloat(p.surface)||0),0);
+                const surfTotale = parcelles.filter(p=>statutParcelle(p)==="production").reduce((s,p)=>s+(parseFloat(p.surface)||0),0);
                 const kgHaReel = surfTotale>0 ? Math.round(kgRecoltes/surfTotale) : 0;
                 const kgHaAutorise = rendAnnee ? parseFloat(rendAnnee.rendementAutorise)||0 : 0;
                 const enRI = kgHaAutorise>0 && kgHaReel>kgHaAutorise;
@@ -3978,7 +3992,7 @@ export default function App() {
               <div>
                 <div style={{fontFamily:"Georgia,serif",fontSize:"20px",color:"#2C3E50"}}>Parcelles</div>
                 {(()=>{
-                  const totalHa = parcelles.reduce((s,p)=>s+(parseFloat(p.surface)||0),0);
+                  const totalHa = parcelles.filter(p=>statutParcelle(p)==="production").reduce((s,p)=>s+(parseFloat(p.surface)||0),0);
                   const ha = Math.floor(totalHa);
                   const ares = Math.floor((totalHa-ha)*100);
                   const ca = Math.round(((totalHa-ha)*100-ares)*100);
@@ -3994,7 +4008,11 @@ export default function App() {
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
                     <div style={{flex:1}}>
                       <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"6px"}}>
+                        <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"2px"}}>
                         <div style={{fontFamily:"Georgia,serif",fontSize:"16px",fontWeight:500,color:"#1a1205"}}>{p.nom}</div>
+                        {statutParcelle(p)!=="production"&&<span style={{fontSize:"10px",background:"#fde8b8",color:"#8B5E00",borderRadius:"3px",padding:"1px 6px",fontWeight:500}}>{labelStatutParcelle(p)}</span>}
+                        {statutParcelle(p)==="production"&&p.anneePlantation&&<span style={{fontSize:"10px",background:"#d4edc0",color:"#2d6a00",borderRadius:"3px",padding:"1px 6px",fontWeight:500}}>En production</span>}
+                      </div>
                         {p.certification&&(
                           <span style={{fontSize:"10px",padding:"1px 6px",borderRadius:"3px",fontFamily:"monospace",fontWeight:500,
                             background:p.certification==="BIO"?"#d4edc0":p.certification==="NON BIO"?"#ede5d4":p.certification==="C1"?"#E8E0D0":p.certification==="C2"?"#fce8a8":"#fad4a0",
@@ -4505,7 +4523,7 @@ export default function App() {
                       const kgNegoce = vAnnee.filter(v=>v.destinationMarc==="negoce_total").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0)
                         + vAnnee.filter(v=>v.destinationMarc==="negoce_partiel").reduce((s,v)=>s+(parseFloat(v.kgVendusNegoce)||0),0);
                       const rendAnnee = rendementsAnnuels.find(r=>r.annee===annee);
-                      const surfTotale = parcelles.reduce((s,p)=>s+(parseFloat(p.surface)||0),0);
+                      const surfTotale = parcelles.filter(p=>statutParcelle(p)==="production").reduce((s,p)=>s+(parseFloat(p.surface)||0),0);
                       const kgHaReel = surfTotale>0 ? Math.round(kgRecoltes/surfTotale) : 0;
                       const kgHaAutorise = rendAnnee ? parseFloat(rendAnnee.rendementAutorise)||0 : 0;
                       const enRI = kgHaAutorise>0 && kgHaReel>kgHaAutorise;
@@ -4656,7 +4674,7 @@ export default function App() {
                 const kgNegoce = vAnnee.filter(v=>v.destinationMarc==="negoce_total").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0)
                   + vAnnee.filter(v=>v.destinationMarc==="negoce_partiel").reduce((s,v)=>s+(parseFloat(v.kgVendusNegoce)||0),0);
                 const rendAnnee = rendementsAnnuels.find(r=>r.annee===annee);
-                const surfTotale = parcelles.reduce((s,p)=>s+(parseFloat(p.surface)||0),0);
+                const surfTotale = parcelles.filter(p=>statutParcelle(p)==="production").reduce((s,p)=>s+(parseFloat(p.surface)||0),0);
                 const kgHaReel = surfTotale>0 ? Math.round(kgRecoltes/surfTotale) : 0;
                 const kgHaAutorise = rendAnnee ? parseFloat(rendAnnee.rendementAutorise)||0 : 0;
                 const enRI = kgHaAutorise>0 && kgHaReel>kgHaAutorise;
@@ -5930,6 +5948,9 @@ export default function App() {
                   </select></div>
               </div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:"12px"}}>
+                <div><span style={s.lbl}>Année de plantation</span>
+                  <input type="number" style={s.inp} placeholder="ex. 2024" value={parcelleForm.anneePlantation||""} onChange={e=>setParcelleForm(f=>({...f,anneePlantation:e.target.value}))}/>
+                  <div style={{fontSize:"10px",color:"#9a8870",marginTop:"2px"}}>Laisser vide si en production</div></div>
                 <div><span style={s.lbl}>Cépage(s)</span>
                   <input style={s.inp} placeholder="ex. Chardonnay + Pinot Noir..." value={parcelleForm.cepage} onChange={e=>setParcelleForm(f=>({...f,cepage:e.target.value}))}/>
                   <div style={{fontSize:"10px",color:"#9a8870",marginTop:"2px"}}>Séparer par " + " pour plusieurs cépages</div></div>
