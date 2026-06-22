@@ -6037,7 +6037,7 @@ export default function App() {
                   <div><span style={s.lbl}>Parcelle(s) *</span>
                     <div style={{border:"0.5px solid #d4c4a0",borderRadius:"6px",padding:"6px",maxHeight:"120px",overflowY:"auto",background:"#fff"}}>
                       {parcelles.length===0&&<div style={{fontSize:"11px",color:"#cc2222"}}>Aucune parcelle.</div>}
-                      {parcelles.map(p=>{
+                      {parcelles.filter(p=>statutParcelle(p)==="production").map(p=>{
                         const ids = vendangeForm.parcelleIds||[];
                         const checked = ids.includes(p.id)||vendangeForm.parcelleId===p.id;
                         return (
