@@ -905,6 +905,15 @@ export default function App() {
       setRendementsAnnuels(prev=>[r,...prev]);
       fbSave("rendements", r.id, r);
     }
+    // Sauvegarder la reserve RI au moment de la cloture
+    if(rendExistant||true) {
+      const rend = rendementsAnnuels.find(r=>r.annee===String(campagne));
+      if(rend) {
+        const updated = {...rend, reserveRISnapshot:parseFloat(reserveRI.volumeKg)||0};
+        setRendementsAnnuels(prev=>prev.map(r=>r.annee===String(campagne)?updated:r));
+        fbSave("rendements", updated.id, updated);
+      }
+    }
     fbSave("campagnesClosees", String(campagne), {campagne: String(campagne), closedAt: new Date().toISOString()});
   };
 
@@ -3981,7 +3990,8 @@ export default function App() {
                 const kgVO = kgMaxRI>0 ? Math.max(0, kgRecoltes - kgMaxRI) : 0;
                 const enSectionRI = kgHaAutorise>0 && kgHaReel>kgHaAutorise;
                 const enVO = kgHaReel>10000;
-                const reserveApres = (parseFloat(reserveRI.volumeKg)||0) + kgRI;
+                const reserveBase = isCampagneClosed(annee) ? (rendAnnee?.reserveRISnapshot||(parseFloat(reserveRI.volumeKg)||0)) : (parseFloat(reserveRI.volumeKg)||0);
+                const reserveApres = reserveBase + kgRI;
                 const reserveMax = kgMaxRI;
                 return (
                   <div key={annee} style={{...s.card,borderLeft:enVO?"3px solid #8B0000":enSectionRI?"3px solid #cc2222":"3px solid #2C3E50"}}>
@@ -4027,7 +4037,7 @@ export default function App() {
                         </div>
                         <div style={{display:"flex",justifyContent:"space-between",marginBottom:"2px"}}>
                           <span style={{color:"#9a7840"}}>Réserve actuelle</span>
-                          <span style={{fontWeight:500}}>{(parseFloat(reserveRI.volumeKg)||0).toLocaleString()} kg</span>
+                          <span style={{fontWeight:500}}>{reserveBase.toLocaleString()} kg</span>
                         </div>
                         <div style={{display:"flex",justifyContent:"space-between"}}>
                           <span style={{color:"#9a7840"}}>Réserve après campagne</span>
