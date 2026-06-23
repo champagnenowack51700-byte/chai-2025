@@ -613,7 +613,7 @@ export default function App() {
   const [reserveRI, setReserveRI] = useState({volumeKg:86110});
   const [showReserveRIForm, setShowReserveRIForm] = useState(false);
   const [showParcellesList, setShowParcellesList] = useState(true);
-  const [rendementForm, setRendementForm] = useState({annee:new Date().getFullYear().toString(),rendementAutorise:"",surface:""});
+  const [rendementForm, setRendementForm] = useState({annee:new Date().getFullYear().toString(),rendementAutorise:"",surface:"",reserveRI:""});
   const [showProduitVendange, setShowProduitVendange] = useState(false);
   const [produitVendangeForm, setProduitVendangeForm] = useState({nom:"",dose:"",lot:"",date:""});
   const [editingTirage,  setEditingTirage]  = useState(null);
@@ -3004,7 +3004,7 @@ export default function App() {
                       const kgNegoce = vAnnee.filter(v=>v.destinationMarc==="negoce_total").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0)
                         + vAnnee.filter(v=>v.destinationMarc==="negoce_partiel").reduce((s,v)=>s+(parseFloat(v.kgVendusNegoce)||0),0);
                       const rendAnnee = rendementsAnnuels.find(r=>r.annee===annee);
-                      const surfTotale = rendAnnee?.surfaceSnapshot || parcelles.filter(p=>statutParcelle(p)==="production").reduce((s,p)=>s+(parseFloat(p.surface)||0),0);
+                      const surfTotale = parseFloat(rendAnnee?.surface)||rendAnnee?.surfaceSnapshot||parcelles.filter(p=>statutParcelle(p)==="production").reduce((s,p)=>s+(parseFloat(p.surface)||0),0);
                       const kgHaReel = surfTotale>0 ? Math.round(kgRecoltes/surfTotale) : 0;
                       const kgHaAutorise = rendAnnee ? parseFloat(rendAnnee.rendementAutorise)||0 : 0;
                       const enRI = kgHaAutorise>0 && kgHaReel>kgHaAutorise;
@@ -3966,7 +3966,7 @@ export default function App() {
                   <strong style={{color:"#8B6000"}}>{(parseFloat(reserveRI.volumeKg)||0).toLocaleString()} kg</strong>
                   <button style={{...s.ghostSm,fontSize:"10px",marginLeft:"8px"}} onClick={()=>setShowReserveRIForm(true)}>Modifier</button>
                 </div>
-                <button style={s.btn} onClick={()=>setShowRendementForm(true)}>+ Saisir rendement</button>
+                <button style={s.btn} onClick={()=>{const r=rendementsAnnuels.find(x=>x.annee===new Date().getFullYear().toString()); setRendementForm({annee:new Date().getFullYear().toString(),rendementAutorise:r?.rendementAutorise||'',surface:r?.surface||'',reserveRI:r?.reserveRI||''});setShowRendementForm(true);}}>+ Saisir rendement</button>
               </div>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:"16px"}}>
@@ -3979,14 +3979,14 @@ export default function App() {
                 const kgNegoce = vAnnee.filter(v=>v.destinationMarc==="negoce_total").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0)
                   + vAnnee.filter(v=>v.destinationMarc==="negoce_partiel").reduce((s,v)=>s+(parseFloat(v.kgVendusNegoce)||0),0);
                 const rendAnnee = rendementsAnnuels.find(r=>r.annee===annee);
-                const surfTotale = rendAnnee?.surfaceSnapshot || parcelles.filter(p=>statutParcelle(p)==="production").reduce((s,p)=>s+(parseFloat(p.surface)||0),0);
+                const surfTotale = parseFloat(rendAnnee?.surface)||rendAnnee?.surfaceSnapshot||parcelles.filter(p=>statutParcelle(p)==="production").reduce((s,p)=>s+(parseFloat(p.surface)||0),0);
                 const kgHaReel = surfTotale>0 ? Math.round(kgRecoltes/surfTotale) : 0;
                 const kgHaAutorise = rendAnnee ? parseFloat(rendAnnee.rendementAutorise)||0 : 0;
                 // Calcul AOC / RI / VO
                 const kgMaxAOC = Math.round(surfTotale * kgHaAutorise);
                 const kgMaxRI = Math.round(surfTotale * 10000);
                 const kgAOC = Math.min(kgRecoltes, kgMaxAOC);
-                const reserveBase = isCampagneClosed(annee) ? (rendAnnee?.reserveRISnapshot||(parseFloat(reserveRI.volumeKg)||0)) : (parseFloat(reserveRI.volumeKg)||0);
+                const reserveBase = parseFloat(rendAnnee?.reserveRI)||parseFloat(reserveRI.volumeKg)||0;
                 const riDejaConstituee = reserveBase;
                 const riDispoFaire = Math.max(0, kgMaxRI - riDejaConstituee);
                 const kgRI = kgMaxAOC>0 ? Math.max(0, Math.min(kgRecoltes - kgMaxAOC, riDispoFaire)) : 0;
@@ -4618,7 +4618,7 @@ export default function App() {
                       const kgNegoce = vAnnee.filter(v=>v.destinationMarc==="negoce_total").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0)
                         + vAnnee.filter(v=>v.destinationMarc==="negoce_partiel").reduce((s,v)=>s+(parseFloat(v.kgVendusNegoce)||0),0);
                       const rendAnnee = rendementsAnnuels.find(r=>r.annee===annee);
-                      const surfTotale = rendAnnee?.surfaceSnapshot || parcelles.filter(p=>statutParcelle(p)==="production").reduce((s,p)=>s+(parseFloat(p.surface)||0),0);
+                      const surfTotale = parseFloat(rendAnnee?.surface)||rendAnnee?.surfaceSnapshot||parcelles.filter(p=>statutParcelle(p)==="production").reduce((s,p)=>s+(parseFloat(p.surface)||0),0);
                       const kgHaReel = surfTotale>0 ? Math.round(kgRecoltes/surfTotale) : 0;
                       const kgHaAutorise = rendAnnee ? parseFloat(rendAnnee.rendementAutorise)||0 : 0;
                       const enRI = kgHaAutorise>0 && kgHaReel>kgHaAutorise;
@@ -4769,7 +4769,7 @@ export default function App() {
                 const kgNegoce = vAnnee.filter(v=>v.destinationMarc==="negoce_total").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0)
                   + vAnnee.filter(v=>v.destinationMarc==="negoce_partiel").reduce((s,v)=>s+(parseFloat(v.kgVendusNegoce)||0),0);
                 const rendAnnee = rendementsAnnuels.find(r=>r.annee===annee);
-                const surfTotale = rendAnnee?.surfaceSnapshot || parcelles.filter(p=>statutParcelle(p)==="production").reduce((s,p)=>s+(parseFloat(p.surface)||0),0);
+                const surfTotale = parseFloat(rendAnnee?.surface)||rendAnnee?.surfaceSnapshot||parcelles.filter(p=>statutParcelle(p)==="production").reduce((s,p)=>s+(parseFloat(p.surface)||0),0);
                 const kgHaReel = surfTotale>0 ? Math.round(kgRecoltes/surfTotale) : 0;
                 const kgHaAutorise = rendAnnee ? parseFloat(rendAnnee.rendementAutorise)||0 : 0;
                 const enRI = kgHaAutorise>0 && kgHaReel>kgHaAutorise;
@@ -6106,7 +6106,7 @@ export default function App() {
                   if(!rendementForm.annee||!rendementForm.rendementAutorise) return alert("Tous les champs sont requis.");
                   const existing = rendementsAnnuels.find(r=>r.annee===rendementForm.annee);
                   if(existing) {
-                    const updated = {...existing,...rendementForm};
+                    const updated = {...existing,...rendementForm,surface:rendementForm.surface||existing.surface,reserveRI:rendementForm.reserveRI||existing.reserveRI};
                     setRendementsAnnuels(prev=>prev.map(r=>r.annee===rendementForm.annee?updated:r));
                     fbSave("rendements",updated.id,updated);
                   } else {
