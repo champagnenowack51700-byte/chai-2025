@@ -893,6 +893,18 @@ export default function App() {
     if(!window.confirm(`Cloture la campagne ${campagne} ? Les traitements ne pourront plus etre modifies.`)) return;
     const newList = [...new Set([...campagnesClosees, String(campagne)])];
     setCampagnesClosees(newList);
+    // Sauvegarder la surface en production au moment de la cloture
+    const surfSnapshot = parcelles.filter(p=>statutParcelle(p)==="production").reduce((s,p)=>s+(parseFloat(p.surface)||0),0);
+    const rendExistant = rendementsAnnuels.find(r=>r.annee===String(campagne));
+    if(rendExistant) {
+      const updated = {...rendExistant, surfaceSnapshot:surfSnapshot};
+      setRendementsAnnuels(prev=>prev.map(r=>r.annee===String(campagne)?updated:r));
+      fbSave("rendements", updated.id, updated);
+    } else {
+      const r = {id:"rend_"+campagne, annee:String(campagne), surfaceSnapshot:surfSnapshot, timestamp:new Date().toISOString()};
+      setRendementsAnnuels(prev=>[r,...prev]);
+      fbSave("rendements", r.id, r);
+    }
     fbSave("campagnesClosees", String(campagne), {campagne: String(campagne), closedAt: new Date().toISOString()});
   };
 
@@ -2983,7 +2995,7 @@ export default function App() {
                       const kgNegoce = vAnnee.filter(v=>v.destinationMarc==="negoce_total").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0)
                         + vAnnee.filter(v=>v.destinationMarc==="negoce_partiel").reduce((s,v)=>s+(parseFloat(v.kgVendusNegoce)||0),0);
                       const rendAnnee = rendementsAnnuels.find(r=>r.annee===annee);
-                      const surfTotale = parcelles.filter(p=>statutParcelle(p)==="production").reduce((s,p)=>s+(parseFloat(p.surface)||0),0);
+                      const surfTotale = rendAnnee?.surfaceSnapshot || parcelles.filter(p=>statutParcelle(p)==="production").reduce((s,p)=>s+(parseFloat(p.surface)||0),0);
                       const kgHaReel = surfTotale>0 ? Math.round(kgRecoltes/surfTotale) : 0;
                       const kgHaAutorise = rendAnnee ? parseFloat(rendAnnee.rendementAutorise)||0 : 0;
                       const enRI = kgHaAutorise>0 && kgHaReel>kgHaAutorise;
@@ -3958,7 +3970,7 @@ export default function App() {
                 const kgNegoce = vAnnee.filter(v=>v.destinationMarc==="negoce_total").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0)
                   + vAnnee.filter(v=>v.destinationMarc==="negoce_partiel").reduce((s,v)=>s+(parseFloat(v.kgVendusNegoce)||0),0);
                 const rendAnnee = rendementsAnnuels.find(r=>r.annee===annee);
-                const surfTotale = parcelles.filter(p=>statutParcelle(p)==="production").reduce((s,p)=>s+(parseFloat(p.surface)||0),0);
+                const surfTotale = rendAnnee?.surfaceSnapshot || parcelles.filter(p=>statutParcelle(p)==="production").reduce((s,p)=>s+(parseFloat(p.surface)||0),0);
                 const kgHaReel = surfTotale>0 ? Math.round(kgRecoltes/surfTotale) : 0;
                 const kgHaAutorise = rendAnnee ? parseFloat(rendAnnee.rendementAutorise)||0 : 0;
                 // Calcul AOC / RI / VO
@@ -4590,7 +4602,7 @@ export default function App() {
                       const kgNegoce = vAnnee.filter(v=>v.destinationMarc==="negoce_total").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0)
                         + vAnnee.filter(v=>v.destinationMarc==="negoce_partiel").reduce((s,v)=>s+(parseFloat(v.kgVendusNegoce)||0),0);
                       const rendAnnee = rendementsAnnuels.find(r=>r.annee===annee);
-                      const surfTotale = parcelles.filter(p=>statutParcelle(p)==="production").reduce((s,p)=>s+(parseFloat(p.surface)||0),0);
+                      const surfTotale = rendAnnee?.surfaceSnapshot || parcelles.filter(p=>statutParcelle(p)==="production").reduce((s,p)=>s+(parseFloat(p.surface)||0),0);
                       const kgHaReel = surfTotale>0 ? Math.round(kgRecoltes/surfTotale) : 0;
                       const kgHaAutorise = rendAnnee ? parseFloat(rendAnnee.rendementAutorise)||0 : 0;
                       const enRI = kgHaAutorise>0 && kgHaReel>kgHaAutorise;
@@ -4741,7 +4753,7 @@ export default function App() {
                 const kgNegoce = vAnnee.filter(v=>v.destinationMarc==="negoce_total").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0)
                   + vAnnee.filter(v=>v.destinationMarc==="negoce_partiel").reduce((s,v)=>s+(parseFloat(v.kgVendusNegoce)||0),0);
                 const rendAnnee = rendementsAnnuels.find(r=>r.annee===annee);
-                const surfTotale = parcelles.filter(p=>statutParcelle(p)==="production").reduce((s,p)=>s+(parseFloat(p.surface)||0),0);
+                const surfTotale = rendAnnee?.surfaceSnapshot || parcelles.filter(p=>statutParcelle(p)==="production").reduce((s,p)=>s+(parseFloat(p.surface)||0),0);
                 const kgHaReel = surfTotale>0 ? Math.round(kgRecoltes/surfTotale) : 0;
                 const kgHaAutorise = rendAnnee ? parseFloat(rendAnnee.rendementAutorise)||0 : 0;
                 const enRI = kgHaAutorise>0 && kgHaReel>kgHaAutorise;
