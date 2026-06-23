@@ -610,6 +610,8 @@ export default function App() {
   const [vendangeForm, setVendangeForm] = useState(VENDANGE_EMPTY);
   const [rendementsAnnuels, setRendementsAnnuels] = useState([]);
   const [showRendementForm, setShowRendementForm] = useState(false);
+  const [reserveRI, setReserveRI] = useState({volumeKg:86110});
+  const [showReserveRIForm, setShowReserveRIForm] = useState(false);
   const [showParcellesList, setShowParcellesList] = useState(true);
   const [rendementForm, setRendementForm] = useState({annee:new Date().getFullYear().toString(),rendementAutorise:"",surface:""});
   const [showProduitVendange, setShowProduitVendange] = useState(false);
@@ -3937,7 +3939,14 @@ export default function App() {
           <div>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
               <div style={{fontFamily:"Georgia,serif",fontSize:"20px",color:"#2C3E50"}}>Rendement</div>
-              <button style={s.btn} onClick={()=>setShowRendementForm(true)}>+ Saisir rendement</button>
+              <div style={{display:"flex",gap:"8px",alignItems:"center"}}>
+                <div style={{background:"#fff8e8",border:"0.5px solid #ffc107",borderRadius:"6px",padding:"6px 12px",fontSize:"12px"}}>
+                  <span style={{color:"#9a7840"}}>Réserve RI actuelle : </span>
+                  <strong style={{color:"#8B6000"}}>{(parseFloat(reserveRI.volumeKg)||0).toLocaleString()} kg</strong>
+                  <button style={{...s.ghostSm,fontSize:"10px",marginLeft:"8px"}} onClick={()=>setShowReserveRIForm(true)}>Modifier</button>
+                </div>
+                <button style={s.btn} onClick={()=>setShowRendementForm(true)}>+ Saisir rendement</button>
+              </div>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:"16px"}}>
               {[...new Set(vendanges.map(v=>v.annee))].sort().reverse().map(annee=>{
@@ -3952,31 +3961,89 @@ export default function App() {
                 const surfTotale = parcelles.filter(p=>statutParcelle(p)==="production").reduce((s,p)=>s+(parseFloat(p.surface)||0),0);
                 const kgHaReel = surfTotale>0 ? Math.round(kgRecoltes/surfTotale) : 0;
                 const kgHaAutorise = rendAnnee ? parseFloat(rendAnnee.rendementAutorise)||0 : 0;
-                const enRI = kgHaAutorise>0 && kgHaReel>kgHaAutorise;
+                // Calcul AOC / RI / VO
+                const kgMaxAOC = Math.round(surfTotale * kgHaAutorise);
+                const kgMaxRI = Math.round(surfTotale * 10000);
+                const kgAOC = Math.min(kgRecoltes, kgMaxAOC);
+                const kgRI = kgMaxAOC>0 ? Math.max(0, Math.min(kgRecoltes - kgMaxAOC, kgMaxRI - kgMaxAOC)) : 0;
+                const kgVO = kgMaxRI>0 ? Math.max(0, kgRecoltes - kgMaxRI) : 0;
+                const enSectionRI = kgHaAutorise>0 && kgHaReel>kgHaAutorise;
+                const enVO = kgHaReel>10000;
+                const reserveApres = (parseFloat(reserveRI.volumeKg)||0) + kgRI;
+                const reserveMax = kgMaxRI;
                 return (
-                  <div key={annee} style={{...s.card,borderLeft:enRI?"3px solid #cc2222":"3px solid #b8860b"}}>
+                  <div key={annee} style={{...s.card,borderLeft:enVO?"3px solid #8B0000":enSectionRI?"3px solid #cc2222":"3px solid #2C3E50"}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
                       <div style={{fontFamily:"Georgia,serif",fontSize:"16px",fontWeight:500,color:"#2C3E50"}}>Campagne {annee}</div>
-                      {enRI&&<span style={{fontSize:"10px",background:"#fde8e8",color:"#cc2222",border:"1px solid #f0b4b4",borderRadius:"4px",padding:"2px 8px",fontWeight:600}}>⚠ Section RI</span>}
+                      <div style={{display:"flex",gap:"6px"}}>
+                        {enVO&&<span style={{fontSize:"10px",background:"#fde8e8",color:"#8B0000",border:"1px solid #f0b4b4",borderRadius:"4px",padding:"2px 8px",fontWeight:600}}>⚠ VO</span>}
+                        {enSectionRI&&!enVO&&<span style={{fontSize:"10px",background:"#fff3cd",color:"#c47800",border:"1px solid #ffc107",borderRadius:"4px",padding:"2px 8px",fontWeight:600}}>⚠ Section RI</span>}
+                      </div>
                     </div>
-                    <div style={{display:"grid",gap:"8px",fontSize:"13px"}}>
-                      {[
-                        ["Total récolté", kgRecoltes.toLocaleString()+" kg", "#1a1205"],
-                        ["Conservé maison", Math.round(kgMaison).toLocaleString()+" kg", "#2d6a00"],
-                        ["Vendu négoce", Math.round(kgNegoce).toLocaleString()+" kg", "#c47800"],
-                        ...(surfTotale>0?[["kg/ha réel", kgHaReel.toLocaleString()+" kg/ha", enRI?"#cc2222":"#1a1205"]]:[]),
-                        ...(kgHaAutorise>0?[["Rendement autorisé", kgHaAutorise.toLocaleString()+" kg/ha", "#6a5838"]]:[]),
-                        ["Nbre apports", vAnnee.filter(v=>v.destinationMarc!=="prestation").length+" apport(s)", "#6a5838"],
-                        ...(kgPrestation>0?[["🔄 Prestation pressurage", kgPrestation.toLocaleString()+" kg", "#185FA5"]]:[]),
-                      ].map(([lbl,val,col])=>(
-                        <div key={lbl} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:"0.5px solid #ede5d4"}}>
-                          <span style={{color:"#9a8870"}}>{lbl}</span>
-                          <span style={{fontWeight:500,color:col}}>{val}</span>
+                    {/* Surface en production */}
+                    {surfTotale>0&&<div style={{background:"#f0f4f7",borderRadius:"6px",padding:"8px 12px",marginBottom:"10px",fontSize:"12px"}}>
+                      <span style={{color:"#4A6274"}}>Surface en production : </span>
+                      <strong style={{color:"#2C3E50"}}>{surfTotale.toFixed(4)} ha</strong>
+                    </div>}
+                    <div style={{display:"grid",gap:"6px",fontSize:"12px"}}>
+                      {/* AOC */}
+                      {kgHaAutorise>0&&<div style={{padding:"8px",background:"#eef4f0",borderRadius:"6px",border:"0.5px solid #a5c8b0"}}>
+                        <div style={{fontWeight:500,color:"#2C3E50",marginBottom:"4px"}}>AOC Champagne</div>
+                        <div style={{display:"flex",justifyContent:"space-between",marginBottom:"2px"}}>
+                          <span style={{color:"#6a8878"}}>Autorisé ({kgHaAutorise.toLocaleString()} kg/ha)</span>
+                          <span style={{fontWeight:500}}>{kgMaxAOC.toLocaleString()} kg</span>
                         </div>
-                      ))}
-                      {enRI&&<div style={{marginTop:"4px",padding:"8px 12px",background:"#fde8e8",borderRadius:"4px",border:"1px solid #f0b4b4"}}>
-                        <div style={{fontSize:"12px",fontWeight:500,color:"#cc2222"}}>Dépassement : +{(kgHaReel-kgHaAutorise).toLocaleString()} kg/ha</div>
+                        <div style={{display:"flex",justifyContent:"space-between",marginBottom:"2px"}}>
+                          <span style={{color:"#6a8878"}}>Récolté</span>
+                          <span style={{fontWeight:500,color:"#2d6a00"}}>{kgAOC.toLocaleString()} kg</span>
+                        </div>
+                        <div style={{display:"flex",justifyContent:"space-between"}}>
+                          <span style={{color:"#6a8878"}}>Restant à récolter</span>
+                          <span style={{fontWeight:500,color:kgMaxAOC-kgAOC>0?"#c47800":"#2d6a00"}}>{Math.max(0,kgMaxAOC-kgAOC).toLocaleString()} kg</span>
+                        </div>
                       </div>}
+                      {/* RI */}
+                      {enSectionRI&&<div style={{padding:"8px",background:"#fff8e8",borderRadius:"6px",border:"0.5px solid #ffc107"}}>
+                        <div style={{fontWeight:500,color:"#8B6000",marginBottom:"4px"}}>Réserve Individuelle (RI)</div>
+                        <div style={{display:"flex",justifyContent:"space-between",marginBottom:"2px"}}>
+                          <span style={{color:"#9a7840"}}>Max (10 000 kg/ha)</span>
+                          <span style={{fontWeight:500}}>{(kgMaxRI-kgMaxAOC).toLocaleString()} kg dispo</span>
+                        </div>
+                        <div style={{display:"flex",justifyContent:"space-between",marginBottom:"2px"}}>
+                          <span style={{color:"#9a7840"}}>Apport cette campagne</span>
+                          <span style={{fontWeight:500,color:"#c47800"}}>{kgRI.toLocaleString()} kg</span>
+                        </div>
+                        <div style={{display:"flex",justifyContent:"space-between",marginBottom:"2px"}}>
+                          <span style={{color:"#9a7840"}}>Réserve actuelle</span>
+                          <span style={{fontWeight:500}}>{(parseFloat(reserveRI.volumeKg)||0).toLocaleString()} kg</span>
+                        </div>
+                        <div style={{display:"flex",justifyContent:"space-between"}}>
+                          <span style={{color:"#9a7840"}}>Réserve après campagne</span>
+                          <span style={{fontWeight:500,color:"#c47800"}}>{reserveApres.toLocaleString()} kg</span>
+                        </div>
+                      </div>}
+                      {/* VO */}
+                      {enVO&&<div style={{padding:"8px",background:"#fde8e8",borderRadius:"6px",border:"0.5px solid #f0b4b4"}}>
+                        <div style={{fontWeight:500,color:"#8B0000",marginBottom:"4px"}}>Vins d'Exploitation (VO)</div>
+                        <div style={{display:"flex",justifyContent:"space-between"}}>
+                          <span style={{color:"#9a5050"}}>Volume en VO</span>
+                          <span style={{fontWeight:500,color:"#8B0000"}}>{kgVO.toLocaleString()} kg</span>
+                        </div>
+                      </div>}
+                      {/* Résumé */}
+                      <div style={{borderTop:"0.5px solid #d4c4a0",paddingTop:"6px",marginTop:"4px"}}>
+                        {[
+                          ["Total récolté", kgRecoltes.toLocaleString()+" kg", "#2C3E50"],
+                          ["Conservé maison", Math.round(kgMaison).toLocaleString()+" kg", "#2d6a00"],
+                          ["Vendu négoce", Math.round(kgNegoce).toLocaleString()+" kg", "#c47800"],
+                          ...(kgPrestation>0?[["Prestation", kgPrestation.toLocaleString()+" kg", "#185FA5"]]:[]),
+                        ].map(([lbl,val,col])=>(
+                          <div key={lbl} style={{display:"flex",justifyContent:"space-between",padding:"3px 0",fontSize:"12px"}}>
+                            <span style={{color:"#9a8870"}}>{lbl}</span>
+                            <span style={{fontWeight:500,color:col}}>{val}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 );
@@ -5971,6 +6038,26 @@ export default function App() {
       )}
 
       {/* == MODAL RENDEMENT == */}
+      {showReserveRIForm&&(
+        <div style={s.modal}>
+          <div style={{...s.modalBox,width:"360px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#2C3E50"}}>Réserve RI actuelle</div>
+              <button style={s.ghost} onClick={()=>setShowReserveRIForm(false)}>x</button>
+            </div>
+            <div style={{display:"grid",gap:"12px"}}>
+              <div><span style={s.lbl}>Volume de réserve (kg)</span>
+                <input type="number" style={s.inp} placeholder="86110" value={reserveRI.volumeKg} onChange={e=>setReserveRI({volumeKg:e.target.value})}/>
+                <div style={{fontSize:"11px",color:"#9a8870",marginTop:"4px"}}>Saisir le volume total de réserve RI disponible en kg</div>
+              </div>
+              <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
+                <button style={s.ghost} onClick={()=>setShowReserveRIForm(false)}>Annuler</button>
+                <button style={s.btn} onClick={()=>setShowReserveRIForm(false)}>Enregistrer</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {showRendementForm&&(
         <div style={s.modal}>
           <div style={{...s.modalBox,width:"380px"}}>
