@@ -6146,7 +6146,7 @@ export default function App() {
                     <input type="time" style={s.inp} value={vendangeForm.heure||""} onChange={e=>setVendangeForm(f=>({...f,heure:e.target.value}))}/></div>
                   <div><span style={s.lbl}>Cuvee creee</span>
                     <input style={s.inp} placeholder="ex. Blanc de Blancs 2025" value={vendangeForm.cuveeCreee||""} onChange={e=>setVendangeForm(f=>({...f,cuveeCreee:e.target.value}))}/></div>
-                  <div><span style={s.lbl}>Heure *</span>
+                  <div><span style={s.lbl}>Opérateur *</span>
                     <select style={s.sel} value={vendangeForm.operateur} onChange={e=>setVendangeForm(f=>({...f,operateur:e.target.value}))}>
                       <option value="">Selectionner...</option>
                       {degustateurs.map(d=><option key={d.nom} value={d.nom}>{d.nom}</option>)}
