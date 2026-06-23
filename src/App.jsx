@@ -363,6 +363,16 @@ const APPELLATION = {
   coteaux:      APPELLATION_FIXED.coteaux,
   ratafia:      APPELLATION_FIXED.ratafia,
 };
+const getCepageStyle = (cepage) => {
+  if(!cepage) return {bg:"#f5f5f0", color:"#6a6a5a", border:"#d0d0c0"};
+  const c = cepage.toLowerCase();
+  if(c.includes("pinot noir")) return {bg:"#2d0a1a", color:"#f5d0e0", border:"#6a1a3a"};
+  if(c.includes("meunier")) return {bg:"#3d1a2a", color:"#f0c8d8", border:"#7a2a4a"};
+  if(c.includes("chardonnay")) return {bg:"#f5e8b0", color:"#5a4a00", border:"#c8a820"};
+  if(c.includes("petit meslier")) return {bg:"#e8f0d0", color:"#3a5a10", border:"#7a9a30"};
+  if(c.includes("voltis")) return {bg:"#e0f0e8", color:"#1a5a3a", border:"#40a060"};
+  return {bg:"#f0ede8", color:"#5a4a38", border:"#b0a090"};
+};
 const statutParcelle = (p) => {
   if(!p.anneePlantation) return "production";
   const annee = parseInt(p.anneePlantation);
@@ -4098,8 +4108,10 @@ export default function App() {
             </div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:"16px"}}>
               {parcelles.length===0&&<div style={{...s.card,color:"#9a8870",fontStyle:"italic"}}>Aucune parcelle. Ajoutez-en une pour commencer.</div>}
-              {parcelles.map(p=>(
-                <div key={p.id} style={{...s.card}}>
+              {parcelles.map(p=>{
+                const cepStyles = p.cepage ? getCepageStyle(p.cepage.split(" + ")[0]) : getCepageStyle("");
+                return (
+                <div key={p.id} style={{...s.card, borderLeft:`3px solid ${cepStyles.border}`}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
                     <div style={{flex:1}}>
                       <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"6px"}}>
@@ -4116,7 +4128,9 @@ export default function App() {
                           </span>
                         )}
                       </div>
-                      {p.cepage&&<div style={{fontSize:"12px",color:"#6a5838",marginBottom:"4px"}}>🍇 {p.cepage}</div>}
+                      {p.cepage&&<div style={{marginBottom:"6px",display:"flex",flexWrap:"wrap",gap:"4px"}}>
+                        {p.cepage.split(" + ").map((c,i)=>{ const st=getCepageStyle(c); return <span key={i} style={{background:st.bg,color:st.color,border:`0.5px solid ${st.border}`,borderRadius:"4px",padding:"2px 8px",fontSize:"11px",fontWeight:500}}>🍇 {c.trim()}</span>; })}
+                      </div>}
                       {p.commune&&<div style={{fontSize:"12px",color:"#9a8870",marginBottom:"4px"}}>📍 {p.commune}</div>}
                       {p.surface&&<div style={{fontSize:"12px",color:"#2C3E50",fontWeight:500,marginBottom:"4px"}}>📐 {p.surface} ha</div>}
                       {p.observations&&<div style={{fontSize:"11px",color:"#7a6840",fontStyle:"italic",marginTop:"6px",padding:"6px",background:"#F8F6F2",borderRadius:"4px"}}>{p.observations}</div>}
