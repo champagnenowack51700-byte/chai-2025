@@ -366,8 +366,8 @@ const APPELLATION = {
 const getCepageStyle = (cepage) => {
   if(!cepage) return {bg:"#f5f5f0", color:"#6a6a5a", border:"#d0d0c0"};
   const c = cepage.toLowerCase();
-  if(c.includes("pinot noir")) return {bg:"#2d0a1a", color:"#f5d0e0", border:"#6a1a3a"};
-  if(c.includes("meunier")) return {bg:"#3d1a2a", color:"#f0c8d8", border:"#7a2a4a"};
+  if(c.includes("pinot noir")) return {bg:"#1a0a12", color:"#f5c0d5", border:"#8B0000"};
+  if(c.includes("meunier")) return {bg:"#6b2d4a", color:"#fde8f0", border:"#c05080"};
   if(c.includes("chardonnay")) return {bg:"#f5e8b0", color:"#5a4a00", border:"#c8a820"};
   if(c.includes("petit meslier")) return {bg:"#e8f0d0", color:"#3a5a10", border:"#7a9a30"};
   if(c.includes("voltis")) return {bg:"#e0f0e8", color:"#1a5a3a", border:"#40a060"};
