@@ -3986,8 +3986,10 @@ export default function App() {
                 const kgMaxAOC = Math.round(surfTotale * kgHaAutorise);
                 const kgMaxRI = Math.round(surfTotale * 10000);
                 const kgAOC = Math.min(kgRecoltes, kgMaxAOC);
-                const kgRI = kgMaxAOC>0 ? Math.max(0, Math.min(kgRecoltes - kgMaxAOC, kgMaxRI - kgMaxAOC)) : 0;
-                const kgVO = kgMaxRI>0 ? Math.max(0, kgRecoltes - kgMaxRI) : 0;
+                const riDejaConstituee = reserveBase;
+                const riDispoFaire = Math.max(0, kgMaxRI - riDejaConstituee);
+                const kgRI = kgMaxAOC>0 ? Math.max(0, Math.min(kgRecoltes - kgMaxAOC, riDispoFaire)) : 0;
+                const kgVO = Math.max(0, kgRecoltes - kgMaxAOC - kgRI);
                 const enSectionRI = kgHaAutorise>0 && kgHaReel>kgHaAutorise;
                 const enVO = kgHaReel>10000;
                 const reserveBase = isCampagneClosed(annee) ? (rendAnnee?.reserveRISnapshot||(parseFloat(reserveRI.volumeKg)||0)) : (parseFloat(reserveRI.volumeKg)||0);
@@ -4028,8 +4030,16 @@ export default function App() {
                       {enSectionRI&&<div style={{padding:"8px",background:"#fff8e8",borderRadius:"6px",border:"0.5px solid #ffc107"}}>
                         <div style={{fontWeight:500,color:"#8B6000",marginBottom:"4px"}}>Réserve Individuelle (RI)</div>
                         <div style={{display:"flex",justifyContent:"space-between",marginBottom:"2px"}}>
-                          <span style={{color:"#9a7840"}}>Max (10 000 kg/ha)</span>
-                          <span style={{fontWeight:500}}>{(kgMaxRI-kgMaxAOC).toLocaleString()} kg dispo</span>
+                          <span style={{color:"#9a7840"}}>RI max total (10 000 kg/ha)</span>
+                          <span style={{fontWeight:500}}>{kgMaxRI.toLocaleString()} kg</span>
+                        </div>
+                        <div style={{display:"flex",justifyContent:"space-between",marginBottom:"2px"}}>
+                          <span style={{color:"#9a7840"}}>RI déjà constituée</span>
+                          <span style={{fontWeight:500}}>{riDejaConstituee.toLocaleString()} kg</span>
+                        </div>
+                        <div style={{display:"flex",justifyContent:"space-between",marginBottom:"2px"}}>
+                          <span style={{color:"#9a7840"}}>RI dispo à faire</span>
+                          <span style={{fontWeight:500,color:"#c47800"}}>{riDispoFaire.toLocaleString()} kg</span>
                         </div>
                         <div style={{display:"flex",justifyContent:"space-between",marginBottom:"2px"}}>
                           <span style={{color:"#9a7840"}}>Apport cette campagne</span>
