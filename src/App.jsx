@@ -3986,13 +3986,13 @@ export default function App() {
                 const kgMaxAOC = Math.round(surfTotale * kgHaAutorise);
                 const kgMaxRI = Math.round(surfTotale * 10000);
                 const kgAOC = Math.min(kgRecoltes, kgMaxAOC);
-                const riDejaConstituee = reserveBase;
+                const reserveBase = isCampagneClosed(annee) ? (rendAnnee?.reserveRISnapshot||(parseFloat(reserveRI.volumeKg)||0)) : (parseFloat(reserveRI.volumeKg)||0);
                 const riDispoFaire = Math.max(0, kgMaxRI - riDejaConstituee);
                 const kgRI = kgMaxAOC>0 ? Math.max(0, Math.min(kgRecoltes - kgMaxAOC, riDispoFaire)) : 0;
                 const kgVO = Math.max(0, kgRecoltes - kgMaxAOC - kgRI);
                 const enSectionRI = kgHaAutorise>0 && kgHaReel>kgHaAutorise;
                 const enVO = kgHaReel>10000;
-                const reserveBase = isCampagneClosed(annee) ? (rendAnnee?.reserveRISnapshot||(parseFloat(reserveRI.volumeKg)||0)) : (parseFloat(reserveRI.volumeKg)||0);
+                const riDejaConstituee = reserveBase;
                 const reserveApres = reserveBase + kgRI;
                 const reserveMax = kgMaxRI;
                 return (
