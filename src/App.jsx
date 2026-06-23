@@ -6099,6 +6099,10 @@ export default function App() {
                   <input type="number" style={s.inp} placeholder="2025" value={rendementForm.annee} onChange={e=>setRendementForm(f=>({...f,annee:e.target.value}))}/></div>
                 <div><span style={s.lbl}>Rendement (kg/ha)</span>
                   <input type="number" style={s.inp} placeholder="10000" value={rendementForm.rendementAutorise} onChange={e=>setRendementForm(f=>({...f,rendementAutorise:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Surface en production (ha)</span>
+                  <input type="number" step="0.0001" style={s.inp} placeholder="ex. 10.1291" value={rendementForm.surface||""} onChange={e=>setRendementForm(f=>({...f,surface:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Réserve RI début campagne (kg)</span>
+                  <input type="number" style={s.inp} placeholder="ex. 86110" value={rendementForm.reserveRI||""} onChange={e=>setRendementForm(f=>({...f,reserveRI:e.target.value}))}/></div>
               </div>
               <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
                 <button style={s.ghost} onClick={()=>setShowRendementForm(false)}>Annuler</button>
