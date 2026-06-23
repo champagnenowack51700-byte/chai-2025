@@ -4034,20 +4034,12 @@ export default function App() {
                           <span style={{fontWeight:500}}>{kgMaxRI.toLocaleString()} kg</span>
                         </div>
                         <div style={{display:"flex",justifyContent:"space-between",marginBottom:"2px"}}>
-                          <span style={{color:"#9a7840"}}>RI déjà constituée</span>
-                          <span style={{fontWeight:500}}>{riDejaConstituee.toLocaleString()} kg</span>
-                        </div>
-                        <div style={{display:"flex",justifyContent:"space-between",marginBottom:"2px"}}>
                           <span style={{color:"#9a7840"}}>RI dispo à faire</span>
                           <span style={{fontWeight:500,color:"#c47800"}}>{riDispoFaire.toLocaleString()} kg</span>
                         </div>
                         <div style={{display:"flex",justifyContent:"space-between",marginBottom:"2px"}}>
                           <span style={{color:"#9a7840"}}>Apport cette campagne</span>
                           <span style={{fontWeight:500,color:"#c47800"}}>{kgRI.toLocaleString()} kg</span>
-                        </div>
-                        <div style={{display:"flex",justifyContent:"space-between",marginBottom:"2px"}}>
-                          <span style={{color:"#9a7840"}}>Réserve actuelle</span>
-                          <span style={{fontWeight:500}}>{reserveBase.toLocaleString()} kg</span>
                         </div>
                         <div style={{display:"flex",justifyContent:"space-between"}}>
                           <span style={{color:"#9a7840"}}>Réserve après campagne</span>
