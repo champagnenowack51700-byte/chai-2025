@@ -4141,61 +4141,13 @@ export default function App() {
                       {p.commune&&<div style={{fontSize:"12px",color:"#9a8870",marginBottom:"4px"}}>📍 {p.commune}</div>}
                       {p.surface&&<div style={{fontSize:"12px",color:"#2C3E50",fontWeight:500,marginBottom:"4px"}}>📐 {p.surface} ha</div>}
                       {p.observations&&<div style={{fontSize:"11px",color:"#7a6840",fontStyle:"italic",marginTop:"6px",padding:"6px",background:"#F8F6F2",borderRadius:"4px"}}>{p.observations}</div>}
-                      <div style={{marginTop:"8px"}}>
-                        {(()=>{
-                          const apports = apportsParcelles.filter(a=>a.parcelleId===p.id);
-                          const annees = [...new Set(apports.map(a=>a.campagne))].sort().reverse();
-                          const totalKg = apports.reduce((s,a)=>s+(parseFloat(a.poidsNet)||0),0);
-                          return (
-                            <div>
-                              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"6px"}}>
-                                <span style={{fontSize:"11px",color:"#9a8870"}}>{apports.length} apport(s) — {totalKg.toLocaleString()} kg total</span>
-                                <button style={{...s.ghostSm,fontSize:"10px",color:"#2C3E50"}} onClick={()=>setShowApportsPanel(prev=>({...prev,[p.id]:!prev[p.id]}))}>
-                                  {showApportsPanel[p.id]?"Masquer":"Voir apports"}
-                                </button>
-                              </div>
-                              {showApportsPanel[p.id]&&(
-                                <div>
-                                  <div style={{display:"flex",gap:"0",marginBottom:"8px",borderBottom:"1px solid #d4c4a0",flexWrap:"wrap"}}>
-                                    {annees.map(an=>(
-                                      <button key={an} onClick={()=>setShowApportsPanel(prev=>({...prev,[p.id+"_an"]:an}))} style={{padding:"4px 10px",border:"none",borderBottom:(showApportsPanel[p.id+"_an"]||annees[0])===an?"2px solid #2C3E50":"2px solid transparent",background:"transparent",color:(showApportsPanel[p.id+"_an"]||annees[0])===an?"#2C3E50":"#9a8870",fontSize:"11px",cursor:"pointer"}}>
-                                        {an} ({apports.filter(a=>a.campagne===an).length})
-                                      </button>
-                                    ))}
-                                  </div>
-                                  {(()=>{
-                                    const anActive = showApportsPanel[p.id+"_an"]||annees[0];
-                                    const apportsAn = apports.filter(a=>a.campagne===anActive).sort((a,b)=>new Date(b.date)-new Date(a.date));
-                                    const kgAn = apportsAn.reduce((s,a)=>s+(parseFloat(a.poidsNet)||0),0);
-                                    const surf = parseFloat(p.surface)||0;
-                                    return (
-                                      <div>
-                                        <div style={{fontSize:"10px",color:"#9a8870",marginBottom:"6px"}}>
-                                          Total : <strong>{kgAn.toLocaleString()} kg</strong>
-                                          {surf>0&&<span> — {Math.round(kgAn/surf).toLocaleString()} kg/ha</span>}
-                                        </div>
-                                        {apportsAn.map(a=>(
-                                          <div key={a.id} style={{display:"grid",gridTemplateColumns:"80px 1fr 60px 24px",gap:"4px",padding:"4px 0",borderBottom:"0.5px solid #ede5d4",fontSize:"11px",alignItems:"center"}}>
-                                            <span style={{color:"#9a8870"}}>{fmt(a.date)}</span>
-                                            <span style={{color:"#2C3E50"}}>{a.operateur} {a.nbCagettes&&<span style={{color:"#9a8870"}}>· {a.nbCagettes} cag.</span>}</span>
-                                            <span style={{fontWeight:500,color:"#2d6a00",textAlign:"right"}}>{parseInt(a.poidsNet).toLocaleString()} kg</span>
-                                            <button style={{background:"none",border:"none",cursor:"pointer",color:"#cc2222",fontSize:"12px",padding:"0"}} onClick={()=>{if(window.confirm("Supprimer ?")){ setApportsParcelles(prev=>prev.filter(x=>x.id!==a.id)); deleteApportParcelle(a.id); }}}>×</button>
-                                          </div>
-                                        ))}
-                                        <button style={{...s.ghostSm,fontSize:"10px",marginTop:"8px",width:"100%"}} onClick={()=>{setApportForm({date:new Date().toISOString().slice(0,10),operateur:"",nbCagettes:"",poidsNet:"",campagne:anActive||new Date().getFullYear().toString()});setShowApportForm(p.id);}}>
-                                          + Ajouter un apport
-                                        </button>
-                                      </div>
-                                    );
-                                  })()}
-                                </div>
-                              )}
-                              {!showApportsPanel[p.id]&&<button style={{...s.ghostSm,fontSize:"10px",width:"100%"}} onClick={()=>{setApportForm({date:new Date().toISOString().slice(0,10),operateur:"",nbCagettes:"",poidsNet:"",campagne:new Date().getFullYear().toString()});setShowApportForm(p.id);}}>
-                                + Ajouter un apport
-                              </button>}
-                            </div>
-                          );
-                        })()}
+                      <div style={{display:"flex",gap:"6px",marginTop:"8px"}}>
+                        <button style={{...s.ghostSm,fontSize:"10px",flex:1}} onClick={()=>{setApportForm({date:new Date().toISOString().slice(0,10),heure:"",operateur:"",nbCagettes:"",poidsNet:"",campagne:new Date().getFullYear().toString()});setShowApportForm(p.id);}}>
+                          + Ajouter un apport
+                        </button>
+                        <button style={{...s.ghostSm,fontSize:"10px"}} onClick={()=>setShowApportsPanel(prev=>({...prev,[p.id]:true}))}>
+                          📄 Apports
+                        </button>
                       </div>
                     </div>
                     <div style={{display:"flex",gap:"4px",flexShrink:0}}>
