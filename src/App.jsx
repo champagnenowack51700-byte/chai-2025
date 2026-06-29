@@ -3468,7 +3468,55 @@ export default function App() {
                         <div style={{fontFamily:"Georgia,serif",fontSize:"16px",fontWeight:500,color:"#2C3E50"}}>{a.nomCuvee||"Sans nom"}</div>
                         <div style={{fontSize:"12px",color:"#9a8870"}}>{fmt(a.date)}</div>
                       </div>
-                      <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>{if(window.confirm("Supprimer cet assemblage ?")){ setAssemblages(prev=>prev.filter(x=>x.id!==a.id)); deleteAssemblageFb(a.id); }}}>Supprimer</button>
+                      <div style={{display:"flex",gap:"6px"}}>
+                        <button style={{...s.ghostSm,fontSize:"10px"}} onClick={()=>{setAssemblageForm({...a});setShowAssemblageForm(true);}}>Modifier</button>
+                        <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>{
+                          if(!window.confirm("Supprimer cet assemblage et restituer les volumes ?")) return;
+                          // Restituer volumes aux sources
+                          const updFuts = tonneaux.map(t=>{
+                            const src = (a.sources||[]).find(s=>s.id===t.id);
+                            const vol = parseFloat(src?.volume)||0;
+                            if(vol>0) {
+                              const updated = {...t, contenuActuel:(t.contenuActuel||0)+vol, statut:"actif"};
+                              saveTonneau(updated); return updated;
+                            }
+                            // Annuler retour reserve fût
+                            if(a.destRetourId===t.id&&!a.destRetourId?.startsWith("cuve_")) {
+                              const volR = parseFloat(a.destRetourVol)||0;
+                              const newVol = Math.max(0,(t.contenuActuel||0)-volR);
+                              const updated = {...t, contenuActuel:newVol, statut:newVol<=0?"vide":t.statut};
+                              saveTonneau(updated); return updated;
+                            }
+                            return t;
+                          });
+                          setTonneaux(updFuts);
+                          // Annuler cuve tirage
+                          if(a.destTirageId) {
+                            const volT = parseFloat(a.destTirageVol)||0;
+                            setCuvesCuverie(prev=>prev.map(c=>{
+                              if(c.id===a.destTirageId) {
+                                const updated = {...c, contenuActuelHL:String(Math.max(0,Math.round(((parseFloat(c.contenuActuelHL)||0)-(volT/100))*100)/100))};
+                                fbSave("cuvesCuverie",c.id,updated); return updated;
+                              }
+                              return c;
+                            }));
+                          }
+                          // Annuler retour cuve
+                          if(a.destRetourId?.startsWith("cuve_")) {
+                            const cuveId = a.destRetourId.replace("cuve_","");
+                            const volR = parseFloat(a.destRetourVol)||0;
+                            setCuvesCuverie(prev=>prev.map(c=>{
+                              if(c.id===cuveId) {
+                                const updated = {...c, contenuActuelHL:String(Math.max(0,Math.round(((parseFloat(c.contenuActuelHL)||0)-(volR/100))*100)/100))};
+                                fbSave("cuvesCuverie",c.id,updated); return updated;
+                              }
+                              return c;
+                            }));
+                          }
+                          setAssemblages(prev=>prev.filter(x=>x.id!==a.id));
+                          deleteAssemblageFb(a.id);
+                        }}>Supprimer</button>
+                      </div>
                     </div>
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px",fontSize:"12px"}}>
                       <div style={{background:"#f4f6f7",borderRadius:"6px",padding:"10px"}}>
@@ -6327,6 +6375,52 @@ export default function App() {
                   if(!assemblageForm.nomCuvee) return alert("Le nom de cuvée est requis.");
                   if(!assemblageForm.sources.some(s=>s.id&&s.volume)) return alert("Ajoutez au moins une source avec un volume.");
                   const a = {id:"asm_"+Date.now(),...assemblageForm,timestamp:new Date().toISOString()};
+                  // Deduire volumes des sources
+                  const updFuts = tonneaux.map(t=>{
+                    const src = assemblageForm.sources.find(s=>s.type==="tonneau"&&s.id===t.id);
+                    const srcRes = assemblageForm.sources.find(s=>s.type==="reserve"&&s.id===t.id);
+                    const vol = parseFloat(src?.volume||srcRes?.volume)||0;
+                    if(vol>0) {
+                      const newVol = Math.max(0,(t.contenuActuel||0)-vol);
+                      const updated = {...t, contenuActuel:newVol, statut:newVol<=0?"vide":t.statut};
+                      saveTonneau(updated);
+                      return updated;
+                    }
+                    // Retour reserve vers fût
+                    if(assemblageForm.destRetourId===t.id&&!assemblageForm.destRetourId.startsWith("cuve_")) {
+                      const volRetour = parseFloat(assemblageForm.destRetourVol)||0;
+                      const updated = {...t, contenuActuel:(t.contenuActuel||0)+volRetour, statut:"actif"};
+                      saveTonneau(updated);
+                      return updated;
+                    }
+                    return t;
+                  });
+                  setTonneaux(updFuts);
+                  // Ajouter volume dans cuve tirage
+                  if(assemblageForm.destTirageId) {
+                    const volT = parseFloat(assemblageForm.destTirageVol)||0;
+                    setCuvesCuverie(prev=>prev.map(c=>{
+                      if(c.id===assemblageForm.destTirageId) {
+                        const updated = {...c, contenuActuelHL:String(Math.round(((parseFloat(c.contenuActuelHL)||0)+(volT/100))*100)/100)};
+                        fbSave("cuvesCuverie",c.id,updated);
+                        return updated;
+                      }
+                      return c;
+                    }));
+                  }
+                  // Retour reserve vers cuve
+                  if(assemblageForm.destRetourId&&assemblageForm.destRetourId.startsWith("cuve_")) {
+                    const cuveId = assemblageForm.destRetourId.replace("cuve_","");
+                    const volR = parseFloat(assemblageForm.destRetourVol)||0;
+                    setCuvesCuverie(prev=>prev.map(c=>{
+                      if(c.id===cuveId) {
+                        const updated = {...c, contenuActuelHL:String(Math.round(((parseFloat(c.contenuActuelHL)||0)+(volR/100))*100)/100)};
+                        fbSave("cuvesCuverie",c.id,updated);
+                        return updated;
+                      }
+                      return c;
+                    }));
+                  }
                   setAssemblages(prev=>[a,...prev]);
                   saveAssemblage(a);
                   setShowAssemblageForm(false);
