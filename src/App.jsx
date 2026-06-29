@@ -6074,6 +6074,83 @@ export default function App() {
       )}
 
       {/* == MODAL RENDEMENT == */}
+      {showApportsPanel&&Object.keys(showApportsPanel).some(k=>showApportsPanel[k]===true)&&(()=>{
+        const parcelleId = Object.keys(showApportsPanel).find(k=>showApportsPanel[k]===true);
+        const parc = parcelles.find(p=>p.id===parcelleId);
+        const apports = apportsParcelles.filter(a=>a.parcelleId===parcelleId).sort((a,b)=>new Date(b.date)-new Date(a.date));
+        const annees = [...new Set(apports.map(a=>a.campagne))].sort().reverse();
+        const exportApportsPDF = () => {
+          const rows = annees.map(an=>{
+            const apportsAn = apports.filter(a=>a.campagne===an);
+            const kgAn = apportsAn.reduce((s,a)=>s+(parseFloat(a.poidsNet)||0),0);
+            const surf = parseFloat(parc?.surface)||0;
+            return `<h3 style="color:#2C3E50;margin:16px 0 8px">Campagne ${an} — ${kgAn.toLocaleString()} kg${surf>0?" / "+Math.round(kgAn/surf).toLocaleString()+" kg/ha":""}</h3>
+              <table width="100%" style="border-collapse:collapse;font-size:11px">
+                <tr style="background:#f0f4f7"><th style="padding:5px;text-align:left;border:0.5px solid #d0d8e0">Date</th><th style="padding:5px;text-align:left;border:0.5px solid #d0d8e0">Heure</th><th style="padding:5px;text-align:left;border:0.5px solid #d0d8e0">Opérateur</th><th style="padding:5px;text-align:right;border:0.5px solid #d0d8e0">Cagettes</th><th style="padding:5px;text-align:right;border:0.5px solid #d0d8e0">Poids net</th></tr>
+              ${apportsAn.map(a=>`<tr><td style="padding:4px 5px;border:0.5px solid #e0e8f0">${fmt(a.date)}</td><td style="padding:4px 5px;border:0.5px solid #e0e8f0">${a.heure||"-"}</td><td style="padding:4px 5px;border:0.5px solid #e0e8f0">${a.operateur||"-"}</td><td style="padding:4px 5px;border:0.5px solid #e0e8f0;text-align:right">${a.nbCagettes||"-"}</td><td style="padding:4px 5px;border:0.5px solid #e0e8f0;text-align:right;font-weight:500">${parseInt(a.poidsNet).toLocaleString()} kg</td></tr>`).join("")}
+              <tr style="background:#f0f4f7;font-weight:bold"><td colspan="4" style="padding:5px;border:0.5px solid #d0d8e0">Total</td><td style="padding:5px;border:0.5px solid #d0d8e0;text-align:right">${kgAn.toLocaleString()} kg</td></tr>
+            </table>`;
+          }).join("");
+          const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:Georgia,serif;margin:20px;color:#1a2530}h1{color:#2C3E50;border-bottom:1px solid #d0d8e0;padding-bottom:8px}</style></head><body><h1>${parc?.nom} — Apports</h1>${rows}</body></html>`;
+          const w = window.open("","_blank"); w.document.write(html); w.document.close(); setTimeout(()=>w.print(),500);
+        };
+        return (
+          <div style={s.modal}>
+            <div style={{...s.modalBox,width:"700px",maxHeight:"80vh",overflowY:"auto"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"16px",position:"sticky",top:0,background:"white",paddingBottom:"12px",borderBottom:"0.5px solid #d4c4a0"}}>
+                <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#2C3E50"}}>{parc?.nom} — Apports</div>
+                <div style={{display:"flex",gap:"8px"}}>
+                  <button style={{...s.ghostSm,fontSize:"10px",color:"#8B0000",borderColor:"#c85050"}} onClick={exportApportsPDF}>↓ PDF</button>
+                  <button style={s.ghost} onClick={()=>setShowApportsPanel({})}>x</button>
+                </div>
+              </div>
+              {annees.length===0&&<div style={{color:"#9a8870",fontStyle:"italic"}}>Aucun apport enregistré.</div>}
+              {annees.map(an=>{
+                const apportsAn = apports.filter(a=>a.campagne===an);
+                const kgAn = apportsAn.reduce((s,a)=>s+(parseFloat(a.poidsNet)||0),0);
+                const surf = parseFloat(parc?.surface)||0;
+                return (
+                  <div key={an} style={{marginBottom:"20px"}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"8px"}}>
+                      <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#2C3E50",fontWeight:500}}>Campagne {an}</div>
+                      <div style={{fontSize:"12px",color:"#9a8870"}}>{kgAn.toLocaleString()} kg{surf>0&&<span> — {Math.round(kgAn/surf).toLocaleString()} kg/ha</span>}</div>
+                    </div>
+                    <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
+                      <thead>
+                        <tr style={{borderBottom:"0.5px solid #d4c4a0",background:"#f4f6f7"}}>
+                          <th style={{textAlign:"left",padding:"5px 8px",color:"#4A6274",fontWeight:400}}>Date</th>
+                          <th style={{textAlign:"left",padding:"5px 8px",color:"#4A6274",fontWeight:400}}>Heure</th>
+                          <th style={{textAlign:"left",padding:"5px 8px",color:"#4A6274",fontWeight:400}}>Opérateur</th>
+                          <th style={{textAlign:"right",padding:"5px 8px",color:"#4A6274",fontWeight:400}}>Cagettes</th>
+                          <th style={{textAlign:"right",padding:"5px 8px",color:"#4A6274",fontWeight:400}}>Poids net</th>
+                          <th style={{width:"20px"}}></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {apportsAn.map(a=>(
+                          <tr key={a.id} style={{borderBottom:"0.5px solid #ede5d4"}}>
+                            <td style={{padding:"5px 8px",color:"#2C3E50"}}>{fmt(a.date)}</td>
+                            <td style={{padding:"5px 8px",color:"#6a5838"}}>{a.heure||"-"}</td>
+                            <td style={{padding:"5px 8px",color:"#2C3E50"}}>{a.operateur||"-"}</td>
+                            <td style={{padding:"5px 8px",color:"#9a8870",textAlign:"right"}}>{a.nbCagettes||"-"}</td>
+                            <td style={{padding:"5px 8px",fontWeight:500,color:"#2d6a00",textAlign:"right"}}>{parseInt(a.poidsNet).toLocaleString()} kg</td>
+                            <td style={{padding:"5px 8px"}}><button style={{background:"none",border:"none",cursor:"pointer",color:"#cc2222",fontSize:"13px"}} onClick={()=>{if(window.confirm("Supprimer ?")){ setApportsParcelles(prev=>prev.filter(x=>x.id!==a.id)); deleteApportParcelle(a.id); }}}>×</button></td>
+                          </tr>
+                        ))}
+                        <tr style={{borderTop:"1px solid #d4c4a0",background:"#f4f6f7"}}>
+                          <td colSpan={4} style={{padding:"5px 8px",fontWeight:500,color:"#2C3E50"}}>Total</td>
+                          <td style={{padding:"5px 8px",fontWeight:700,color:"#2d6a00",textAlign:"right"}}>{kgAn.toLocaleString()} kg</td>
+                          <td></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
       {showApportForm&&(
         <div style={s.modal}>
           <div style={{...s.modalBox,width:"400px"}}>
@@ -6088,8 +6165,12 @@ export default function App() {
                 <div><span style={s.lbl}>Date</span>
                   <input type="date" style={s.inp} value={apportForm.date} onChange={e=>setApportForm(f=>({...f,date:e.target.value}))}/></div>
               </div>
-              <div><span style={s.lbl}>Opérateur</span>
-                <input style={s.inp} placeholder="Nom de l'opérateur" value={apportForm.operateur} onChange={e=>setApportForm(f=>({...f,operateur:e.target.value}))}/></div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                <div><span style={s.lbl}>Heure d'arrivée</span>
+                  <input type="time" style={s.inp} value={apportForm.heure||""} onChange={e=>setApportForm(f=>({...f,heure:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Opérateur</span>
+                  <input style={s.inp} placeholder="Nom de l'opérateur" value={apportForm.operateur} onChange={e=>setApportForm(f=>({...f,operateur:e.target.value}))}/></div>
+              </div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
                 <div><span style={s.lbl}>Nb cagettes / stamps</span>
                   <input type="number" style={s.inp} placeholder="ex. 120" value={apportForm.nbCagettes} onChange={e=>setApportForm(f=>({...f,nbCagettes:e.target.value}))}/></div>
