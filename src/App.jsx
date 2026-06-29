@@ -3649,7 +3649,33 @@ export default function App() {
                       Modifier
                     </button>
                     <button style={{background:"#fce8e8",color:"#cc2222",border:"0.5px solid #f0b4b4",borderRadius:"4px",padding:"4px 12px",fontSize:"11px",cursor:"pointer",fontFamily:"monospace"}}
-                      onClick={()=>{if(window.confirm("Supprimer ce tirage ? Cette action est irreversible.")) { setTirages(prev=>prev.filter(tr=>tr.id!==t.id)); deleteTirageFb(t.id); }}}>
+                      onClick={()=>{
+  if(!window.confirm("Supprimer ce tirage et restituer les volumes aux fûts ?")) return;
+  // Restituer volumes aux futs sources
+  const updFuts = tonneaux.map(fut=>{
+    const vol = parseFloat(t.assemblageVolumes?.[fut.id])||0;
+    if(vol>0) {
+      const newVol = (fut.contenuActuel||0)+vol;
+      const updated = {...fut, contenuActuel:newVol, statut:"actif"};
+      saveTonneau(updated); return updated;
+    }
+    return fut;
+  });
+  setTonneaux(updFuts);
+  // Restituer volume cuve destination
+  if(t.cuveCuveeId) {
+    const volHL = parseFloat(t.volumeCuvee)||0;
+    setCuvesCuverie(prev=>prev.map(c=>{
+      if(c.id===t.cuveCuveeId) {
+        const updated = {...c, contenuActuelHL:String(Math.max(0,Math.round(((parseFloat(c.contenuActuelHL)||0)-volHL)*100)/100))};
+        fbSave("cuvesCuverie",c.id,updated); return updated;
+      }
+      return c;
+    }));
+  }
+  setTirages(prev=>prev.filter(tr=>tr.id!==t.id));
+  deleteTirageFb(t.id);
+}}>
                       Supprimer
                     </button>
                   </div>
@@ -5345,7 +5371,33 @@ export default function App() {
                       Modifier
                     </button>
                     <button style={{background:"#fce8e8",color:"#cc2222",border:"0.5px solid #f0b4b4",borderRadius:"4px",padding:"4px 12px",fontSize:"11px",cursor:"pointer",fontFamily:"monospace"}}
-                      onClick={()=>{if(window.confirm("Supprimer ce tirage ? Cette action est irreversible.")) { setTirages(prev=>prev.filter(tr=>tr.id!==t.id)); deleteTirageFb(t.id); }}}>
+                      onClick={()=>{
+  if(!window.confirm("Supprimer ce tirage et restituer les volumes aux fûts ?")) return;
+  // Restituer volumes aux futs sources
+  const updFuts = tonneaux.map(fut=>{
+    const vol = parseFloat(t.assemblageVolumes?.[fut.id])||0;
+    if(vol>0) {
+      const newVol = (fut.contenuActuel||0)+vol;
+      const updated = {...fut, contenuActuel:newVol, statut:"actif"};
+      saveTonneau(updated); return updated;
+    }
+    return fut;
+  });
+  setTonneaux(updFuts);
+  // Restituer volume cuve destination
+  if(t.cuveCuveeId) {
+    const volHL = parseFloat(t.volumeCuvee)||0;
+    setCuvesCuverie(prev=>prev.map(c=>{
+      if(c.id===t.cuveCuveeId) {
+        const updated = {...c, contenuActuelHL:String(Math.max(0,Math.round(((parseFloat(c.contenuActuelHL)||0)-volHL)*100)/100))};
+        fbSave("cuvesCuverie",c.id,updated); return updated;
+      }
+      return c;
+    }));
+  }
+  setTirages(prev=>prev.filter(tr=>tr.id!==t.id));
+  deleteTirageFb(t.id);
+}}>
                       Supprimer
                     </button>
                   </div>
