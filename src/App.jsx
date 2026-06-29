@@ -6310,7 +6310,7 @@ export default function App() {
                   <div><span style={s.lbl}>🔄 Retour réserve (fût)</span>
                     <select style={s.sel} value={assemblageForm.destRetourId} onChange={e=>setAssemblageForm(f=>({...f,destRetourId:e.target.value}))}>
                       <option value="">Aucun</option>
-                      {tonneaux.filter(t=>t.appellation==="vins_reserve").map(t=><option key={t.id} value={t.id}>{t.id} ({Math.round(t.contenuActuel/100)} L)</option>)}
+                      {[...tonneaux.map(t=>({id:t.id,nom:t.id+" "+(t.denomination||""),vol:Math.round((t.contenuActuel||0)/100)})),...cuvesCuverie.map(c=>({id:"cuve_"+c.id,nom:c.nom+" (cuve)",vol:parseFloat(c.contenuActuelHL)||0}))].map(x=><option key={x.id} value={x.id}>{x.nom} — {x.vol} {x.id.startsWith("cuve_")?"HL":"L"}</option>)}
                     </select>
                   </div>
                   <div><span style={s.lbl}>Volume retour (L)</span>
