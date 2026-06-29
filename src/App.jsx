@@ -632,6 +632,9 @@ export default function App() {
   const [produitVendangeForm, setProduitVendangeForm] = useState({nom:"",dose:"",lot:"",date:""});
   const [editingTirage,  setEditingTirage]  = useState(null);
   const [tirages,        setTirages]        = useState([]);
+  const [assemblages, setAssemblages] = useState([]);
+  const [showAssemblageForm, setShowAssemblageForm] = useState(false);
+  const [assemblageForm, setAssemblageForm] = useState({nomCuvee:"",date:new Date().toISOString().slice(0,10),sources:[{type:"tonneau",id:"",volume:""}],destTirageId:"",destTirageVol:"",destRetourId:"",destRetourVol:"",notes:""});
   const TIRAGE_EMPTY = {
     date: new Date().toISOString().slice(0,10),
     operateur: "",
