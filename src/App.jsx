@@ -703,6 +703,8 @@ export default function App() {
   const saveCampagne = (c) => fbSave("campagnes", c.id, c);
   const deleteCampagneFb = (id) => fbDelete("campagnes", id);
   const saveTirage = (t) => fbSave("tirages", t.id, t);
+  const saveAssemblage = (a) => fbSave("assemblages", a.id, a);
+  const deleteAssemblageFb = (id) => fbDelete("assemblages", id);
   const deleteTirageFb = (id) => fbDelete("tirages", id);
   const saveVendange = (v) => fbSave("vendanges", v.id, v);
   const deleteVendangeFb = (id) => fbDelete("vendanges", id);
@@ -1101,6 +1103,7 @@ export default function App() {
     ["degustations", setDegustations],
     ["campagnes",    setCampagnes],
     ["tirages",      setTirages],
+    ["assemblages",   setAssemblages],
     ["vendanges",    setVendanges],
     ["parcelles",    setParcelles],
     ["degorgements", setDegorgements],
@@ -2289,7 +2292,7 @@ export default function App() {
       {/* NAV */}
       <nav style={{...s.nav, flexWrap:"nowrap", overflowX:"auto", WebkitOverflowScrolling:"touch"}} className="nav-scroll">
         <div style={s.brand}>Nowack</div>
-        {[["dashboard","Vue d'ensemble"],["parcelles","Parcelles"],["vigne","Vigne"],["vendanges","Vendange"],["rendement","Rendement"],["mouvements","Mouvements"],["tonneaux","Vinification"],["degustations","Dégustations"],["tirages","Tirage"],["stock","Stock"]].map(([v,l])=>(
+        {[["dashboard","Vue d'ensemble"],["parcelles","Parcelles"],["vigne","Vigne"],["vendanges","Vendange"],["rendement","Rendement"],["mouvements","Mouvements"],["tonneaux","Vinification"],["assemblage","Assemblage"],["degustations","Dégustations"],["tirages","Tirage"],["stock","Stock"]].map(([v,l])=>(
           <button key={v} style={s.navBtn(view===v)} onClick={()=>{setView(v);refreshFromFirebase();}}>{l}</button>
         ))}
         <div style={{flex:1}}/>
@@ -3445,6 +3448,59 @@ export default function App() {
         })()}
 
         {/* -- TIRAGES -- */}
+        {view==="assemblage" && (
+          <div>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"20px",color:"#2C3E50"}}>Assemblages</div>
+              <button style={s.btn} onClick={()=>{setAssemblageForm({nomCuvee:"",date:new Date().toISOString().slice(0,10),sources:[{type:"tonneau",id:"",volume:""}],destTirageId:"",destTirageVol:"",destRetourId:"",destRetourVol:"",notes:""});setShowAssemblageForm(true);}}>+ Nouvel assemblage</button>
+            </div>
+            {assemblages.length===0&&<div style={{...s.card,color:"#9a8870",fontStyle:"italic"}}>Aucun assemblage enregistré.</div>}
+            {[...new Set(assemblages.map(a=>a.date?.slice(0,4)))].sort().reverse().map(annee=>(
+              <div key={annee} style={{marginBottom:"24px"}}>
+                <div style={{fontFamily:"Georgia,serif",fontSize:"16px",color:"#2C3E50",marginBottom:"12px",borderBottom:"1px solid #d4c4a0",paddingBottom:"6px"}}>Campagne {annee}</div>
+                {assemblages.filter(a=>a.date?.slice(0,4)===annee).sort((a,b)=>new Date(b.date)-new Date(a.date)).map(a=>(
+                  <div key={a.id} style={{...s.card,marginBottom:"12px",borderLeft:"3px solid #2C3E50"}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"start",marginBottom:"10px"}}>
+                      <div>
+                        <div style={{fontFamily:"Georgia,serif",fontSize:"16px",fontWeight:500,color:"#2C3E50"}}>{a.nomCuvee||"Sans nom"}</div>
+                        <div style={{fontSize:"12px",color:"#9a8870"}}>{fmt(a.date)}</div>
+                      </div>
+                      <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>{if(window.confirm("Supprimer cet assemblage ?")){ setAssemblages(prev=>prev.filter(x=>x.id!==a.id)); deleteAssemblageFb(a.id); }}}>Supprimer</button>
+                    </div>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px",fontSize:"12px"}}>
+                      <div style={{background:"#f4f6f7",borderRadius:"6px",padding:"10px"}}>
+                        <div style={{fontWeight:500,color:"#2C3E50",marginBottom:"6px"}}>Sources</div>
+                        {(a.sources||[]).map((src,i)=>(
+                          <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:"0.5px solid #e0e8f0"}}>
+                            <span style={{color:"#4A6274"}}>{src.type==="reserve"?"🍷 Réserve":"🛢 Fût"} {src.id}</span>
+                            <span style={{fontWeight:500}}>{src.volume} L</span>
+                          </div>
+                        ))}
+                        <div style={{display:"flex",justifyContent:"space-between",padding:"4px 0",fontWeight:600,color:"#2C3E50",borderTop:"1px solid #d4c4a0",marginTop:"4px"}}>
+                          <span>Total assemblé</span>
+                          <span>{(a.sources||[]).reduce((s,src)=>s+(parseFloat(src.volume)||0),0).toLocaleString()} L</span>
+                        </div>
+                      </div>
+                      <div style={{background:"#f4f6f7",borderRadius:"6px",padding:"10px"}}>
+                        <div style={{fontWeight:500,color:"#2C3E50",marginBottom:"6px"}}>Destinations</div>
+                        {a.destTirageId&&<div style={{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:"0.5px solid #e0e8f0"}}>
+                          <span style={{color:"#2d6a00"}}>🍾 Tirage — {cuvesCuverie.find(c=>c.id===a.destTirageId)?.nom||a.destTirageId}</span>
+                          <span style={{fontWeight:500}}>{a.destTirageVol} L</span>
+                        </div>}
+                        {a.destRetourId&&<div style={{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:"0.5px solid #e0e8f0"}}>
+                          <span style={{color:"#7a5200"}}>🔄 Retour réserve — {tonneaux.find(t=>t.id===a.destRetourId)?.id||a.destRetourId}</span>
+                          <span style={{fontWeight:500}}>{a.destRetourVol} L</span>
+                        </div>}
+                      </div>
+                    </div>
+                    {a.notes&&<div style={{marginTop:"8px",fontSize:"12px",color:"#6a5838",fontStyle:"italic",borderTop:"0.5px solid #ede5d4",paddingTop:"8px"}}>{a.notes}</div>}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        )}
+
         {view==="tirages" && (
           <div>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
@@ -6185,6 +6241,92 @@ export default function App() {
                   setApportsParcelles(prev=>[a,...prev]);
                   saveApportParcelle(a);
                   setShowApportForm(null);
+                }}>Enregistrer</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {showAssemblageForm&&(
+        <div style={s.modal}>
+          <div style={{...s.modalBox,width:"680px",maxHeight:"85vh",overflowY:"auto"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#2C3E50"}}>Nouvel assemblage</div>
+              <button style={s.ghost} onClick={()=>setShowAssemblageForm(false)}>x</button>
+            </div>
+            <div style={{display:"grid",gap:"14px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                <div><span style={s.lbl}>Nom de cuvée *</span>
+                  <input style={s.inp} placeholder="ex. Blanc de Blancs 2026" value={assemblageForm.nomCuvee} onChange={e=>setAssemblageForm(f=>({...f,nomCuvee:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Date</span>
+                  <input type="date" style={s.inp} value={assemblageForm.date} onChange={e=>setAssemblageForm(f=>({...f,date:e.target.value}))}/></div>
+              </div>
+
+              {/* Sources */}
+              <div style={{background:"#f4f6f7",borderRadius:"8px",padding:"12px"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"10px"}}>
+                  <span style={{fontWeight:500,color:"#2C3E50",fontSize:"13px"}}>Sources</span>
+                  <button style={s.ghostSm} onClick={()=>setAssemblageForm(f=>({...f,sources:[...f.sources,{type:"tonneau",id:"",volume:""}]}))}>+ Ajouter source</button>
+                </div>
+                {assemblageForm.sources.map((src,i)=>(
+                  <div key={i} style={{display:"grid",gridTemplateColumns:"120px 1fr 100px 24px",gap:"8px",marginBottom:"8px",alignItems:"center"}}>
+                    <select style={s.sel} value={src.type} onChange={e=>setAssemblageForm(f=>({...f,sources:f.sources.map((s,j)=>j===i?{...s,type:e.target.value,id:""}:s)}))}>
+                      <option value="tonneau">Fût</option>
+                      <option value="reserve">Vins de réserve</option>
+                    </select>
+                    <select style={s.sel} value={src.id} onChange={e=>setAssemblageForm(f=>({...f,sources:f.sources.map((s,j)=>j===i?{...s,id:e.target.value}:s)}))}>
+                      <option value="">Sélectionner...</option>
+                      {src.type==="tonneau"
+                        ? tonneaux.filter(t=>t.statut!=="vide"&&t.contenuActuel>0).map(t=><option key={t.id} value={t.id}>{t.id} — {t.denomination} ({Math.round(t.contenuActuel/100)} L)</option>)
+                        : tonneaux.filter(t=>t.appellation==="vins_reserve"&&t.contenuActuel>0).map(t=><option key={t.id} value={t.id}>{t.id} — {Math.round(t.contenuActuel/100)} L</option>)
+                      }
+                    </select>
+                    <input type="number" style={s.inp} placeholder="Volume L" value={src.volume} onChange={e=>setAssemblageForm(f=>({...f,sources:f.sources.map((s,j)=>j===i?{...s,volume:e.target.value}:s)}))}/>
+                    <button style={{background:"none",border:"none",cursor:"pointer",color:"#cc2222",fontSize:"16px"}} onClick={()=>setAssemblageForm(f=>({...f,sources:f.sources.filter((_,j)=>j!==i)}))}>×</button>
+                  </div>
+                ))}
+                <div style={{fontSize:"12px",color:"#2C3E50",fontWeight:500,textAlign:"right",marginTop:"6px"}}>
+                  Total : {assemblageForm.sources.reduce((s,src)=>s+(parseFloat(src.volume)||0),0).toLocaleString()} L
+                </div>
+              </div>
+
+              {/* Destinations */}
+              <div style={{background:"#f0f8f4",borderRadius:"8px",padding:"12px"}}>
+                <div style={{fontWeight:500,color:"#2C3E50",fontSize:"13px",marginBottom:"10px"}}>Destinations</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px",marginBottom:"10px"}}>
+                  <div><span style={s.lbl}>🍾 Cuve tirage</span>
+                    <select style={s.sel} value={assemblageForm.destTirageId} onChange={e=>setAssemblageForm(f=>({...f,destTirageId:e.target.value}))}>
+                      <option value="">Aucune</option>
+                      {cuvesCuverie.filter(c=>c.type!=="bourbes").map(c=><option key={c.id} value={c.id}>{c.nom}</option>)}
+                    </select>
+                  </div>
+                  <div><span style={s.lbl}>Volume tirage (L)</span>
+                    <input type="number" style={s.inp} placeholder="ex. 5000" value={assemblageForm.destTirageVol} onChange={e=>setAssemblageForm(f=>({...f,destTirageVol:e.target.value}))}/></div>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                  <div><span style={s.lbl}>🔄 Retour réserve (fût)</span>
+                    <select style={s.sel} value={assemblageForm.destRetourId} onChange={e=>setAssemblageForm(f=>({...f,destRetourId:e.target.value}))}>
+                      <option value="">Aucun</option>
+                      {tonneaux.filter(t=>t.appellation==="vins_reserve").map(t=><option key={t.id} value={t.id}>{t.id} ({Math.round(t.contenuActuel/100)} L)</option>)}
+                    </select>
+                  </div>
+                  <div><span style={s.lbl}>Volume retour (L)</span>
+                    <input type="number" style={s.inp} placeholder="ex. 2000" value={assemblageForm.destRetourVol} onChange={e=>setAssemblageForm(f=>({...f,destRetourVol:e.target.value}))}/></div>
+                </div>
+              </div>
+
+              <div><span style={s.lbl}>Notes</span>
+                <textarea style={{...s.inp,height:"60px",resize:"vertical"}} value={assemblageForm.notes} onChange={e=>setAssemblageForm(f=>({...f,notes:e.target.value}))}/></div>
+
+              <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
+                <button style={s.ghost} onClick={()=>setShowAssemblageForm(false)}>Annuler</button>
+                <button style={s.btn} onClick={()=>{
+                  if(!assemblageForm.nomCuvee) return alert("Le nom de cuvée est requis.");
+                  if(!assemblageForm.sources.some(s=>s.id&&s.volume)) return alert("Ajoutez au moins une source avec un volume.");
+                  const a = {id:"asm_"+Date.now(),...assemblageForm,timestamp:new Date().toISOString()};
+                  setAssemblages(prev=>[a,...prev]);
+                  saveAssemblage(a);
+                  setShowAssemblageForm(false);
                 }}>Enregistrer</button>
               </div>
             </div>
