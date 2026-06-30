@@ -2298,7 +2298,7 @@ export default function App() {
       {/* NAV */}
       <nav style={{...s.nav, flexWrap:"nowrap", overflowX:"auto", WebkitOverflowScrolling:"touch"}} className="nav-scroll">
         <div style={s.brand}>Nowack</div>
-        {[["dashboard","Vue d'ensemble"],["parcelles","Parcelles"],["vigne","Vigne"],["vendanges","Vendange"],["rendement","Rendement"],["mouvements","Mouvements"],["tonneaux","Vinification"],["assemblage","Assemblage"],["degustations","Dégustations"],["tirages","Tirage"],["stock","Stock"]].map(([v,l])=>(
+        {[["dashboard","Accueil"],["parcelles","Parcelles"],["vigne","Traitements"],["vendanges","Vendanges"],["rendement","Rendement"],["tonneaux","Chai & Cuverie"],["mouvements","Mouvements"],["degustations","Dégustation"],["assemblage","Assemblage"],["tirages","Tirage"],["stock","Stock"]].map(([v,l])=>(
           <button key={v} style={s.navBtn(view===v)} onClick={()=>{setView(v);refreshFromFirebase();}}>{l}</button>
         ))}
         <div style={{flex:1}}/>
