@@ -6383,7 +6383,21 @@ export default function App() {
             <div style={{...s.modalBox,width:"600px",maxHeight:"80vh",overflowY:"auto"}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"16px",position:"sticky",top:0,background:"white",paddingBottom:"12px",borderBottom:"0.5px solid #d4c4a0"}}>
                 <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#2C3E50"}}>{cuve?.nom} — Historique</div>
-                <button style={s.ghost} onClick={()=>setShowCuveHistorique(null)}>x</button>
+                <div style={{display:"flex",gap:"8px"}}>
+                  <button style={{...s.ghostSm,fontSize:"10px",color:"#8B0000",borderColor:"#c85050"}} onClick={()=>{
+                    const rows = annees.map(an=>{
+                      const evtsAn = evts.filter(e=>e.campagne===an);
+                      return `<h3 style="color:#2C3E50;margin:16px 0 8px">Campagne ${an}</h3>
+                        <table width="100%" style="border-collapse:collapse;font-size:11px">
+                          <tr style="background:#f0f4f7"><th style="padding:5px;text-align:left;border:0.5px solid #d0d8e0">Date</th><th style="padding:5px;text-align:left;border:0.5px solid #d0d8e0">Type</th><th style="padding:5px;text-align:left;border:0.5px solid #d0d8e0">Détail</th><th style="padding:5px;text-align:right;border:0.5px solid #d0d8e0">Volume</th></tr>
+                        ${evtsAn.map(e=>`<tr><td style="padding:4px 5px;border:0.5px solid #e0e8f0">${fmt(e.date)}</td><td style="padding:4px 5px;border:0.5px solid #e0e8f0">${e.type}</td><td style="padding:4px 5px;border:0.5px solid #e0e8f0">${e.detail||"-"}</td><td style="padding:4px 5px;border:0.5px solid #e0e8f0;text-align:right;color:${e.volume>=0?"#2d6a00":"#cc2222"}">${e.volume>=0?"+":""}${Math.round(e.volume)} L</td></tr>`).join("")}
+                        </table>`;
+                    }).join("");
+                    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:Georgia,serif;margin:20px;color:#1a2530}h1{color:#2C3E50;border-bottom:1px solid #d0d8e0;padding-bottom:8px}</style></head><body><h1>${cuve?.nom} — Historique</h1>${rows}</body></html>`;
+                    const w = window.open("","_blank"); w.document.write(html); w.document.close(); setTimeout(()=>w.print(),500);
+                  }}>↓ PDF</button>
+                  <button style={s.ghost} onClick={()=>setShowCuveHistorique(null)}>x</button>
+                </div>
               </div>
               {evts.length===0&&<div style={{color:"#9a8870",fontStyle:"italic"}}>Aucun mouvement enregistré.</div>}
               {annees.map(an=>(
