@@ -634,6 +634,7 @@ export default function App() {
   const [tirages,        setTirages]        = useState([]);
   const [assemblages, setAssemblages] = useState([]);
   const [showAssemblageForm, setShowAssemblageForm] = useState(false);
+  const [showCuveHistorique, setShowCuveHistorique] = useState(null);
   const [assemblageForm, setAssemblageForm] = useState({nomCuvee:"",date:new Date().toISOString().slice(0,10),sources:[{type:"tonneau",id:"",volume:""}],cuveAssemblageId:"",destTirageId:"",destTirageVol:"",destRetourId:"",destRetourVol:"",notes:""});
   const TIRAGE_EMPTY = {
     date: new Date().toISOString().slice(0,10),
@@ -2898,6 +2899,7 @@ export default function App() {
                             {c.notes&&<div style={{fontSize:"11px",color:"#9a8870",fontStyle:"italic",marginTop:"2px"}}>{c.notes}</div>}
                           </div>
                           <div style={{display:"flex",gap:"6px"}}>
+                            <button style={{...s.ghostSm,fontSize:"10px"}} onClick={()=>setShowCuveHistorique(c.id)}>📄 Historique</button>
                             <button style={{...s.ghostSm,fontSize:"10px"}} onClick={()=>{setCuverieForm({nom:c.nom,type:c.type,volumeHL:c.volumeHL,contenuActuelHL:c.contenuActuelHL||"0",notes:c.notes||""});setEditingCuverie(c);setShowCuverieForm(true);}}>Mod.</button>
                             <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>{if(window.confirm("Supprimer cette cuve ?")){setCuvesCuverie(prev=>prev.filter(x=>x.id!==c.id));fbDelete("cuvesCuverie",c.id);}}}>Sup.</button>
                           </div>
@@ -6350,6 +6352,69 @@ export default function App() {
           </div>
         </div>
       )}
+      {showCuveHistorique&&(()=>{
+        const cuve = cuvesCuverie.find(c=>c.id===showCuveHistorique);
+        // Mouvements lies a cette cuve : entonnage (cuve source), assemblage (reception/tirage/retour), tirages
+        const evts = [];
+        mouvements.filter(m=>m.type==="entonnage"&&(m.entonnageCuves||[]).some(ec=>ec.cuveId===showCuveHistorique)).forEach(m=>{
+          const ec = (m.entonnageCuves||[]).find(ec=>ec.cuveId===showCuveHistorique);
+          evts.push({date:m.date,type:"Entonnage (sortie)",detail:"Vers fûts",volume:-(parseFloat(ec?.volume)||0)*100,campagne:m.date?.slice(0,4)});
+        });
+        assemblages.forEach(a=>{
+          if(a.cuveAssemblageId===showCuveHistorique) {
+            const volTotal = (a.sources||[]).reduce((s,src)=>s+(parseFloat(src.volume)||0),0);
+            const volSortie = (parseFloat(a.destTirageVol)||0)+(parseFloat(a.destRetourVol)||0);
+            evts.push({date:a.date,type:"Assemblage (réception)",detail:a.nomCuvee,volume:volTotal-volSortie,campagne:a.date?.slice(0,4)});
+          }
+          if(a.destTirageId===showCuveHistorique) {
+            evts.push({date:a.date,type:"Assemblage → Tirage",detail:a.nomCuvee,volume:parseFloat(a.destTirageVol)||0,campagne:a.date?.slice(0,4)});
+          }
+          if(a.destRetourId==="cuve_"+showCuveHistorique) {
+            evts.push({date:a.date,type:"Assemblage → Retour réserve",detail:a.nomCuvee,volume:parseFloat(a.destRetourVol)||0,campagne:a.date?.slice(0,4)});
+          }
+        });
+        tirages.filter(t=>t.cuveCuveeId===showCuveHistorique).forEach(t=>{
+          evts.push({date:t.date,type:"Tirage (sortie)",detail:t.cuveeCreee||t.nomCuvee,volume:-(parseFloat(t.volumeCuvee)||0)*100,campagne:t.date?.slice(0,4)});
+        });
+        evts.sort((x,y)=>new Date(y.date)-new Date(x.date));
+        const annees = [...new Set(evts.map(e=>e.campagne))].sort().reverse();
+        return (
+          <div style={s.modal}>
+            <div style={{...s.modalBox,width:"600px",maxHeight:"80vh",overflowY:"auto"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"16px",position:"sticky",top:0,background:"white",paddingBottom:"12px",borderBottom:"0.5px solid #d4c4a0"}}>
+                <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#2C3E50"}}>{cuve?.nom} — Historique</div>
+                <button style={s.ghost} onClick={()=>setShowCuveHistorique(null)}>x</button>
+              </div>
+              {evts.length===0&&<div style={{color:"#9a8870",fontStyle:"italic"}}>Aucun mouvement enregistré.</div>}
+              {annees.map(an=>(
+                <div key={an} style={{marginBottom:"16px"}}>
+                  <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#2C3E50",fontWeight:500,marginBottom:"8px"}}>Campagne {an}</div>
+                  <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
+                    <thead>
+                      <tr style={{borderBottom:"0.5px solid #d4c4a0",background:"#f4f6f7"}}>
+                        <th style={{textAlign:"left",padding:"5px 8px",color:"#4A6274",fontWeight:400}}>Date</th>
+                        <th style={{textAlign:"left",padding:"5px 8px",color:"#4A6274",fontWeight:400}}>Type</th>
+                        <th style={{textAlign:"left",padding:"5px 8px",color:"#4A6274",fontWeight:400}}>Détail</th>
+                        <th style={{textAlign:"right",padding:"5px 8px",color:"#4A6274",fontWeight:400}}>Volume</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {evts.filter(e=>e.campagne===an).map((e,i)=>(
+                        <tr key={i} style={{borderBottom:"0.5px solid #ede5d4"}}>
+                          <td style={{padding:"5px 8px",color:"#2C3E50"}}>{fmt(e.date)}</td>
+                          <td style={{padding:"5px 8px",color:"#6a5838"}}>{e.type}</td>
+                          <td style={{padding:"5px 8px",color:"#6a5838"}}>{e.detail||"-"}</td>
+                          <td style={{padding:"5px 8px",fontWeight:500,textAlign:"right",color:e.volume>=0?"#2d6a00":"#cc2222"}}>{e.volume>=0?"+":""}{Math.round(e.volume)} L</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
       {showAssemblageForm&&(
         <div style={s.modal}>
           <div style={{...s.modalBox,width:"680px",maxHeight:"85vh",overflowY:"auto"}}>
