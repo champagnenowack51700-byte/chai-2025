@@ -634,7 +634,7 @@ export default function App() {
   const [tirages,        setTirages]        = useState([]);
   const [assemblages, setAssemblages] = useState([]);
   const [showAssemblageForm, setShowAssemblageForm] = useState(false);
-  const [assemblageForm, setAssemblageForm] = useState({nomCuvee:"",date:new Date().toISOString().slice(0,10),sources:[{type:"tonneau",id:"",volume:""}],destTirageId:"",destTirageVol:"",destRetourId:"",destRetourVol:"",notes:""});
+  const [assemblageForm, setAssemblageForm] = useState({nomCuvee:"",date:new Date().toISOString().slice(0,10),sources:[{type:"tonneau",id:"",volume:""}],cuveAssemblageId:"",destTirageId:"",destTirageVol:"",destRetourId:"",destRetourVol:"",notes:""});
   const TIRAGE_EMPTY = {
     date: new Date().toISOString().slice(0,10),
     operateur: "",
@@ -6393,9 +6393,19 @@ export default function App() {
                 </div>
               </div>
 
+              {/* Cuve d'assemblage intermediaire */}
+              <div style={{background:"#fff8e8",borderRadius:"8px",padding:"12px",border:"0.5px solid #ffc107"}}>
+                <div style={{fontWeight:500,color:"#8B6000",fontSize:"13px",marginBottom:"10px"}}>🥃 Cuve d'assemblage (réception)</div>
+                <select style={s.sel} value={assemblageForm.cuveAssemblageId} onChange={e=>setAssemblageForm(f=>({...f,cuveAssemblageId:e.target.value}))}>
+                  <option value="">Sélectionner la cuve de réception...</option>
+                  {cuvesCuverie.map(c=><option key={c.id} value={c.id}>{c.nom} ({c.contenuActuelHL||0} HL)</option>)}
+                </select>
+                <div style={{fontSize:"11px",color:"#9a7840",marginTop:"6px"}}>Le volume total des sources est d'abord reçu ici, puis réparti vers les destinations ci-dessous.</div>
+              </div>
+
               {/* Destinations */}
               <div style={{background:"#f0f8f4",borderRadius:"8px",padding:"12px"}}>
-                <div style={{fontWeight:500,color:"#2C3E50",fontSize:"13px",marginBottom:"10px"}}>Destinations</div>
+                <div style={{fontWeight:500,color:"#2C3E50",fontSize:"13px",marginBottom:"10px"}}>Destinations (répartition depuis la cuve d'assemblage)</div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px",marginBottom:"10px"}}>
                   <div><span style={s.lbl}>🍾 Cuve tirage</span>
                     <select style={s.sel} value={assemblageForm.destTirageId} onChange={e=>setAssemblageForm(f=>({...f,destTirageId:e.target.value}))}>
@@ -6448,6 +6458,21 @@ export default function App() {
                     return t;
                   });
                   setTonneaux(updFuts);
+                  // Volume total recu dans la cuve d'assemblage, puis reparti vers les destinations
+                  const volTotalSources = assemblageForm.sources.reduce((s,src)=>s+(parseFloat(src.volume)||0),0);
+                  const volTirageR = parseFloat(assemblageForm.destTirageVol)||0;
+                  const volRetourR = parseFloat(assemblageForm.destRetourVol)||0;
+                  const volNetAssemblage = volTotalSources - volTirageR - volRetourR; // ce qui reste dans la cuve d'assemblage
+                  if(assemblageForm.cuveAssemblageId) {
+                    setCuvesCuverie(prev=>prev.map(c=>{
+                      if(c.id===assemblageForm.cuveAssemblageId) {
+                        const updated = {...c, contenuActuelHL:String(Math.round(((parseFloat(c.contenuActuelHL)||0)+(volNetAssemblage/100))*100)/100)};
+                        fbSave("cuvesCuverie",c.id,updated);
+                        return updated;
+                      }
+                      return c;
+                    }));
+                  }
                   // Ajouter volume dans cuve tirage
                   if(assemblageForm.destTirageId) {
                     const volT = parseFloat(assemblageForm.destTirageVol)||0;
