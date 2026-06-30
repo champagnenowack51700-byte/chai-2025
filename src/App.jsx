@@ -2883,14 +2883,7 @@ export default function App() {
                   <div style={{fontSize:"13px",color:"#7a6840"}}>{cuvesCuverie.length} cuve(s) de cuverie</div>
                   <div style={{display:"flex",gap:"8px"}}>
                     <button style={s.ghost} onClick={()=>setShowPlanChai(true)}>🗺 Voir le plan</button>
-                    <button style={{...s.ghost,color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>{
-                      if(!window.confirm("Remettre TOUTES les cuves cuverie a 0 ? Action irreversible.")) return;
-                      setCuvesCuverie(prev=>prev.map(c=>{
-                        const updated={...c,contenuActuelHL:"0"};
-                        fbSave("cuvesCuverie",c.id,updated);
-                        return updated;
-                      }));
-                    }}>⚠ Reset toutes a 0</button>
+                    
                     <button style={s.btn} onClick={()=>{setCuverieForm(CUVERIE_EMPTY);setEditingCuverie(null);setShowCuverieForm(true);}}>+ Nouvelle cuve</button>
                   </div>
                 </div>
