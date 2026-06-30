@@ -636,6 +636,7 @@ export default function App() {
   const [showAssemblageForm, setShowAssemblageForm] = useState(false);
   const [showCuveHistorique, setShowCuveHistorique] = useState(null);
   const [showCuveHistAnnee, setShowCuveHistAnnee] = useState(()=>new Date().getFullYear().toString());
+  const [showPlanChai, setShowPlanChai] = useState(false);
   const [assemblageForm, setAssemblageForm] = useState({nomCuvee:"",date:new Date().toISOString().slice(0,10),sources:[{type:"tonneau",id:"",volume:""}],cuveAssemblageId:"",destTirageId:"",destTirageVol:"",destRetourId:"",destRetourVol:"",notes:""});
   const TIRAGE_EMPTY = {
     date: new Date().toISOString().slice(0,10),
@@ -2871,7 +2872,10 @@ export default function App() {
               <div>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"16px"}}>
                   <div style={{fontSize:"13px",color:"#7a6840"}}>{cuvesCuverie.length} cuve(s) de cuverie</div>
-                  <button style={s.btn} onClick={()=>{setCuverieForm(CUVERIE_EMPTY);setEditingCuverie(null);setShowCuverieForm(true);}}>+ Nouvelle cuve</button>
+                  <div style={{display:"flex",gap:"8px"}}>
+                    <button style={s.ghost} onClick={()=>setShowPlanChai(true)}>🗺 Voir le plan</button>
+                    <button style={s.btn} onClick={()=>{setCuverieForm(CUVERIE_EMPTY);setEditingCuverie(null);setShowCuverieForm(true);}}>+ Nouvelle cuve</button>
+                  </div>
                 </div>
                 {cuvesCuverie.length===0&&(
                   <div style={{...s.card,textAlign:"center",padding:"40px",color:"#9a8870"}}>
@@ -6437,6 +6441,16 @@ export default function App() {
           </div>
         );
       })()}
+      {showPlanChai&&(
+        <div style={s.modal} onClick={()=>setShowPlanChai(false)}>
+          <div style={{...s.modalBox,width:"auto",maxWidth:"90vw",padding:"16px"}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",justifyContent:"flex-end",marginBottom:"8px"}}>
+              <button style={s.ghost} onClick={()=>setShowPlanChai(false)}>x</button>
+            </div>
+            <img src="/plan-chai.png" alt="Plan de chai" style={{maxWidth:"100%",maxHeight:"80vh",borderRadius:"6px"}}/>
+          </div>
+        </div>
+      )}
       {showAssemblageForm&&(
         <div style={s.modal}>
           <div style={{...s.modalBox,width:"680px",maxHeight:"85vh",overflowY:"auto"}}>
