@@ -2322,7 +2322,7 @@ export default function App() {
             </div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(180px,1fr))",gap:"12px",marginBottom:"12px"}}>
               {(()=>{
-                const isChampagne = t => !t.appellation || t.appellation.startsWith("vins_clairs") || t.appellation==="vins_reserve" || t.appellation==="ri";
+                const isChampagne = t => t.appellation&&(t.appellation.startsWith("vins_clairs") || t.appellation==="vins_reserve" || t.appellation==="ri");
                 const isAutre = t => t.appellation==="coteaux" || t.appellation==="ratafia";
                 const futsActifs = tonneaux.filter(t=>t.statut!=="vide");
                 const totalVin = futsActifs.filter(isChampagne).reduce((s,t)=>s+(t.contenuActuel||0),0);
