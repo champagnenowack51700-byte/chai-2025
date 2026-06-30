@@ -635,6 +635,7 @@ export default function App() {
   const [assemblages, setAssemblages] = useState([]);
   const [showAssemblageForm, setShowAssemblageForm] = useState(false);
   const [showCuveHistorique, setShowCuveHistorique] = useState(null);
+  const [showCuveHistAnnee, setShowCuveHistAnnee] = useState(()=>new Date().getFullYear().toString());
   const [assemblageForm, setAssemblageForm] = useState({nomCuvee:"",date:new Date().toISOString().slice(0,10),sources:[{type:"tonneau",id:"",volume:""}],cuveAssemblageId:"",destTirageId:"",destTirageVol:"",destRetourId:"",destRetourVol:"",notes:""});
   const TIRAGE_EMPTY = {
     date: new Date().toISOString().slice(0,10),
@@ -6400,9 +6401,16 @@ export default function App() {
                 </div>
               </div>
               {evts.length===0&&<div style={{color:"#9a8870",fontStyle:"italic"}}>Aucun mouvement enregistré.</div>}
-              {annees.map(an=>(
-                <div key={an} style={{marginBottom:"16px"}}>
-                  <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#2C3E50",fontWeight:500,marginBottom:"8px"}}>Campagne {an}</div>
+              {annees.length>0&&<div style={{display:"flex",gap:"0",marginBottom:"12px",borderBottom:"1px solid #d4c4a0",flexWrap:"wrap"}}>
+                {annees.map(an=>{
+                  const active=(showCuveHistAnnee||annees[0])===an;
+                  return <button key={an} onClick={()=>setShowCuveHistAnnee(an)} style={{padding:"6px 12px",border:"none",borderBottom:active?"2px solid #2C3E50":"2px solid transparent",background:"transparent",color:active?"#2C3E50":"#9a8870",fontWeight:active?500:400,fontSize:"12px",cursor:"pointer"}}>
+                    {an} <span style={{fontSize:"10px",color:"#9a8870"}}>({evts.filter(e=>e.campagne===an).length})</span>
+                  </button>;
+                })}
+              </div>}
+              {annees.filter(an=>(showCuveHistAnnee||annees[0])===an).map(an=>(
+                <div key={an}>
                   <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
                     <thead>
                       <tr style={{borderBottom:"0.5px solid #d4c4a0",background:"#f4f6f7"}}>
