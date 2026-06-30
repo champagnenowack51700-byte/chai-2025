@@ -6586,19 +6586,13 @@ export default function App() {
                   const a = {id:"asm_"+Date.now(),...assemblageForm,timestamp:new Date().toISOString()};
                   // Deduire volumes des sources
                   const updFuts = tonneaux.map(t=>{
-                    const src = assemblageForm.sources.find(s=>s.type==="tonneau"&&s.id===t.id);
-                    const srcRes = assemblageForm.sources.find(s=>s.type==="reserve"&&s.id===t.id);
-                    const vol = parseFloat(src?.volume||srcRes?.volume)||0;
-                    if(vol>0) {
-                      const newVol = Math.max(0,(t.contenuActuel||0)-vol);
-                      const updated = {...t, contenuActuel:newVol, statut:newVol<=0?"vide":t.statut};
-                      saveTonneau(updated);
-                      return updated;
-                    }
-                    // Retour reserve vers fût
-                    if(assemblageForm.destRetourId===t.id&&!assemblageForm.destRetourId.startsWith("cuve_")) {
-                      const volRetour = parseFloat(assemblageForm.destRetourVol)||0;
-                      const updated = {...t, contenuActuel:(t.contenuActuel||0)+volRetour, statut:"actif"};
+                    const src = assemblageForm.sources.find(s=>(s.type==="tonneau"||s.type==="reserve")&&s.id===t.id);
+                    const volSortie = parseFloat(src?.volume)||0;
+                    const isRetourTarget = assemblageForm.destRetourId===t.id&&!assemblageForm.destRetourId.startsWith("cuve_");
+                    const volRetour = isRetourTarget ? (parseFloat(assemblageForm.destRetourVol)||0) : 0;
+                    if(volSortie>0||volRetour>0) {
+                      const newVol = Math.max(0,(t.contenuActuel||0)-volSortie+volRetour);
+                      const updated = {...t, contenuActuel:newVol, statut:newVol<=0?"vide":"actif"};
                       saveTonneau(updated);
                       return updated;
                     }
