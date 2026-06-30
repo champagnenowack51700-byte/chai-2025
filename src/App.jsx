@@ -6522,7 +6522,7 @@ export default function App() {
                 <div style={{fontWeight:500,color:"#8B6000",fontSize:"13px",marginBottom:"10px"}}>🥃 Cuve d'assemblage (réception)</div>
                 <select style={s.sel} value={assemblageForm.cuveAssemblageId} onChange={e=>setAssemblageForm(f=>({...f,cuveAssemblageId:e.target.value}))}>
                   <option value="">Sélectionner la cuve de réception...</option>
-                  {cuvesCuverie.map(c=><option key={c.id} value={c.id}>{c.nom} ({c.contenuActuelHL||0} HL)</option>)}
+                  {cuvesCuverie.map(c=><option key={c.id} value={c.id}>{c.nom} ({(parseFloat(c.contenuActuelHL)||0)*100} L)</option>)}
                 </select>
                 <div style={{fontSize:"11px",color:"#9a7840",marginTop:"6px"}}>Le volume total des sources est d'abord reçu ici, puis réparti vers les destinations ci-dessous.</div>
               </div>
@@ -6534,7 +6534,7 @@ export default function App() {
                   <div><span style={s.lbl}>🍾 Cuve tirage</span>
                     <select style={s.sel} value={assemblageForm.destTirageId} onChange={e=>setAssemblageForm(f=>({...f,destTirageId:e.target.value}))}>
                       <option value="">Aucune</option>
-                      {cuvesCuverie.filter(c=>c.type!=="bourbes").map(c=><option key={c.id} value={c.id}>{c.nom}</option>)}
+                      {cuvesCuverie.filter(c=>c.type!=="bourbes").map(c=><option key={c.id} value={c.id}>{c.nom} ({(parseFloat(c.contenuActuelHL)||0)*100} L)</option>)}
                     </select>
                   </div>
                   <div><span style={s.lbl}>Volume tirage (L)</span>
@@ -6544,7 +6544,7 @@ export default function App() {
                   <div><span style={s.lbl}>🔄 Retour réserve (fût)</span>
                     <select style={s.sel} value={assemblageForm.destRetourId} onChange={e=>setAssemblageForm(f=>({...f,destRetourId:e.target.value}))}>
                       <option value="">Aucun</option>
-                      {[...tonneaux.map(t=>({id:t.id,nom:t.id+" "+(t.denomination||""),vol:t.contenuActuel||0})),...cuvesCuverie.map(c=>({id:"cuve_"+c.id,nom:c.nom+" (cuve)",vol:parseFloat(c.contenuActuelHL)||0}))].map(x=><option key={x.id} value={x.id}>{x.nom} — {x.vol} {x.id.startsWith("cuve_")?"HL":"L"}</option>)}
+                      {[...tonneaux.map(t=>({id:t.id,nom:t.id+" "+(t.denomination||""),vol:t.contenuActuel||0})),...cuvesCuverie.map(c=>({id:"cuve_"+c.id,nom:c.nom+" (cuve)",vol:(parseFloat(c.contenuActuelHL)||0)*100}))].map(x=><option key={x.id} value={x.id}>{x.nom} — {x.vol} L</option>)}
                     </select>
                   </div>
                   <div><span style={s.lbl}>Volume retour (L)</span>
