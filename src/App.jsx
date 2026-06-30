@@ -3497,6 +3497,19 @@ export default function App() {
                             return t;
                           });
                           setTonneaux(updFuts);
+                          // Annuler cuve assemblage (retirer le volume net qui y avait ete ajoute)
+                          if(a.cuveAssemblageId) {
+                            const volTotalA = (a.sources||[]).reduce((s,src)=>s+(parseFloat(src.volume)||0),0);
+                            const volSortieA = (parseFloat(a.destTirageVol)||0)+(parseFloat(a.destRetourVol)||0);
+                            const volNetA = volTotalA - volSortieA;
+                            setCuvesCuverie(prev=>prev.map(c=>{
+                              if(c.id===a.cuveAssemblageId) {
+                                const updated = {...c, contenuActuelHL:String(Math.max(0,((parseFloat(c.contenuActuelHL)||0)-(volNetA/100))))};
+                                fbSave("cuvesCuverie",c.id,updated); return updated;
+                              }
+                              return c;
+                            }));
+                          }
                           // Annuler cuve tirage
                           if(a.destTirageId) {
                             const volT = parseFloat(a.destTirageVol)||0;
@@ -6587,41 +6600,23 @@ export default function App() {
                   const volTirageR = parseFloat(assemblageForm.destTirageVol)||0;
                   const volRetourR = parseFloat(assemblageForm.destRetourVol)||0;
                   const volNetAssemblage = volTotalSources - volTirageR - volRetourR; // ce qui reste dans la cuve d'assemblage
-                  if(assemblageForm.cuveAssemblageId) {
-                    setCuvesCuverie(prev=>prev.map(c=>{
-                      if(c.id===assemblageForm.cuveAssemblageId) {
-                        const updated = {...c, contenuActuelHL:String(Math.round(((parseFloat(c.contenuActuelHL)||0)+(volNetAssemblage/100))*100)/100)};
+                  const retourCuveId = assemblageForm.destRetourId&&assemblageForm.destRetourId.startsWith("cuve_") ? assemblageForm.destRetourId.replace("cuve_","") : null;
+                  // Un seul passage sur toutes les cuves pour eviter les ecrasements
+                  setCuvesCuverie(prev=>{
+                    const upd = prev.map(c=>{
+                      let delta = 0;
+                      if(assemblageForm.cuveAssemblageId===c.id) delta += volNetAssemblage;
+                      if(assemblageForm.destTirageId===c.id) delta += volTirageR;
+                      if(retourCuveId===c.id) delta += volRetourR;
+                      if(delta!==0) {
+                        const updated = {...c, contenuActuelHL:String(((parseFloat(c.contenuActuelHL)||0)+(delta/100)))};
                         fbSave("cuvesCuverie",c.id,updated);
                         return updated;
                       }
                       return c;
-                    }));
-                  }
-                  // Ajouter volume dans cuve tirage
-                  if(assemblageForm.destTirageId) {
-                    const volT = parseFloat(assemblageForm.destTirageVol)||0;
-                    setCuvesCuverie(prev=>prev.map(c=>{
-                      if(c.id===assemblageForm.destTirageId) {
-                        const updated = {...c, contenuActuelHL:String(Math.round(((parseFloat(c.contenuActuelHL)||0)+(volT/100))*100)/100)};
-                        fbSave("cuvesCuverie",c.id,updated);
-                        return updated;
-                      }
-                      return c;
-                    }));
-                  }
-                  // Retour reserve vers cuve
-                  if(assemblageForm.destRetourId&&assemblageForm.destRetourId.startsWith("cuve_")) {
-                    const cuveId = assemblageForm.destRetourId.replace("cuve_","");
-                    const volR = parseFloat(assemblageForm.destRetourVol)||0;
-                    setCuvesCuverie(prev=>prev.map(c=>{
-                      if(c.id===cuveId) {
-                        const updated = {...c, contenuActuelHL:String(Math.round(((parseFloat(c.contenuActuelHL)||0)+(volR/100))*100)/100)};
-                        fbSave("cuvesCuverie",c.id,updated);
-                        return updated;
-                      }
-                      return c;
-                    }));
-                  }
+                    });
+                    return upd;
+                  });
                   setAssemblages(prev=>[a,...prev]);
                   saveAssemblage(a);
                   setShowAssemblageForm(false);
