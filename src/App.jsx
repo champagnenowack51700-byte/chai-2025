@@ -4046,6 +4046,21 @@ export default function App() {
                   {ficheTab==="historique"&&(()=>{
                     const mvtsParAn = {};
                     selectedMvts.forEach(m=>{ const y=m.date?m.date.slice(0,4):"?"; if(!mvtsParAn[y]) mvtsParAn[y]=[]; mvtsParAn[y].push(m); });
+                    // Inclure les assemblages lies a ce fut (source ou retour reserve)
+                    assemblages.forEach(a=>{
+                      const srcMatch = (a.sources||[]).find(src=>src.id===selectedT?.id);
+                      const isRetour = a.destRetourId===selectedT?.id;
+                      if(srcMatch||isRetour) {
+                        const y = a.date?a.date.slice(0,4):"?";
+                        if(!mvtsParAn[y]) mvtsParAn[y]=[];
+                        mvtsParAn[y].push({
+                          date:a.date,
+                          type:"assemblage",
+                          notes:srcMatch?`Assemblage "${a.nomCuvee}" — Source (${srcMatch.volume} L)`:`Assemblage "${a.nomCuvee}" — Retour réserve (${a.destRetourVol} L)`,
+                          _isAssemblage:true,
+                        });
+                      }
+                    });
                     const allYears=[...new Set(Object.keys(mvtsParAn))].sort().reverse();
                     return (
                       <div>
@@ -4062,7 +4077,15 @@ export default function App() {
                               Campagne {year}
                               {mvtsParAn[year]&&<span style={{fontSize:"11px",color:"#9a8870",fontWeight:400,marginLeft:"8px"}}>{mvtsParAn[year].length} mvt(s)</span>}
                             </div>
-                            {(mvtsParAn[year]||[]).map((m,i)=>(
+                            {(mvtsParAn[year]||[]).map((m,i)=>m._isAssemblage?(
+                              <div key={i} style={{display:"flex",gap:"8px",padding:"5px 0",borderBottom:"0.5px solid #ede5d4",fontSize:"12px"}}>
+                                <div style={{width:"80px",color:"#9a8870",flexShrink:0}}>{fmt(m.date)}</div>
+                                <div style={{flex:1}}>
+                                  <span style={{background:"#fff3cd",color:"#8B6000",borderRadius:"3px",padding:"1px 6px",fontSize:"10px",marginRight:"6px"}}>Assemblage</span>
+                                  <span style={{color:"#6a5838"}}>{m.notes}</span>
+                                </div>
+                              </div>
+                            ):(
                               <div key={i} style={{display:"flex",gap:"8px",padding:"5px 0",borderBottom:"0.5px solid #ede5d4",fontSize:"12px"}}>
                                 <div style={{width:"80px",color:"#9a8870",flexShrink:0}}>{m.date}</div>
                                 <div style={{flex:1}}>
