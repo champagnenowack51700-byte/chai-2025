@@ -2328,7 +2328,11 @@ export default function App() {
                 const totalVin = futsActifs.filter(isChampagne).reduce((s,t)=>s+(t.contenuActuel||0),0);
                 const totalAutres = futsActifs.filter(isAutre).reduce((s,t)=>s+(t.contenuActuel||0),0);
                 const totalCap = tonneaux.filter(isChampagne).reduce((s,t)=>s+(t.volume||0),0);
-                const totalRI = futsActifs.filter(isChampagne).reduce((s,t)=>{ if(t.appellation==="ri") return s+(t.contenuActuel||0)/100; return s+(parseFloat(t.volumeRI)||0)/100; },0);
+                const totalRI = futsActifs.filter(isChampagne).reduce((s,t)=>{
+                  const vri = parseFloat(t.volumeRI)||0;
+                  if(t.appellation==="ri") return s+(vri>0?vri:(t.contenuActuel||0))/100;
+                  return s+vri/100;
+                },0);
                 const totalTirable = Math.max(0, (totalVin/100) - totalRI);
                 return [
                   {lbl:"Volume Champagne",val:(totalVin/100).toFixed(2)+" HL",sub:`cap. ${(totalCap/100).toFixed(0)} HL`},
@@ -2348,7 +2352,11 @@ export default function App() {
               const annee = new Date().getFullYear().toString();
               const riRequisAnnee = riRequis.find(r=>r.annee===annee);
               const isChampagneRI = t => t.appellation&&(t.appellation.startsWith("vins_clairs") || t.appellation==="vins_reserve" || t.appellation==="ri");
-              const totalRI = tonneaux.filter(t=>t.statut!=="vide").filter(isChampagneRI).reduce((s,t)=>{ if(t.appellation==="ri") return s+(t.contenuActuel||0)/100; return s+(parseFloat(t.volumeRI)||0)/100; },0);
+              const totalRI = tonneaux.filter(t=>t.statut!=="vide").filter(isChampagneRI).reduce((s,t)=>{
+                const vri = parseFloat(t.volumeRI)||0;
+                if(t.appellation==="ri") return s+(vri>0?vri:(t.contenuActuel||0))/100;
+                return s+vri/100;
+              },0);
               const riOk = !riRequisAnnee || totalRI>=(parseFloat(riRequisAnnee.volumeHL)||0);
               return (
                 <div style={{...s.card,marginBottom:"12px",padding:"10px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",background:riOk?"#fff":"#fde8e8",border:riOk?"0.5px solid #d4c4a0":"1px solid #f0b4b4"}}>
