@@ -6380,8 +6380,8 @@ export default function App() {
                     <select style={s.sel} value={src.id} onChange={e=>setAssemblageForm(f=>({...f,sources:f.sources.map((s,j)=>j===i?{...s,id:e.target.value}:s)}))}>
                       <option value="">Sélectionner...</option>
                       {src.type==="tonneau"
-                        ? tonneaux.filter(t=>t.statut!=="vide"&&t.contenuActuel>0).map(t=><option key={t.id} value={t.id}>{t.id} — {t.denomination} ({Math.round(t.contenuActuel/100)} L)</option>)
-                        : tonneaux.filter(t=>t.appellation==="vins_reserve"&&t.contenuActuel>0).map(t=><option key={t.id} value={t.id}>{t.id} — {Math.round(t.contenuActuel/100)} L</option>)
+                        ? tonneaux.filter(t=>t.statut!=="vide"&&t.contenuActuel>0).map(t=><option key={t.id} value={t.id}>{t.id} — {t.denomination} ({t.contenuActuel} L)</option>)
+                        : tonneaux.filter(t=>t.appellation==="vins_reserve"&&t.contenuActuel>0).map(t=><option key={t.id} value={t.id}>{t.id} — {t.contenuActuel} L</option>)
                       }
                     </select>
                     <input type="number" style={s.inp} placeholder="Volume L" value={src.volume} onChange={e=>setAssemblageForm(f=>({...f,sources:f.sources.map((s,j)=>j===i?{...s,volume:e.target.value}:s)}))}/>
@@ -6410,7 +6410,7 @@ export default function App() {
                   <div><span style={s.lbl}>🔄 Retour réserve (fût)</span>
                     <select style={s.sel} value={assemblageForm.destRetourId} onChange={e=>setAssemblageForm(f=>({...f,destRetourId:e.target.value}))}>
                       <option value="">Aucun</option>
-                      {[...tonneaux.map(t=>({id:t.id,nom:t.id+" "+(t.denomination||""),vol:Math.round((t.contenuActuel||0)/100)})),...cuvesCuverie.map(c=>({id:"cuve_"+c.id,nom:c.nom+" (cuve)",vol:parseFloat(c.contenuActuelHL)||0}))].map(x=><option key={x.id} value={x.id}>{x.nom} — {x.vol} {x.id.startsWith("cuve_")?"HL":"L"}</option>)}
+                      {[...tonneaux.map(t=>({id:t.id,nom:t.id+" "+(t.denomination||""),vol:t.contenuActuel||0})),...cuvesCuverie.map(c=>({id:"cuve_"+c.id,nom:c.nom+" (cuve)",vol:parseFloat(c.contenuActuelHL)||0}))].map(x=><option key={x.id} value={x.id}>{x.nom} — {x.vol} {x.id.startsWith("cuve_")?"HL":"L"}</option>)}
                     </select>
                   </div>
                   <div><span style={s.lbl}>Volume retour (L)</span>
