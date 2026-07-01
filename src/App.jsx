@@ -26,6 +26,10 @@ const fbSave = (col, id, data) => {
   return setDoc(doc(db, col, String(id)), {...clean, _ts: new Date().toISOString()});
 };
 const fbDelete = (col, id) => deleteDoc(doc(db, col, String(id)));
+// Tolérance (en L) sous laquelle un reliquat de volume est considéré comme
+// un résidu d'arrondi et non un vrai reste de vin dans le fût.
+const SEUIL_VIDE = 0.5;
+const estVide = (v) => (v||0) <= SEUIL_VIDE;
 // Remet un fût à l'état vierge ("--Vide--") : ne conserve que les caractéristiques
 // physiques du fût lui-même (numéro/id, volume, tonnelier, grain, chauffe).
 // Tout ce qui décrit le vin qu'il contenait est effacé.
@@ -1205,7 +1209,7 @@ export default function App() {
       statut:futForm.statut, contenuActuel:contenu, volumeRI:parseFloat(futForm.volumeRI)||0, marc:futForm.marc||"", commentaire:futForm.commentaire||"" };
     // Si le statut choisi est "vide" (ou si le volume tombe à 0), le fût repart vierge :
     // seules les caractéristiques physiques (numéro, volume, tonnelier, grain, chauffe) sont conservées.
-    if(fut.statut==="vide" || contenu<=0) fut = viderFut(fut);
+    if(fut.statut==="vide" || estVide(contenu)) fut = viderFut(fut);
     if(editingFut) {
       if(editingFut.id !== fut.id) {
         // ID changed - remove old, add new
@@ -1307,7 +1311,7 @@ export default function App() {
           if(tirageForm.futsSources.includes(t.id)) {
             const volPris = parseFloat(tirageForm.futsSourcesVolumes[t.id])||t.contenuActuel||0;
             const reste = Math.max(0,(t.contenuActuel||0)-volPris);
-            return reste<=0 ? viderFut(t) : {...t, contenuActuel:reste};
+            return estVide(reste) ? viderFut(t) : {...t, contenuActuel:reste};
           }
           return t;
         });
@@ -1766,7 +1770,7 @@ export default function App() {
     const vol = parseFloat(mvt.volume)||0;
     let upd = [...tonneaux];
     if(mvt.type==="soutirage" && mvt.futSource?.[0] && mvt.futDest){
-      upd=upd.map(t=>{ if(t.id===mvt.futSource[0]) return{...t,contenuActuel:Math.min(t.volume,t.contenuActuel+vol),statut:"actif"}; if(t.id===mvt.futDest){ const c=Math.max(0,t.contenuActuel-vol); return c<=0 ? viderFut(t) : {...t,contenuActuel:c}; } return t; });
+      upd=upd.map(t=>{ if(t.id===mvt.futSource[0]) return{...t,contenuActuel:Math.min(t.volume,t.contenuActuel+vol),statut:"actif"}; if(t.id===mvt.futDest){ const c=Math.max(0,t.contenuActuel-vol); return estVide(c) ? viderFut(t) : {...t,contenuActuel:c}; } return t; });
     } else if(["ecoulage","perte"].includes(mvt.type) && mvt.futSource?.[0]){
       upd=upd.map(t=>t.id===mvt.futSource[0]?{...t,contenuActuel:Math.min(t.volume,t.contenuActuel+vol)}:t);
     } else if(["remplissage","ouillage"].includes(mvt.type) && mvt.futDest){
@@ -1828,14 +1832,14 @@ export default function App() {
     const vol = parseFloat(mvtForm.volume)||0;
     let upd = [...tonneaux];
     if(mvtForm.type==="soutirage" && mvtForm.futSource[0] && mvtForm.futDest){
-      upd=upd.map(t=>{ if(t.id===mvtForm.futSource[0]){ const c=Math.max(0,t.contenuActuel-vol); return c<=0 ? viderFut(t) : {...t,contenuActuel:c}; } if(t.id===mvtForm.futDest) return{...t,contenuActuel:Math.min(t.volume,t.contenuActuel+vol),statut:"actif"}; return t; });
+      upd=upd.map(t=>{ if(t.id===mvtForm.futSource[0]){ const c=Math.max(0,t.contenuActuel-vol); return estVide(c) ? viderFut(t) : {...t,contenuActuel:c}; } if(t.id===mvtForm.futDest) return{...t,contenuActuel:Math.min(t.volume,t.contenuActuel+vol),statut:"actif"}; return t; });
     } else if(mvtForm.type==="assemblage" && mvtForm.futDest){
       const tot=mvtForm.futSource.reduce((s,id)=>s+(parseFloat(mvtForm.assemblageVolumes[id])||getTonneau(id)?.contenuActuel||0),0);
       upd=upd.map(t=>{
         if(mvtForm.futSource.includes(t.id)) {
           const volPris = parseFloat(mvtForm.assemblageVolumes[t.id])||t.contenuActuel||0;
           const reste = Math.max(0,(t.contenuActuel||0)-volPris);
-          return reste<=0 ? viderFut(t) : {...t, contenuActuel:reste};
+          return estVide(reste) ? viderFut(t) : {...t, contenuActuel:reste};
         }
         if(t.id===mvtForm.futDest && mvtForm.type!=="assemblage") return{...t,contenuActuel:Math.min(t.volume,(t.contenuActuel||0)+tot)};
         return t;
@@ -1854,11 +1858,11 @@ export default function App() {
       }
     } else if(mvtForm.type==="perte" && mvtForm.futSource.length>0){
       upd=upd.map(t=>{
-        if(mvtForm.futSource.includes(t.id)) { const volPerte=parseFloat(mvtForm.perteVolumes[t.id])||0; const c=Math.max(0,(t.contenuActuel||0)-volPerte); return c<=0 ? viderFut(t) : {...t,contenuActuel:c}; }
+        if(mvtForm.futSource.includes(t.id)) { const volPerte=parseFloat(mvtForm.perteVolumes[t.id])||0; const c=Math.max(0,(t.contenuActuel||0)-volPerte); return estVide(c) ? viderFut(t) : {...t,contenuActuel:c}; }
         return t;
       });
     } else if(mvtForm.type==="ecoulage" && mvtForm.futSource[0]){
-      upd=upd.map(t=>{ if(t.id===mvtForm.futSource[0]){ const c=Math.max(0,t.contenuActuel-vol); return c<=0 ? viderFut(t) : {...t,contenuActuel:c}; } return t; });
+      upd=upd.map(t=>{ if(t.id===mvtForm.futSource[0]){ const c=Math.max(0,t.contenuActuel-vol); return estVide(c) ? viderFut(t) : {...t,contenuActuel:c}; } return t; });
     } else if(mvtForm.type==="vidange"){
       upd=upd.map(t=>mvtForm.futSource.includes(t.id)?viderFut(t):t);
     } else if(mvtForm.type==="ouillage" && mvtForm.futSource[0]){
@@ -3092,7 +3096,7 @@ export default function App() {
                       );
                     })()}
 
-                    {vAnnee.map(v=>{
+                    {[...vAnnee].sort((a,b)=>new Date(b.date+"T"+(b.heure||"00:00"))-new Date(a.date+"T"+(a.heure||"00:00"))).map(v=>{
                       const parc = parcelles.find(p=>p.id===v.parcelleId);
                       const parcs = (v.parcelleIds&&v.parcelleIds.length>0) ? v.parcelleIds.map(id=>parcelles.find(p=>p.id===id)).filter(Boolean) : (parc?[parc]:[]);
                       return (
@@ -3522,7 +3526,7 @@ export default function App() {
                             if(a.destRetourId===t.id&&!a.destRetourId?.startsWith("cuve_")) {
                               const volR = parseFloat(a.destRetourVol)||0;
                               const newVol = Math.max(0,(t.contenuActuel||0)-volR);
-                              const updated = newVol<=0 ? viderFut(t) : {...t, contenuActuel:newVol};
+                              const updated = estVide(newVol) ? viderFut(t) : {...t, contenuActuel:newVol};
                               saveTonneau(updated); return updated;
                             }
                             return t;
@@ -3621,7 +3625,7 @@ export default function App() {
             )}
 
             <div style={{display:"grid",gap:"14px"}}>
-              {tirages.map(t=>(
+              {[...tirages].sort((a,b)=>new Date(b.date)-new Date(a.date)).map(t=>(
                 <div key={t.id} style={{...s.card,borderLeft:"3px solid #533AB7"}}>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:"16px"}}>
                     {/* Identite */}
@@ -3992,8 +3996,8 @@ export default function App() {
                             {getApc(selectedT.appellation).label}
                           </div>}
                       </div>
-                      <span style={s.tag(selectedT.statut==="surveillance"?"#c47800":selectedT.contenuActuel<10?"#cc2222":"#1a7a40")}>
-                        {selectedT.statut==="surveillance"?"surveillance":selectedT.contenuActuel<10?"vide":"actif"}
+                      <span style={s.tag(selectedT.statut==="surveillance"?"#c47800":selectedT.statut==="vide"?"#cc2222":"#1a7a40")}>
+                        {selectedT.statut==="surveillance"?"surveillance":selectedT.statut==="vide"?"vide":"actif"}
                       </span>
                     </div>
                     <div style={{marginBottom:"14px"}}>
@@ -4860,7 +4864,7 @@ export default function App() {
                       );
                     })()}
 
-                    {vAnnee.map(v=>{
+                    {[...vAnnee].sort((a,b)=>new Date(b.date+"T"+(b.heure||"00:00"))-new Date(a.date+"T"+(a.heure||"00:00"))).map(v=>{
                       const parc = parcelles.find(p=>p.id===v.parcelleId);
                       return (
                         <div key={v.id} style={{...s.card,marginBottom:"10px",borderLeft:`3px solid ${v.destinationMarc==="prestation"?"#185FA5":v.destinationMarc&&v.destinationMarc!=="maison"?"#c47800":"#2d6a00"}`,background:v.destinationMarc==="prestation"?"#dde4ed":"white"}}>
@@ -5366,7 +5370,7 @@ export default function App() {
             )}
 
             <div style={{display:"grid",gap:"14px"}}>
-              {tirages.map(t=>(
+              {[...tirages].sort((a,b)=>new Date(b.date)-new Date(a.date)).map(t=>(
                 <div key={t.id} style={{...s.card,borderLeft:"3px solid #533AB7"}}>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:"16px"}}>
                     {/* Identite */}
@@ -6607,13 +6611,12 @@ export default function App() {
                   const a = {id:"asm_"+Date.now(),...assemblageForm,timestamp:new Date().toISOString()};
                   // Deduire volumes des sources
                   const updFuts = tonneaux.map(t=>{
-                    const src = assemblageForm.sources.find(s=>(s.type==="tonneau"||s.type==="reserve")&&s.id===t.id);
-                    const volSortie = parseFloat(src?.volume)||0;
+                    const volSortie = assemblageForm.sources.filter(s=>(s.type==="tonneau"||s.type==="reserve")&&s.id===t.id).reduce((sum,s)=>sum+(parseFloat(s.volume)||0),0);
                     const isRetourTarget = assemblageForm.destRetourId===t.id&&!assemblageForm.destRetourId.startsWith("cuve_");
                     const volRetour = isRetourTarget ? (parseFloat(assemblageForm.destRetourVol)||0) : 0;
                     if(volSortie>0||volRetour>0) {
                       const newVol = Math.max(0,(t.contenuActuel||0)-volSortie+volRetour);
-                      const updated = newVol<=0 ? viderFut(t) : {...t, contenuActuel:newVol, statut:"actif"};
+                      const updated = estVide(newVol) ? viderFut(t) : {...t, contenuActuel:newVol, statut:"actif"};
                       saveTonneau(updated);
                       return updated;
                     }
