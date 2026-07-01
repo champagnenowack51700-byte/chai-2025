@@ -3554,12 +3554,13 @@ export default function App() {
                 </div>
               )}
               {lotsFiltre.length>0&&(
-                <div style={{...s.card,padding:0,overflow:"hidden",marginBottom:"24px"}}>
+                <div style={{...s.card,padding:0,marginBottom:"24px"}}>
+                  <div style={{maxHeight:"65vh",overflowY:"auto",overflowX:"auto",borderRadius:"8px"}}>
                   <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
                     <thead>
                       <tr style={{background:"#F0EDE8",borderBottom:"1px solid #d4c4a0"}}>
                         {["Cuvee","Millesime","N° Lot","Format","Date tirage","Age","Statut","Lieu","Qte actuelle","Actions"].map(h=>(
-                          <th key={h} style={{textAlign:"left",padding:"10px 12px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#9a8870",fontWeight:500}}>{h}</th>
+                          <th key={h} style={{textAlign:"left",padding:"10px 12px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#9a8870",fontWeight:500,position:"sticky",top:0,background:"#F0EDE8",zIndex:1,boxShadow:"0 1px 0 #d4c4a0"}}>{h}</th>
                         ))}
                       </tr>
                     </thead>
@@ -3602,6 +3603,7 @@ export default function App() {
                       ))}
                     </tbody>
                   </table>
+                  </div>
                 </div>
               )}
 
@@ -5564,12 +5566,13 @@ export default function App() {
                 </div>
               )}
               {lotsFiltre.length>0&&(
-                <div style={{...s.card,padding:0,overflow:"hidden",marginBottom:"24px"}}>
+                <div style={{...s.card,padding:0,marginBottom:"24px"}}>
+                  <div style={{maxHeight:"65vh",overflowY:"auto",overflowX:"auto",borderRadius:"8px"}}>
                   <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
                     <thead>
                       <tr style={{background:"#F0EDE8",borderBottom:"1px solid #d4c4a0"}}>
                         {["Cuvee","Millesime","N° Lot","Format","Date tirage","Age","Statut","Lieu","Qte actuelle","Actions"].map(h=>(
-                          <th key={h} style={{textAlign:"left",padding:"10px 12px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#9a8870",fontWeight:500}}>{h}</th>
+                          <th key={h} style={{textAlign:"left",padding:"10px 12px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#9a8870",fontWeight:500,position:"sticky",top:0,background:"#F0EDE8",zIndex:1,boxShadow:"0 1px 0 #d4c4a0"}}>{h}</th>
                         ))}
                       </tr>
                     </thead>
@@ -5612,6 +5615,7 @@ export default function App() {
                       ))}
                     </tbody>
                   </table>
+                  </div>
                 </div>
               )}
 
