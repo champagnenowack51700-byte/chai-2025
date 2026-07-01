@@ -6597,7 +6597,7 @@ export default function App() {
                 <div style={{fontWeight:500,color:"#8B6000",fontSize:"13px",marginBottom:"10px"}}>🥃 Cuve d'assemblage (réception)</div>
                 <select style={s.sel} value={assemblageForm.cuveAssemblageId} onChange={e=>setAssemblageForm(f=>({...f,cuveAssemblageId:e.target.value}))}>
                   <option value="">Sélectionner la cuve de réception...</option>
-                  {cuvesCuverie.map(c=><option key={c.id} value={c.id}>{c.nom} ({(parseFloat(c.contenuActuelHL)||0)*100} L)</option>)}
+                  {cuvesCuverie.map(c=><option key={c.id} value={c.id}>{c.nom}{c.notes?" — "+c.notes:""} ({(parseFloat(c.contenuActuelHL)||0)*100} L)</option>)}
                 </select>
                 <div style={{fontSize:"11px",color:"#9a7840",marginTop:"6px"}}>Le volume total des sources est d'abord reçu ici, puis réparti vers les destinations ci-dessous.</div>
               </div>
@@ -6609,7 +6609,7 @@ export default function App() {
                   <div><span style={s.lbl}>🍾 Cuve tirage</span>
                     <select style={s.sel} value={assemblageForm.destTirageId} onChange={e=>setAssemblageForm(f=>({...f,destTirageId:e.target.value}))}>
                       <option value="">Aucune</option>
-                      {cuvesCuverie.filter(c=>c.type!=="bourbes").map(c=><option key={c.id} value={c.id}>{c.nom} ({(parseFloat(c.contenuActuelHL)||0)*100} L)</option>)}
+                      {cuvesCuverie.filter(c=>c.type!=="bourbes").map(c=><option key={c.id} value={c.id}>{c.nom}{c.notes?" — "+c.notes:""} ({(parseFloat(c.contenuActuelHL)||0)*100} L)</option>)}
                     </select>
                   </div>
                   <div><span style={s.lbl}>Volume tirage (L)</span>
@@ -7595,9 +7595,14 @@ export default function App() {
                     <select style={s.sel} value={tirageForm.cuveSourceId} onChange={e=>setTirageForm(f=>({...f,cuveSourceId:e.target.value}))}>
                       <option value="">-- Aucune --</option>
                       {cuvesCuverie.filter(c=>c.type!=="bourbes"&&(parseFloat(c.contenuActuelHL)||0)>0).map(c=>(
-                        <option key={c.id} value={c.id}>{c.nom} - {c.type} (dispo: {((parseFloat(c.contenuActuelHL)||0)*100).toLocaleString()} L)</option>
+                        <option key={c.id} value={c.id}>{c.nom}{c.notes?" — "+c.notes:""} (dispo: {((parseFloat(c.contenuActuelHL)||0)*100).toLocaleString()} L)</option>
                       ))}
                     </select>
+                    {tirageForm.cuveSourceId && cuvesCuverie.find(c=>c.id===tirageForm.cuveSourceId)?.notes && (
+                      <div style={{fontSize:"11px",color:"#533AB7",marginTop:"4px",fontStyle:"italic"}}>
+                        Contenu : {cuvesCuverie.find(c=>c.id===tirageForm.cuveSourceId).notes}
+                      </div>
+                    )}
                   </div>
                   <div>
                     <span style={s.lbl}>Volume vin (L)</span>
