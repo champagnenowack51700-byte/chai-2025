@@ -7630,36 +7630,6 @@ export default function App() {
                 </div>
               </div>
               <div style={{background:"#F0EDE8",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
-                <div style={{...s.lbl,marginBottom:"10px",fontSize:"11px"}}>Stockage apres assemblage</div>
-                <div style={{display:"flex",gap:"8px",marginBottom:"12px"}}>
-                  {[["existante","Cuve existante"],["nouvelle","Creer une nouvelle cuve"]].map(([val,lbl])=>(
-                    <button key={val} onClick={()=>setTirageForm(f=>({...f,cuveDestMode:val}))}
-                      style={{padding:"6px 14px",borderRadius:"5px",border:`0.5px solid ${tirageForm.cuveDestMode===val?"#533AB7":"#d4c4a0"}`,background:tirageForm.cuveDestMode===val?"#eeedfe":"transparent",color:tirageForm.cuveDestMode===val?"#533AB7":"#9a8870",fontSize:"12px",cursor:"pointer",fontFamily:"monospace"}}>
-                      {lbl}
-                    </button>
-                  ))}
-                </div>
-                {tirageForm.cuveDestMode==="existante"&&(
-                  <div>
-                    <span style={s.lbl}>Selectionner la cuve de destination</span>
-                    <select style={s.sel} value={tirageForm.cuveDestId} onChange={e=>setTirageForm(f=>({...f,cuveDestId:e.target.value}))}>
-                      <option value="">-- Aucune --</option>
-                      {cuvesCuverie.filter(c=>c.type!=="bourbes").map(c=>(
-                        <option key={c.id} value={c.id}>{c.nom} - {c.type} (dispo: {Math.max(0,(parseFloat(c.volumeHL)||0)-(parseFloat(c.contenuActuelHL)||0)).toFixed(1)} HL)</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-                {tirageForm.cuveDestMode==="nouvelle"&&(
-                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
-                    <div><span style={s.lbl}>N° / Nom de la nouvelle cuve *</span>
-                      <input style={s.inp} placeholder="ex. CT-001..." value={tirageForm.nouvelleCuveId} onChange={e=>setTirageForm(f=>({...f,nouvelleCuveId:e.target.value}))}/></div>
-                    <div><span style={s.lbl}>Capacite (L)</span>
-                      <input type="number" style={s.inp} placeholder="optionnel" value={tirageForm.nouvelleCuveVolume} onChange={e=>setTirageForm(f=>({...f,nouvelleCuveVolume:e.target.value}))}/></div>
-                  </div>
-                )}
-              </div>
-              <div style={{background:"#F0EDE8",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
                 <div style={{...s.lbl,marginBottom:"10px",fontSize:"11px"}}>Mise en bouteilles - 1 numero de lot par format</div>
                 <div style={{display:"grid",gap:"10px"}}>
                   {[["Bouteilles 75cl","qte75","lot75","#2d6a00",0.75],["Magnums 1.5L","qteMagnum","lotMagnum","#8b5e0a",1.5],["Jeroboams 3L","qteJeroboam","lotJeroboam","#8B0000",3.0]].map(([lbl,qk,lk,col,vol])=>(
