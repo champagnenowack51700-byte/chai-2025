@@ -2642,12 +2642,11 @@ export default function App() {
 
             {/* SECTION 3 : ALERTES COIFFES */}
             {(()=>{
-              const calcStock = (type) => coiffesStock.filter(c=>c.type===type).reduce((s,c)=>s+(c.operation==="achat"?parseInt(c.qte)||0:-(parseInt(c.qte)||0)),0);
+              const calcStock = (type) => coiffesStock.filter(c=>c.type===type||(type==="Export"&&c.type==="Export Magnum")).reduce((s,c)=>s+(c.operation==="achat"?parseInt(c.qte)||0:-(parseInt(c.qte)||0)),0);
               const alertesCRD = calcStock("CRD")<500;
               const alertesExp = calcStock("Export")<500;
               const alertesCRDMag = calcStock("CRD Magnum")<20;
-              const alertesExpMag = calcStock("Export Magnum")<20;
-              if(!alertesCRD&&!alertesExp&&!alertesCRDMag&&!alertesExpMag) return null;
+              if(!alertesCRD&&!alertesExp&&!alertesCRDMag) return null;
               return (
                 <div>
                   <div style={{display:"flex",alignItems:"center",gap:"10px",marginBottom:"16px"}}>
@@ -2656,9 +2655,8 @@ export default function App() {
                   </div>
                   <div style={{display:"grid",gap:"8px"}}>
                     {alertesCRD&&<div style={{padding:"10px 14px",background:"#fde8e8",border:"1px solid #f0b4b4",borderRadius:"6px",fontSize:"12px",color:"#cc2222"}}>CRD 75cl : {calcStock("CRD")} coiffes (seuil 500)</div>}
-                    {alertesExp&&<div style={{padding:"10px 14px",background:"#fde8e8",border:"1px solid #f0b4b4",borderRadius:"6px",fontSize:"12px",color:"#cc2222"}}>Export 75cl : {calcStock("Export")} coiffes (seuil 500)</div>}
+                    {alertesExp&&<div style={{padding:"10px 14px",background:"#fde8e8",border:"1px solid #f0b4b4",borderRadius:"6px",fontSize:"12px",color:"#cc2222"}}>Export (75cl + Magnum) : {calcStock("Export")} coiffes (seuil 500)</div>}
                     {alertesCRDMag&&<div style={{padding:"10px 14px",background:"#fde8e8",border:"1px solid #f0b4b4",borderRadius:"6px",fontSize:"12px",color:"#cc2222"}}>CRD Magnum : {calcStock("CRD Magnum")} coiffes (seuil 20)</div>}
-                    {alertesExpMag&&<div style={{padding:"10px 14px",background:"#fde8e8",border:"1px solid #f0b4b4",borderRadius:"6px",fontSize:"12px",color:"#cc2222"}}>Export Magnum : {calcStock("Export Magnum")} coiffes (seuil 20)</div>}
                   </div>
                 </div>
               );
@@ -3446,9 +3444,9 @@ export default function App() {
 
               {/* Alertes */}
               {(()=>{
-                const calcStock = (type) => coiffesStock.filter(c=>c.type===type).reduce((s,c)=>s+(c.operation==="achat"?parseInt(c.qte)||0:-(parseInt(c.qte)||0)),0);
+                const calcStock = (type) => coiffesStock.filter(c=>c.type===type||(type==="Export"&&c.type==="Export Magnum")).reduce((s,c)=>s+(c.operation==="achat"?parseInt(c.qte)||0:-(parseInt(c.qte)||0)),0);
                 const alerteCoiffeCRD = calcStock("CRD") < 500;
-                const alerteCoiffeMag = calcStock("CRD Magnum") < 20 || calcStock("Export Magnum") < 20;
+                const alerteCoiffeMag = calcStock("CRD Magnum") < 20;
                 const alerteCoiffeExp = calcStock("Export") < 500;
                 const alerte15 = lots.filter(l=>l.mois>=14&&!l.passage15);
                 const hasAlertes = alerteCoiffeCRD || alerteCoiffeExp || alerteCoiffeMag || alerte15.length>0;
@@ -3475,9 +3473,8 @@ export default function App() {
                           <div style={{fontWeight:500,color:"#cc2222",fontSize:"13px"}}>Stock coiffes bas</div>
                           <div style={{display:"flex",gap:"6px",flexWrap:"wrap",marginTop:"4px"}}>
                             {alerteCoiffeCRD&&<span style={{background:"#fff",color:"#cc2222",border:"1px solid #f0b4b4",borderRadius:"4px",padding:"1px 8px",fontSize:"11px"}}>CRD 75cl : {calcStock("CRD")} coiffes (seuil 500)</span>}
-                            {alerteCoiffeExp&&<span style={{background:"#fff",color:"#cc2222",border:"1px solid #f0b4b4",borderRadius:"4px",padding:"1px 8px",fontSize:"11px"}}>Export 75cl : {calcStock("Export")} coiffes (seuil 500)</span>}
+                            {alerteCoiffeExp&&<span style={{background:"#fff",color:"#cc2222",border:"1px solid #f0b4b4",borderRadius:"4px",padding:"1px 8px",fontSize:"11px"}}>Export (75cl + Magnum) : {calcStock("Export")} coiffes (seuil 500)</span>}
                             {calcStock("CRD Magnum")<20&&<span style={{background:"#fff",color:"#cc2222",border:"1px solid #f0b4b4",borderRadius:"4px",padding:"1px 8px",fontSize:"11px"}}>CRD Magnum : {calcStock("CRD Magnum")} coiffes (seuil 20)</span>}
-                            {calcStock("Export Magnum")<20&&<span style={{background:"#fff",color:"#cc2222",border:"1px solid #f0b4b4",borderRadius:"4px",padding:"1px 8px",fontSize:"11px"}}>Export Magnum : {calcStock("Export Magnum")} coiffes (seuil 20)</span>}
                           </div>
                         </div>
                       </div>
@@ -3569,12 +3566,11 @@ export default function App() {
 
               {/* Encart coiffes */}
               {(()=>{
-                const calcStock = (type) => coiffesStock.filter(c=>c.type===type).reduce((s,c)=>s+(c.operation==="achat"?parseInt(c.qte)||0:-(parseInt(c.qte)||0)),0);
+                const calcStock = (type) => coiffesStock.filter(c=>c.type===type||(type==="Export"&&c.type==="Export Magnum")).reduce((s,c)=>s+(c.operation==="achat"?parseInt(c.qte)||0:-(parseInt(c.qte)||0)),0);
                 const stockCRD = calcStock("CRD");
                 const stockCRDMag = calcStock("CRD Magnum");
                 const stockCRDJer = calcStock("CRD Jeroboam");
                 const stockExport = calcStock("Export");
-                const stockExpMag = calcStock("Export Magnum");
                 const stockExpJer = calcStock("Export Jeroboam");
                 return (
                   <div style={{...s.card,padding:"16px 20px",marginTop:"16px",marginBottom:"16px"}}>
@@ -3584,7 +3580,7 @@ export default function App() {
                     </div>
                     <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:"8px"}}>
                       {[["CRD 75cl",stockCRD,"#6a2d8a"],["CRD Mag",stockCRDMag,"#6a2d8a"],["CRD Jer",stockCRDJer,"#6a2d8a"],
-                        ["Export 75cl",stockExport,"#8a2d6a"],["Export Mag",stockExpMag,"#8a2d6a"],["Export Jer",stockExpJer,"#8a2d6a"]
+                        ["Export 75cl/Mag",stockExport,"#8a2d6a"],["Export Jer",stockExpJer,"#8a2d6a"]
                       ].filter(([,q])=>q>0||true).map(([lbl,q,col])=>(
                         <div key={lbl} style={{padding:"8px",background:q<50?"#fde8e8":"#f0fff4",borderRadius:"6px",textAlign:"center"}}>
                           <div style={{fontSize:"10px",color:col,fontWeight:500,marginBottom:"2px"}}>{lbl}</div>
@@ -5319,9 +5315,9 @@ export default function App() {
 
               {/* Alertes */}
               {(()=>{
-                const calcStock = (type) => coiffesStock.filter(c=>c.type===type).reduce((s,c)=>s+(c.operation==="achat"?parseInt(c.qte)||0:-(parseInt(c.qte)||0)),0);
+                const calcStock = (type) => coiffesStock.filter(c=>c.type===type||(type==="Export"&&c.type==="Export Magnum")).reduce((s,c)=>s+(c.operation==="achat"?parseInt(c.qte)||0:-(parseInt(c.qte)||0)),0);
                 const alerteCoiffeCRD = calcStock("CRD") < 500;
-                const alerteCoiffeMag = calcStock("CRD Magnum") < 20 || calcStock("Export Magnum") < 20;
+                const alerteCoiffeMag = calcStock("CRD Magnum") < 20;
                 const alerteCoiffeExp = calcStock("Export") < 500;
                 const alerte15 = lots.filter(l=>l.mois>=14&&!l.passage15);
                 const hasAlertes = alerteCoiffeCRD || alerteCoiffeExp || alerteCoiffeMag || alerte15.length>0;
@@ -5348,9 +5344,8 @@ export default function App() {
                           <div style={{fontWeight:500,color:"#cc2222",fontSize:"13px"}}>Stock coiffes bas</div>
                           <div style={{display:"flex",gap:"6px",flexWrap:"wrap",marginTop:"4px"}}>
                             {alerteCoiffeCRD&&<span style={{background:"#fff",color:"#cc2222",border:"1px solid #f0b4b4",borderRadius:"4px",padding:"1px 8px",fontSize:"11px"}}>CRD 75cl : {calcStock("CRD")} coiffes (seuil 500)</span>}
-                            {alerteCoiffeExp&&<span style={{background:"#fff",color:"#cc2222",border:"1px solid #f0b4b4",borderRadius:"4px",padding:"1px 8px",fontSize:"11px"}}>Export 75cl : {calcStock("Export")} coiffes (seuil 500)</span>}
+                            {alerteCoiffeExp&&<span style={{background:"#fff",color:"#cc2222",border:"1px solid #f0b4b4",borderRadius:"4px",padding:"1px 8px",fontSize:"11px"}}>Export (75cl + Magnum) : {calcStock("Export")} coiffes (seuil 500)</span>}
                             {calcStock("CRD Magnum")<20&&<span style={{background:"#fff",color:"#cc2222",border:"1px solid #f0b4b4",borderRadius:"4px",padding:"1px 8px",fontSize:"11px"}}>CRD Magnum : {calcStock("CRD Magnum")} coiffes (seuil 20)</span>}
-                            {calcStock("Export Magnum")<20&&<span style={{background:"#fff",color:"#cc2222",border:"1px solid #f0b4b4",borderRadius:"4px",padding:"1px 8px",fontSize:"11px"}}>Export Magnum : {calcStock("Export Magnum")} coiffes (seuil 20)</span>}
                           </div>
                         </div>
                       </div>
@@ -5442,12 +5437,11 @@ export default function App() {
 
               {/* Encart coiffes */}
               {(()=>{
-                const calcStock = (type) => coiffesStock.filter(c=>c.type===type).reduce((s,c)=>s+(c.operation==="achat"?parseInt(c.qte)||0:-(parseInt(c.qte)||0)),0);
+                const calcStock = (type) => coiffesStock.filter(c=>c.type===type||(type==="Export"&&c.type==="Export Magnum")).reduce((s,c)=>s+(c.operation==="achat"?parseInt(c.qte)||0:-(parseInt(c.qte)||0)),0);
                 const stockCRD = calcStock("CRD");
                 const stockCRDMag = calcStock("CRD Magnum");
                 const stockCRDJer = calcStock("CRD Jeroboam");
                 const stockExport = calcStock("Export");
-                const stockExpMag = calcStock("Export Magnum");
                 const stockExpJer = calcStock("Export Jeroboam");
                 return (
                   <div style={{...s.card,padding:"16px 20px",marginTop:"16px",marginBottom:"16px"}}>
@@ -5457,7 +5451,7 @@ export default function App() {
                     </div>
                     <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:"8px"}}>
                       {[["CRD 75cl",stockCRD,"#6a2d8a"],["CRD Mag",stockCRDMag,"#6a2d8a"],["CRD Jer",stockCRDJer,"#6a2d8a"],
-                        ["Export 75cl",stockExport,"#8a2d6a"],["Export Mag",stockExpMag,"#8a2d6a"],["Export Jer",stockExpJer,"#8a2d6a"]
+                        ["Export 75cl/Mag",stockExport,"#8a2d6a"],["Export Jer",stockExpJer,"#8a2d6a"]
                       ].filter(([,q])=>q>0||true).map(([lbl,q,col])=>(
                         <div key={lbl} style={{padding:"8px",background:q<50?"#fde8e8":"#f0fff4",borderRadius:"6px",textAlign:"center"}}>
                           <div style={{fontSize:"10px",color:col,fontWeight:500,marginBottom:"2px"}}>{lbl}</div>
@@ -7608,8 +7602,7 @@ export default function App() {
                     <option value="CRD">CRD 75cl</option>
                     <option value="CRD Magnum">CRD Magnum</option>
                     <option value="CRD Jeroboam">CRD Jeroboam</option>
-                    <option value="Export">Export 75cl</option>
-                    <option value="Export Magnum">Export Magnum</option>
+                    <option value="Export">Export 75cl / Magnum</option>
                     <option value="Export Jeroboam">Export Jeroboam</option>
                   </select></div>
                 <div><span style={s.lbl}>Date</span>
@@ -7741,7 +7734,9 @@ export default function App() {
                     // Deduire coiffes si habillage
                     if(newStatut==="Habille CRD"||newStatut==="Habille Export") {
                       const lotFmt = lotAction.lot.format;
-                      const typeCoiffe = (newStatut==="Habille CRD"?"CRD":"Export") + (lotFmt==="Magnum"?" Magnum":lotFmt==="Jeroboam"?" Jeroboam":"");
+                      const typeCoiffe = newStatut==="Habille CRD"
+                        ? "CRD"+(lotFmt==="Magnum"?" Magnum":lotFmt==="Jeroboam"?" Jeroboam":"")
+                        : "Export"+(lotFmt==="Jeroboam"?" Jeroboam":""); // Export : 75cl et Magnum partagent le meme stock de coiffes
                       const deduction = {id:"coiffe_"+Date.now(),type:typeCoiffe,operation:"utilisation",qte:String(qte),date,notes:"Habillage "+lotAction.lot.cuvee,timestamp:new Date().toISOString()};
                       setCoiffesStock(prev=>[deduction,...prev]);
                       fbSave("coiffes",deduction.id,deduction);
