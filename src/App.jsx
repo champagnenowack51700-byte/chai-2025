@@ -720,7 +720,7 @@ export default function App() {
   const [campagnes,    setCampagnes]    = useState([]);
   const [campForm,     setCampForm]     = useState({annee:"", denomination:"", millesime:"", notes:""});
   const [editingNote,  setEditingNote]  = useState(null);
-  const [editNoteForm, setEditNoteForm] = useState({boise:"",longueur:"",noteG:"",commentaire:""});
+  const [editNoteForm, setEditNoteForm] = useState({boise:"",longueur:"",noteG:"",commentaire:"",date:""});
   const [showFutForm, setShowFutForm] = useState(false);
   const [editingFut,  setEditingFut]  = useState(null); // null=ajout, objet=édition
   const [importText,  setImportText]  = useState("");
@@ -1870,7 +1870,7 @@ export default function App() {
   // Notes de degustation
   const openEditNote = (note) => {
     setEditingNote(note);
-    setEditNoteForm({boise:note.boise??'',longueur:note.longueur??'',noteG:note.noteG??'',commentaire:note.commentaire||''});
+    setEditNoteForm({boise:note.boise??'',longueur:note.longueur??'',noteG:note.noteG??'',commentaire:note.commentaire||'',date:note.date||''});
     setShowEditDeg(true);
   };
   const saveEditNote = () => {
@@ -1879,8 +1879,19 @@ export default function App() {
       longueur:editNoteForm.longueur!==''?parseFloat(editNoteForm.longueur):null,
       noteG:   editNoteForm.noteG!==''?parseFloat(editNoteForm.noteG):null,
       commentaire:editNoteForm.commentaire,
+      date:editNoteForm.date,
     };
-    setDegustations(prev=>prev.map(d=>d.id===editingNote.id?updated:d));
+    setDegustations(prev=>prev.map(d=>{
+      // Si la date a change, on l'applique a toutes les notes de la meme session
+      // (meme fut + meme session) pour rester cohérent, en plus de la note modifiee.
+      if(d.id===editingNote.id) return updated;
+      if(editNoteForm.date!==editingNote.date && d.futId===editingNote.futId && d.session===editingNote.session) {
+        const alsoUpdated = {...d, date:editNoteForm.date};
+        saveDegustation(alsoUpdated);
+        return alsoUpdated;
+      }
+      return d;
+    }));
     saveDegustation(updated);
     setShowEditDeg(false); setEditingNote(null);
   };
@@ -6313,13 +6324,15 @@ export default function App() {
                 <div><span style={s.lbl}>Note globale /5</span>
                   <input type="number" min="0" max="5" step="0.5" style={s.inp} value={editNoteForm.noteG} onChange={e=>setEditNoteForm(f=>({...f,noteG:e.target.value}))}/></div>
               </div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
-                <div><span style={s.lbl}>Volume RI (HL)</span>
-                  <input type="number" step="0.1" style={s.inp} placeholder="0" value={futForm.volumeRI||"0"} onChange={e=>setFutForm(f=>({...f,volumeRI:e.target.value}))}/></div>
-                <div style={{paddingTop:"18px",fontSize:"11px",color:"#9a8870"}}>
-                  {futForm.contenuActuel&&futForm.volumeRI?<span>Tirable : <strong style={{color:"#2d6a00"}}>{Math.max(0,(parseFloat(futForm.contenuActuel)||0)-(parseFloat(futForm.volumeRI)||0)).toFixed(1)} HL</strong></span>:null}
-                </div>
+              <div>
+                <span style={s.lbl}>Date</span>
+                <input type="date" style={s.inp} value={editNoteForm.date} onChange={e=>setEditNoteForm(f=>({...f,date:e.target.value}))}/>
               </div>
+              {editNoteForm.date!==editingNote.date && (
+                <div style={{fontSize:"11px",color:"#c47800",background:"#fff6e0",border:"0.5px solid #e8c888",borderRadius:"4px",padding:"6px 10px"}}>
+                  La date sera mise a jour pour toutes les notes de la session "{editingNote.session}" sur ce fût.
+                </div>
+              )}
               <div><span style={s.lbl}>Commentaire</span>
                 <textarea style={{...s.inp,height:"80px",resize:"vertical"}} value={editNoteForm.commentaire} onChange={e=>setEditNoteForm(f=>({...f,commentaire:e.target.value}))}/></div>
               <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
