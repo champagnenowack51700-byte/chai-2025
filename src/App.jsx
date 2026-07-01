@@ -531,6 +531,7 @@ export default function App() {
   const [filterStock15,    setFilterStock15]    = useState("");
   const [groupByStock,     setGroupByStock]     = useState(["cuvee"]);
   const [filterTirageAnnee, setFilterTirageAnnee] = useState("");
+  const [showTotauxDetail, setShowTotauxDetail] = useState(false);
   const [filterAppellation, setFilterAppellation] = useState("");
   const [filterOp,         setFilterOp]         = useState("");
   const [filterDegFut,     setFilterDegFut]     = useState("");
@@ -3698,19 +3699,24 @@ export default function App() {
 
                 return (
                   <div style={{...s.card,padding:"16px 20px",marginTop:"16px"}}>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px",flexWrap:"wrap",gap:"8px"}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:showTotauxDetail?"12px":"0",flexWrap:"wrap",gap:"8px"}}>
                       <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#2C3E50"}}>Totaux ({lotsFiltre.length} lot{lotsFiltre.length>1?"s":""} — filtres appliqués)</div>
-                      <div style={{display:"flex",gap:"6px",flexWrap:"wrap"}}>
-                        {[["cuvee","Cuvée"],["lieu","Lieu"],["age","Âge"]].map(([val,lbl])=>(
-                          <button key={val} onClick={()=>setGroupByStock(prev=>prev.includes(val)?prev.filter(x=>x!==val):[...prev,val])}
-                            style={{padding:"4px 10px",borderRadius:"5px",border:`0.5px solid ${groupByStock.includes(val)?"#8B7355":"#d4c4a0"}`,background:groupByStock.includes(val)?"#F0EDE8":"transparent",color:groupByStock.includes(val)?"#8B7355":"#9a8870",fontSize:"11px",cursor:"pointer",fontWeight:groupByStock.includes(val)?600:400}}>
-                            {groupByStock.includes(val)?"✓ ":""}{lbl}
-                          </button>
-                        ))}
-                      </div>
+                      <button style={{...s.ghostSm,fontSize:"11px"}} onClick={()=>setShowTotauxDetail(v=>!v)}>{showTotauxDetail?"Masquer le détail":"Voir le détail"}</button>
                     </div>
-                    {content}
-                    <div style={{display:"flex",justifyContent:"space-between",padding:"8px 10px",marginTop:"10px",borderTop:"1px solid #d4c4a0",fontSize:"13px"}}>
+                    {showTotauxDetail && (
+                      <>
+                        <div style={{display:"flex",gap:"6px",flexWrap:"wrap",marginBottom:"12px"}}>
+                          {[["cuvee","Cuvée"],["lieu","Lieu"],["age","Âge"]].map(([val,lbl])=>(
+                            <button key={val} onClick={()=>setGroupByStock(prev=>prev.includes(val)?prev.filter(x=>x!==val):[...prev,val])}
+                              style={{padding:"4px 10px",borderRadius:"5px",border:`0.5px solid ${groupByStock.includes(val)?"#8B7355":"#d4c4a0"}`,background:groupByStock.includes(val)?"#F0EDE8":"transparent",color:groupByStock.includes(val)?"#8B7355":"#9a8870",fontSize:"11px",cursor:"pointer",fontWeight:groupByStock.includes(val)?600:400}}>
+                              {groupByStock.includes(val)?"✓ ":""}{lbl}
+                            </button>
+                          ))}
+                        </div>
+                        {content}
+                      </>
+                    )}
+                    <div style={{display:"flex",justifyContent:"space-between",padding:"8px 10px",marginTop:showTotauxDetail?"10px":"0",borderTop:showTotauxDetail?"1px solid #d4c4a0":"none",fontSize:"13px"}}>
                       <span style={{fontWeight:500,color:"#2C3E50"}}>Total général</span>
                       <span style={{fontWeight:700,color:"#2C3E50",fontFamily:"monospace"}}>{totalGeneral.toLocaleString("fr-FR")} btl</span>
                     </div>
@@ -5703,19 +5709,24 @@ export default function App() {
 
                 return (
                   <div style={{...s.card,padding:"16px 20px",marginTop:"16px"}}>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px",flexWrap:"wrap",gap:"8px"}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:showTotauxDetail?"12px":"0",flexWrap:"wrap",gap:"8px"}}>
                       <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#2C3E50"}}>Totaux ({lotsFiltre.length} lot{lotsFiltre.length>1?"s":""} — filtres appliqués)</div>
-                      <div style={{display:"flex",gap:"6px",flexWrap:"wrap"}}>
-                        {[["cuvee","Cuvée"],["lieu","Lieu"],["age","Âge"]].map(([val,lbl])=>(
-                          <button key={val} onClick={()=>setGroupByStock(prev=>prev.includes(val)?prev.filter(x=>x!==val):[...prev,val])}
-                            style={{padding:"4px 10px",borderRadius:"5px",border:`0.5px solid ${groupByStock.includes(val)?"#8B7355":"#d4c4a0"}`,background:groupByStock.includes(val)?"#F0EDE8":"transparent",color:groupByStock.includes(val)?"#8B7355":"#9a8870",fontSize:"11px",cursor:"pointer",fontWeight:groupByStock.includes(val)?600:400}}>
-                            {groupByStock.includes(val)?"✓ ":""}{lbl}
-                          </button>
-                        ))}
-                      </div>
+                      <button style={{...s.ghostSm,fontSize:"11px"}} onClick={()=>setShowTotauxDetail(v=>!v)}>{showTotauxDetail?"Masquer le détail":"Voir le détail"}</button>
                     </div>
-                    {content}
-                    <div style={{display:"flex",justifyContent:"space-between",padding:"8px 10px",marginTop:"10px",borderTop:"1px solid #d4c4a0",fontSize:"13px"}}>
+                    {showTotauxDetail && (
+                      <>
+                        <div style={{display:"flex",gap:"6px",flexWrap:"wrap",marginBottom:"12px"}}>
+                          {[["cuvee","Cuvée"],["lieu","Lieu"],["age","Âge"]].map(([val,lbl])=>(
+                            <button key={val} onClick={()=>setGroupByStock(prev=>prev.includes(val)?prev.filter(x=>x!==val):[...prev,val])}
+                              style={{padding:"4px 10px",borderRadius:"5px",border:`0.5px solid ${groupByStock.includes(val)?"#8B7355":"#d4c4a0"}`,background:groupByStock.includes(val)?"#F0EDE8":"transparent",color:groupByStock.includes(val)?"#8B7355":"#9a8870",fontSize:"11px",cursor:"pointer",fontWeight:groupByStock.includes(val)?600:400}}>
+                              {groupByStock.includes(val)?"✓ ":""}{lbl}
+                            </button>
+                          ))}
+                        </div>
+                        {content}
+                      </>
+                    )}
+                    <div style={{display:"flex",justifyContent:"space-between",padding:"8px 10px",marginTop:showTotauxDetail?"10px":"0",borderTop:showTotauxDetail?"1px solid #d4c4a0":"none",fontSize:"13px"}}>
                       <span style={{fontWeight:500,color:"#2C3E50"}}>Total général</span>
                       <span style={{fontWeight:700,color:"#2C3E50",fontFamily:"monospace"}}>{totalGeneral.toLocaleString("fr-FR")} btl</span>
                     </div>
