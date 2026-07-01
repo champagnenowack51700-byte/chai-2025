@@ -618,15 +618,15 @@ export default function App() {
   const getStatutsMouvement = (typeProduit) => ["coteaux_blanc","coteaux_rouge","ratafia"].includes(typeProduit) ? ["En vieillissement"] : STATUTS_MOUVEMENT;
   // Statut de depart requis avant de pouvoir "Diviser" (habiller) un lot
   const getPreHabillageStatut = (typeProduit) => ["coteaux_blanc","coteaux_rouge","ratafia"].includes(typeProduit) ? "En vieillissement" : "Degorge";
-  // Statuts d'habillage disponibles selon le type de produit
-  const getStatutsHabillage = (typeProduit) => {
-    if(typeProduit==="ratafia") return ["Habille"];
+  // Statuts d'habillage disponibles selon le type de produit ET le format (pour Ratafia, depend du format)
+  const getStatutsHabillage = (typeProduit, format) => {
+    if(typeProduit==="ratafia") return format==="Jeroboam" ? ["Habillage neutre 3L"] : ["Habillage neutre 50cl"];
     if(typeProduit==="coteaux_blanc"||typeProduit==="coteaux_rouge") return ["Habille Neutre","Habille Vignette CRD"];
     return STATUTS_HABILLAGE; // champagne
   };
-  // Type de coiffe a deduire du stock pour un habillage donne (null = pas de gestion de stock, ex. habillage neutre)
+  // Type de coiffe a deduire du stock pour un habillage donne (null = pas de gestion de stock, ex. habillage neutre coteaux)
   const getTypeCoiffeHabillage = (typeProduit, statutChoisi, format) => {
-    if(typeProduit==="ratafia") return format==="Jeroboam" ? "Neutre 3L" : "Neutre 50cl";
+    if(typeProduit==="ratafia") return statutChoisi==="Habillage neutre 3L" ? "Neutre 3L" : "Neutre 50cl";
     if(typeProduit==="coteaux_blanc"||typeProduit==="coteaux_rouge") {
       return statutChoisi==="Habille Vignette CRD" ? "Vignette CRD Coteaux" : null; // Neutre : pas de coiffe a gerer
     }
@@ -636,7 +636,7 @@ export default function App() {
       : "Export"+(format==="Jeroboam"?" Jeroboam":""); // Export : 75cl et Magnum partagent le meme stock
   };
   const STATUTS_AUTRES = ["En vieillissement", "Habille"];
-  const TOUS_STATUTS_POSSIBLES = [...STATUTS_BOUTEILLES, "En vieillissement", "Habille Neutre", "Habille Vignette CRD", "Habille"];
+  const TOUS_STATUTS_POSSIBLES = [...STATUTS_BOUTEILLES, "En vieillissement", "Habille Neutre", "Habille Vignette CRD", "Habillage neutre 50cl", "Habillage neutre 3L"];
   const getStatuts = (type) => ["coteaux_blanc","coteaux_rouge","ratafia"].includes(type) ? STATUTS_AUTRES : STATUTS_BOUTEILLES;
   const LIEU_COLORS = {"Domaine":{bg:"#d4edda",color:"#1a7a40"},"Lorain Champagnisation":{bg:"#d4e8f8",color:"#185FA5"},"Epernay":{bg:"#E8E0D0",color:"#c47800"}};
   const STATUT_COLORS = {"Sur latte / Sur pointe":{bg:"#e8f0fb",color:"#185FA5"},"En cours de degorgement":{bg:"#fff3cd",color:"#c47800"},"Degorge":{bg:"#d4f0dd",color:"#1a7a40"},"Habille CRD":{bg:"#e8d4f8",color:"#6a2d8a"},"Habille Export":{bg:"#f8d4e8",color:"#8a2d6a"}};
@@ -7816,8 +7816,8 @@ export default function App() {
                   <input type="number" style={s.inp} id="div_qte" placeholder="ex. 300" max={lotAction.lot.qteActuelle-1}/>
                 </div>
                 <div><span style={s.lbl}>Statut du nouveau lot</span>
-                  <select style={s.sel} id="div_statut" defaultValue={getStatutsHabillage(lotAction.lot.typeProduit)[0]}>
-                    {getStatutsHabillage(lotAction.lot.typeProduit).map(st=><option key={st} value={st}>{st}</option>)}
+                  <select style={s.sel} id="div_statut" defaultValue={getStatutsHabillage(lotAction.lot.typeProduit,lotAction.lot.format)[0]}>
+                    {getStatutsHabillage(lotAction.lot.typeProduit,lotAction.lot.format).map(st=><option key={st} value={st}>{st}</option>)}
                   </select>
                 </div>
                 <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
