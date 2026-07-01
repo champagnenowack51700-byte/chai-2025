@@ -3604,18 +3604,98 @@ export default function App() {
                 </div>
               )}
 
-              {/* Totaux (respecte les filtres actifs, criteres combinables) */}
+              {/* Totaux (respecte les filtres actifs) - tableau croise quand 2 criteres sont selectionnes */}
               {lotsFiltre.length>0 && (()=>{
                 const totalGeneral = lotsFiltre.reduce((s,l)=>s+(parseInt(l.qteActuelle)||0),0);
-                const dims = groupByStock.length>0 ? groupByStock : [];
-                const dimLabel = (dim,l) => dim==="cuvee" ? l.cuvee+(l.millesime?" "+l.millesime:"") : dim==="lieu" ? (l.lieu||"-") : (l.mois>=15 ? "≥ 15 mois" : "< 15 mois");
-                const grouped = {};
-                lotsFiltre.forEach(l=>{
-                  const key = dims.length>0 ? dims.map(d=>dimLabel(d,l)).join(" • ") : "Tout";
-                  if(!grouped[key]) grouped[key] = {key, qte:0, _mois: dims.includes("age")?(l.mois>=15?1:0):null};
-                  grouped[key].qte += parseInt(l.qteActuelle)||0;
-                });
-                const lignes = Object.values(grouped).sort((a,b)=>dims.includes("age") && dims.length===1 ? a._mois-b._mois : b.qte-a.qte);
+                const dims = groupByStock;
+                const DIM_LABELS = {cuvee:"Cuvée",lieu:"Lieu",age:"Âge"};
+                const dimVal = (dim,l) => dim==="cuvee" ? l.cuvee+(l.millesime?" "+l.millesime:"") : dim==="lieu" ? (l.lieu||"-") : (l.mois>=15 ? "≥ 15 mois" : "< 15 mois");
+                const sortVals = (dim,vals) => {
+                  if(dim==="age") return ["< 15 mois","≥ 15 mois"].filter(v=>vals.includes(v));
+                  if(dim==="lieu") return [...LIEUX_STOCK.filter(v=>vals.includes(v)), ...vals.filter(v=>!LIEUX_STOCK.includes(v))];
+                  return [...vals].sort((a,b)=>a.localeCompare(b));
+                };
+                const barColor = "#c9a876";
+
+                let content;
+                if(dims.length===0) {
+                  content = <div style={{fontSize:"11px",color:"#9a8870",marginBottom:"4px"}}>Sélectionne un ou plusieurs critères ci-dessus pour voir le détail (ex. Lieu + Âge pour un tableau croisé).</div>;
+                } else if(dims.length===1) {
+                  // Liste simple avec barre de proportion
+                  const dim = dims[0];
+                  const grouped = {};
+                  lotsFiltre.forEach(l=>{
+                    const key = dimVal(dim,l);
+                    grouped[key] = (grouped[key]||0) + (parseInt(l.qteActuelle)||0);
+                  });
+                  const keysTriees = sortVals(dim, Object.keys(grouped));
+                  content = (
+                    <div style={{display:"grid",gap:"6px",maxHeight:"340px",overflowY:"auto"}}>
+                      {keysTriees.map(k=>{
+                        const qte = grouped[k];
+                        const pct = totalGeneral>0 ? Math.round(qte/totalGeneral*100) : 0;
+                        return (
+                          <div key={k}>
+                            <div style={{display:"flex",justifyContent:"space-between",fontSize:"12px",marginBottom:"2px"}}>
+                              <span style={{color:"#6a5838"}}>{k}</span>
+                              <span style={{fontWeight:600,color:"#8B7355",fontFamily:"monospace"}}>{qte.toLocaleString("fr-FR")} btl <span style={{color:"#c4b494",fontWeight:400}}>({pct}%)</span></span>
+                            </div>
+                            <div style={{height:"6px",background:"#ede5d4",borderRadius:"3px",overflow:"hidden"}}>
+                              <div style={{height:"100%",width:pct+"%",background:barColor,borderRadius:"3px"}}/>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                } else {
+                  // Tableau croise sur les 2 premiers criteres selectionnes (lignes x colonnes)
+                  const [rowDim, colDim] = dims;
+                  const matrix = {};
+                  const rowSet = new Set(), colSet = new Set();
+                  lotsFiltre.forEach(l=>{
+                    const rk = dimVal(rowDim,l), ck = dimVal(colDim,l);
+                    rowSet.add(rk); colSet.add(ck);
+                    matrix[rk] = matrix[rk]||{};
+                    matrix[rk][ck] = (matrix[rk][ck]||0) + (parseInt(l.qteActuelle)||0);
+                  });
+                  const rows = sortVals(rowDim, [...rowSet]);
+                  const cols = sortVals(colDim, [...colSet]);
+                  const rowTotal = (rk) => cols.reduce((s,ck)=>s+((matrix[rk]||{})[ck]||0),0);
+                  const colTotal = (ck) => rows.reduce((s,rk)=>s+((matrix[rk]||{})[ck]||0),0);
+                  content = (
+                    <div style={{overflowX:"auto"}}>
+                      <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
+                        <thead>
+                          <tr style={{borderBottom:"1.5px solid #d4c4a0"}}>
+                            <th style={{textAlign:"left",padding:"6px 10px",color:"#7a6840",fontWeight:600}}>{DIM_LABELS[rowDim]} \ {DIM_LABELS[colDim]}</th>
+                            {cols.map(ck=><th key={ck} style={{textAlign:"right",padding:"6px 10px",color:"#7a6840",fontWeight:600}}>{ck}</th>)}
+                            <th style={{textAlign:"right",padding:"6px 10px",color:"#2C3E50",fontWeight:700}}>Total</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {rows.map((rk,i)=>(
+                            <tr key={rk} style={{borderBottom:"0.5px solid #ede5d4",background:i%2===0?"#fffbf5":"#ffffff"}}>
+                              <td style={{padding:"6px 10px",color:"#6a5838",fontWeight:500}}>{rk}</td>
+                              {cols.map(ck=>{
+                                const v = (matrix[rk]||{})[ck]||0;
+                                return <td key={ck} style={{textAlign:"right",padding:"6px 10px",color:v>0?"#8B7355":"#d4c4a0",fontFamily:"monospace"}}>{v>0?v.toLocaleString("fr-FR"):"-"}</td>;
+                              })}
+                              <td style={{textAlign:"right",padding:"6px 10px",fontWeight:600,color:"#2C3E50",fontFamily:"monospace"}}>{rowTotal(rk).toLocaleString("fr-FR")}</td>
+                            </tr>
+                          ))}
+                          <tr style={{borderTop:"1.5px solid #d4c4a0"}}>
+                            <td style={{padding:"6px 10px",fontWeight:700,color:"#2C3E50"}}>Total</td>
+                            {cols.map(ck=><td key={ck} style={{textAlign:"right",padding:"6px 10px",fontWeight:600,color:"#2C3E50",fontFamily:"monospace"}}>{colTotal(ck).toLocaleString("fr-FR")}</td>)}
+                            <td style={{textAlign:"right",padding:"6px 10px",fontWeight:700,color:"#2C3E50",fontFamily:"monospace"}}>{totalGeneral.toLocaleString("fr-FR")}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                      {dims.length>2 && <div style={{fontSize:"10px",color:"#9a8870",marginTop:"6px"}}>Le 3e critère ({DIM_LABELS[dims[2]]}) n'est pas affiché dans ce tableau croisé (limité à 2 axes) — désélectionne-le ou remplace-le pour changer les axes.</div>}
+                    </div>
+                  );
+                }
+
                 return (
                   <div style={{...s.card,padding:"16px 20px",marginTop:"16px"}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px",flexWrap:"wrap",gap:"8px"}}>
@@ -3629,16 +3709,8 @@ export default function App() {
                         ))}
                       </div>
                     </div>
-                    {dims.length===0 && <div style={{fontSize:"11px",color:"#9a8870",marginBottom:"8px"}}>Sélectionne un ou plusieurs critères ci-dessus pour croiser les totaux (ex. Lieu + Âge).</div>}
-                    <div style={{display:"grid",gap:"4px",maxHeight:"320px",overflowY:"auto"}}>
-                      {lignes.map(l=>(
-                        <div key={l.key} style={{display:"flex",justifyContent:"space-between",padding:"6px 10px",background:"#fffbf5",borderRadius:"4px",fontSize:"12px"}}>
-                          <span style={{color:"#6a5838"}}>{l.key}</span>
-                          <span style={{fontWeight:600,color:"#8B7355",fontFamily:"monospace"}}>{l.qte.toLocaleString("fr-FR")} btl</span>
-                        </div>
-                      ))}
-                    </div>
-                    <div style={{display:"flex",justifyContent:"space-between",padding:"8px 10px",marginTop:"6px",borderTop:"1px solid #d4c4a0",fontSize:"13px"}}>
+                    {content}
+                    <div style={{display:"flex",justifyContent:"space-between",padding:"8px 10px",marginTop:"10px",borderTop:"1px solid #d4c4a0",fontSize:"13px"}}>
                       <span style={{fontWeight:500,color:"#2C3E50"}}>Total général</span>
                       <span style={{fontWeight:700,color:"#2C3E50",fontFamily:"monospace"}}>{totalGeneral.toLocaleString("fr-FR")} btl</span>
                     </div>
@@ -5537,18 +5609,98 @@ export default function App() {
                 </div>
               )}
 
-              {/* Totaux (respecte les filtres actifs, criteres combinables) */}
+              {/* Totaux (respecte les filtres actifs) - tableau croise quand 2 criteres sont selectionnes */}
               {lotsFiltre.length>0 && (()=>{
                 const totalGeneral = lotsFiltre.reduce((s,l)=>s+(parseInt(l.qteActuelle)||0),0);
-                const dims = groupByStock.length>0 ? groupByStock : [];
-                const dimLabel = (dim,l) => dim==="cuvee" ? l.cuvee+(l.millesime?" "+l.millesime:"") : dim==="lieu" ? (l.lieu||"-") : (l.mois>=15 ? "≥ 15 mois" : "< 15 mois");
-                const grouped = {};
-                lotsFiltre.forEach(l=>{
-                  const key = dims.length>0 ? dims.map(d=>dimLabel(d,l)).join(" • ") : "Tout";
-                  if(!grouped[key]) grouped[key] = {key, qte:0, _mois: dims.includes("age")?(l.mois>=15?1:0):null};
-                  grouped[key].qte += parseInt(l.qteActuelle)||0;
-                });
-                const lignes = Object.values(grouped).sort((a,b)=>dims.includes("age") && dims.length===1 ? a._mois-b._mois : b.qte-a.qte);
+                const dims = groupByStock;
+                const DIM_LABELS = {cuvee:"Cuvée",lieu:"Lieu",age:"Âge"};
+                const dimVal = (dim,l) => dim==="cuvee" ? l.cuvee+(l.millesime?" "+l.millesime:"") : dim==="lieu" ? (l.lieu||"-") : (l.mois>=15 ? "≥ 15 mois" : "< 15 mois");
+                const sortVals = (dim,vals) => {
+                  if(dim==="age") return ["< 15 mois","≥ 15 mois"].filter(v=>vals.includes(v));
+                  if(dim==="lieu") return [...LIEUX_STOCK.filter(v=>vals.includes(v)), ...vals.filter(v=>!LIEUX_STOCK.includes(v))];
+                  return [...vals].sort((a,b)=>a.localeCompare(b));
+                };
+                const barColor = "#c9a876";
+
+                let content;
+                if(dims.length===0) {
+                  content = <div style={{fontSize:"11px",color:"#9a8870",marginBottom:"4px"}}>Sélectionne un ou plusieurs critères ci-dessus pour voir le détail (ex. Lieu + Âge pour un tableau croisé).</div>;
+                } else if(dims.length===1) {
+                  // Liste simple avec barre de proportion
+                  const dim = dims[0];
+                  const grouped = {};
+                  lotsFiltre.forEach(l=>{
+                    const key = dimVal(dim,l);
+                    grouped[key] = (grouped[key]||0) + (parseInt(l.qteActuelle)||0);
+                  });
+                  const keysTriees = sortVals(dim, Object.keys(grouped));
+                  content = (
+                    <div style={{display:"grid",gap:"6px",maxHeight:"340px",overflowY:"auto"}}>
+                      {keysTriees.map(k=>{
+                        const qte = grouped[k];
+                        const pct = totalGeneral>0 ? Math.round(qte/totalGeneral*100) : 0;
+                        return (
+                          <div key={k}>
+                            <div style={{display:"flex",justifyContent:"space-between",fontSize:"12px",marginBottom:"2px"}}>
+                              <span style={{color:"#6a5838"}}>{k}</span>
+                              <span style={{fontWeight:600,color:"#8B7355",fontFamily:"monospace"}}>{qte.toLocaleString("fr-FR")} btl <span style={{color:"#c4b494",fontWeight:400}}>({pct}%)</span></span>
+                            </div>
+                            <div style={{height:"6px",background:"#ede5d4",borderRadius:"3px",overflow:"hidden"}}>
+                              <div style={{height:"100%",width:pct+"%",background:barColor,borderRadius:"3px"}}/>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                } else {
+                  // Tableau croise sur les 2 premiers criteres selectionnes (lignes x colonnes)
+                  const [rowDim, colDim] = dims;
+                  const matrix = {};
+                  const rowSet = new Set(), colSet = new Set();
+                  lotsFiltre.forEach(l=>{
+                    const rk = dimVal(rowDim,l), ck = dimVal(colDim,l);
+                    rowSet.add(rk); colSet.add(ck);
+                    matrix[rk] = matrix[rk]||{};
+                    matrix[rk][ck] = (matrix[rk][ck]||0) + (parseInt(l.qteActuelle)||0);
+                  });
+                  const rows = sortVals(rowDim, [...rowSet]);
+                  const cols = sortVals(colDim, [...colSet]);
+                  const rowTotal = (rk) => cols.reduce((s,ck)=>s+((matrix[rk]||{})[ck]||0),0);
+                  const colTotal = (ck) => rows.reduce((s,rk)=>s+((matrix[rk]||{})[ck]||0),0);
+                  content = (
+                    <div style={{overflowX:"auto"}}>
+                      <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
+                        <thead>
+                          <tr style={{borderBottom:"1.5px solid #d4c4a0"}}>
+                            <th style={{textAlign:"left",padding:"6px 10px",color:"#7a6840",fontWeight:600}}>{DIM_LABELS[rowDim]} \ {DIM_LABELS[colDim]}</th>
+                            {cols.map(ck=><th key={ck} style={{textAlign:"right",padding:"6px 10px",color:"#7a6840",fontWeight:600}}>{ck}</th>)}
+                            <th style={{textAlign:"right",padding:"6px 10px",color:"#2C3E50",fontWeight:700}}>Total</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {rows.map((rk,i)=>(
+                            <tr key={rk} style={{borderBottom:"0.5px solid #ede5d4",background:i%2===0?"#fffbf5":"#ffffff"}}>
+                              <td style={{padding:"6px 10px",color:"#6a5838",fontWeight:500}}>{rk}</td>
+                              {cols.map(ck=>{
+                                const v = (matrix[rk]||{})[ck]||0;
+                                return <td key={ck} style={{textAlign:"right",padding:"6px 10px",color:v>0?"#8B7355":"#d4c4a0",fontFamily:"monospace"}}>{v>0?v.toLocaleString("fr-FR"):"-"}</td>;
+                              })}
+                              <td style={{textAlign:"right",padding:"6px 10px",fontWeight:600,color:"#2C3E50",fontFamily:"monospace"}}>{rowTotal(rk).toLocaleString("fr-FR")}</td>
+                            </tr>
+                          ))}
+                          <tr style={{borderTop:"1.5px solid #d4c4a0"}}>
+                            <td style={{padding:"6px 10px",fontWeight:700,color:"#2C3E50"}}>Total</td>
+                            {cols.map(ck=><td key={ck} style={{textAlign:"right",padding:"6px 10px",fontWeight:600,color:"#2C3E50",fontFamily:"monospace"}}>{colTotal(ck).toLocaleString("fr-FR")}</td>)}
+                            <td style={{textAlign:"right",padding:"6px 10px",fontWeight:700,color:"#2C3E50",fontFamily:"monospace"}}>{totalGeneral.toLocaleString("fr-FR")}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                      {dims.length>2 && <div style={{fontSize:"10px",color:"#9a8870",marginTop:"6px"}}>Le 3e critère ({DIM_LABELS[dims[2]]}) n'est pas affiché dans ce tableau croisé (limité à 2 axes) — désélectionne-le ou remplace-le pour changer les axes.</div>}
+                    </div>
+                  );
+                }
+
                 return (
                   <div style={{...s.card,padding:"16px 20px",marginTop:"16px"}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px",flexWrap:"wrap",gap:"8px"}}>
@@ -5562,16 +5714,8 @@ export default function App() {
                         ))}
                       </div>
                     </div>
-                    {dims.length===0 && <div style={{fontSize:"11px",color:"#9a8870",marginBottom:"8px"}}>Sélectionne un ou plusieurs critères ci-dessus pour croiser les totaux (ex. Lieu + Âge).</div>}
-                    <div style={{display:"grid",gap:"4px",maxHeight:"320px",overflowY:"auto"}}>
-                      {lignes.map(l=>(
-                        <div key={l.key} style={{display:"flex",justifyContent:"space-between",padding:"6px 10px",background:"#fffbf5",borderRadius:"4px",fontSize:"12px"}}>
-                          <span style={{color:"#6a5838"}}>{l.key}</span>
-                          <span style={{fontWeight:600,color:"#8B7355",fontFamily:"monospace"}}>{l.qte.toLocaleString("fr-FR")} btl</span>
-                        </div>
-                      ))}
-                    </div>
-                    <div style={{display:"flex",justifyContent:"space-between",padding:"8px 10px",marginTop:"6px",borderTop:"1px solid #d4c4a0",fontSize:"13px"}}>
+                    {content}
+                    <div style={{display:"flex",justifyContent:"space-between",padding:"8px 10px",marginTop:"10px",borderTop:"1px solid #d4c4a0",fontSize:"13px"}}>
                       <span style={{fontWeight:500,color:"#2C3E50"}}>Total général</span>
                       <span style={{fontWeight:700,color:"#2C3E50",fontFamily:"monospace"}}>{totalGeneral.toLocaleString("fr-FR")} btl</span>
                     </div>
