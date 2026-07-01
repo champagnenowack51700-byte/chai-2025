@@ -611,6 +611,8 @@ export default function App() {
   const LIEUX_STOCK = ["Domaine", "Lorain Champagnisation", "Epernay"];
   const FORMATS = [{key:"75", label:"Bouteille 75cl", vol:0.75}, {key:"magnum", label:"Magnum 1.5L", vol:1.5}, {key:"jeroboam", label:"Jeroboam 3L", vol:3.0}];
   const STATUTS_BOUTEILLES = ["Sur latte / Sur pointe", "En cours de degorgement", "Degorge", "Habille CRD", "Habille Export"];
+  const STATUTS_MOUVEMENT = ["Sur latte / Sur pointe", "En cours de degorgement", "Degorge"];
+  const STATUTS_HABILLAGE = ["Habille CRD", "Habille Export"];
   const STATUTS_AUTRES = ["En vieillissement", "Habille"];
   const getStatuts = (type) => ["coteaux_blanc","coteaux_rouge","ratafia"].includes(type) ? STATUTS_AUTRES : STATUTS_BOUTEILLES;
   const LIEU_COLORS = {"Domaine":{bg:"#d4edda",color:"#1a7a40"},"Lorain Champagnisation":{bg:"#d4e8f8",color:"#185FA5"},"Epernay":{bg:"#E8E0D0",color:"#c47800"}};
@@ -816,6 +818,18 @@ export default function App() {
     if(isNaN(qte)||qte<0) return alert("Quantité invalide.");
     const delta = qte - (editingLot.qteActuelle||0);
     const updated = {...editingLot, ...lotEditForm, qteActuelle:qte};
+    // Deduire coiffes si le statut passe a Habille CRD/Export alors qu'il ne l'etait pas avant
+    // (meme logique que Mouvement et Diviser, pour rester coherent)
+    const devientHabille = (updated.statut==="Habille CRD"||updated.statut==="Habille Export") && editingLot.statut!==updated.statut;
+    if(devientHabille) {
+      const lotFmt = updated.format;
+      const typeCoiffe = updated.statut==="Habille CRD"
+        ? "CRD"+(lotFmt==="Magnum"?" Magnum":lotFmt==="Jeroboam"?" Jeroboam":"")
+        : "Export"+(lotFmt==="Jeroboam"?" Jeroboam":"");
+      const deduction = {id:"coiffe_"+Date.now(),type:typeCoiffe,operation:"utilisation",qte:String(qte),date:new Date().toISOString().slice(0,10),notes:"Modification - Habillage "+updated.cuvee,timestamp:new Date().toISOString()};
+      setCoiffesStock(prev=>[deduction,...prev]);
+      fbSave("coiffes",deduction.id,deduction);
+    }
     // Si ce lot est issu d'une division, ajuster le lot lie en sens inverse pour garder le total constant
     if(delta!==0 && editingLot.linkedLotId) {
       const linked = stockBouteilles.find(x=>x.id===editingLot.linkedLotId);
@@ -7698,10 +7712,13 @@ export default function App() {
             </div>
             {lotAction.action==="mouvement"&&(
               <div style={{display:"grid",gap:"12px"}}>
+                <div style={{fontSize:"12px",color:"#185FA5",background:"#e8f0fa",border:"0.5px solid #b4d0f0",borderRadius:"4px",padding:"6px 10px"}}>
+                  Le mouvement sert à faire évoluer le lot avant habillage (Sur latte → Dégorgement → Dégorgé) et/ou à changer son lieu de stockage. Pour passer en Habillé CRD/Export, utilise "Diviser".
+                </div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
                   <div><span style={s.lbl}>Nouveau statut</span>
-                    <select style={s.sel} id="mvt_statut" defaultValue={lotAction.lot.statut}>
-                      {STATUTS_BOUTEILLES.map(st=><option key={st} value={st}>{st}</option>)}
+                    <select style={s.sel} id="mvt_statut" defaultValue={STATUTS_MOUVEMENT.includes(lotAction.lot.statut)?lotAction.lot.statut:STATUTS_MOUVEMENT[0]}>
+                      {STATUTS_MOUVEMENT.map(st=><option key={st} value={st}>{st}</option>)}
                     </select>
                   </div>
                   <div><span style={s.lbl}>Nouveau lieu</span>
@@ -7731,16 +7748,6 @@ export default function App() {
                     const notes = document.getElementById("mvt_notes").value;
                     const qteRestante = lotAction.lot.qteActuelle - qte;
                     if(qte <= 0) return alert("Quantite invalide.");
-                    // Deduire coiffes si habillage
-                    if(newStatut==="Habille CRD"||newStatut==="Habille Export") {
-                      const lotFmt = lotAction.lot.format;
-                      const typeCoiffe = newStatut==="Habille CRD"
-                        ? "CRD"+(lotFmt==="Magnum"?" Magnum":lotFmt==="Jeroboam"?" Jeroboam":"")
-                        : "Export"+(lotFmt==="Jeroboam"?" Jeroboam":""); // Export : 75cl et Magnum partagent le meme stock de coiffes
-                      const deduction = {id:"coiffe_"+Date.now(),type:typeCoiffe,operation:"utilisation",qte:String(qte),date,notes:"Habillage "+lotAction.lot.cuvee,timestamp:new Date().toISOString()};
-                      setCoiffesStock(prev=>[deduction,...prev]);
-                      fbSave("coiffes",deduction.id,deduction);
-                    }
                     if(qte < lotAction.lot.qteActuelle) {
                       const newLotId = "lot_"+Date.now();
                       const newLot = {...lotAction.lot, id:newLotId, qteInitiale:qte, qteActuelle:qte, statut:newStatut, lieu:newLieu, dateMvt:date, notes, linkedLotId:lotAction.lot.id};
@@ -7760,29 +7767,38 @@ export default function App() {
             )}
             {lotAction.action==="diviser"&&(
               <div style={{display:"grid",gap:"12px"}}>
-                <div style={{fontSize:"13px",color:"#6a5838"}}>Indiquez la quantite a separer du lot original.</div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
-                  <div><span style={s.lbl}>Quantite a separer</span>
-                    <input type="number" style={s.inp} id="div_qte" placeholder="ex. 300" max={lotAction.lot.qteActuelle-1}/>
+                <div style={{fontSize:"12px",color:"#185FA5",background:"#e8f0fa",border:"0.5px solid #b4d0f0",borderRadius:"4px",padding:"6px 10px"}}>
+                  Diviser sert à passer une partie du lot dégorgé en habillage (CRD ou Export), avec déduction automatique des coiffes. Le lieu reste celui du lot d'origine — utilise "Mouvement" pour le changer.
+                </div>
+                {lotAction.lot.statut!=="Degorge"&&(
+                  <div style={{fontSize:"12px",color:"#c47800",background:"#fff6e0",border:"0.5px solid #e8c888",borderRadius:"4px",padding:"6px 10px"}}>
+                    Ce lot n'est pas au statut "Dégorgé" (statut actuel : {lotAction.lot.statut}). Passe-le d'abord en Dégorgé via "Mouvement".
                   </div>
-                  <div><span style={s.lbl}>Lieu du nouveau lot</span>
-                    <select style={s.sel} id="div_lieu" defaultValue={lotAction.lot.lieu}>
-                      {LIEUX_STOCK.map(l=><option key={l} value={l}>{l}</option>)}
-                    </select>
-                  </div>
+                )}
+                <div><span style={s.lbl}>Quantite a separer</span>
+                  <input type="number" style={s.inp} id="div_qte" placeholder="ex. 300" max={lotAction.lot.qteActuelle-1}/>
                 </div>
                 <div><span style={s.lbl}>Statut du nouveau lot</span>
-                  <select style={s.sel} id="div_statut" defaultValue={lotAction.lot.statut}>
-                    {STATUTS_BOUTEILLES.map(st=><option key={st} value={st}>{st}</option>)}
+                  <select style={s.sel} id="div_statut" defaultValue={STATUTS_HABILLAGE[0]}>
+                    {STATUTS_HABILLAGE.map(st=><option key={st} value={st}>{st}</option>)}
                   </select>
                 </div>
                 <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
                   <button style={s.ghost} onClick={()=>setLotAction(null)}>Annuler</button>
-                  <button style={s.btn} onClick={()=>{
+                  <button style={s.btn} disabled={lotAction.lot.statut!=="Degorge"} onClick={()=>{
+                    if(lotAction.lot.statut!=="Degorge") return alert("Ce lot doit d'abord etre au statut \"Degorge\" (via Mouvement) avant de pouvoir etre habille.");
                     const qte = parseInt(document.getElementById("div_qte").value)||0;
-                    const lieu = document.getElementById("div_lieu").value;
+                    const lieu = lotAction.lot.lieu;
                     const statut = document.getElementById("div_statut").value;
                     if(qte<=0||qte>=lotAction.lot.qteActuelle) return alert("Quantite invalide - doit etre entre 1 et "+(lotAction.lot.qteActuelle-1));
+                    // Deduction des coiffes (Diviser sert uniquement a l'habillage desormais)
+                    const lotFmt = lotAction.lot.format;
+                    const typeCoiffe = statut==="Habille CRD"
+                      ? "CRD"+(lotFmt==="Magnum"?" Magnum":lotFmt==="Jeroboam"?" Jeroboam":"")
+                      : "Export"+(lotFmt==="Jeroboam"?" Jeroboam":"");
+                    const deduction = {id:"coiffe_"+Date.now(),type:typeCoiffe,operation:"utilisation",qte:String(qte),date:new Date().toISOString().slice(0,10),notes:"Division - Habillage "+lotAction.lot.cuvee,timestamp:new Date().toISOString()};
+                    setCoiffesStock(prev=>[deduction,...prev]);
+                    fbSave("coiffes",deduction.id,deduction);
                     const newLotId = "lot_"+Date.now();
                     const newLot = {...lotAction.lot, id:newLotId, qteInitiale:qte, qteActuelle:qte, statut, lieu, linkedLotId:lotAction.lot.id};
                     const updatedLot = {...lotAction.lot, qteActuelle:lotAction.lot.qteActuelle-qte, linkedLotId:newLotId};
