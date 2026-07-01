@@ -3738,10 +3738,10 @@ export default function App() {
                     </button>
                     <button style={{background:"#fce8e8",color:"#cc2222",border:"0.5px solid #f0b4b4",borderRadius:"4px",padding:"4px 12px",fontSize:"11px",cursor:"pointer",fontFamily:"monospace"}}
                       onClick={()=>{
-  if(!window.confirm("Supprimer ce tirage et restituer les volumes aux fûts ?")) return;
-  // Restituer volumes aux futs sources
+  if(!window.confirm("Supprimer ce tirage et restituer les volumes ?")) return;
+  // Restituer volumes aux futs sources (ancien systeme)
   const updFuts = tonneaux.map(fut=>{
-    const vol = parseFloat(t.assemblageVolumes?.[fut.id])||0;
+    const vol = parseFloat(t.futsSourcesVolumes?.[fut.id])||0;
     if(vol>0) {
       const newVol = (fut.contenuActuel||0)+vol;
       const updated = {...fut, contenuActuel:newVol, statut:"actif"};
@@ -3750,12 +3750,12 @@ export default function App() {
     return fut;
   });
   setTonneaux(updFuts);
-  // Restituer volume cuve destination
-  if(t.cuveCuveeId) {
-    const volHL = parseFloat(t.volumeCuvee)||0;
+  // Restituer volume a la cuve source (cuverie)
+  if(t.cuveSourceId) {
+    const volHL = (parseFloat(t.volumeTotal)||0)/100;
     setCuvesCuverie(prev=>prev.map(c=>{
-      if(c.id===t.cuveCuveeId) {
-        const updated = majCuveContenu(c, (parseFloat(c.contenuActuelHL)||0)-volHL);
+      if(c.id===t.cuveSourceId) {
+        const updated = {...c, contenuActuelHL:String(Math.round(((parseFloat(c.contenuActuelHL)||0)+volHL)*100)/100)};
         fbSave("cuvesCuverie",c.id,updated); return updated;
       }
       return c;
@@ -5488,10 +5488,10 @@ export default function App() {
                     </button>
                     <button style={{background:"#fce8e8",color:"#cc2222",border:"0.5px solid #f0b4b4",borderRadius:"4px",padding:"4px 12px",fontSize:"11px",cursor:"pointer",fontFamily:"monospace"}}
                       onClick={()=>{
-  if(!window.confirm("Supprimer ce tirage et restituer les volumes aux fûts ?")) return;
-  // Restituer volumes aux futs sources
+  if(!window.confirm("Supprimer ce tirage et restituer les volumes ?")) return;
+  // Restituer volumes aux futs sources (ancien systeme)
   const updFuts = tonneaux.map(fut=>{
-    const vol = parseFloat(t.assemblageVolumes?.[fut.id])||0;
+    const vol = parseFloat(t.futsSourcesVolumes?.[fut.id])||0;
     if(vol>0) {
       const newVol = (fut.contenuActuel||0)+vol;
       const updated = {...fut, contenuActuel:newVol, statut:"actif"};
@@ -5500,12 +5500,12 @@ export default function App() {
     return fut;
   });
   setTonneaux(updFuts);
-  // Restituer volume cuve destination
-  if(t.cuveCuveeId) {
-    const volHL = parseFloat(t.volumeCuvee)||0;
+  // Restituer volume a la cuve source (cuverie)
+  if(t.cuveSourceId) {
+    const volHL = (parseFloat(t.volumeTotal)||0)/100;
     setCuvesCuverie(prev=>prev.map(c=>{
-      if(c.id===t.cuveCuveeId) {
-        const updated = majCuveContenu(c, (parseFloat(c.contenuActuelHL)||0)-volHL);
+      if(c.id===t.cuveSourceId) {
+        const updated = {...c, contenuActuelHL:String(Math.round(((parseFloat(c.contenuActuelHL)||0)+volHL)*100)/100)};
         fbSave("cuvesCuverie",c.id,updated); return updated;
       }
       return c;
