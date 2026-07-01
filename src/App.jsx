@@ -4569,7 +4569,7 @@ export default function App() {
               </div>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:"16px"}}>
-              {[...new Set(vendanges.map(v=>v.annee))].sort().reverse().map(annee=>{
+              {[...new Set([...vendanges.map(v=>v.annee), ...rendementsAnnuels.map(r=>r.annee)])].sort().reverse().map(annee=>{
                 const vAnnee = vendanges.filter(v=>v.annee===annee);
                 const kgRecoltes = vAnnee.filter(v=>v.destinationMarc!=="prestation").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0);
                 const kgPrestation = vAnnee.filter(v=>v.destinationMarc==="prestation").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0);
@@ -4598,9 +4598,18 @@ export default function App() {
                   <div key={annee} style={{...s.card,borderLeft:enVO?"3px solid #8B0000":enSectionRI?"3px solid #cc2222":"3px solid #2C3E50"}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
                       <div style={{fontFamily:"Georgia,serif",fontSize:"16px",fontWeight:500,color:"#2C3E50"}}>Campagne {annee}</div>
-                      <div style={{display:"flex",gap:"6px"}}>
+                      <div style={{display:"flex",gap:"6px",alignItems:"center"}}>
                         {enVO&&<span style={{fontSize:"10px",background:"#fde8e8",color:"#8B0000",border:"1px solid #f0b4b4",borderRadius:"4px",padding:"2px 8px",fontWeight:600}}>⚠ VO</span>}
                         {enSectionRI&&!enVO&&<span style={{fontSize:"10px",background:"#fff3cd",color:"#c47800",border:"1px solid #ffc107",borderRadius:"4px",padding:"2px 8px",fontWeight:600}}>⚠ Section RI</span>}
+                        {vAnnee.length===0&&rendAnnee&&(
+                          <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
+                            onClick={()=>{
+                              if(window.confirm(`Supprimer la campagne ${annee} (rendement/RI saisis, sans aucune vendange associée) ?`)){
+                                setRendementsAnnuels(prev=>prev.filter(r=>r.annee!==annee));
+                                fbDelete("rendements", rendAnnee.id);
+                              }
+                            }}>Supprimer</button>
+                        )}
                       </div>
                     </div>
                     {/* Surface en production */}
