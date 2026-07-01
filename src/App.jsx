@@ -2937,7 +2937,7 @@ export default function App() {
                       <div key={c.id} style={{...s.card,borderLeft:`3px solid ${c.type==="debourbage"?"#185FA5":c.type==="bourbes"?"#8B0000":"#1a7a40"}`}}>
                         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr auto",gap:"16px",alignItems:"center"}}>
                           <div>
-                            <div style={{fontWeight:500,color:"#1a1205",fontSize:"14px"}}>{c.nom}</div>
+                            <div style={{fontWeight:500,color:"#1a1205",fontSize:"14px"}}>{c.nom}{c.isBio&&(parseFloat(c.contenuActuelHL)||0)>0&&<span style={{marginLeft:"6px",fontSize:"10px",background:"#2d6a00",color:"#fff",borderRadius:"3px",padding:"1px 6px",fontWeight:600}}>🌿 BIO</span>}</div>
                             <div style={{fontSize:"11px",color:"#9a8870",marginTop:"2px"}}>
                               <span style={{background:c.type==="debourbage"?"#e8f0fb":c.type==="bourbes"?"#fdd0d0":"#d4f0dd",color:c.type==="debourbage"?"#185FA5":c.type==="bourbes"?"#8B0000":"#1a7a40",borderRadius:"3px",padding:"1px 6px",fontSize:"10px"}}>{c.type==="debourbage"?"Debourbage":c.type==="bourbes"?"Bourbes":"Assemblage"}</span>
                             </div>
@@ -3520,7 +3520,7 @@ export default function App() {
                   <div key={a.id} style={{...s.card,marginBottom:"12px",borderLeft:"3px solid #2C3E50"}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"start",marginBottom:"10px"}}>
                       <div>
-                        <div style={{fontFamily:"Georgia,serif",fontSize:"16px",fontWeight:500,color:"#2C3E50"}}>{a.nomCuvee||"Sans nom"}</div>
+                        <div style={{fontFamily:"Georgia,serif",fontSize:"16px",fontWeight:500,color:"#2C3E50"}}>{a.nomCuvee||"Sans nom"}{a.isBio&&<span style={{marginLeft:"8px",fontSize:"11px",background:"#2d6a00",color:"#fff",borderRadius:"4px",padding:"2px 7px",fontWeight:600}}>🌿 BIO</span>}</div>
                         <div style={{fontSize:"12px",color:"#9a8870"}}>{fmt(a.date)}</div>
                       </div>
                       <div style={{display:"flex",gap:"6px"}}>
@@ -5647,8 +5647,8 @@ export default function App() {
                 <div><span style={s.lbl}>Contenu actuel (HL)</span>
                   <input type="number" step="0.1" style={s.inp} placeholder="0" value={cuverieForm.contenuActuelHL} onChange={e=>setCuverieForm(f=>({...f,contenuActuelHL:e.target.value}))}/></div>
               </div>
-              <div><span style={s.lbl}>Notes</span>
-                <input style={s.inp} placeholder="ex. Inox 50HL..." value={cuverieForm.notes||""} onChange={e=>setCuverieForm(f=>({...f,notes:e.target.value}))}/></div>
+              <div><span style={s.lbl}>Notes (ex. contenu actuellement stocké)</span>
+                <input style={s.inp} placeholder="ex. Fontinette 2025 - en attente tirage" value={cuverieForm.notes||""} onChange={e=>setCuverieForm(f=>({...f,notes:e.target.value}))}/></div>
               <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
                 <button style={s.ghost} onClick={()=>setShowCuverieForm(false)}>Annuler</button>
                 <button style={s.btn} onClick={()=>{
@@ -6635,7 +6635,9 @@ export default function App() {
                 <button style={s.btn} onClick={()=>{
                   if(!assemblageForm.nomCuvee) return alert("Le nom de cuvée est requis.");
                   if(!assemblageForm.sources.some(s=>s.id&&s.volume)) return alert("Ajoutez au moins une source avec un volume.");
-                  const a = {id:"asm_"+Date.now(),...assemblageForm,timestamp:new Date().toISOString()};
+                  const sourcesValides = assemblageForm.sources.filter(s=>s.id&&s.volume);
+                  const isBioAssemblage = sourcesValides.length>0 && sourcesValides.every(s=>tonneaux.find(t=>t.id===s.id)?.certif==="BIO");
+                  const a = {id:"asm_"+Date.now(),...assemblageForm,isBio:isBioAssemblage,timestamp:new Date().toISOString()};
                   // Deduire volumes des sources
                   const updFuts = tonneaux.map(t=>{
                     const volSortie = assemblageForm.sources.filter(s=>(s.type==="tonneau"||s.type==="reserve")&&s.id===t.id).reduce((sum,s)=>sum+(parseFloat(s.volume)||0),0);
@@ -6664,7 +6666,11 @@ export default function App() {
                       if(assemblageForm.destTirageId===c.id) delta += volTirageR;
                       if(retourCuveId===c.id) delta += volRetourR;
                       if(delta!==0) {
-                        const updated = {...c, contenuActuelHL:String(((parseFloat(c.contenuActuelHL)||0)+(delta/100)))};
+                        // Sur la cuve d'assemblage : noter ce qui y est stocke temporairement (cuvee + statut BIO)
+                        const noteContenu = assemblageForm.cuveAssemblageId===c.id&&volNetAssemblage>0
+                          ? `${assemblageForm.nomCuvee}${isBioAssemblage?" 🌿 BIO":""} — assemblé le ${fmt(assemblageForm.date)}`
+                          : c.notes;
+                        const updated = {...c, contenuActuelHL:String(((parseFloat(c.contenuActuelHL)||0)+(delta/100))), notes:noteContenu, isBio:assemblageForm.cuveAssemblageId===c.id&&volNetAssemblage>0?isBioAssemblage:c.isBio};
                         fbSave("cuvesCuverie",c.id,updated);
                         return updated;
                       }
