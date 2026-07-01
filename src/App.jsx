@@ -530,6 +530,7 @@ export default function App() {
   const [filterStockStatut,setFilterStockStatut]= useState("");
   const [filterStock15,    setFilterStock15]    = useState("");
   const [groupByStock,     setGroupByStock]     = useState(["cuvee"]);
+  const [filterTirageAnnee, setFilterTirageAnnee] = useState("");
   const [filterAppellation, setFilterAppellation] = useState("");
   const [filterOp,         setFilterOp]         = useState("");
   const [filterDegFut,     setFilterDegFut]     = useState("");
@@ -3873,13 +3874,22 @@ export default function App() {
           </div>
         )}
 
-        {view==="tirages" && (
+        {view==="tirages" && (()=>{
+          const anneesTirages = [...new Set(tirages.map(t=>t.date?.slice(0,4)).filter(Boolean))].sort().reverse();
+          const tiragesAffiches = [...tirages].filter(t=>!filterTirageAnnee||t.date?.slice(0,4)===filterTirageAnnee).sort((a,b)=>new Date(b.date)-new Date(a.date));
+          return (
           <div>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
-              <div style={{fontSize:"13px",color:"#7a6840"}}>{tirages.length} tirage(s) enregistré(s)</div>
-              <button style={s.btn} onClick={()=>{setTirageForm(TIRAGE_EMPTY);setEditingTirage(null);setShowTirageForm(true);}}>
-                + Nouveau tirage
-              </button>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px",flexWrap:"wrap",gap:"10px"}}>
+              <div style={{fontSize:"13px",color:"#7a6840"}}>{tiragesAffiches.length} tirage(s){filterTirageAnnee?" en "+filterTirageAnnee:""} ({tirages.length} au total)</div>
+              <div style={{display:"flex",gap:"8px",alignItems:"center"}}>
+                <select style={{...s.sel,maxWidth:"140px"}} value={filterTirageAnnee} onChange={e=>setFilterTirageAnnee(e.target.value)}>
+                  <option value="">Toutes les années</option>
+                  {anneesTirages.map(a=><option key={a} value={a}>{a}</option>)}
+                </select>
+                <button style={s.btn} onClick={()=>{setTirageForm(TIRAGE_EMPTY);setEditingTirage(null);setShowTirageForm(true);}}>
+                  + Nouveau tirage
+                </button>
+              </div>
             </div>
 
             {tirages.length===0 && (
@@ -3889,9 +3899,14 @@ export default function App() {
                 <button style={s.btn} onClick={()=>{setTirageForm(TIRAGE_EMPTY);setEditingTirage(null);setShowTirageForm(true);}}>+ Nouveau tirage</button>
               </div>
             )}
+            {tirages.length>0 && tiragesAffiches.length===0 && (
+              <div style={{...s.card,textAlign:"center",padding:"40px",color:"#9a8870"}}>
+                <div style={{fontSize:"14px"}}>Aucun tirage en {filterTirageAnnee}.</div>
+              </div>
+            )}
 
             <div style={{display:"grid",gap:"14px"}}>
-              {[...tirages].sort((a,b)=>new Date(b.date)-new Date(a.date)).map(t=>(
+              {tiragesAffiches.map(t=>(
                 <div key={t.id} style={{...s.card,borderLeft:"3px solid #533AB7"}}>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:"16px"}}>
                     {/* Identite */}
@@ -4009,7 +4024,8 @@ export default function App() {
               ))}
             </div>
           </div>
-        )}
+          );
+        })()}
 
         {/* -- DÉGUSTATIONS (vue globale) -- */}
         {view==="degustations" && (
