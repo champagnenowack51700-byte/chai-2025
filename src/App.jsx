@@ -506,7 +506,10 @@ export default function App() {
   const [filterStockLieu,  setFilterStockLieu]  = useState("");
   const [filterStockCuvee, setFilterStockCuvee] = useState("");
   const [riRequis,         setRiRequis]         = useState([]);
+  const [degresRatafia,    setDegresRatafia]     = useState([]);
   const [showRiForm,       setShowRiForm]       = useState(false);
+  const [showDegreRatafiaForm, setShowDegreRatafiaForm] = useState(false);
+  const [degreRatafiaForm, setDegreRatafiaForm] = useState("18");
   const [showRiDetail,     setShowRiDetail]      = useState(false);
   const [riForm,           setRiForm]           = useState({annee:new Date().getFullYear().toString(),volumeHL:""});
   const [stockTab,         setStockTab]         = useState("champagne");
@@ -1198,6 +1201,7 @@ export default function App() {
     ["traitements",  setTraitements],
     ["cuvesCuverie",  setCuvesCuverie],
     ["riRequis",      setRiRequis],
+    ["degresRatafia", setDegresRatafia],
     ["rendements",    setRendementsAnnuels],
     ["apportsParcelles", setApportsParcelles],
   ];
@@ -2432,16 +2436,20 @@ export default function App() {
                   return s+vri/100;
                 },0);
                 const totalTirable = Math.max(0, (totalVin/100) - totalRI);
+                const totalRatafiaHL = futsActifs.filter(t=>t.appellation==="ratafia").reduce((s,t)=>s+(t.contenuActuel||0),0)/100;
+                const degreRatafia = parseFloat(degresRatafia[0]?.degre) || 18;
+                const hlapRatafia = totalRatafiaHL*degreRatafia/100;
                 return [
                   {lbl:"Volume Champagne",val:(totalVin/100).toFixed(2)+" HL",sub:`cap. ${(totalCap/100).toFixed(0)} HL`},
                   {lbl:"Volume tirable",val:totalTirable.toFixed(2)+" HL",sub:"~"+Math.floor(totalTirable*100/0.75).toLocaleString("fr-FR")+" btl 75cl",col:"#1a7a40"},
                   ...(futsActifs.filter(t=>t.appellation==="coteaux").reduce((s,t)=>s+(t.contenuActuel||0),0)>0?[{lbl:"Coteaux Champenois",val:(futsActifs.filter(t=>t.appellation==="coteaux").reduce((s,t)=>s+(t.contenuActuel||0),0)/100).toFixed(2)+" HL",sub:"",col:"#8B0000"}]:[]),
-                  ...(futsActifs.filter(t=>t.appellation==="ratafia").reduce((s,t)=>s+(t.contenuActuel||0),0)>0?[{lbl:"Ratafia",val:(futsActifs.filter(t=>t.appellation==="ratafia").reduce((s,t)=>s+(t.contenuActuel||0),0)/100).toFixed(2)+" HL",sub:"",col:"#5c2a08"}]:[]),
+                  ...(totalRatafiaHL>0?[{lbl:"Ratafia",val:totalRatafiaHL.toFixed(2)+" HL",sub:`≈ ${hlapRatafia.toFixed(2)} HL d'alcool pur (à ${degreRatafia}°)`,col:"#5c2a08",ratafia:true}]:[]),
                 ].map((k,i)=>(
                   <div key={i} style={s.card}>
                     <div style={s.lbl}>{k.lbl}</div>
                     <div style={{fontSize:"28px",fontWeight:700,color:k.col||"#8B7355",letterSpacing:"-0.5px"}}>{k.val}</div>
                     <div style={{fontSize:"11px",color:"#9a8870",marginTop:"4px"}}>{k.sub}</div>
+                    {k.ratafia&&<button style={{...s.ghostSm,fontSize:"10px",marginTop:"6px",padding:"3px 8px"}} onClick={()=>{setDegreRatafiaForm(String(degreRatafia));setShowDegreRatafiaForm(true);}}>Modifier le degré</button>}
                   </div>
                 ));
               })()}
@@ -5742,6 +5750,36 @@ export default function App() {
                   setShowCuverieForm(false);
                   setEditingCuverie(null);
                   setCuverieForm(CUVERIE_EMPTY);
+                }}>Enregistrer</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* == MODAL DEGRE RATAFIA == */}
+      {showDegreRatafiaForm&&(
+        <div style={s.modal}>
+          <div style={{...s.modalBox,width:"380px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#2C3E50"}}>Degré alcoolique du Ratafia</div>
+              <button style={s.ghost} onClick={()=>setShowDegreRatafiaForm(false)}>x</button>
+            </div>
+            <div style={{display:"grid",gap:"12px"}}>
+              <div>
+                <span style={s.lbl}>Degré (% vol.)</span>
+                <input type="number" step="0.1" style={s.inp} placeholder="ex. 18" value={degreRatafiaForm} onChange={e=>setDegreRatafiaForm(e.target.value)}/>
+              </div>
+              <div style={{fontSize:"11px",color:"#9a8870"}}>Utilisé pour calculer le volume d'alcool pur (HL AP) affiché sur l'accueil : Volume (HL) × degré ÷ 100.</div>
+              <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
+                <button style={s.ghost} onClick={()=>setShowDegreRatafiaForm(false)}>Annuler</button>
+                <button style={s.btn} onClick={()=>{
+                  if(!degreRatafiaForm) return alert("Le degré est requis.");
+                  const existing = degresRatafia[0];
+                  const r = {id:existing?.id||"degre_ratafia", degre:degreRatafiaForm, timestamp:new Date().toISOString()};
+                  setDegresRatafia([r]);
+                  fbSave("degresRatafia", r.id, r);
+                  setShowDegreRatafiaForm(false);
                 }}>Enregistrer</button>
               </div>
             </div>
