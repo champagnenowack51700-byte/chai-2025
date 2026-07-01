@@ -2131,6 +2131,12 @@ export default function App() {
     setImportMsg("");
     const lines = importText.trim().split("\n").filter(l=>l.trim());
     if(lines.length<2){setImportMsg("X Format invalide. Vérifiez le fichier."); return;}
+    // Garde-fou : empecher d'importer l'exemple du formulaire tel quel (colle sans etre remplace)
+    const exempleBrut = "fut_id;session;date;degustateur;boise;longueur;note_g;commentaire\n23.28;Avril 2026;2026-04-15;Flavien;1;1.5;3;Nez grillé net droit\n23.28;Avril 2026;2026-04-15;Sébastien;1.5;2.5;4.5;Equilibré fruit/bois";
+    if(importText.trim()===exempleBrut.trim() || lines.some(l=>l.includes("Nez grillé net droit")||l.includes("Equilibré fruit/bois"))){
+      setImportMsg("X Il s'agit du texte d'exemple, pas de vos données. Remplacez-le par votre vrai fichier avant d'importer.");
+      return;
+    }
     const header = lines[0].split(";").map(h=>h.trim().toLowerCase());
     const required = ["fut_id","session","degustateur","note_g"];
     const missing = required.filter(r=>!header.includes(r));
@@ -5789,21 +5795,32 @@ export default function App() {
                   Cette action va mettre a jour la date sur <strong>{degustations.filter(d=>d.session===bulkDateForm.session).length} note(s)</strong>, tous fûts confondus, pour la session "{bulkDateForm.session}".
                 </div>
               )}
-              <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
-                <button style={s.ghost} onClick={()=>setShowBulkDateForm(false)}>Annuler</button>
-                <button style={s.btn} onClick={()=>{
+              <div style={{display:"flex",gap:"8px",justifyContent:"space-between",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
+                <button style={{...s.ghost,color:"#cc2222",borderColor:"#e8888855"}} disabled={!bulkDateForm.session} onClick={()=>{
                   if(!bulkDateForm.session) return alert("Choisir une session.");
-                  if(!bulkDateForm.date) return alert("Choisir une date.");
                   const concernees = degustations.filter(d=>d.session===bulkDateForm.session);
-                  const updated = concernees.map(d=>({...d, date:bulkDateForm.date}));
-                  setDegustations(prev=>prev.map(d=>{
-                    const u = updated.find(x=>x.id===d.id);
-                    return u || d;
-                  }));
-                  updated.forEach(d=>saveDegustation(d));
-                  alert(`${updated.length} note(s) mise(s) a jour avec la date ${bulkDateForm.date.split("-").reverse().join("/")}.`);
+                  if(!window.confirm(`Supprimer definitivement les ${concernees.length} note(s) de la session "${bulkDateForm.session}" ? Cette action est irreversible.`)) return;
+                  setDegustations(prev=>prev.filter(d=>d.session!==bulkDateForm.session));
+                  concernees.forEach(d=>deleteDegustationFb(d.id));
+                  alert(`${concernees.length} note(s) supprimee(s).`);
                   setShowBulkDateForm(false);
-                }}>Mettre à jour</button>
+                }}>Supprimer cette session</button>
+                <div style={{display:"flex",gap:"8px"}}>
+                  <button style={s.ghost} onClick={()=>setShowBulkDateForm(false)}>Annuler</button>
+                  <button style={s.btn} onClick={()=>{
+                    if(!bulkDateForm.session) return alert("Choisir une session.");
+                    if(!bulkDateForm.date) return alert("Choisir une date.");
+                    const concernees = degustations.filter(d=>d.session===bulkDateForm.session);
+                    const updated = concernees.map(d=>({...d, date:bulkDateForm.date}));
+                    setDegustations(prev=>prev.map(d=>{
+                      const u = updated.find(x=>x.id===d.id);
+                      return u || d;
+                    }));
+                    updated.forEach(d=>saveDegustation(d));
+                    alert(`${updated.length} note(s) mise(s) a jour avec la date ${bulkDateForm.date.split("-").reverse().join("/")}.`);
+                    setShowBulkDateForm(false);
+                  }}>Mettre à jour</button>
+                </div>
               </div>
             </div>
           </div>
