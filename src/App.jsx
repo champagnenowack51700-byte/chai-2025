@@ -507,6 +507,7 @@ export default function App() {
   const [filterStockCuvee, setFilterStockCuvee] = useState("");
   const [riRequis,         setRiRequis]         = useState([]);
   const [showRiForm,       setShowRiForm]       = useState(false);
+  const [showRiDetail,     setShowRiDetail]      = useState(false);
   const [riForm,           setRiForm]           = useState({annee:new Date().getFullYear().toString(),volumeHL:""});
   const [stockTab,         setStockTab]         = useState("champagne");
   const [lotAction,        setLotAction]        = useState(null);
@@ -2438,20 +2439,37 @@ export default function App() {
               const annee = new Date().getFullYear().toString();
               const riRequisAnnee = riRequis.find(r=>r.annee===annee);
               const isChampagneRI = t => t.appellation&&(t.appellation.startsWith("vins_clairs") || t.appellation==="vins_reserve" || t.appellation==="ri");
-              const totalRI = tonneaux.filter(t=>t.statut!=="vide").filter(isChampagneRI).reduce((s,t)=>{
+              const futsRI = tonneaux.filter(t=>t.statut!=="vide").filter(isChampagneRI).map(t=>{
                 const vri = parseFloat(t.volumeRI)||0;
-                if(t.appellation==="ri") return s+(vri>0?vri:(t.contenuActuel||0))/100;
-                return s+vri/100;
-              },0);
+                const contribution = t.appellation==="ri" ? (vri>0?vri:(t.contenuActuel||0))/100 : vri/100;
+                return {...t, contribution, divise: vri>0};
+              }).filter(t=>t.contribution>0);
+              const totalRI = futsRI.reduce((s,t)=>s+t.contribution,0);
               const riOk = !riRequisAnnee || totalRI>=(parseFloat(riRequisAnnee.volumeHL)||0);
               return (
-                <div style={{...s.card,marginBottom:"12px",padding:"10px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",background:riOk?"#fff":"#fde8e8",border:riOk?"0.5px solid #d4c4a0":"1px solid #f0b4b4"}}>
-                  <div style={{display:"flex",gap:"24px",alignItems:"center"}}>
-                    <div><div style={{fontSize:"10px",color:"#9a8870",textTransform:"uppercase",letterSpacing:"0.05em"}}>RI actuelle</div><div style={{fontSize:"18px",fontWeight:600,color:riOk?"#8B0000":"#cc2222"}}>{totalRI.toFixed(2)} <span style={{fontSize:"11px"}}>HL</span></div></div>
-                    <div><div style={{fontSize:"10px",color:"#9a8870",textTransform:"uppercase",letterSpacing:"0.05em"}}>RI requise {annee}</div><div style={{fontSize:"18px",fontWeight:600,color:"#9a8870"}}>{riRequisAnnee?.volumeHL||"-"} <span style={{fontSize:"11px"}}>HL</span></div></div>
-                    {!riOk&&<div style={{fontSize:"12px",color:"#cc2222",fontWeight:500}}>RI insuffisante</div>}
+                <div style={{marginBottom:"12px"}}>
+                  <div style={{...s.card,padding:"10px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",background:riOk?"#fff":"#fde8e8",border:riOk?"0.5px solid #d4c4a0":"1px solid #f0b4b4"}}>
+                    <div style={{display:"flex",gap:"24px",alignItems:"center"}}>
+                      <div><div style={{fontSize:"10px",color:"#9a8870",textTransform:"uppercase",letterSpacing:"0.05em"}}>RI actuelle</div><div style={{fontSize:"18px",fontWeight:600,color:riOk?"#8B0000":"#cc2222"}}>{totalRI.toFixed(2)} <span style={{fontSize:"11px"}}>HL</span></div></div>
+                      <div><div style={{fontSize:"10px",color:"#9a8870",textTransform:"uppercase",letterSpacing:"0.05em"}}>RI requise {annee}</div><div style={{fontSize:"18px",fontWeight:600,color:"#9a8870"}}>{riRequisAnnee?.volumeHL||"-"} <span style={{fontSize:"11px"}}>HL</span></div></div>
+                      {!riOk&&<div style={{fontSize:"12px",color:"#cc2222",fontWeight:500}}>RI insuffisante</div>}
+                    </div>
+                    <div style={{display:"flex",gap:"8px"}}>
+                      <button style={{...s.ghostSm,fontSize:"11px"}} onClick={()=>setShowRiDetail(v=>!v)}>{showRiDetail?"Masquer le détail":"Voir le détail"}</button>
+                      <button style={{...s.ghostSm,fontSize:"11px"}} onClick={()=>setShowRiForm(true)}>Saisir RI requise</button>
+                    </div>
                   </div>
-                  <button style={{...s.ghostSm,fontSize:"11px"}} onClick={()=>setShowRiForm(true)}>Saisir RI requise</button>
+                  {showRiDetail&&(
+                    <div style={{...s.card,marginTop:"6px",padding:"10px 16px",fontSize:"12px"}}>
+                      <div style={{fontWeight:500,color:"#2C3E50",marginBottom:"6px"}}>Détail du calcul ({futsRI.length} fût{futsRI.length>1?"s":""})</div>
+                      {futsRI.sort((a,b)=>b.contribution-a.contribution).map(t=>(
+                        <div key={t.id} style={{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:"0.5px solid #e8e0d0"}}>
+                          <span style={{color:"#6a5838"}}>{t.id} — {t.appellation==="ri"?"RI":t.appellation==="vins_reserve"?"Vins réserve":"Vins clairs"}{t.appellation==="ri"&&!t.divise?" (non divisé, 100% RI)":""}</span>
+                          <span style={{fontWeight:500}}>{t.contribution.toFixed(2)} HL</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               );
             })()}
