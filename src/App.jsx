@@ -48,6 +48,17 @@ const viderFut = (t) => ({
   volumeRI: 0,
   commentaire: "",
 });
+// Seuil (en HL) sous lequel une cuve de cuverie est consideree comme vide.
+const CUVE_VIDE_SEUIL_HL = 0.05; // 5 L
+// Calcule le nouveau contenu (HL) d'une cuve de cuverie et efface la note de
+// contenu (+ statut BIO) quand elle revient a 0, comme pour les fûts.
+const majCuveContenu = (c, newContenuHL) => {
+  const val = Math.max(0, Math.round(newContenuHL*100)/100);
+  if(val<=CUVE_VIDE_SEUIL_HL) {
+    return {...c, contenuActuelHL:"0", notes:"", isBio:false};
+  }
+  return {...c, contenuActuelHL:String(val)};
+};
 const fmt = (d) => {
   if(!d) return "-";
   const parts = d.slice(0,10).split("-");
@@ -1322,7 +1333,7 @@ export default function App() {
         const volPrisSourceHL = (parseFloat(tirageForm.volumeTotal)||0)/100;
         setCuvesCuverie(prev=>prev.map(c=>{
           if(c.id===tirageForm.cuveSourceId) {
-            const updatedC = {...c, contenuActuelHL:String(Math.max(0,Math.round(((parseFloat(c.contenuActuelHL)||0)-volPrisSourceHL)*100)/100))};
+            const updatedC = majCuveContenu(c, (parseFloat(c.contenuActuelHL)||0)-volPrisSourceHL);
             fbSave("cuvesCuverie", c.id, updatedC);
             return updatedC;
           }
@@ -1722,7 +1733,7 @@ export default function App() {
             ].filter(u=>u.id===c.id).reduce((s,u)=>s+(parseFloat(u.vol)||0),0);
             const diff = newVol - oldVol;
             if(diff===0) return c;
-            const updated = {...c, contenuActuelHL:String(Math.max(0,Math.round(((parseFloat(c.contenuActuelHL)||0)+diff)*100)/100))};
+            const updated = majCuveContenu(c, (parseFloat(c.contenuActuelHL)||0)+diff);
             fbSave("cuvesCuverie", c.id, updated);
             return updated;
           });
@@ -1903,7 +1914,7 @@ export default function App() {
       setCuvesCuverie(prev=>prev.map(c=>{
         const ec = cuves.find(ec=>ec.cuveId===c.id);
         if(ec && parseFloat(ec.volume)>0) {
-          const updated = {...c, contenuActuelHL:String(Math.max(0,Math.round(((parseFloat(c.contenuActuelHL)||0)-(parseFloat(ec.volume)||0))*100)/100))};
+          const updated = majCuveContenu(c, (parseFloat(c.contenuActuelHL)||0)-(parseFloat(ec.volume)||0));
           fbSave("cuvesCuverie", c.id, updated);
           return updated;
         }
@@ -3197,7 +3208,7 @@ export default function App() {
       const next = prev.map(c=>{
         const u = updates.find(u=>u.id===c.id);
         if(u) {
-          const updated = {...c, contenuActuelHL:String(Math.max(0,Math.round(((parseFloat(c.contenuActuelHL)||0)-(parseFloat(u.vol)||0))*100)/100))};
+          const updated = majCuveContenu(c, (parseFloat(c.contenuActuelHL)||0)-(parseFloat(u.vol)||0));
           fbSave("cuvesCuverie", c.id, updated);
           return updated;
         }
@@ -3552,7 +3563,7 @@ export default function App() {
                             const volNetA = volTotalA - volSortieA;
                             setCuvesCuverie(prev=>prev.map(c=>{
                               if(c.id===a.cuveAssemblageId) {
-                                const updated = {...c, contenuActuelHL:String(Math.max(0,((parseFloat(c.contenuActuelHL)||0)-(volNetA/100))))};
+                                const updated = majCuveContenu(c, (parseFloat(c.contenuActuelHL)||0)-(volNetA/100));
                                 fbSave("cuvesCuverie",c.id,updated); return updated;
                               }
                               return c;
@@ -3563,7 +3574,7 @@ export default function App() {
                             const volT = parseFloat(a.destTirageVol)||0;
                             setCuvesCuverie(prev=>prev.map(c=>{
                               if(c.id===a.destTirageId) {
-                                const updated = {...c, contenuActuelHL:String(Math.max(0,Math.round(((parseFloat(c.contenuActuelHL)||0)-(volT/100))*100)/100))};
+                                const updated = majCuveContenu(c, (parseFloat(c.contenuActuelHL)||0)-(volT/100));
                                 fbSave("cuvesCuverie",c.id,updated); return updated;
                               }
                               return c;
@@ -3575,7 +3586,7 @@ export default function App() {
                             const volR = parseFloat(a.destRetourVol)||0;
                             setCuvesCuverie(prev=>prev.map(c=>{
                               if(c.id===cuveId) {
-                                const updated = {...c, contenuActuelHL:String(Math.max(0,Math.round(((parseFloat(c.contenuActuelHL)||0)-(volR/100))*100)/100))};
+                                const updated = majCuveContenu(c, (parseFloat(c.contenuActuelHL)||0)-(volR/100));
                                 fbSave("cuvesCuverie",c.id,updated); return updated;
                               }
                               return c;
@@ -3744,7 +3755,7 @@ export default function App() {
     const volHL = parseFloat(t.volumeCuvee)||0;
     setCuvesCuverie(prev=>prev.map(c=>{
       if(c.id===t.cuveCuveeId) {
-        const updated = {...c, contenuActuelHL:String(Math.max(0,Math.round(((parseFloat(c.contenuActuelHL)||0)-volHL)*100)/100))};
+        const updated = majCuveContenu(c, (parseFloat(c.contenuActuelHL)||0)-volHL);
         fbSave("cuvesCuverie",c.id,updated); return updated;
       }
       return c;
@@ -4971,7 +4982,7 @@ export default function App() {
       const next = prev.map(c=>{
         const u = updates.find(u=>u.id===c.id);
         if(u) {
-          const updated = {...c, contenuActuelHL:String(Math.max(0,Math.round(((parseFloat(c.contenuActuelHL)||0)-(parseFloat(u.vol)||0))*100)/100))};
+          const updated = majCuveContenu(c, (parseFloat(c.contenuActuelHL)||0)-(parseFloat(u.vol)||0));
           fbSave("cuvesCuverie", c.id, updated);
           return updated;
         }
@@ -5494,7 +5505,7 @@ export default function App() {
     const volHL = parseFloat(t.volumeCuvee)||0;
     setCuvesCuverie(prev=>prev.map(c=>{
       if(c.id===t.cuveCuveeId) {
-        const updated = {...c, contenuActuelHL:String(Math.max(0,Math.round(((parseFloat(c.contenuActuelHL)||0)-volHL)*100)/100))};
+        const updated = majCuveContenu(c, (parseFloat(c.contenuActuelHL)||0)-volHL);
         fbSave("cuvesCuverie",c.id,updated); return updated;
       }
       return c;
