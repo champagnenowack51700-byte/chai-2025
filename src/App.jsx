@@ -1397,9 +1397,10 @@ export default function App() {
     if(editingTirage) {
       setTirages(prev=>prev.map(t=>t.id===editingTirage.id ? updated : t));
       // Update isBio in stock bouteilles
+      const isBioActuel = cuvesCuverie.find(c=>c.id===tirageForm.cuveSourceId)?.isBio||false;
       setStockBouteilles(prev=>prev.map(lot=>{
         if(lot.tirageId===editingTirage.id) {
-          const updatedLot = {...lot, isBio:updated.isBio||false};
+          const updatedLot = {...lot, isBio:isBioActuel};
           fbSave("stockBouteilles", lot.id, updatedLot);
           return updatedLot;
         }
@@ -1460,12 +1461,14 @@ export default function App() {
     // Creer/mettre a jour les lots dans stockBouteilles
     if(editingTirage) {
       // Mise a jour des lots existants (date, cuvee, millesime, quantites)
-      const fmts = [{fmt:"75cl",qk:"qte75"},{fmt:"Magnum",qk:"qteMagnum"},{fmt:"Jeroboam",qk:"qteJeroboam"}];
-      fmts.forEach(({fmt,qk})=>{
+      // + creation du lot si un format a ete ajoute apres coup (ex. Magnums ajoutes lors d'une modification)
+      const fmtLabels = {"75cl":"Bouteille 75cl","Magnum":"Magnum 1.5L","Jeroboam":"Jeroboam 3L"};
+      const fmts = [{fmt:"75cl",qk:"qte75",lk:"lot75"},{fmt:"Magnum",qk:"qteMagnum",lk:"lotMagnum"},{fmt:"Jeroboam",qk:"qteJeroboam",lk:"lotJeroboam"}];
+      fmts.forEach(({fmt,qk,lk})=>{
         const lotId = updated.id+"_"+fmt;
         const existingLot = stockBouteilles.find(l=>l.id===lotId);
+        const newQte = parseInt(tirageForm[qk])||0;
         if(existingLot) {
-          const newQte = parseInt(tirageForm[qk])||0;
           const diff = newQte - (existingLot.qteInitiale||0);
           const updatedLot = {
             ...existingLot,
@@ -1477,6 +1480,28 @@ export default function App() {
           };
           setStockBouteilles(prev=>prev.map(x=>x.id===lotId?updatedLot:x));
           fbSave("stockBouteilles", lotId, updatedLot);
+        } else if(newQte>0) {
+          // Format ajoute apres coup (n'existait pas a la creation du tirage) : on cree le lot
+          const newLot = {
+            id: lotId,
+            tirageId: updated.id,
+            typeProduit: tirageForm.typeProduit||"champagne",
+            isBio: cuvesCuverie.find(c=>c.id===tirageForm.cuveSourceId)?.isBio||false,
+            cuvee: tirageForm.cuvee,
+            millesime: tirageForm.millesime||"",
+            dateTirage: tirageForm.date,
+            format: fmt,
+            formatLabel: fmtLabels[fmt],
+            lot: tirageForm[lk]||lotId,
+            qteInitiale: newQte,
+            qteActuelle: newQte,
+            statut: ["coteaux_blanc","coteaux_rouge","ratafia"].includes(tirageForm.typeProduit) ? "En vieillissement" : "Sur latte / Sur pointe",
+            lieu: "Domaine",
+            mouvements: [],
+            timestamp: new Date().toISOString(),
+          };
+          setStockBouteilles(prev=>[newLot,...prev]);
+          fbSave("stockBouteilles", lotId, newLot);
         }
       });
     }
@@ -1492,7 +1517,7 @@ export default function App() {
           id: updated.id+"_"+l.fmt,
           tirageId: updated.id,
           typeProduit: tirageForm.typeProduit||"champagne",
-          isBio: tirageForm.futsSource&&tirageForm.futsSource.length>0?tirageForm.futsSource.every(f=>tonneaux.find(t=>t.id===f.futId)?.certif==="BIO"):false,
+          isBio: cuvesCuverie.find(c=>c.id===tirageForm.cuveSourceId)?.isBio||false,
           cuvee: tirageForm.cuvee,
           millesime: tirageForm.millesime||"",
           dateTirage: tirageForm.date,
