@@ -516,6 +516,8 @@ export default function App() {
   const [riForm,           setRiForm]           = useState({annee:new Date().getFullYear().toString(),volumeHL:""});
   const [stockTab,         setStockTab]         = useState("champagne");
   const [lotAction,        setLotAction]        = useState(null);
+  const [editingLot,       setEditingLot]        = useState(null);
+  const [lotEditForm,      setLotEditForm]       = useState(null);
   const [showSortieForm,   setShowSortieForm]   = useState(false);
   const [coiffesStock,     setCoiffesStock]     = useState([]);
   const [coiffesCRD,       setCoiffesCRD]       = useState(0);
@@ -791,6 +793,51 @@ export default function App() {
   const deleteTirageFb = (id) => fbDelete("tirages", id);
   const saveVendange = (v) => fbSave("vendanges", v.id, v);
   const deleteVendangeFb = (id) => fbDelete("vendanges", id);
+
+  // Edition directe d'un lot de stock bouteilles (corrige une erreur de saisie,
+  // y compris sur un lot cree par une division vers un statut d'habillage).
+  const openEditLot = (lot) => {
+    setEditingLot(lot);
+    setLotEditForm({
+      cuvee: lot.cuvee||"",
+      millesime: lot.millesime||"",
+      lot: lot.lot||"",
+      format: lot.format||"75cl",
+      dateTirage: lot.dateTirage||"",
+      statut: lot.statut||STATUTS_BOUTEILLES[0],
+      lieu: lot.lieu||"Domaine",
+      qteActuelle: lot.qteActuelle??"",
+      notes: lot.notes||"",
+    });
+  };
+  const saveEditLot = () => {
+    if(!lotEditForm.cuvee) return alert("La cuvée est requise.");
+    const qte = parseInt(lotEditForm.qteActuelle);
+    if(isNaN(qte)||qte<0) return alert("Quantité invalide.");
+    const delta = qte - (editingLot.qteActuelle||0);
+    const updated = {...editingLot, ...lotEditForm, qteActuelle:qte};
+    // Si ce lot est issu d'une division, ajuster le lot lie en sens inverse pour garder le total constant
+    if(delta!==0 && editingLot.linkedLotId) {
+      const linked = stockBouteilles.find(x=>x.id===editingLot.linkedLotId);
+      if(linked) {
+        const newLinkedQte = (linked.qteActuelle||0) - delta;
+        if(newLinkedQte<0) return alert(`Impossible : le lot lié "${linked.cuvee} ${linked.format} (${linked.statut})" ne contient que ${linked.qteActuelle} bouteille(s), pas assez pour compenser cet ajustement.`);
+        const updatedLinked = {...linked, qteActuelle:newLinkedQte};
+        setStockBouteilles(prev=>prev.map(x=>{
+          if(x.id===editingLot.id) return updated;
+          if(x.id===linked.id) return updatedLinked;
+          return x;
+        }));
+        fbSave("stockBouteilles", updatedLinked.id, updatedLinked);
+        fbSave("stockBouteilles", updated.id, updated);
+        setEditingLot(null); setLotEditForm(null);
+        return;
+      }
+    }
+    setStockBouteilles(prev=>prev.map(x=>x.id===editingLot.id?updated:x));
+    fbSave("stockBouteilles", updated.id, updated);
+    setEditingLot(null); setLotEditForm(null);
+  };
   const saveParcelle = (p) => fbSave("parcelles", p.id, p);
   const deleteParcelleFb = (id) => fbDelete("parcelles", id);
 
@@ -3476,6 +3523,8 @@ export default function App() {
                                 onClick={()=>setLotAction({lot:l,action:"mouvement"})}>Mouvement</button>
                               <button style={{...s.ghostSm,fontSize:"10px",color:"#1a7a40",borderColor:"#b4d0b4"}}
                                 onClick={()=>{setSortieForm({lotId:l._ids?l._ids[0]:l.id,_ids:l._ids||[l.id],qteMax:parseInt(l.qteActuelle)||0,cuvee:l.cuvee,millesime:l.millesime,format:l.format,date:new Date().toISOString().slice(0,10),qte:"",notes:""});setShowSortieForm(true);}}>Sortie</button>
+                              <button style={{...s.ghostSm,fontSize:"10px",color:"#8B5A2B",borderColor:"#d4b48c"}}
+                                onClick={()=>openEditLot(l)}>Modifier</button>
                               <button style={{...s.ghostSm,fontSize:"10px",color:"#2C3E50",borderColor:"#d4c4a0"}}
                                 onClick={()=>setLotAction({lot:l,action:"diviser"})}>Diviser</button>
                               {l.mois>=14&&!l.passage15&&(
@@ -5347,6 +5396,8 @@ export default function App() {
                                 onClick={()=>setLotAction({lot:l,action:"mouvement"})}>Mouvement</button>
                               <button style={{...s.ghostSm,fontSize:"10px",color:"#1a7a40",borderColor:"#b4d0b4"}}
                                 onClick={()=>{setSortieForm({lotId:l._ids?l._ids[0]:l.id,_ids:l._ids||[l.id],qteMax:parseInt(l.qteActuelle)||0,cuvee:l.cuvee,millesime:l.millesime,format:l.format,date:new Date().toISOString().slice(0,10),qte:"",notes:""});setShowSortieForm(true);}}>Sortie</button>
+                              <button style={{...s.ghostSm,fontSize:"10px",color:"#8B5A2B",borderColor:"#d4b48c"}}
+                                onClick={()=>openEditLot(l)}>Modifier</button>
                               <button style={{...s.ghostSm,fontSize:"10px",color:"#2C3E50",borderColor:"#d4c4a0"}}
                                 onClick={()=>setLotAction({lot:l,action:"diviser"})}>Diviser</button>
                               {l.mois>=14&&!l.passage15&&(
@@ -7557,6 +7608,62 @@ export default function App() {
         </div>
       )}
 
+      {/* == MODAL MODIFIER LOT == */}
+      {editingLot && lotEditForm && (
+        <div style={s.modal}>
+          <div style={{...s.modalBox,width:"480px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#2C3E50"}}>Modifier le lot</div>
+              <button style={s.ghost} onClick={()=>{setEditingLot(null);setLotEditForm(null);}}>x</button>
+            </div>
+            <div style={{display:"grid",gap:"12px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                <div><span style={s.lbl}>Cuvée *</span>
+                  <input style={s.inp} value={lotEditForm.cuvee} onChange={e=>setLotEditForm(f=>({...f,cuvee:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Millésime</span>
+                  <input style={s.inp} value={lotEditForm.millesime} onChange={e=>setLotEditForm(f=>({...f,millesime:e.target.value}))}/></div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                <div><span style={s.lbl}>N° de lot</span>
+                  <input style={s.inp} value={lotEditForm.lot} onChange={e=>setLotEditForm(f=>({...f,lot:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Date de tirage</span>
+                  <input type="date" style={s.inp} value={lotEditForm.dateTirage} onChange={e=>setLotEditForm(f=>({...f,dateTirage:e.target.value}))}/></div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                <div><span style={s.lbl}>Statut</span>
+                  <select style={s.sel} value={lotEditForm.statut} onChange={e=>setLotEditForm(f=>({...f,statut:e.target.value}))}>
+                    {[...STATUTS_BOUTEILLES,"Passage 15 mois (commercialisable)"].map(st=><option key={st} value={st}>{st}</option>)}
+                  </select></div>
+                <div><span style={s.lbl}>Lieu</span>
+                  <select style={s.sel} value={lotEditForm.lieu} onChange={e=>setLotEditForm(f=>({...f,lieu:e.target.value}))}>
+                    {LIEUX_STOCK.map(l=><option key={l} value={l}>{l}</option>)}
+                  </select></div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+                <div><span style={s.lbl}>Quantité actuelle *</span>
+                  <input type="number" style={s.inp} value={lotEditForm.qteActuelle} onChange={e=>setLotEditForm(f=>({...f,qteActuelle:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Format</span>
+                  <div style={{...s.inp,background:"#F0EDE8",color:"#9a8870"}}>{lotEditForm.format} (non modifiable)</div></div>
+              </div>
+              {editingLot.linkedLotId && stockBouteilles.find(x=>x.id===editingLot.linkedLotId) && (()=>{
+                const linked = stockBouteilles.find(x=>x.id===editingLot.linkedLotId);
+                return (
+                  <div style={{fontSize:"11px",color:"#185FA5",background:"#e8f0fa",border:"0.5px solid #b4d0f0",borderRadius:"4px",padding:"6px 10px"}}>
+                    Ce lot est lié au lot "{linked.statut}" ({linked.qteActuelle} btl). Si tu changes la quantité, l'autre lot sera automatiquement ajusté pour garder le total constant.
+                  </div>
+                );
+              })()}
+              <div><span style={s.lbl}>Notes</span>
+                <input style={s.inp} value={lotEditForm.notes} onChange={e=>setLotEditForm(f=>({...f,notes:e.target.value}))}/></div>
+              <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
+                <button style={s.ghost} onClick={()=>{setEditingLot(null);setLotEditForm(null);}}>Annuler</button>
+                <button style={s.btn} onClick={saveEditLot}>Enregistrer</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* == MODAL ACTION LOT == */}
       {lotAction&&(
         <div style={s.modal}>
@@ -7615,8 +7722,9 @@ export default function App() {
                       fbSave("coiffes",deduction.id,deduction);
                     }
                     if(qte < lotAction.lot.qteActuelle) {
-                      const newLot = {...lotAction.lot, id:"lot_"+Date.now(), qteInitiale:qte, qteActuelle:qte, statut:newStatut, lieu:newLieu, dateMvt:date, notes};
-                      const updatedLot = {...lotAction.lot, qteActuelle:qteRestante};
+                      const newLotId = "lot_"+Date.now();
+                      const newLot = {...lotAction.lot, id:newLotId, qteInitiale:qte, qteActuelle:qte, statut:newStatut, lieu:newLieu, dateMvt:date, notes, linkedLotId:lotAction.lot.id};
+                      const updatedLot = {...lotAction.lot, qteActuelle:qteRestante, linkedLotId:newLotId};
                       setStockBouteilles(prev=>[newLot,...prev.map(x=>x.id===lotAction.lot.id?updatedLot:x)]);
                       fbSave("stockBouteilles", newLot.id, newLot);
                       fbSave("stockBouteilles", updatedLot.id, updatedLot);
@@ -7655,8 +7763,9 @@ export default function App() {
                     const lieu = document.getElementById("div_lieu").value;
                     const statut = document.getElementById("div_statut").value;
                     if(qte<=0||qte>=lotAction.lot.qteActuelle) return alert("Quantite invalide - doit etre entre 1 et "+(lotAction.lot.qteActuelle-1));
-                    const newLot = {...lotAction.lot, id:"lot_"+Date.now(), qteInitiale:qte, qteActuelle:qte, statut, lieu};
-                    const updatedLot = {...lotAction.lot, qteActuelle:lotAction.lot.qteActuelle-qte};
+                    const newLotId = "lot_"+Date.now();
+                    const newLot = {...lotAction.lot, id:newLotId, qteInitiale:qte, qteActuelle:qte, statut, lieu, linkedLotId:lotAction.lot.id};
+                    const updatedLot = {...lotAction.lot, qteActuelle:lotAction.lot.qteActuelle-qte, linkedLotId:newLotId};
                     setStockBouteilles(prev=>[newLot,...prev.map(x=>x.id===lotAction.lot.id?updatedLot:x)]);
                     fbSave("stockBouteilles", newLot.id, newLot);
                     fbSave("stockBouteilles", updatedLot.id, updatedLot);
