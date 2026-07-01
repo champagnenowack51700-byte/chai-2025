@@ -510,6 +510,8 @@ export default function App() {
   const [showRiForm,       setShowRiForm]       = useState(false);
   const [showDegreRatafiaForm, setShowDegreRatafiaForm] = useState(false);
   const [degreRatafiaForm, setDegreRatafiaForm] = useState("18");
+  const [showBulkDateForm, setShowBulkDateForm] = useState(false);
+  const [bulkDateForm, setBulkDateForm] = useState({session:"",date:""});
   const [showRiDetail,     setShowRiDetail]      = useState(false);
   const [riForm,           setRiForm]           = useState({annee:new Date().getFullYear().toString(),volumeHL:""});
   const [stockTab,         setStockTab]         = useState("champagne");
@@ -3859,6 +3861,9 @@ export default function App() {
                   <button style={s.ghost} onClick={()=>setShowImport(true)}>
                     <i className="ti ti-file-import" style={{marginRight:"4px"}}/>Importer (CSV)
                   </button>
+                  <button style={s.ghost} onClick={()=>{setBulkDateForm({session:"",date:new Date().toISOString().slice(0,10)});setShowBulkDateForm(true);}}>
+                    <i className="ti ti-calendar" style={{marginRight:"4px"}}/>Corriger une date de session
+                  </button>
                   <button style={s.btn} onClick={()=>{setDegForm({futId:"",session:"",date:new Date().toISOString().slice(0,10),lignes:degustateurs.filter(d=>d.actif).map(d=>({degustateur:d.nom,boise:"",longueur:"",noteG:"",commentaire:""}))});setShowDegForm(true);}}>
                     <i className="ti ti-plus" style={{marginRight:"4px"}}/>Nouvelle dégustation
                   </button>
@@ -5751,6 +5756,54 @@ export default function App() {
                   setEditingCuverie(null);
                   setCuverieForm(CUVERIE_EMPTY);
                 }}>Enregistrer</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* == MODAL CORRECTION DATE SESSION (DEGUSTATION) == */}
+      {showBulkDateForm&&(
+        <div style={s.modal}>
+          <div style={{...s.modalBox,width:"420px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#2C3E50"}}>Corriger la date d'une session</div>
+              <button style={s.ghost} onClick={()=>setShowBulkDateForm(false)}>x</button>
+            </div>
+            <div style={{display:"grid",gap:"12px"}}>
+              <div>
+                <span style={s.lbl}>Session</span>
+                <select style={s.sel} value={bulkDateForm.session} onChange={e=>setBulkDateForm(f=>({...f,session:e.target.value}))}>
+                  <option value="">-- Choisir une session --</option>
+                  {[...new Set(degustations.map(d=>d.session))].filter(Boolean).sort().map(sess=>(
+                    <option key={sess} value={sess}>{sess} ({degustations.filter(d=>d.session===sess).length} notes)</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <span style={s.lbl}>Nouvelle date</span>
+                <input type="date" style={s.inp} value={bulkDateForm.date} onChange={e=>setBulkDateForm(f=>({...f,date:e.target.value}))}/>
+              </div>
+              {bulkDateForm.session&&(
+                <div style={{fontSize:"12px",color:"#7a6840",background:"#F0EDE8",border:"0.5px solid #d4c4a0",borderRadius:"6px",padding:"8px 12px"}}>
+                  Cette action va mettre a jour la date sur <strong>{degustations.filter(d=>d.session===bulkDateForm.session).length} note(s)</strong>, tous fûts confondus, pour la session "{bulkDateForm.session}".
+                </div>
+              )}
+              <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
+                <button style={s.ghost} onClick={()=>setShowBulkDateForm(false)}>Annuler</button>
+                <button style={s.btn} onClick={()=>{
+                  if(!bulkDateForm.session) return alert("Choisir une session.");
+                  if(!bulkDateForm.date) return alert("Choisir une date.");
+                  const concernees = degustations.filter(d=>d.session===bulkDateForm.session);
+                  const updated = concernees.map(d=>({...d, date:bulkDateForm.date}));
+                  setDegustations(prev=>prev.map(d=>{
+                    const u = updated.find(x=>x.id===d.id);
+                    return u || d;
+                  }));
+                  updated.forEach(d=>saveDegustation(d));
+                  alert(`${updated.length} note(s) mise(s) a jour avec la date ${bulkDateForm.date.split("-").reverse().join("/")}.`);
+                  setShowBulkDateForm(false);
+                }}>Mettre à jour</button>
               </div>
             </div>
           </div>
