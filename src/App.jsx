@@ -749,6 +749,7 @@ export default function App() {
     nouvelleCuveId: "",         // id nouvelle cuve
     nouvelleCuveVolume: "",     // capacite nouvelle cuve
     notes: "",
+    isBio: false,
   };
   const [tirageForm, setTirageForm] = useState(TIRAGE_EMPTY);
   const [campFutId,    setCampFutId]    = useState(null);
@@ -1438,7 +1439,7 @@ export default function App() {
     if(editingTirage) {
       setTirages(prev=>prev.map(t=>t.id===editingTirage.id ? updated : t));
       // Update isBio in stock bouteilles
-      const isBioActuel = cuvesCuverie.find(c=>c.id===tirageForm.cuveSourceId)?.isBio||false;
+      const isBioActuel = tirageForm.isBio||cuvesCuverie.find(c=>c.id===tirageForm.cuveSourceId)?.isBio||false;
       setStockBouteilles(prev=>prev.map(lot=>{
         if(lot.tirageId===editingTirage.id) {
           const updatedLot = {...lot, isBio:isBioActuel};
@@ -1527,7 +1528,7 @@ export default function App() {
             id: lotId,
             tirageId: updated.id,
             typeProduit: tirageForm.typeProduit||"champagne",
-            isBio: cuvesCuverie.find(c=>c.id===tirageForm.cuveSourceId)?.isBio||false,
+            isBio: tirageForm.isBio||cuvesCuverie.find(c=>c.id===tirageForm.cuveSourceId)?.isBio||false,
             cuvee: tirageForm.cuvee,
             millesime: tirageForm.millesime||"",
             dateTirage: tirageForm.date,
@@ -1558,7 +1559,7 @@ export default function App() {
           id: updated.id+"_"+l.fmt,
           tirageId: updated.id,
           typeProduit: tirageForm.typeProduit||"champagne",
-          isBio: cuvesCuverie.find(c=>c.id===tirageForm.cuveSourceId)?.isBio||false,
+          isBio: tirageForm.isBio||cuvesCuverie.find(c=>c.id===tirageForm.cuveSourceId)?.isBio||false,
           cuvee: tirageForm.cuvee,
           millesime: tirageForm.millesime||"",
           dateTirage: tirageForm.date,
