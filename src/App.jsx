@@ -613,7 +613,30 @@ export default function App() {
   const STATUTS_BOUTEILLES = ["Sur latte / Sur pointe", "En cours de degorgement", "Degorge", "Habille CRD", "Habille Export"];
   const STATUTS_MOUVEMENT = ["Sur latte / Sur pointe", "En cours de degorgement", "Degorge"];
   const STATUTS_HABILLAGE = ["Habille CRD", "Habille Export"];
+  // Statuts "Mouvement" (avant habillage) selon le type de produit :
+  // Champagne suit Sur latte -> Degorgement -> Degorge ; Coteaux/Ratafia n'ont qu'un seul palier avant habillage.
+  const getStatutsMouvement = (typeProduit) => ["coteaux_blanc","coteaux_rouge","ratafia"].includes(typeProduit) ? ["En vieillissement"] : STATUTS_MOUVEMENT;
+  // Statut de depart requis avant de pouvoir "Diviser" (habiller) un lot
+  const getPreHabillageStatut = (typeProduit) => ["coteaux_blanc","coteaux_rouge","ratafia"].includes(typeProduit) ? "En vieillissement" : "Degorge";
+  // Statuts d'habillage disponibles selon le type de produit
+  const getStatutsHabillage = (typeProduit) => {
+    if(typeProduit==="ratafia") return ["Habille"];
+    if(typeProduit==="coteaux_blanc"||typeProduit==="coteaux_rouge") return ["Habille Neutre","Habille Vignette CRD"];
+    return STATUTS_HABILLAGE; // champagne
+  };
+  // Type de coiffe a deduire du stock pour un habillage donne (null = pas de gestion de stock, ex. habillage neutre)
+  const getTypeCoiffeHabillage = (typeProduit, statutChoisi, format) => {
+    if(typeProduit==="ratafia") return format==="Jeroboam" ? "Neutre 3L" : "Neutre 50cl";
+    if(typeProduit==="coteaux_blanc"||typeProduit==="coteaux_rouge") {
+      return statutChoisi==="Habille Vignette CRD" ? "Vignette CRD Coteaux" : null; // Neutre : pas de coiffe a gerer
+    }
+    // Champagne
+    return statutChoisi==="Habille CRD"
+      ? "CRD"+(format==="Magnum"?" Magnum":format==="Jeroboam"?" Jeroboam":"")
+      : "Export"+(format==="Jeroboam"?" Jeroboam":""); // Export : 75cl et Magnum partagent le meme stock
+  };
   const STATUTS_AUTRES = ["En vieillissement", "Habille"];
+  const TOUS_STATUTS_POSSIBLES = [...STATUTS_BOUTEILLES, "En vieillissement", "Habille Neutre", "Habille Vignette CRD", "Habille"];
   const getStatuts = (type) => ["coteaux_blanc","coteaux_rouge","ratafia"].includes(type) ? STATUTS_AUTRES : STATUTS_BOUTEILLES;
   const LIEU_COLORS = {"Domaine":{bg:"#d4edda",color:"#1a7a40"},"Lorain Champagnisation":{bg:"#d4e8f8",color:"#185FA5"},"Epernay":{bg:"#E8E0D0",color:"#c47800"}};
   const STATUT_COLORS = {"Sur latte / Sur pointe":{bg:"#e8f0fb",color:"#185FA5"},"En cours de degorgement":{bg:"#fff3cd",color:"#c47800"},"Degorge":{bg:"#d4f0dd",color:"#1a7a40"},"Habille CRD":{bg:"#e8d4f8",color:"#6a2d8a"},"Habille Export":{bg:"#f8d4e8",color:"#8a2d6a"}};
@@ -1369,7 +1392,8 @@ export default function App() {
     return (parseFloat(f.levainEau)||0) + (parseFloat(f.levainVin)||0) + (parseFloat(f.levainLevure)||0);
   };
   const calcVolBouteilles = (f) => {
-    return ((parseFloat(f.qte75)||0)*0.75) + ((parseFloat(f.qteMagnum)||0)*1.5) + ((parseFloat(f.qteJeroboam)||0)*3.0);
+    const volFormat1 = f.typeProduit==="ratafia" ? 0.5 : 0.75; // Ratafia : bouteilles 50cl (pas 75cl)
+    return ((parseFloat(f.qte75)||0)*volFormat1) + ((parseFloat(f.qteMagnum)||0)*1.5) + ((parseFloat(f.qteJeroboam)||0)*3.0);
   };
   const calcTotalAssemble = (f) => {
     return (parseFloat(f.volumeTotal)||0) + calcVolLevain(f);
@@ -1504,8 +1528,8 @@ export default function App() {
             cuvee: tirageForm.cuvee,
             millesime: tirageForm.millesime||"",
             dateTirage: tirageForm.date,
-            format: fmt,
-            formatLabel: fmtLabels[fmt],
+            format: (fmt==="75cl" && tirageForm.typeProduit==="ratafia") ? "50cl" : fmt,
+            formatLabel: tirageForm.typeProduit==="ratafia"&&fmt==="75cl" ? "Bouteille 50cl" : fmtLabels[fmt],
             lot: tirageForm[lk]||lotId,
             qteInitiale: newQte,
             qteActuelle: newQte,
@@ -1535,7 +1559,7 @@ export default function App() {
           cuvee: tirageForm.cuvee,
           millesime: tirageForm.millesime||"",
           dateTirage: tirageForm.date,
-          format: l.fmt,
+          format: (l.fmt==="75cl" && tirageForm.typeProduit==="ratafia") ? "50cl" : l.fmt,
           lot: l.lot,
           qteInitiale: l.qte,
           qteActuelle: l.qte,
@@ -3506,7 +3530,7 @@ export default function App() {
                 </select>
                 <select style={{...s.sel,maxWidth:"220px"}} value={filterStockStatut} onChange={e=>setFilterStockStatut(e.target.value)}>
                   <option value="">Tous les statuts</option>
-                  {[...STATUTS_BOUTEILLES,"Passage 15 mois (commercialisable)"].map(st=><option key={st} value={st}>{st}</option>)}
+                  {[...TOUS_STATUTS_POSSIBLES,"Passage 15 mois (commercialisable)"].map(st=><option key={st} value={st}>{st}</option>)}
                 </select>
                 <select style={{...s.sel,maxWidth:"160px"}} value={filterStock15} onChange={e=>setFilterStock15(e.target.value)}>
                   <option value="">Tous ages</option>
@@ -3586,6 +3610,9 @@ export default function App() {
                 const stockCRDJer = calcStock("CRD Jeroboam");
                 const stockExport = calcStock("Export");
                 const stockExpJer = calcStock("Export Jeroboam");
+                const stockVignetteCRD = calcStock("Vignette CRD Coteaux");
+                const stockNeutre50 = calcStock("Neutre 50cl");
+                const stockNeutre3L = calcStock("Neutre 3L");
                 return (
                   <div style={{...s.card,padding:"16px 20px",marginTop:"16px",marginBottom:"16px"}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
@@ -3594,7 +3621,9 @@ export default function App() {
                     </div>
                     <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:"8px"}}>
                       {[["CRD 75cl",stockCRD,"#6a2d8a"],["CRD Mag",stockCRDMag,"#6a2d8a"],["CRD Jer",stockCRDJer,"#6a2d8a"],
-                        ["Export 75cl/Mag",stockExport,"#8a2d6a"],["Export Jer",stockExpJer,"#8a2d6a"]
+                        ["Export 75cl/Mag",stockExport,"#8a2d6a"],["Export Jer",stockExpJer,"#8a2d6a"],
+                        ["Vignette CRD Coteaux",stockVignetteCRD,"#2d6a5c"],
+                        ["Neutre 50cl (Ratafia)",stockNeutre50,"#5c2a08"],["Neutre 3L (Ratafia)",stockNeutre3L,"#5c2a08"]
                       ].filter(([,q])=>q>0||true).map(([lbl,q,col])=>(
                         <div key={lbl} style={{padding:"8px",background:q<50?"#fde8e8":"#f0fff4",borderRadius:"6px",textAlign:"center"}}>
                           <div style={{fontSize:"10px",color:col,fontWeight:500,marginBottom:"2px"}}>{lbl}</div>
@@ -3873,8 +3902,8 @@ export default function App() {
                       <div style={{fontSize:"20px",fontWeight:500,color:"#1a7a40"}}>{t.volBouteilles?.toFixed(1)} L</div>
                       <div style={{marginTop:"6px",display:"flex",flexDirection:"column",gap:"3px"}}>
                         {(parseFloat(t.qte75)||0)>0&&<div style={{fontSize:"11px",color:"#6a5838"}}>
-                          <span style={{display:"inline-block",width:"18px",height:"18px",background:"#d4edc0",borderRadius:"3px",textAlign:"center",lineHeight:"18px",fontSize:"10px",marginRight:"5px",color:"#2d6a00",fontFamily:"monospace"}}>75</span>
-                          {t.qte75} bouteilles = {((parseFloat(t.qte75)||0)*0.75).toFixed(0)}L
+                          <span style={{display:"inline-block",width:"18px",height:"18px",background:"#d4edc0",borderRadius:"3px",textAlign:"center",lineHeight:"18px",fontSize:"10px",marginRight:"5px",color:"#2d6a00",fontFamily:"monospace"}}>{t.typeProduit==="ratafia"?50:75}</span>
+                          {t.qte75} bouteilles = {((parseFloat(t.qte75)||0)*(t.typeProduit==="ratafia"?0.5:0.75)).toFixed(0)}L
                         </div>}
                         {(parseFloat(t.qteMagnum)||0)>0&&<div style={{fontSize:"11px",color:"#6a5838"}}>
                           <span style={{display:"inline-block",width:"18px",height:"18px",background:"#E8E0D0",borderRadius:"3px",textAlign:"center",lineHeight:"18px",fontSize:"10px",marginRight:"5px",color:"#2C3E50",fontFamily:"monospace"}}>M</span>
@@ -5377,7 +5406,7 @@ export default function App() {
                 </select>
                 <select style={{...s.sel,maxWidth:"220px"}} value={filterStockStatut} onChange={e=>setFilterStockStatut(e.target.value)}>
                   <option value="">Tous les statuts</option>
-                  {[...STATUTS_BOUTEILLES,"Passage 15 mois (commercialisable)"].map(st=><option key={st} value={st}>{st}</option>)}
+                  {[...TOUS_STATUTS_POSSIBLES,"Passage 15 mois (commercialisable)"].map(st=><option key={st} value={st}>{st}</option>)}
                 </select>
                 <select style={{...s.sel,maxWidth:"160px"}} value={filterStock15} onChange={e=>setFilterStock15(e.target.value)}>
                   <option value="">Tous ages</option>
@@ -5457,6 +5486,9 @@ export default function App() {
                 const stockCRDJer = calcStock("CRD Jeroboam");
                 const stockExport = calcStock("Export");
                 const stockExpJer = calcStock("Export Jeroboam");
+                const stockVignetteCRD = calcStock("Vignette CRD Coteaux");
+                const stockNeutre50 = calcStock("Neutre 50cl");
+                const stockNeutre3L = calcStock("Neutre 3L");
                 return (
                   <div style={{...s.card,padding:"16px 20px",marginTop:"16px",marginBottom:"16px"}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
@@ -5465,7 +5497,9 @@ export default function App() {
                     </div>
                     <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:"8px"}}>
                       {[["CRD 75cl",stockCRD,"#6a2d8a"],["CRD Mag",stockCRDMag,"#6a2d8a"],["CRD Jer",stockCRDJer,"#6a2d8a"],
-                        ["Export 75cl/Mag",stockExport,"#8a2d6a"],["Export Jer",stockExpJer,"#8a2d6a"]
+                        ["Export 75cl/Mag",stockExport,"#8a2d6a"],["Export Jer",stockExpJer,"#8a2d6a"],
+                        ["Vignette CRD Coteaux",stockVignetteCRD,"#2d6a5c"],
+                        ["Neutre 50cl (Ratafia)",stockNeutre50,"#5c2a08"],["Neutre 3L (Ratafia)",stockNeutre3L,"#5c2a08"]
                       ].filter(([,q])=>q>0||true).map(([lbl,q,col])=>(
                         <div key={lbl} style={{padding:"8px",background:q<50?"#fde8e8":"#f0fff4",borderRadius:"6px",textAlign:"center"}}>
                           <div style={{fontSize:"10px",color:col,fontWeight:500,marginBottom:"2px"}}>{lbl}</div>
@@ -5626,8 +5660,8 @@ export default function App() {
                       <div style={{fontSize:"20px",fontWeight:500,color:"#1a7a40"}}>{t.volBouteilles?.toFixed(1)} L</div>
                       <div style={{marginTop:"6px",display:"flex",flexDirection:"column",gap:"3px"}}>
                         {(parseFloat(t.qte75)||0)>0&&<div style={{fontSize:"11px",color:"#6a5838"}}>
-                          <span style={{display:"inline-block",width:"18px",height:"18px",background:"#d4edc0",borderRadius:"3px",textAlign:"center",lineHeight:"18px",fontSize:"10px",marginRight:"5px",color:"#2d6a00",fontFamily:"monospace"}}>75</span>
-                          {t.qte75} bouteilles = {((parseFloat(t.qte75)||0)*0.75).toFixed(0)}L
+                          <span style={{display:"inline-block",width:"18px",height:"18px",background:"#d4edc0",borderRadius:"3px",textAlign:"center",lineHeight:"18px",fontSize:"10px",marginRight:"5px",color:"#2d6a00",fontFamily:"monospace"}}>{t.typeProduit==="ratafia"?50:75}</span>
+                          {t.qte75} bouteilles = {((parseFloat(t.qte75)||0)*(t.typeProduit==="ratafia"?0.5:0.75)).toFixed(0)}L
                         </div>}
                         {(parseFloat(t.qteMagnum)||0)>0&&<div style={{fontSize:"11px",color:"#6a5838"}}>
                           <span style={{display:"inline-block",width:"18px",height:"18px",background:"#E8E0D0",borderRadius:"3px",textAlign:"center",lineHeight:"18px",fontSize:"10px",marginRight:"5px",color:"#2C3E50",fontFamily:"monospace"}}>M</span>
@@ -7618,6 +7652,9 @@ export default function App() {
                     <option value="CRD Jeroboam">CRD Jeroboam</option>
                     <option value="Export">Export 75cl / Magnum</option>
                     <option value="Export Jeroboam">Export Jeroboam</option>
+                    <option value="Vignette CRD Coteaux">Vignette CRD Coteaux</option>
+                    <option value="Neutre 50cl">Neutre 50cl (Ratafia)</option>
+                    <option value="Neutre 3L">Neutre 3L (Ratafia)</option>
                   </select></div>
                 <div><span style={s.lbl}>Date</span>
                   <input type="date" style={s.inp} value={coiffesForm.date||new Date().toISOString().slice(0,10)} onChange={e=>setCoiffesForm(f=>({...f,date:e.target.value}))}/></div>
@@ -7664,7 +7701,7 @@ export default function App() {
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
                 <div><span style={s.lbl}>Statut</span>
                   <select style={s.sel} value={lotEditForm.statut} onChange={e=>setLotEditForm(f=>({...f,statut:e.target.value}))}>
-                    {[...STATUTS_BOUTEILLES,"Passage 15 mois (commercialisable)"].map(st=><option key={st} value={st}>{st}</option>)}
+                    {[...TOUS_STATUTS_POSSIBLES,"Passage 15 mois (commercialisable)"].map(st=><option key={st} value={st}>{st}</option>)}
                   </select></div>
                 <div><span style={s.lbl}>Lieu</span>
                   <select style={s.sel} value={lotEditForm.lieu} onChange={e=>setLotEditForm(f=>({...f,lieu:e.target.value}))}>
@@ -7717,8 +7754,8 @@ export default function App() {
                 </div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
                   <div><span style={s.lbl}>Nouveau statut</span>
-                    <select style={s.sel} id="mvt_statut" defaultValue={STATUTS_MOUVEMENT.includes(lotAction.lot.statut)?lotAction.lot.statut:STATUTS_MOUVEMENT[0]}>
-                      {STATUTS_MOUVEMENT.map(st=><option key={st} value={st}>{st}</option>)}
+                    <select style={s.sel} id="mvt_statut" defaultValue={getStatutsMouvement(lotAction.lot.typeProduit).includes(lotAction.lot.statut)?lotAction.lot.statut:getStatutsMouvement(lotAction.lot.typeProduit)[0]}>
+                      {getStatutsMouvement(lotAction.lot.typeProduit).map(st=><option key={st} value={st}>{st}</option>)}
                     </select>
                   </div>
                   <div><span style={s.lbl}>Nouveau lieu</span>
@@ -7768,37 +7805,36 @@ export default function App() {
             {lotAction.action==="diviser"&&(
               <div style={{display:"grid",gap:"12px"}}>
                 <div style={{fontSize:"12px",color:"#185FA5",background:"#e8f0fa",border:"0.5px solid #b4d0f0",borderRadius:"4px",padding:"6px 10px"}}>
-                  Diviser sert à passer une partie du lot dégorgé en habillage (CRD ou Export), avec déduction automatique des coiffes. Le lieu reste celui du lot d'origine — utilise "Mouvement" pour le changer.
+                  Diviser sert à passer une partie du lot en habillage, avec déduction automatique des coiffes si le type d'habillage en nécessite. Le lieu reste celui du lot d'origine — utilise "Mouvement" pour le changer.
                 </div>
-                {lotAction.lot.statut!=="Degorge"&&(
+                {lotAction.lot.statut!==getPreHabillageStatut(lotAction.lot.typeProduit)&&(
                   <div style={{fontSize:"12px",color:"#c47800",background:"#fff6e0",border:"0.5px solid #e8c888",borderRadius:"4px",padding:"6px 10px"}}>
-                    Ce lot n'est pas au statut "Dégorgé" (statut actuel : {lotAction.lot.statut}). Passe-le d'abord en Dégorgé via "Mouvement".
+                    Ce lot n'est pas au statut "{getPreHabillageStatut(lotAction.lot.typeProduit)}" (statut actuel : {lotAction.lot.statut}). Passe-le d'abord via "Mouvement".
                   </div>
                 )}
                 <div><span style={s.lbl}>Quantite a separer</span>
                   <input type="number" style={s.inp} id="div_qte" placeholder="ex. 300" max={lotAction.lot.qteActuelle-1}/>
                 </div>
                 <div><span style={s.lbl}>Statut du nouveau lot</span>
-                  <select style={s.sel} id="div_statut" defaultValue={STATUTS_HABILLAGE[0]}>
-                    {STATUTS_HABILLAGE.map(st=><option key={st} value={st}>{st}</option>)}
+                  <select style={s.sel} id="div_statut" defaultValue={getStatutsHabillage(lotAction.lot.typeProduit)[0]}>
+                    {getStatutsHabillage(lotAction.lot.typeProduit).map(st=><option key={st} value={st}>{st}</option>)}
                   </select>
                 </div>
                 <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
                   <button style={s.ghost} onClick={()=>setLotAction(null)}>Annuler</button>
-                  <button style={s.btn} disabled={lotAction.lot.statut!=="Degorge"} onClick={()=>{
-                    if(lotAction.lot.statut!=="Degorge") return alert("Ce lot doit d'abord etre au statut \"Degorge\" (via Mouvement) avant de pouvoir etre habille.");
+                  <button style={s.btn} disabled={lotAction.lot.statut!==getPreHabillageStatut(lotAction.lot.typeProduit)} onClick={()=>{
+                    if(lotAction.lot.statut!==getPreHabillageStatut(lotAction.lot.typeProduit)) return alert(`Ce lot doit d'abord etre au statut "${getPreHabillageStatut(lotAction.lot.typeProduit)}" (via Mouvement) avant de pouvoir etre habille.`);
                     const qte = parseInt(document.getElementById("div_qte").value)||0;
                     const lieu = lotAction.lot.lieu;
                     const statut = document.getElementById("div_statut").value;
                     if(qte<=0||qte>=lotAction.lot.qteActuelle) return alert("Quantite invalide - doit etre entre 1 et "+(lotAction.lot.qteActuelle-1));
-                    // Deduction des coiffes (Diviser sert uniquement a l'habillage desormais)
-                    const lotFmt = lotAction.lot.format;
-                    const typeCoiffe = statut==="Habille CRD"
-                      ? "CRD"+(lotFmt==="Magnum"?" Magnum":lotFmt==="Jeroboam"?" Jeroboam":"")
-                      : "Export"+(lotFmt==="Jeroboam"?" Jeroboam":"");
-                    const deduction = {id:"coiffe_"+Date.now(),type:typeCoiffe,operation:"utilisation",qte:String(qte),date:new Date().toISOString().slice(0,10),notes:"Division - Habillage "+lotAction.lot.cuvee,timestamp:new Date().toISOString()};
-                    setCoiffesStock(prev=>[deduction,...prev]);
-                    fbSave("coiffes",deduction.id,deduction);
+                    // Deduction des coiffes (null = habillage neutre, pas de stock a gerer)
+                    const typeCoiffe = getTypeCoiffeHabillage(lotAction.lot.typeProduit, statut, lotAction.lot.format);
+                    if(typeCoiffe) {
+                      const deduction = {id:"coiffe_"+Date.now(),type:typeCoiffe,operation:"utilisation",qte:String(qte),date:new Date().toISOString().slice(0,10),notes:"Division - Habillage "+lotAction.lot.cuvee,timestamp:new Date().toISOString()};
+                      setCoiffesStock(prev=>[deduction,...prev]);
+                      fbSave("coiffes",deduction.id,deduction);
+                    }
                     const newLotId = "lot_"+Date.now();
                     const newLot = {...lotAction.lot, id:newLotId, qteInitiale:qte, qteActuelle:qte, statut, lieu, linkedLotId:lotAction.lot.id};
                     const updatedLot = {...lotAction.lot, qteActuelle:lotAction.lot.qteActuelle-qte, linkedLotId:newLotId};
@@ -7975,7 +8011,7 @@ export default function App() {
               <div style={{background:"#F0EDE8",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
                 <div style={{...s.lbl,marginBottom:"10px",fontSize:"11px"}}>Mise en bouteilles - 1 numero de lot par format</div>
                 <div style={{display:"grid",gap:"10px"}}>
-                  {[["Bouteilles 75cl","qte75","lot75","#2d6a00",0.75],["Magnums 1.5L","qteMagnum","lotMagnum","#8b5e0a",1.5],["Jeroboams 3L","qteJeroboam","lotJeroboam","#8B0000",3.0]].map(([lbl,qk,lk,col,vol])=>(
+                  {[[tirageForm.typeProduit==="ratafia"?"Bouteilles 50cl":"Bouteilles 75cl","qte75","lot75","#2d6a00",tirageForm.typeProduit==="ratafia"?0.5:0.75],["Magnums 1.5L","qteMagnum","lotMagnum","#8b5e0a",1.5],["Jeroboams 3L","qteJeroboam","lotJeroboam","#8B0000",3.0]].map(([lbl,qk,lk,col,vol])=>(
                     <div key={lbl} style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px",padding:"10px",background:"#fffdf7",borderRadius:"6px",border:"0.5px solid #e2d9c5"}}>
                       <div>
                         <span style={s.lbl}>{lbl}</span>
