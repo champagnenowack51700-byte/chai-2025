@@ -666,6 +666,7 @@ export default function App() {
     typeProduit: "champagne",
     cuvee: "",
     millesime: "",
+    cuveSourceId: "",
     futsSources: [],
     futsSourcesVolumes: {},
     volumeTotal: "",
@@ -1262,7 +1263,7 @@ export default function App() {
   const openEditTirage = (t) => {
     setTirageForm({
       date:t.date||"", operateur:t.operateur||"", typeProduit:t.typeProduit||"champagne", cuvee:t.cuvee||"",
-      millesime:t.millesime||"", futsSources:t.futsSources||[], futsSourcesVolumes:t.futsSourcesVolumes||{},
+      millesime:t.millesime||"", cuveSourceId:t.cuveSourceId||"", futsSources:t.futsSources||[], futsSourcesVolumes:t.futsSourcesVolumes||{},
       volumeTotal:t.volumeTotal||"", levainEau:t.levainEau||"",
       levainVin:t.levainVin||"", levainLevure:t.levainLevure||"",
       levainLevureNom:t.levainLevureNom||"", levainLot:t.levainLot||"",
@@ -1315,6 +1316,18 @@ export default function App() {
           }
           return t;
         });
+      }
+      // Deduire le volume pris dans la cuve source (cuverie) selectionnee pour le tirage
+      if(tirageForm.cuveSourceId) {
+        const volPrisSourceHL = (parseFloat(tirageForm.volumeTotal)||0)/100;
+        setCuvesCuverie(prev=>prev.map(c=>{
+          if(c.id===tirageForm.cuveSourceId) {
+            const updatedC = {...c, contenuActuelHL:String(Math.max(0,Math.round(((parseFloat(c.contenuActuelHL)||0)-volPrisSourceHL)*100)/100))};
+            fbSave("cuvesCuverie", c.id, updatedC);
+            return updatedC;
+          }
+          return c;
+        }));
       }
       if(tirageForm.cuveDestMode==="existante" && tirageForm.cuveDestId) {
         const volAssembleHL = volAssemble/100;
@@ -3638,6 +3651,11 @@ export default function App() {
                           Futs : {t.futsSources.join(", ")}
                         </div>
                       )}
+                      {t.cuveSourceId&&(
+                        <div style={{fontSize:"11px",color:"#6a5838",marginTop:"3px"}}>
+                          Cuve source : {cuvesCuverie.find(c=>c.id===t.cuveSourceId)?.nom||t.cuveSourceId}
+                        </div>
+                      )}
                     </div>
 
                     {/* Volumes assembles */}
@@ -5381,6 +5399,11 @@ export default function App() {
                       {t.futsSources?.length>0&&(
                         <div style={{fontSize:"11px",color:"#6a5838",marginTop:"3px"}}>
                           Futs : {t.futsSources.join(", ")}
+                        </div>
+                      )}
+                      {t.cuveSourceId&&(
+                        <div style={{fontSize:"11px",color:"#6a5838",marginTop:"3px"}}>
+                          Cuve source : {cuvesCuverie.find(c=>c.id===t.cuveSourceId)?.nom||t.cuveSourceId}
                         </div>
                       )}
                     </div>
@@ -7554,37 +7577,17 @@ export default function App() {
                   <input style={s.inp} placeholder="ex. FONTINETTE..." value={tirageForm.cuvee} onChange={e=>setTirageForm(f=>({...f,cuvee:e.target.value}))}/></div>
               </div>
               <div style={{background:"#F0EDE8",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
-                <div style={{...s.lbl,marginBottom:"10px",fontSize:"11px"}}>Assemblage - Volume vin (depuis les futs)</div>
-                {editingTirage&&<div style={{fontSize:"11px",color:"#c47800",background:"#E8E0D0",border:"0.5px solid #e8c888",borderRadius:"4px",padding:"6px 10px",marginBottom:"10px"}}>En mode modification, les volumes des futs ne sont pas recalcules automatiquement.</div>}
+                <div style={{...s.lbl,marginBottom:"10px",fontSize:"11px"}}>Assemblage - Volume vin (depuis la cuverie)</div>
+                {editingTirage&&<div style={{fontSize:"11px",color:"#c47800",background:"#E8E0D0",border:"0.5px solid #e8c888",borderRadius:"4px",padding:"6px 10px",marginBottom:"10px"}}>En mode modification, le volume de la cuve source n'est pas recalcule automatiquement.</div>}
                 <div style={{display:"grid",gridTemplateColumns:"1fr 140px",gap:"12px"}}>
                   <div>
-                    <span style={s.lbl}>Futs sources (selection multiple)</span>
-                    <div style={{maxHeight:"180px",overflowY:"auto",border:"0.5px solid #d4c4a0",borderRadius:"6px",padding:"6px",background:"#fffdf7"}}>
-                      {tonneaux.filter(t=>t.contenuActuel>0).map(t=>(
-                        <div key={t.id} style={{display:"flex",alignItems:"center",gap:"7px",padding:"3px",fontSize:"12px"}}>
-                          <input type="checkbox" checked={tirageForm.futsSources.includes(t.id)}
-                            onChange={()=>setTirageForm(f=>({
-                              ...f,
-                              futsSources:f.futsSources.includes(t.id)?f.futsSources.filter(x=>x!==t.id):[...f.futsSources,t.id],
-                              futsSourcesVolumes:{...f.futsSourcesVolumes,[t.id]:f.futsSourcesVolumes[t.id]||t.contenuActuel}
-                            }))}/>
-                          <span style={{color:"#8B7355",minWidth:"54px",fontFamily:"monospace"}}>{t.id}</span>
-                          <span style={{color:"#6a5838",flex:1}}>{t.denomination}</span>
-                          <span style={{color:"#9a8870",fontSize:"10px"}}>{t.contenuActuel}L</span>
-                          {tirageForm.futsSources.includes(t.id)&&(
-                            <input type="number" style={{...s.inp,width:"75px",padding:"2px 6px",fontSize:"11px"}}
-                              placeholder={String(t.contenuActuel)}
-                              value={tirageForm.futsSourcesVolumes[t.id]||""}
-                              onChange={e=>setTirageForm(f=>({...f,futsSourcesVolumes:{...f.futsSourcesVolumes,[t.id]:e.target.value}}))}/>
-                          )}
-                        </div>
+                    <span style={s.lbl}>Cuve source (cuverie)</span>
+                    <select style={s.sel} value={tirageForm.cuveSourceId} onChange={e=>setTirageForm(f=>({...f,cuveSourceId:e.target.value}))}>
+                      <option value="">-- Aucune --</option>
+                      {cuvesCuverie.filter(c=>c.type!=="bourbes"&&(parseFloat(c.contenuActuelHL)||0)>0).map(c=>(
+                        <option key={c.id} value={c.id}>{c.nom} - {c.type} (dispo: {((parseFloat(c.contenuActuelHL)||0)*100).toLocaleString()} L)</option>
                       ))}
-                    </div>
-                    {tirageForm.futsSources.length>0&&(
-                      <div style={{fontSize:"11px",color:"#533AB7",marginTop:"4px"}}>
-                        Total sélectionné : {tirageForm.futsSources.reduce((s,id)=>s+(parseFloat(tirageForm.futsSourcesVolumes[id])||getTonneau(id)?.contenuActuel||0),0).toLocaleString()} L
-                      </div>
-                    )}
+                    </select>
                   </div>
                   <div>
                     <span style={s.lbl}>Volume vin (L)</span>
