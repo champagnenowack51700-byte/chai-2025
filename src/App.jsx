@@ -3591,7 +3591,7 @@ export default function App() {
                         <div style={{fontWeight:500,color:"#2C3E50",marginBottom:"6px"}}>Sources</div>
                         {(a.sources||[]).map((src,i)=>(
                           <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:"0.5px solid #e0e8f0"}}>
-                            <span style={{color:"#4A6274"}}>{src.type==="reserve"?"🍷 Réserve":"🛢 Fût"} {src.id}</span>
+                            <span style={{color:"#4A6274"}}>{src.type==="reserve"?"🍷 Réserve":"🛢 Fût"} {src.id}{tonneaux.find(t=>t.id===src.id)?.denomination?" — "+tonneaux.find(t=>t.id===src.id).denomination:""}</span>
                             <span style={{fontWeight:500}}>{src.volume} L</span>
                           </div>
                         ))}
@@ -3602,12 +3602,16 @@ export default function App() {
                       </div>
                       <div style={{background:"#f4f6f7",borderRadius:"6px",padding:"10px"}}>
                         <div style={{fontWeight:500,color:"#2C3E50",marginBottom:"6px"}}>Destinations</div>
+                        {a.cuveAssemblageId&&<div style={{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:"0.5px solid #e0e8f0"}}>
+                          <span style={{color:"#8B6000"}}>🥃 Cuve d'assemblage — {cuvesCuverie.find(c=>c.id===a.cuveAssemblageId)?.nom||a.cuveAssemblageId}</span>
+                          <span style={{fontWeight:500}}>{((a.sources||[]).reduce((s,src)=>s+(parseFloat(src.volume)||0),0)-(parseFloat(a.destTirageVol)||0)-(parseFloat(a.destRetourVol)||0)).toLocaleString()} L</span>
+                        </div>}
                         {a.destTirageId&&<div style={{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:"0.5px solid #e0e8f0"}}>
                           <span style={{color:"#2d6a00"}}>🍾 Tirage — {cuvesCuverie.find(c=>c.id===a.destTirageId)?.nom||a.destTirageId}</span>
                           <span style={{fontWeight:500}}>{a.destTirageVol} L</span>
                         </div>}
                         {a.destRetourId&&<div style={{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:"0.5px solid #e0e8f0"}}>
-                          <span style={{color:"#7a5200"}}>🔄 Retour réserve — {tonneaux.find(t=>t.id===a.destRetourId)?.id||a.destRetourId}</span>
+                          <span style={{color:"#7a5200"}}>🔄 Retour réserve — {a.destRetourId.startsWith("cuve_")?(cuvesCuverie.find(c=>c.id===a.destRetourId.replace("cuve_",""))?.nom||a.destRetourId):(a.destRetourId+(tonneaux.find(t=>t.id===a.destRetourId)?.denomination?" — "+tonneaux.find(t=>t.id===a.destRetourId).denomination:""))}</span>
                           <span style={{fontWeight:500}}>{a.destRetourVol} L</span>
                         </div>}
                       </div>
@@ -6576,7 +6580,7 @@ export default function App() {
                       <option value="">Sélectionner...</option>
                       {src.type==="tonneau"
                         ? tonneaux.filter(t=>t.statut!=="vide"&&t.contenuActuel>0).map(t=><option key={t.id} value={t.id}>{t.id} — {t.denomination} ({t.contenuActuel} L)</option>)
-                        : tonneaux.filter(t=>t.appellation==="vins_reserve"&&t.contenuActuel>0).map(t=><option key={t.id} value={t.id}>{t.id} — {t.contenuActuel} L</option>)
+                        : tonneaux.filter(t=>t.appellation==="vins_reserve"&&t.contenuActuel>0).map(t=><option key={t.id} value={t.id}>{t.id}{t.denomination?" — "+t.denomination:""} ({t.contenuActuel} L)</option>)
                       }
                     </select>
                     <input type="number" style={s.inp} placeholder="Volume L" value={src.volume} onChange={e=>setAssemblageForm(f=>({...f,sources:f.sources.map((s,j)=>j===i?{...s,volume:e.target.value}:s)}))}/>
