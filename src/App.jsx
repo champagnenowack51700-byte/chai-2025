@@ -529,7 +529,7 @@ export default function App() {
   const [sortieForm,       setSortieForm]       = useState({lotId:"",date:new Date().toISOString().slice(0,10),qte:"",notes:""});
   const [filterStockStatut,setFilterStockStatut]= useState("");
   const [filterStock15,    setFilterStock15]    = useState("");
-  const [groupByStock,     setGroupByStock]     = useState("cuvee");
+  const [groupByStock,     setGroupByStock]     = useState(["cuvee"]);
   const [filterAppellation, setFilterAppellation] = useState("");
   const [filterOp,         setFilterOp]         = useState("");
   const [filterDegFut,     setFilterDegFut]     = useState("");
@@ -3603,33 +3603,33 @@ export default function App() {
                 </div>
               )}
 
-              {/* Totaux (respecte les filtres actifs) */}
+              {/* Totaux (respecte les filtres actifs, criteres combinables) */}
               {lotsFiltre.length>0 && (()=>{
                 const totalGeneral = lotsFiltre.reduce((s,l)=>s+(parseInt(l.qteActuelle)||0),0);
+                const dims = groupByStock.length>0 ? groupByStock : [];
+                const dimLabel = (dim,l) => dim==="cuvee" ? l.cuvee+(l.millesime?" "+l.millesime:"") : dim==="lieu" ? (l.lieu||"-") : (l.mois>=15 ? "≥ 15 mois" : "< 15 mois");
                 const grouped = {};
                 lotsFiltre.forEach(l=>{
-                  let key;
-                  if(groupByStock==="cuvee") key = l.cuvee+(l.millesime?" "+l.millesime:"");
-                  else if(groupByStock==="lieu") key = l.lieu||"-";
-                  else key = l.mois+" mois";
-                  if(!grouped[key]) grouped[key] = {key, qte:0, _mois: groupByStock==="age"?l.mois:null};
+                  const key = dims.length>0 ? dims.map(d=>dimLabel(d,l)).join(" • ") : "Tout";
+                  if(!grouped[key]) grouped[key] = {key, qte:0, _mois: dims.includes("age")?(l.mois>=15?1:0):null};
                   grouped[key].qte += parseInt(l.qteActuelle)||0;
                 });
-                const lignes = Object.values(grouped).sort((a,b)=>groupByStock==="age" ? a._mois-b._mois : b.qte-a.qte);
+                const lignes = Object.values(grouped).sort((a,b)=>dims.includes("age") && dims.length===1 ? a._mois-b._mois : b.qte-a.qte);
                 return (
                   <div style={{...s.card,padding:"16px 20px",marginTop:"16px"}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px",flexWrap:"wrap",gap:"8px"}}>
                       <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#2C3E50"}}>Totaux ({lotsFiltre.length} lot{lotsFiltre.length>1?"s":""} — filtres appliqués)</div>
-                      <div style={{display:"flex",gap:"6px"}}>
-                        {[["cuvee","Par cuvée"],["lieu","Par lieu"],["age","Par âge"]].map(([val,lbl])=>(
-                          <button key={val} onClick={()=>setGroupByStock(val)}
-                            style={{padding:"4px 10px",borderRadius:"5px",border:`0.5px solid ${groupByStock===val?"#8B7355":"#d4c4a0"}`,background:groupByStock===val?"#F0EDE8":"transparent",color:groupByStock===val?"#8B7355":"#9a8870",fontSize:"11px",cursor:"pointer"}}>
-                            {lbl}
+                      <div style={{display:"flex",gap:"6px",flexWrap:"wrap"}}>
+                        {[["cuvee","Cuvée"],["lieu","Lieu"],["age","Âge"]].map(([val,lbl])=>(
+                          <button key={val} onClick={()=>setGroupByStock(prev=>prev.includes(val)?prev.filter(x=>x!==val):[...prev,val])}
+                            style={{padding:"4px 10px",borderRadius:"5px",border:`0.5px solid ${groupByStock.includes(val)?"#8B7355":"#d4c4a0"}`,background:groupByStock.includes(val)?"#F0EDE8":"transparent",color:groupByStock.includes(val)?"#8B7355":"#9a8870",fontSize:"11px",cursor:"pointer",fontWeight:groupByStock.includes(val)?600:400}}>
+                            {groupByStock.includes(val)?"✓ ":""}{lbl}
                           </button>
                         ))}
                       </div>
                     </div>
-                    <div style={{display:"grid",gap:"4px",maxHeight:"260px",overflowY:"auto"}}>
+                    {dims.length===0 && <div style={{fontSize:"11px",color:"#9a8870",marginBottom:"8px"}}>Sélectionne un ou plusieurs critères ci-dessus pour croiser les totaux (ex. Lieu + Âge).</div>}
+                    <div style={{display:"grid",gap:"4px",maxHeight:"320px",overflowY:"auto"}}>
                       {lignes.map(l=>(
                         <div key={l.key} style={{display:"flex",justifyContent:"space-between",padding:"6px 10px",background:"#fffbf5",borderRadius:"4px",fontSize:"12px"}}>
                           <span style={{color:"#6a5838"}}>{l.key}</span>
@@ -5521,33 +5521,33 @@ export default function App() {
                 </div>
               )}
 
-              {/* Totaux (respecte les filtres actifs) */}
+              {/* Totaux (respecte les filtres actifs, criteres combinables) */}
               {lotsFiltre.length>0 && (()=>{
                 const totalGeneral = lotsFiltre.reduce((s,l)=>s+(parseInt(l.qteActuelle)||0),0);
+                const dims = groupByStock.length>0 ? groupByStock : [];
+                const dimLabel = (dim,l) => dim==="cuvee" ? l.cuvee+(l.millesime?" "+l.millesime:"") : dim==="lieu" ? (l.lieu||"-") : (l.mois>=15 ? "≥ 15 mois" : "< 15 mois");
                 const grouped = {};
                 lotsFiltre.forEach(l=>{
-                  let key;
-                  if(groupByStock==="cuvee") key = l.cuvee+(l.millesime?" "+l.millesime:"");
-                  else if(groupByStock==="lieu") key = l.lieu||"-";
-                  else key = l.mois+" mois";
-                  if(!grouped[key]) grouped[key] = {key, qte:0, _mois: groupByStock==="age"?l.mois:null};
+                  const key = dims.length>0 ? dims.map(d=>dimLabel(d,l)).join(" • ") : "Tout";
+                  if(!grouped[key]) grouped[key] = {key, qte:0, _mois: dims.includes("age")?(l.mois>=15?1:0):null};
                   grouped[key].qte += parseInt(l.qteActuelle)||0;
                 });
-                const lignes = Object.values(grouped).sort((a,b)=>groupByStock==="age" ? a._mois-b._mois : b.qte-a.qte);
+                const lignes = Object.values(grouped).sort((a,b)=>dims.includes("age") && dims.length===1 ? a._mois-b._mois : b.qte-a.qte);
                 return (
                   <div style={{...s.card,padding:"16px 20px",marginTop:"16px"}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px",flexWrap:"wrap",gap:"8px"}}>
                       <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#2C3E50"}}>Totaux ({lotsFiltre.length} lot{lotsFiltre.length>1?"s":""} — filtres appliqués)</div>
-                      <div style={{display:"flex",gap:"6px"}}>
-                        {[["cuvee","Par cuvée"],["lieu","Par lieu"],["age","Par âge"]].map(([val,lbl])=>(
-                          <button key={val} onClick={()=>setGroupByStock(val)}
-                            style={{padding:"4px 10px",borderRadius:"5px",border:`0.5px solid ${groupByStock===val?"#8B7355":"#d4c4a0"}`,background:groupByStock===val?"#F0EDE8":"transparent",color:groupByStock===val?"#8B7355":"#9a8870",fontSize:"11px",cursor:"pointer"}}>
-                            {lbl}
+                      <div style={{display:"flex",gap:"6px",flexWrap:"wrap"}}>
+                        {[["cuvee","Cuvée"],["lieu","Lieu"],["age","Âge"]].map(([val,lbl])=>(
+                          <button key={val} onClick={()=>setGroupByStock(prev=>prev.includes(val)?prev.filter(x=>x!==val):[...prev,val])}
+                            style={{padding:"4px 10px",borderRadius:"5px",border:`0.5px solid ${groupByStock.includes(val)?"#8B7355":"#d4c4a0"}`,background:groupByStock.includes(val)?"#F0EDE8":"transparent",color:groupByStock.includes(val)?"#8B7355":"#9a8870",fontSize:"11px",cursor:"pointer",fontWeight:groupByStock.includes(val)?600:400}}>
+                            {groupByStock.includes(val)?"✓ ":""}{lbl}
                           </button>
                         ))}
                       </div>
                     </div>
-                    <div style={{display:"grid",gap:"4px",maxHeight:"260px",overflowY:"auto"}}>
+                    {dims.length===0 && <div style={{fontSize:"11px",color:"#9a8870",marginBottom:"8px"}}>Sélectionne un ou plusieurs critères ci-dessus pour croiser les totaux (ex. Lieu + Âge).</div>}
+                    <div style={{display:"grid",gap:"4px",maxHeight:"320px",overflowY:"auto"}}>
                       {lignes.map(l=>(
                         <div key={l.key} style={{display:"flex",justifyContent:"space-between",padding:"6px 10px",background:"#fffbf5",borderRadius:"4px",fontSize:"12px"}}>
                           <span style={{color:"#6a5838"}}>{l.key}</span>
