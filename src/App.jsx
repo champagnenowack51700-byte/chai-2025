@@ -66,6 +66,20 @@ const fmt = (d) => {
   return d;
 };
 
+// -- Persistance de la navigation dans l'URL (pour rester sur la meme page apres un rafraichissement) --
+const VALID_VIEWS = ["dashboard","parcelles","vigne","vendanges","rendement","tonneaux","mouvements","degustations","assemblage","tirages","stock","fiche"];
+const getInitialView = () => {
+  try {
+    const v = new URLSearchParams(window.location.search).get("view");
+    return VALID_VIEWS.includes(v) ? v : "dashboard";
+  } catch(e) { return "dashboard"; }
+};
+const getInitialUrlParam = (key) => {
+  try {
+    return new URLSearchParams(window.location.search).get(key) || null;
+  } catch(e) { return null; }
+};
+
 const fbLoad = async (col, setter) => {
   try {
     const snap = await getDocs(collection(db, col));
@@ -482,8 +496,9 @@ export default function App() {
   const [editingDeg,    setEditingDeg]    = useState(false);
   const [degDraft,      setDegDraft]      = useState([]);
 
-  const [view,        setView]        = useState("dashboard");
-  const [selectedFut, setSelectedFut] = useState(null);
+  const [view,        setView]        = useState(getInitialView);
+  const [firebaseLoaded, setFirebaseLoaded] = useState(false);
+  const [selectedFut, setSelectedFut] = useState(()=>getInitialUrlParam("fut"));
   const [ficheTab,    setFicheTab]    = useState("historique");
   const [searchFut,   setSearchFut]   = useState("");
   const [filterDenom,      setFilterDenom]      = useState("");
@@ -621,7 +636,7 @@ export default function App() {
   const [editingCuverie,   setEditingCuverie]   = useState(null);
   const CUVERIE_EMPTY = {nom:"",type:"debourbage",volumeHL:"",contenuActuelHL:"0",notes:""};
   const [cuverieForm,      setCuverieForm]      = useState(CUVERIE_EMPTY);
-  const [tonneauxTab,      setTonneauxTab]      = useState("futscuves");
+  const [tonneauxTab,      setTonneauxTab]      = useState(()=>getInitialUrlParam("tab")||"futscuves");
   const [showDivisionForm, setShowDivisionForm] = useState(false);
   const [divisionFut,      setDivisionFut]      = useState(null);
   const [divisionForm,     setDivisionForm]     = useState({volAOC:"",volRI:""});
@@ -730,6 +745,28 @@ export default function App() {
     window.addEventListener('unhandledrejection', (e) => setAppError(String(e.reason)));
   }, []);
   // Toutes les donnees sont dans Firebase - pas de localStorage
+
+  // Garder la page (vue) courante dans l'URL pour qu'un rafraichissement
+  // (F5) reste sur la meme page au lieu de revenir a l'accueil.
+  useEffect(()=>{
+    try {
+      const params = new URLSearchParams(window.location.search);
+      params.set("view", view);
+      if(view==="tonneaux") params.set("tab", tonneauxTab); else params.delete("tab");
+      if(view==="fiche" && selectedFut) params.set("fut", selectedFut); else params.delete("fut");
+      const newUrl = window.location.pathname + "?" + params.toString();
+      window.history.replaceState(null, "", newUrl);
+    } catch(e) {}
+  }, [view, tonneauxTab, selectedFut]);
+
+  // Si on recharge sur la fiche d'un fut qui n'existe plus, revenir a la liste
+  // (on attend que les vraies donnees Firebase soient chargees avant de verifier,
+  // pour ne pas se baser sur les donnees de demarrage).
+  useEffect(()=>{
+    if(firebaseLoaded && view==="fiche" && selectedFut && !tonneaux.find(t=>t.id===selectedFut)) {
+      setView("tonneaux"); setSelectedFut(null);
+    }
+  }, [firebaseLoaded, view, selectedFut, tonneaux]);
 
   // Firebase save helpers
   const saveTonneau = (t) => fbSave("tonneaux", t.id, t);
@@ -1175,7 +1212,7 @@ export default function App() {
 
   // Chargement initial + polling toutes les 10s
   useEffect(()=>{
-    refreshFromFirebase();
+    refreshFromFirebase().then(()=>setFirebaseLoaded(true));
     getDocs(collection(db,"traitements")).then(s=>{
       if(s.empty){ HIST_TRAITEMENTS.forEach(t=>{ const id=`hist_${t.campagne}_${t.numero}`; fbSave("traitements",id,{...t,id}); }); }
     });
