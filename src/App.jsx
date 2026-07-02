@@ -517,6 +517,7 @@ export default function App() {
   const [stockTab,         setStockTab]         = useState("champagne");
   const [lotAction,        setLotAction]        = useState(null);
   const [editingLot,       setEditingLot]        = useState(null);
+  const [divPreview,       setDivPreview]        = useState(null);
   const [lotEditForm,      setLotEditForm]       = useState(null);
   const [showSortieForm,   setShowSortieForm]   = useState(false);
   const [coiffesStock,     setCoiffesStock]     = useState([]);
@@ -537,6 +538,9 @@ export default function App() {
   const [filterDegFut,     setFilterDegFut]     = useState("");
   const [filterDegCuvee,   setFilterDegCuvee]   = useState("");
   const [filterDegFabric,  setFilterDegFabric]  = useState("");
+  const [filterDegVolMin,  setFilterDegVolMin]  = useState("");
+  const [filterDegVolMax,  setFilterDegVolMax]  = useState("");
+  const [filterDegNote,    setFilterDegNote]    = useState("");
   const [filterFut,   setFilterFut]   = useState("");
   const [filterMvtType, setFilterMvtType] = useState('');
   const [filterMvtAnnee, setFilterMvtAnnee] = useState(() => new Date().getFullYear().toString());
@@ -881,6 +885,22 @@ export default function App() {
   };
   const saveParcelle = (p) => fbSave("parcelles", p.id, p);
   const deleteParcelleFb = (id) => fbDelete("parcelles", id);
+
+  // Annuler une division de lot : refusionne avec le lot lie et restitue les coiffes deduites
+  const annulerDivision = (lot) => {
+    const linked = stockBouteilles.find(x=>x.id===lot.linkedLotId);
+    if(!linked) return alert("Le lot lié est introuvable (a peut-être déjà été modifié depuis).");
+    if(!window.confirm(`Annuler cette division ? Les ${lot.qteActuelle} bouteille(s) seront refusionnées avec le lot "${linked.cuvee} ${linked.format} (${linked.statut})", et les coiffes éventuellement déduites seront restituées.`)) return;
+    // Restituer les coiffes si cette division en avait deduit
+    if(lot.divisionCoiffeId) {
+      setCoiffesStock(prev=>prev.filter(c=>c.id!==lot.divisionCoiffeId));
+      fbDelete("coiffes", lot.divisionCoiffeId);
+    }
+    const updatedLinked = {...linked, qteActuelle:(linked.qteActuelle||0)+(lot.qteActuelle||0), linkedLotId:null};
+    setStockBouteilles(prev=>prev.filter(x=>x.id!==lot.id).map(x=>x.id===linked.id?updatedLinked:x));
+    fbSave("stockBouteilles", updatedLinked.id, updatedLinked);
+    fbDelete("stockBouteilles", lot.id);
+  };
 
   // Refresh depuis Firebase
   // -- STOCK HELPERS ----------------------------------------------------
@@ -2502,9 +2522,19 @@ export default function App() {
     if(filterDegFut    && !t.id.toLowerCase().includes(filterDegFut.toLowerCase())) return false;
     if(filterDegCuvee  && t.denomination!==filterDegCuvee) return false;
     if(filterDegFabric && t.tonnelier!==filterDegFabric) return false;
+    if(filterDegVolMin && (t.volume||0) < parseFloat(filterDegVolMin)) return false;
+    if(filterDegVolMax && (t.volume||0) > parseFloat(filterDegVolMax)) return false;
+    if(filterDegNote) {
+      const ng = avgNoteG(t.id);
+      if(ng==null) return false;
+      if(filterDegNote==="0-2" && !(ng<2)) return false;
+      if(filterDegNote==="2-3" && !(ng>=2&&ng<3)) return false;
+      if(filterDegNote==="3-4" && !(ng>=3&&ng<4)) return false;
+      if(filterDegNote==="4-5" && !(ng>=4&&ng<=5)) return false;
+    }
     return true;
   });
-  const hasFilter = filterDegFut||filterDegCuvee||filterDegFabric;
+  const hasFilter = filterDegFut||filterDegCuvee||filterDegFabric||filterDegVolMin||filterDegVolMax||filterDegNote;
 
   return (
     <div style={s.app}>
@@ -3591,7 +3621,11 @@ export default function App() {
                               <button style={{...s.ghostSm,fontSize:"10px",color:"#8B5A2B",borderColor:"#d4b48c"}}
                                 onClick={()=>openEditLot(l)}>Modifier</button>
                               <button style={{...s.ghostSm,fontSize:"10px",color:"#2C3E50",borderColor:"#d4c4a0"}}
-                                onClick={()=>setLotAction({lot:l,action:"diviser"})}>Diviser</button>
+                                onClick={()=>{setDivPreview(null);setLotAction({lot:l,action:"diviser"});}}>Diviser</button>
+                              {l.linkedLotId&&(!l._ids||l._ids.length===1)&&stockBouteilles.find(x=>x.id===l.linkedLotId)&&(
+                                <button style={{...s.ghostSm,fontSize:"10px",color:"#c47800",borderColor:"#e8c888"}}
+                                  onClick={()=>annulerDivision(l)}>Annuler la division</button>
+                              )}
                               {l.mois>=14&&!l.passage15&&(
                                 <button style={{...s.ghostSm,fontSize:"10px",color:"#1a7a40",borderColor:"#b4d4b4",fontWeight:500}}
                                   onClick={()=>{if(window.confirm("Confirmer le passage en +15 mois pour ce lot ?")){const upd={...l,passage15:true};setStockBouteilles(prev=>prev.map(x=>x.id===l.id?upd:x));fbSave("stockBouteilles",l.id,upd);}}}> Confirmer +15m</button>
@@ -4171,9 +4205,25 @@ export default function App() {
                   <option value="">Tous les fabricants</option>
                   {fabricOptions.map(f=><option key={f} value={f}>{f}</option>)}
                 </select>
+                <div style={{display:"flex",alignItems:"center",gap:"4px"}}>
+                  <input type="number" style={{...s.inp,width:"70px",padding:"5px 9px",fontSize:"12px"}}
+                    placeholder="Vol. min" value={filterDegVolMin} onChange={e=>setFilterDegVolMin(e.target.value)}/>
+                  <span style={{fontSize:"11px",color:"#9a8870"}}>–</span>
+                  <input type="number" style={{...s.inp,width:"70px",padding:"5px 9px",fontSize:"12px"}}
+                    placeholder="Vol. max" value={filterDegVolMax} onChange={e=>setFilterDegVolMax(e.target.value)}/>
+                  <span style={{fontSize:"11px",color:"#9a8870"}}>L</span>
+                </div>
+                <select style={{...s.sel,maxWidth:"150px",padding:"5px 9px",fontSize:"12px"}}
+                  value={filterDegNote} onChange={e=>setFilterDegNote(e.target.value)}>
+                  <option value="">Toutes les notes</option>
+                  <option value="0-2">Moins de 2</option>
+                  <option value="2-3">Entre 2 et 3</option>
+                  <option value="3-4">Entre 3 et 4</option>
+                  <option value="4-5">Entre 4 et 5</option>
+                </select>
                 {hasFilter && (
                   <button style={{...s.ghostSm,color:"#cc2222",borderColor:"#e8888855",fontSize:"11px"}}
-                    onClick={()=>{setFilterDegFut("");setFilterDegCuvee("");setFilterDegFabric("");}}>
+                    onClick={()=>{setFilterDegFut("");setFilterDegCuvee("");setFilterDegFabric("");setFilterDegVolMin("");setFilterDegVolMax("");setFilterDegNote("");}}>
                     <i className="ti ti-x" style={{marginRight:"3px"}}/>Réinitialiser
                   </button>
                 )}
@@ -4185,7 +4235,7 @@ export default function App() {
                   <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
                     <thead>
                       <tr style={{borderBottom:"2px solid #d4c4a0",background:"#F0EDE8"}}>
-                        {["N° Fût","Cuvée","Fabricant","Mill.","Moy. Note G","Moy. Boisé","Moy. Long.","Nb notes","Sessions"].map(h=>(
+                        {["N° Fût","Cuvée","Fabricant","Mill.","Volume","Moy. Note G","Moy. Boisé","Moy. Long.","Nb notes","Sessions"].map(h=>(
                           <th key={h} style={{textAlign:"left",padding:"8px 10px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#8a7248",fontWeight:600}}>{h}</th>
                         ))}
                       </tr>
@@ -4208,6 +4258,7 @@ export default function App() {
                               }
                             </td>
                             <td style={{padding:"9px 10px",color:"#6a5838",fontFamily:"'IBM Plex Mono',monospace"}}>{t.millesime||"-"}</td>
+                            <td style={{padding:"9px 10px",color:"#6a5838",fontFamily:"'IBM Plex Mono',monospace"}}>{t.volume||0} L</td>
                             <td style={{padding:"9px 10px"}}>
                               <div style={{display:"flex",alignItems:"center",gap:"6px"}}>
                                 <div style={{width:"44px",height:"5px",background:"#e8dcc6",borderRadius:"3px",overflow:"hidden"}}>
@@ -4226,7 +4277,7 @@ export default function App() {
                         );
                       })}
                       {futsFiltres.length===0&&(
-                        <tr><td colSpan={9} style={{padding:"24px 10px",color:"#8a7248",fontSize:"13px",textAlign:"center"}}>
+                        <tr><td colSpan={10} style={{padding:"24px 10px",color:"#8a7248",fontSize:"13px",textAlign:"center"}}>
                           {hasFilter?"Aucun fût ne correspond aux filtres.":"Aucune note encore."}
                         </td></tr>
                       )}
@@ -5612,7 +5663,11 @@ export default function App() {
                               <button style={{...s.ghostSm,fontSize:"10px",color:"#8B5A2B",borderColor:"#d4b48c"}}
                                 onClick={()=>openEditLot(l)}>Modifier</button>
                               <button style={{...s.ghostSm,fontSize:"10px",color:"#2C3E50",borderColor:"#d4c4a0"}}
-                                onClick={()=>setLotAction({lot:l,action:"diviser"})}>Diviser</button>
+                                onClick={()=>{setDivPreview(null);setLotAction({lot:l,action:"diviser"});}}>Diviser</button>
+                              {l.linkedLotId&&(!l._ids||l._ids.length===1)&&stockBouteilles.find(x=>x.id===l.linkedLotId)&&(
+                                <button style={{...s.ghostSm,fontSize:"10px",color:"#c47800",borderColor:"#e8c888"}}
+                                  onClick={()=>annulerDivision(l)}>Annuler la division</button>
+                              )}
                               {l.mois>=14&&!l.passage15&&(
                                 <button style={{...s.ghostSm,fontSize:"10px",color:"#1a7a40",borderColor:"#b4d4b4",fontWeight:500}}
                                   onClick={()=>{if(window.confirm("Confirmer le passage en +15 mois pour ce lot ?")){const upd={...l,passage15:true};setStockBouteilles(prev=>prev.map(x=>x.id===l.id?upd:x));fbSave("stockBouteilles",l.id,upd);}}}> Confirmer +15m</button>
@@ -8011,7 +8066,7 @@ export default function App() {
               <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#2C3E50"}}>
                 {lotAction.action==="diviser"?"Diviser le lot":"Mouvement de lot"}
               </div>
-              <button style={s.ghost} onClick={()=>setLotAction(null)}>x</button>
+              <button style={s.ghost} onClick={()=>{setLotAction(null);setDivPreview(null);}}>x</button>
             </div>
             <div style={{...s.card,marginBottom:"16px",padding:"12px",background:"#F0EDE8"}}>
               <div style={{fontWeight:500,color:"#1a1205"}}>{lotAction.lot.cuvee} {lotAction.lot.millesime}</div>
@@ -8072,7 +8127,7 @@ export default function App() {
                 </div>
               </div>
             )}
-            {lotAction.action==="diviser"&&(
+            {lotAction.action==="diviser"&&!divPreview&&(
               <div style={{display:"grid",gap:"12px"}}>
                 <div style={{fontSize:"12px",color:"#185FA5",background:"#e8f0fa",border:"0.5px solid #b4d0f0",borderRadius:"4px",padding:"6px 10px"}}>
                   Diviser sert à passer une partie du lot en habillage, avec déduction automatique des coiffes si le type d'habillage en nécessite. Le lieu reste celui du lot d'origine — utilise "Mouvement" pour le changer.
@@ -8095,27 +8150,84 @@ export default function App() {
                   <button style={s.btn} disabled={lotAction.lot.statut!==getPreHabillageStatut(lotAction.lot.typeProduit)} onClick={()=>{
                     if(lotAction.lot.statut!==getPreHabillageStatut(lotAction.lot.typeProduit)) return alert(`Ce lot doit d'abord etre au statut "${getPreHabillageStatut(lotAction.lot.typeProduit)}" (via Mouvement) avant de pouvoir etre habille.`);
                     const qte = parseInt(document.getElementById("div_qte").value)||0;
-                    const lieu = lotAction.lot.lieu;
                     const statut = document.getElementById("div_statut").value;
                     if(qte<=0||qte>=lotAction.lot.qteActuelle) return alert("Quantite invalide - doit etre entre 1 et "+(lotAction.lot.qteActuelle-1));
-                    // Deduction des coiffes (null = habillage neutre, pas de stock a gerer)
                     const typeCoiffe = getTypeCoiffeHabillage(lotAction.lot.typeProduit, statut, lotAction.lot.format);
-                    if(typeCoiffe) {
-                      const deduction = {id:"coiffe_"+Date.now(),type:typeCoiffe,operation:"utilisation",qte:String(qte),date:new Date().toISOString().slice(0,10),notes:"Division - Habillage "+lotAction.lot.cuvee,timestamp:new Date().toISOString()};
-                      setCoiffesStock(prev=>[deduction,...prev]);
-                      fbSave("coiffes",deduction.id,deduction);
-                    }
-                    const newLotId = "lot_"+Date.now();
-                    const newLot = {...lotAction.lot, id:newLotId, qteInitiale:qte, qteActuelle:qte, statut, lieu, linkedLotId:lotAction.lot.id};
-                    const updatedLot = {...lotAction.lot, qteActuelle:lotAction.lot.qteActuelle-qte, linkedLotId:newLotId};
-                    setStockBouteilles(prev=>[newLot,...prev.map(x=>x.id===lotAction.lot.id?updatedLot:x)]);
-                    fbSave("stockBouteilles", newLot.id, newLot);
-                    fbSave("stockBouteilles", updatedLot.id, updatedLot);
-                    setLotAction(null);
-                  }}>Diviser</button>
+                    const calcStockPreview = (type) => coiffesStock.filter(c=>c.type===type||(type==="Export"&&c.type==="Export Magnum")).reduce((s,c)=>s+(c.operation==="achat"?parseInt(c.qte)||0:-(parseInt(c.qte)||0)),0);
+                    const stockDispo = typeCoiffe ? calcStockPreview(typeCoiffe) : null;
+                    setDivPreview({qte, statut, typeCoiffe, stockDispo});
+                  }}>Continuer</button>
                 </div>
               </div>
             )}
+
+            {lotAction.action==="diviser"&&divPreview&&(()=>{
+              const stockApres = divPreview.stockDispo!=null ? divPreview.stockDispo-divPreview.qte : null;
+              const stockInsuffisant = stockApres!=null && stockApres<0;
+              return (
+                <div style={{display:"grid",gap:"12px"}}>
+                  <div style={{fontFamily:"Georgia,serif",fontSize:"15px",color:"#2C3E50"}}>Récapitulatif</div>
+                  <div style={{background:"#F0EDE8",borderRadius:"8px",padding:"14px",display:"grid",gap:"8px",fontSize:"13px"}}>
+                    <div style={{display:"flex",justifyContent:"space-between"}}>
+                      <span style={{color:"#7a6840"}}>Fût source</span>
+                      <span style={{fontWeight:500,color:"#2C3E50"}}>{lotAction.lot.cuvee} — {lotAction.lot.format}</span>
+                    </div>
+                    <div style={{display:"flex",justifyContent:"space-between"}}>
+                      <span style={{color:"#7a6840"}}>Quantité séparée</span>
+                      <span style={{fontWeight:600,color:"#8B7355",fontFamily:"monospace"}}>{divPreview.qte} btl</span>
+                    </div>
+                    <div style={{display:"flex",justifyContent:"space-between"}}>
+                      <span style={{color:"#7a6840"}}>Reste sur le lot d'origine</span>
+                      <span style={{fontFamily:"monospace"}}>{lotAction.lot.qteActuelle-divPreview.qte} btl</span>
+                    </div>
+                    <div style={{display:"flex",justifyContent:"space-between"}}>
+                      <span style={{color:"#7a6840"}}>Nouveau statut</span>
+                      <span style={{fontWeight:600,color:"#2C3E50"}}>{divPreview.statut}</span>
+                    </div>
+                    {divPreview.typeCoiffe ? (
+                      <div style={{borderTop:"0.5px solid #d4c4a0",paddingTop:"8px",marginTop:"2px"}}>
+                        <div style={{display:"flex",justifyContent:"space-between"}}>
+                          <span style={{color:"#7a6840"}}>Coiffe déduite</span>
+                          <span style={{fontWeight:500,color:"#2C3E50"}}>{divPreview.typeCoiffe} (-{divPreview.qte})</span>
+                        </div>
+                        <div style={{display:"flex",justifyContent:"space-between"}}>
+                          <span style={{color:"#7a6840"}}>Stock coiffes {divPreview.typeCoiffe}</span>
+                          <span style={{fontFamily:"monospace",color:stockInsuffisant?"#cc2222":"#2C3E50"}}>{divPreview.stockDispo} → {stockApres}</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{borderTop:"0.5px solid #d4c4a0",paddingTop:"8px",marginTop:"2px",color:"#9a8870",fontStyle:"italic"}}>Habillage neutre — aucune coiffe à déduire.</div>
+                    )}
+                  </div>
+                  {stockInsuffisant && (
+                    <div style={{fontSize:"12px",color:"#cc2222",background:"#fde8e8",border:"0.5px solid #f0b4b4",borderRadius:"4px",padding:"6px 10px"}}>
+                      Attention : le stock de coiffes {divPreview.typeCoiffe} passerait en négatif ({stockApres}). Vérifie ton stock avant de confirmer.
+                    </div>
+                  )}
+                  <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
+                    <button style={s.ghost} onClick={()=>setDivPreview(null)}>Modifier</button>
+                    <button style={s.btn} onClick={()=>{
+                      const {qte, statut, typeCoiffe} = divPreview;
+                      const lieu = lotAction.lot.lieu;
+                      let divisionCoiffeId = null;
+                      if(typeCoiffe) {
+                        const deduction = {id:"coiffe_"+Date.now(),type:typeCoiffe,operation:"utilisation",qte:String(qte),date:new Date().toISOString().slice(0,10),notes:"Division - Habillage "+lotAction.lot.cuvee,timestamp:new Date().toISOString()};
+                        divisionCoiffeId = deduction.id;
+                        setCoiffesStock(prev=>[deduction,...prev]);
+                        fbSave("coiffes",deduction.id,deduction);
+                      }
+                      const newLotId = "lot_"+Date.now();
+                      const newLot = {...lotAction.lot, id:newLotId, qteInitiale:qte, qteActuelle:qte, statut, lieu, linkedLotId:lotAction.lot.id, divisionCoiffeId};
+                      const updatedLot = {...lotAction.lot, qteActuelle:lotAction.lot.qteActuelle-qte, linkedLotId:newLotId};
+                      setStockBouteilles(prev=>[newLot,...prev.map(x=>x.id===lotAction.lot.id?updatedLot:x)]);
+                      fbSave("stockBouteilles", newLot.id, newLot);
+                      fbSave("stockBouteilles", updatedLot.id, updatedLot);
+                      setLotAction(null); setDivPreview(null);
+                    }}>Confirmer la division</button>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}
