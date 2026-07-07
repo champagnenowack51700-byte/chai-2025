@@ -647,7 +647,7 @@ export default function App() {
   const TOUS_STATUTS_POSSIBLES = [...STATUTS_BOUTEILLES, "En vieillissement", "Habille Neutre", "Habille Vignette CRD", "Habillage neutre 50cl", "Habillage neutre 3L"];
   const getStatuts = (type) => ["coteaux_blanc","coteaux_rouge","ratafia"].includes(type) ? STATUTS_AUTRES : STATUTS_BOUTEILLES;
   const LIEU_COLORS = {"Domaine":{bg:"#d4edda",color:"#1a7a40"},"Lorain Champagnisation":{bg:"#d4e8f8",color:"#185FA5"},"Epernay":{bg:"#E8E0D0",color:"#c47800"}};
-  const STATUT_COLORS = {"Sur latte / Sur pointe":{bg:"#e8f0fb",color:"#185FA5"},"En cours de degorgement":{bg:"#fff3cd",color:"#c47800"},"Degorge":{bg:"#d4f0dd",color:"#1a7a40"},"Habille CRD":{bg:"#e8d4f8",color:"#6a2d8a"},"Habille Export":{bg:"#f8d4e8",color:"#8a2d6a"},"En vieillissement":{bg:"#f0e8d4",color:"#7a5200"},"Habille Neutre":{bg:"#e8f0e8",color:"#2d6a00"},"Habille Vignette CRD":{bg:"#d4e8f8",color:"#185FA5"}};
+  const STATUT_COLORS = {"Sur latte / Sur pointe":{bg:"#e8f0fb",color:"#185FA5"},"En cours de degorgement":{bg:"#fff3cd",color:"#c47800"},"Degorge":{bg:"#d4f0dd",color:"#1a7a40"},"Habille CRD":{bg:"#e8d4f8",color:"#6a2d8a"},"Habille Export":{bg:"#f8d4e8",color:"#8a2d6a"},"En vieillissement":{bg:"#f0e8d4",color:"#7a5200"},"Habille Neutre":{bg:"#e8f0e8",color:"#2d6a00"},"Habille Vignette CRD":{bg:"#d4e8f8",color:"#185FA5"},"Habillage neutre 50cl":{bg:"#f5e8d4",color:"#8B5200"},"Habillage neutre 3L":{bg:"#ead4f5",color:"#6a2d8a"}};
   const DEGORGE_EMPTY = {
     lotId: "", date:"", operateur:"",
     lieuDepart:"Domaine", lieuArrivee:"Lorain Champagnisation",
