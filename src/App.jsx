@@ -529,6 +529,7 @@ export default function App() {
   const [coiffesForm,      setCoiffesForm]       = useState({type:"CRD",qte:"",operation:"achat"});
   const [sortieForm,       setSortieForm]       = useState({lotId:"",date:new Date().toISOString().slice(0,10),qte:"",notes:""});
   const [filterStockStatut,setFilterStockStatut]= useState("");
+  const [filterStockFormat, setFilterStockFormat] = useState("");
   const [filterStock15,    setFilterStock15]    = useState("");
   const [groupByStock,     setGroupByStock]     = useState(["cuvee"]);
   const [filterTirageAnnee, setFilterTirageAnnee] = useState("");
@@ -3467,6 +3468,7 @@ export default function App() {
             if(filterStockCuvee && !l.cuvee.toLowerCase().includes(filterStockCuvee.toLowerCase())) return false;
             if(filterStockLieu && l.lieu!==filterStockLieu) return false;
             if(filterStockStatut && l.statut!==filterStockStatut) return false;
+            if(filterStockFormat && stockTab==="champagne" && (l.format||"75cl")!==filterStockFormat) return false;
             if(filterStock15==="moins15" && l.mois>=15) return false;
             if(filterStock15==="plus15" && l.mois<15) return false;
             return true;
@@ -3510,7 +3512,7 @@ export default function App() {
               {/* Onglets type produit */}
               <div style={{display:"flex",gap:"4px",marginBottom:"16px",borderBottom:"1px solid #d4c4a0",paddingBottom:"0"}}>
                 {[["champagne","Champagne"],["coteaux_blanc","Coteaux Blanc"],["coteaux_rouge","Coteaux Rouge"],["ratafia","Ratafia"]].map(([key,lbl])=>(
-                  <button key={key} onClick={()=>{setStockTab(key);setFilterStockStatut("");}} style={{padding:"8px 14px",border:"none",borderBottom:stockTab===key?"2px solid #b8860b":"2px solid transparent",background:"transparent",color:stockTab===key?"#2C3E50":"#9a8870",fontWeight:stockTab===key?500:400,fontSize:"12px",cursor:"pointer",fontFamily:"Georgia,serif"}}>{lbl}</button>
+                  <button key={key} onClick={()=>{setStockTab(key);setFilterStockStatut("");setFilterStockFormat("");}} style={{padding:"8px 14px",border:"none",borderBottom:stockTab===key?"2px solid #b8860b":"2px solid transparent",background:"transparent",color:stockTab===key?"#2C3E50":"#9a8870",fontWeight:stockTab===key?500:400,fontSize:"12px",cursor:"pointer",fontFamily:"Georgia,serif"}}>{lbl}</button>
                 ))}
               </div>
 
@@ -3562,6 +3564,12 @@ export default function App() {
                   <option value="">Tous les lieux</option>
                   {LIEUX_STOCK.map(l=><option key={l} value={l}>{l}</option>)}
                 </select>
+                {stockTab==="champagne"&&<select style={{...s.sel,maxWidth:"160px"}} value={filterStockFormat} onChange={e=>setFilterStockFormat(e.target.value)}>
+                  <option value="">Tous formats</option>
+                  <option value="75cl">75cl</option>
+                  <option value="Magnum">Magnum</option>
+                  <option value="Jeroboam">Jéroboam</option>
+                </select>}
                 <select style={{...s.sel,maxWidth:"220px"}} value={filterStockStatut} onChange={e=>setFilterStockStatut(e.target.value)}>
                   <option value="">Tous les statuts</option>
                   {[...TOUS_STATUTS_POSSIBLES,"Passage 15 mois (commercialisable)"].map(st=><option key={st} value={st}>{st}</option>)}
@@ -5513,6 +5521,7 @@ export default function App() {
             if(filterStockCuvee && !l.cuvee.toLowerCase().includes(filterStockCuvee.toLowerCase())) return false;
             if(filterStockLieu && l.lieu!==filterStockLieu) return false;
             if(filterStockStatut && l.statut!==filterStockStatut) return false;
+            if(filterStockFormat && stockTab==="champagne" && (l.format||"75cl")!==filterStockFormat) return false;
             if(filterStock15==="moins15" && l.mois>=15) return false;
             if(filterStock15==="plus15" && l.mois<15) return false;
             return true;
@@ -5552,7 +5561,7 @@ export default function App() {
               {/* Onglets type produit */}
               <div style={{display:"flex",gap:"4px",marginBottom:"16px",borderBottom:"1px solid #d4c4a0",paddingBottom:"0"}}>
                 {[["champagne","Champagne"],["coteaux_blanc","Coteaux Blanc"],["coteaux_rouge","Coteaux Rouge"],["ratafia","Ratafia"]].map(([key,lbl])=>(
-                  <button key={key} onClick={()=>{setStockTab(key);setFilterStockStatut("");}} style={{padding:"8px 14px",border:"none",borderBottom:stockTab===key?"2px solid #b8860b":"2px solid transparent",background:"transparent",color:stockTab===key?"#2C3E50":"#9a8870",fontWeight:stockTab===key?500:400,fontSize:"12px",cursor:"pointer",fontFamily:"Georgia,serif"}}>{lbl}</button>
+                  <button key={key} onClick={()=>{setStockTab(key);setFilterStockStatut("");setFilterStockFormat("");}} style={{padding:"8px 14px",border:"none",borderBottom:stockTab===key?"2px solid #b8860b":"2px solid transparent",background:"transparent",color:stockTab===key?"#2C3E50":"#9a8870",fontWeight:stockTab===key?500:400,fontSize:"12px",cursor:"pointer",fontFamily:"Georgia,serif"}}>{lbl}</button>
                 ))}
               </div>
 
@@ -5604,6 +5613,12 @@ export default function App() {
                   <option value="">Tous les lieux</option>
                   {LIEUX_STOCK.map(l=><option key={l} value={l}>{l}</option>)}
                 </select>
+                {stockTab==="champagne"&&<select style={{...s.sel,maxWidth:"160px"}} value={filterStockFormat} onChange={e=>setFilterStockFormat(e.target.value)}>
+                  <option value="">Tous formats</option>
+                  <option value="75cl">75cl</option>
+                  <option value="Magnum">Magnum</option>
+                  <option value="Jeroboam">Jéroboam</option>
+                </select>}
                 <select style={{...s.sel,maxWidth:"220px"}} value={filterStockStatut} onChange={e=>setFilterStockStatut(e.target.value)}>
                   <option value="">Tous les statuts</option>
                   {[...TOUS_STATUTS_POSSIBLES,"Passage 15 mois (commercialisable)"].map(st=><option key={st} value={st}>{st}</option>)}
