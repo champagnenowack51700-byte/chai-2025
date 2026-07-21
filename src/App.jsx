@@ -726,7 +726,7 @@ export default function App() {
   const [showCuveHistorique, setShowCuveHistorique] = useState(null);
   const [showCuveHistAnnee, setShowCuveHistAnnee] = useState(()=>new Date().getFullYear().toString());
   const [showPlanChai, setShowPlanChai] = useState(false);
-  const [assemblageForm, setAssemblageForm] = useState({nomCuvee:"",date:new Date().toISOString().slice(0,10),sources:[{type:"tonneau",id:"",volume:""}],cuveAssemblageId:"",destTirageId:"",destTirageVol:"",destRetourId:"",destRetourVol:"",notes:""});
+  const [assemblageForm, setAssemblageForm] = useState({nomCuvee:"",date:new Date().toISOString().slice(0,10),sources:[{type:"tonneau",id:"",volume:""}],cuveAssemblageId:"",destTirageId:"",destTirageVol:"",destRetours:[{id:"",volume:""}],notes:""});
   const TIRAGE_EMPTY = {
     date: new Date().toISOString().slice(0,10),
     operateur: "",
@@ -3883,7 +3883,7 @@ export default function App() {
           <div>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
               <div style={{fontFamily:"Georgia,serif",fontSize:"20px",color:"#2C3E50"}}>Assemblages</div>
-              <button style={s.btn} onClick={()=>{setAssemblageForm({nomCuvee:"",date:new Date().toISOString().slice(0,10),sources:[{type:"tonneau",id:"",volume:""}],destTirageId:"",destTirageVol:"",destRetourId:"",destRetourVol:"",notes:""});setShowAssemblageForm(true);}}>+ Nouvel assemblage</button>
+              <button style={s.btn} onClick={()=>{setAssemblageForm({nomCuvee:"",date:new Date().toISOString().slice(0,10),sources:[{type:"tonneau",id:"",volume:""}],cuveAssemblageId:"",destTirageId:"",destTirageVol:"",destRetours:[{id:"",volume:""}],notes:""});setShowAssemblageForm(true);}}>+ Nouvel assemblage</button>
             </div>
             {assemblages.length===0&&<div style={{...s.card,color:"#9a8870",fontStyle:"italic"}}>Aucun assemblage enregistré.</div>}
             {[...new Set(assemblages.map(a=>a.date?.slice(0,4)))].sort().reverse().map(annee=>(
@@ -3909,8 +3909,9 @@ export default function App() {
                               saveTonneau(updated); return updated;
                             }
                             // Annuler retour reserve fût
-                            if(a.destRetourId===t.id&&!a.destRetourId?.startsWith("cuve_")) {
-                              const volR = parseFloat(a.destRetourVol)||0;
+                            const retourFutMatch = (a.destRetours||[]).find(r=>r.id===t.id&&!r.id?.startsWith("cuve_"));
+                            if(retourFutMatch) {
+                              const volR = parseFloat(retourFutMatch.volume)||0;
                               const newVol = Math.max(0,(t.contenuActuel||0)-volR);
                               const updated = estVide(newVol) ? viderFut(t) : {...t, contenuActuel:newVol};
                               saveTonneau(updated); return updated;
@@ -3921,7 +3922,7 @@ export default function App() {
                           // Annuler cuve assemblage (retirer le volume net qui y avait ete ajoute)
                           if(a.cuveAssemblageId) {
                             const volTotalA = (a.sources||[]).reduce((s,src)=>s+(parseFloat(src.volume)||0),0);
-                            const volSortieA = (parseFloat(a.destTirageVol)||0)+(parseFloat(a.destRetourVol)||0);
+                            const volSortieA = (parseFloat(a.destTirageVol)||0)+((a.destRetours||[]).reduce((s,r)=>s+(parseFloat(r.volume)||0),0));
                             const volNetA = volTotalA - volSortieA;
                             setCuvesCuverie(prev=>prev.map(c=>{
                               if(c.id===a.cuveAssemblageId) {
@@ -3943,9 +3944,9 @@ export default function App() {
                             }));
                           }
                           // Annuler retour cuve
-                          if(a.destRetourId?.startsWith("cuve_")) {
-                            const cuveId = a.destRetourId.replace("cuve_","");
-                            const volR = parseFloat(a.destRetourVol)||0;
+                          (a.destRetours||[]).filter(r=>r.id?.startsWith("cuve_")).forEach(r=>{
+                            const cuveId = r.id.replace("cuve_","");
+                            const volR = parseFloat(r.volume)||0;
                             setCuvesCuverie(prev=>prev.map(c=>{
                               if(c.id===cuveId) {
                                 const updated = majCuveContenu(c, (parseFloat(c.contenuActuelHL)||0)-(volR/100));
@@ -7260,15 +7261,24 @@ export default function App() {
                   <div><span style={s.lbl}>Volume tirage (L)</span>
                     <input type="number" style={s.inp} placeholder="ex. 5000" value={assemblageForm.destTirageVol} onChange={e=>setAssemblageForm(f=>({...f,destTirageVol:e.target.value}))}/></div>
                 </div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
-                  <div><span style={s.lbl}>🔄 Retour réserve (fût)</span>
-                    <select style={s.sel} value={assemblageForm.destRetourId} onChange={e=>setAssemblageForm(f=>({...f,destRetourId:e.target.value}))}>
-                      <option value="">Aucun</option>
-                      {[...tonneaux.map(t=>({id:t.id,nom:t.id+" "+(t.denomination||""),vol:t.contenuActuel||0})),...cuvesCuverie.map(c=>({id:"cuve_"+c.id,nom:c.nom+" (cuve)",vol:(parseFloat(c.contenuActuelHL)||0)*100}))].map(x=><option key={x.id} value={x.id}>{x.nom} — {x.vol} L</option>)}
-                    </select>
+                <div>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"8px"}}>
+                    <span style={{...s.lbl,marginBottom:0}}>🔄 Retours réserve</span>
+                    <button style={s.ghostSm} onClick={()=>setAssemblageForm(f=>({...f,destRetours:[...f.destRetours,{id:"",volume:""}]}))}>+ Ajouter</button>
                   </div>
-                  <div><span style={s.lbl}>Volume retour (L)</span>
-                    <input type="number" style={s.inp} placeholder="ex. 2000" value={assemblageForm.destRetourVol} onChange={e=>setAssemblageForm(f=>({...f,destRetourVol:e.target.value}))}/></div>
+                  {assemblageForm.destRetours.map((dr,i)=>(
+                    <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 120px 24px",gap:"8px",marginBottom:"8px",alignItems:"center"}}>
+                      <select style={s.sel} value={dr.id} onChange={e=>setAssemblageForm(f=>({...f,destRetours:f.destRetours.map((r,j)=>j===i?{...r,id:e.target.value}:r)}))}>
+                        <option value="">Aucun</option>
+                        {[...tonneaux.map(t=>({id:t.id,nom:t.id+" "+(t.denomination||""),vol:t.contenuActuel||0})),...cuvesCuverie.map(c=>({id:"cuve_"+c.id,nom:c.nom+" (cuve)",vol:(parseFloat(c.contenuActuelHL)||0)*100}))].map(x=><option key={x.id} value={x.id}>{x.nom} — {x.vol} L</option>)}
+                      </select>
+                      <input type="number" style={s.inp} placeholder="Volume L" value={dr.volume} onChange={e=>setAssemblageForm(f=>({...f,destRetours:f.destRetours.map((r,j)=>j===i?{...r,volume:e.target.value}:r)}))}/>
+                      <button style={{background:"none",border:"none",cursor:"pointer",color:"#cc2222",fontSize:"16px"}} onClick={()=>setAssemblageForm(f=>({...f,destRetours:f.destRetours.filter((_,j)=>j!==i)}))}>×</button>
+                    </div>
+                  ))}
+                  <div style={{fontSize:"12px",color:"#2C3E50",fontWeight:500,textAlign:"right"}}>
+                    Total retour : {assemblageForm.destRetours.reduce((s,r)=>s+(parseFloat(r.volume)||0),0).toLocaleString()} L
+                  </div>
                 </div>
               </div>
 
