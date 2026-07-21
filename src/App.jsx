@@ -529,6 +529,7 @@ export default function App() {
   const [coiffesForm,      setCoiffesForm]       = useState({type:"CRD",qte:"",operation:"achat"});
   const [sortieForm,       setSortieForm]       = useState({lotId:"",date:new Date().toISOString().slice(0,10),qte:"",notes:""});
   const [filterStockStatut,setFilterStockStatut]= useState("");
+  const [filterStockFormat, setFilterStockFormat] = useState("");
   const [filterStock15,    setFilterStock15]    = useState("");
   const [groupByStock,     setGroupByStock]     = useState(["cuvee"]);
   const [filterTirageAnnee, setFilterTirageAnnee] = useState("");
@@ -646,7 +647,7 @@ export default function App() {
   const TOUS_STATUTS_POSSIBLES = [...STATUTS_BOUTEILLES, "En vieillissement", "Habille Neutre", "Habille Vignette CRD", "Habillage neutre 50cl", "Habillage neutre 3L"];
   const getStatuts = (type) => ["coteaux_blanc","coteaux_rouge","ratafia"].includes(type) ? STATUTS_AUTRES : STATUTS_BOUTEILLES;
   const LIEU_COLORS = {"Domaine":{bg:"#d4edda",color:"#1a7a40"},"Lorain Champagnisation":{bg:"#d4e8f8",color:"#185FA5"},"Epernay":{bg:"#E8E0D0",color:"#c47800"}};
-  const STATUT_COLORS = {"Sur latte / Sur pointe":{bg:"#e8f0fb",color:"#185FA5"},"En cours de degorgement":{bg:"#fff3cd",color:"#c47800"},"Degorge":{bg:"#d4f0dd",color:"#1a7a40"},"Habille CRD":{bg:"#e8d4f8",color:"#6a2d8a"},"Habille Export":{bg:"#f8d4e8",color:"#8a2d6a"}};
+  const STATUT_COLORS = {"Sur latte / Sur pointe":{bg:"#e8f0fb",color:"#185FA5"},"En cours de degorgement":{bg:"#fff3cd",color:"#c47800"},"Degorge":{bg:"#d4f0dd",color:"#1a7a40"},"Habille CRD":{bg:"#e8d4f8",color:"#6a2d8a"},"Habille Export":{bg:"#f8d4e8",color:"#8a2d6a"},"En vieillissement":{bg:"#f0e8d4",color:"#7a5200"},"Habille Neutre":{bg:"#e8f0e8",color:"#2d6a00"},"Habille Vignette CRD":{bg:"#d4e8f8",color:"#185FA5"},"Habillage neutre 50cl":{bg:"#f5e8d4",color:"#8B5200"},"Habillage neutre 3L":{bg:"#ead4f5",color:"#6a2d8a"}};
   const DEGORGE_EMPTY = {
     lotId: "", date:"", operateur:"",
     lieuDepart:"Domaine", lieuArrivee:"Lorain Champagnisation",
@@ -725,7 +726,7 @@ export default function App() {
   const [showCuveHistorique, setShowCuveHistorique] = useState(null);
   const [showCuveHistAnnee, setShowCuveHistAnnee] = useState(()=>new Date().getFullYear().toString());
   const [showPlanChai, setShowPlanChai] = useState(false);
-  const [assemblageForm, setAssemblageForm] = useState({nomCuvee:"",date:new Date().toISOString().slice(0,10),sources:[{type:"tonneau",id:"",volume:""}],cuveAssemblageId:"",destTirageId:"",destTirageVol:"",destRetourId:"",destRetourVol:"",notes:""});
+  const [assemblageForm, setAssemblageForm] = useState({nomCuvee:"",date:new Date().toISOString().slice(0,10),sources:[{type:"tonneau",id:"",volume:""}],cuveAssemblageId:"",destTirageId:"",destTirageVol:"",destRetours:[{id:"",volume:""}],notes:""});
   const TIRAGE_EMPTY = {
     date: new Date().toISOString().slice(0,10),
     operateur: "",
@@ -3467,6 +3468,7 @@ export default function App() {
             if(filterStockCuvee && !l.cuvee.toLowerCase().includes(filterStockCuvee.toLowerCase())) return false;
             if(filterStockLieu && l.lieu!==filterStockLieu) return false;
             if(filterStockStatut && l.statut!==filterStockStatut) return false;
+            if(filterStockFormat && stockTab==="champagne" && (l.format||"75cl")!==filterStockFormat) return false;
             if(filterStock15==="moins15" && l.mois>=15) return false;
             if(filterStock15==="plus15" && l.mois<15) return false;
             return true;
@@ -3510,7 +3512,7 @@ export default function App() {
               {/* Onglets type produit */}
               <div style={{display:"flex",gap:"4px",marginBottom:"16px",borderBottom:"1px solid #d4c4a0",paddingBottom:"0"}}>
                 {[["champagne","Champagne"],["coteaux_blanc","Coteaux Blanc"],["coteaux_rouge","Coteaux Rouge"],["ratafia","Ratafia"]].map(([key,lbl])=>(
-                  <button key={key} onClick={()=>{setStockTab(key);setFilterStockStatut("");}} style={{padding:"8px 14px",border:"none",borderBottom:stockTab===key?"2px solid #b8860b":"2px solid transparent",background:"transparent",color:stockTab===key?"#2C3E50":"#9a8870",fontWeight:stockTab===key?500:400,fontSize:"12px",cursor:"pointer",fontFamily:"Georgia,serif"}}>{lbl}</button>
+                  <button key={key} onClick={()=>{setStockTab(key);setFilterStockStatut("");setFilterStockFormat("");}} style={{padding:"8px 14px",border:"none",borderBottom:stockTab===key?"2px solid #b8860b":"2px solid transparent",background:"transparent",color:stockTab===key?"#2C3E50":"#9a8870",fontWeight:stockTab===key?500:400,fontSize:"12px",cursor:"pointer",fontFamily:"Georgia,serif"}}>{lbl}</button>
                 ))}
               </div>
 
@@ -3562,6 +3564,12 @@ export default function App() {
                   <option value="">Tous les lieux</option>
                   {LIEUX_STOCK.map(l=><option key={l} value={l}>{l}</option>)}
                 </select>
+                {stockTab==="champagne"&&<select style={{...s.sel,maxWidth:"160px"}} value={filterStockFormat} onChange={e=>setFilterStockFormat(e.target.value)}>
+                  <option value="">Tous formats</option>
+                  <option value="75cl">75cl</option>
+                  <option value="Magnum">Magnum</option>
+                  <option value="Jeroboam">Jéroboam</option>
+                </select>}
                 <select style={{...s.sel,maxWidth:"220px"}} value={filterStockStatut} onChange={e=>setFilterStockStatut(e.target.value)}>
                   <option value="">Tous les statuts</option>
                   {[...TOUS_STATUTS_POSSIBLES,"Passage 15 mois (commercialisable)"].map(st=><option key={st} value={st}>{st}</option>)}
@@ -3875,7 +3883,7 @@ export default function App() {
           <div>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
               <div style={{fontFamily:"Georgia,serif",fontSize:"20px",color:"#2C3E50"}}>Assemblages</div>
-              <button style={s.btn} onClick={()=>{setAssemblageForm({nomCuvee:"",date:new Date().toISOString().slice(0,10),sources:[{type:"tonneau",id:"",volume:""}],destTirageId:"",destTirageVol:"",destRetourId:"",destRetourVol:"",notes:""});setShowAssemblageForm(true);}}>+ Nouvel assemblage</button>
+              <button style={s.btn} onClick={()=>{setAssemblageForm({nomCuvee:"",date:new Date().toISOString().slice(0,10),sources:[{type:"tonneau",id:"",volume:""}],cuveAssemblageId:"",destTirageId:"",destTirageVol:"",destRetours:[{id:"",volume:""}],notes:""});setShowAssemblageForm(true);}}>+ Nouvel assemblage</button>
             </div>
             {assemblages.length===0&&<div style={{...s.card,color:"#9a8870",fontStyle:"italic"}}>Aucun assemblage enregistré.</div>}
             {[...new Set(assemblages.map(a=>a.date?.slice(0,4)))].sort().reverse().map(annee=>(
@@ -3901,8 +3909,9 @@ export default function App() {
                               saveTonneau(updated); return updated;
                             }
                             // Annuler retour reserve fût
-                            if(a.destRetourId===t.id&&!a.destRetourId?.startsWith("cuve_")) {
-                              const volR = parseFloat(a.destRetourVol)||0;
+                            const retourFutMatch = (a.destRetours||[]).find(r=>r.id===t.id&&!r.id?.startsWith("cuve_"));
+                            if(retourFutMatch) {
+                              const volR = parseFloat(retourFutMatch.volume)||0;
                               const newVol = Math.max(0,(t.contenuActuel||0)-volR);
                               const updated = estVide(newVol) ? viderFut(t) : {...t, contenuActuel:newVol};
                               saveTonneau(updated); return updated;
@@ -3913,7 +3922,7 @@ export default function App() {
                           // Annuler cuve assemblage (retirer le volume net qui y avait ete ajoute)
                           if(a.cuveAssemblageId) {
                             const volTotalA = (a.sources||[]).reduce((s,src)=>s+(parseFloat(src.volume)||0),0);
-                            const volSortieA = (parseFloat(a.destTirageVol)||0)+(parseFloat(a.destRetourVol)||0);
+                            const volSortieA = (parseFloat(a.destTirageVol)||0)+((a.destRetours||[]).reduce((s,r)=>s+(parseFloat(r.volume)||0),0));
                             const volNetA = volTotalA - volSortieA;
                             setCuvesCuverie(prev=>prev.map(c=>{
                               if(c.id===a.cuveAssemblageId) {
@@ -3935,9 +3944,9 @@ export default function App() {
                             }));
                           }
                           // Annuler retour cuve
-                          if(a.destRetourId?.startsWith("cuve_")) {
-                            const cuveId = a.destRetourId.replace("cuve_","");
-                            const volR = parseFloat(a.destRetourVol)||0;
+                          (a.destRetours||[]).filter(r=>r.id?.startsWith("cuve_")).forEach(r=>{
+                            const cuveId = r.id.replace("cuve_","");
+                            const volR = parseFloat(r.volume)||0;
                             setCuvesCuverie(prev=>prev.map(c=>{
                               if(c.id===cuveId) {
                                 const updated = majCuveContenu(c, (parseFloat(c.contenuActuelHL)||0)-(volR/100));
@@ -3945,7 +3954,7 @@ export default function App() {
                               }
                               return c;
                             }));
-                          }
+                          });
                           setAssemblages(prev=>prev.filter(x=>x.id!==a.id));
                           deleteAssemblageFb(a.id);
                         }}>Supprimer</button>
@@ -5513,6 +5522,7 @@ export default function App() {
             if(filterStockCuvee && !l.cuvee.toLowerCase().includes(filterStockCuvee.toLowerCase())) return false;
             if(filterStockLieu && l.lieu!==filterStockLieu) return false;
             if(filterStockStatut && l.statut!==filterStockStatut) return false;
+            if(filterStockFormat && stockTab==="champagne" && (l.format||"75cl")!==filterStockFormat) return false;
             if(filterStock15==="moins15" && l.mois>=15) return false;
             if(filterStock15==="plus15" && l.mois<15) return false;
             return true;
@@ -5552,7 +5562,7 @@ export default function App() {
               {/* Onglets type produit */}
               <div style={{display:"flex",gap:"4px",marginBottom:"16px",borderBottom:"1px solid #d4c4a0",paddingBottom:"0"}}>
                 {[["champagne","Champagne"],["coteaux_blanc","Coteaux Blanc"],["coteaux_rouge","Coteaux Rouge"],["ratafia","Ratafia"]].map(([key,lbl])=>(
-                  <button key={key} onClick={()=>{setStockTab(key);setFilterStockStatut("");}} style={{padding:"8px 14px",border:"none",borderBottom:stockTab===key?"2px solid #b8860b":"2px solid transparent",background:"transparent",color:stockTab===key?"#2C3E50":"#9a8870",fontWeight:stockTab===key?500:400,fontSize:"12px",cursor:"pointer",fontFamily:"Georgia,serif"}}>{lbl}</button>
+                  <button key={key} onClick={()=>{setStockTab(key);setFilterStockStatut("");setFilterStockFormat("");}} style={{padding:"8px 14px",border:"none",borderBottom:stockTab===key?"2px solid #b8860b":"2px solid transparent",background:"transparent",color:stockTab===key?"#2C3E50":"#9a8870",fontWeight:stockTab===key?500:400,fontSize:"12px",cursor:"pointer",fontFamily:"Georgia,serif"}}>{lbl}</button>
                 ))}
               </div>
 
@@ -5604,6 +5614,12 @@ export default function App() {
                   <option value="">Tous les lieux</option>
                   {LIEUX_STOCK.map(l=><option key={l} value={l}>{l}</option>)}
                 </select>
+                {stockTab==="champagne"&&<select style={{...s.sel,maxWidth:"160px"}} value={filterStockFormat} onChange={e=>setFilterStockFormat(e.target.value)}>
+                  <option value="">Tous formats</option>
+                  <option value="75cl">75cl</option>
+                  <option value="Magnum">Magnum</option>
+                  <option value="Jeroboam">Jéroboam</option>
+                </select>}
                 <select style={{...s.sel,maxWidth:"220px"}} value={filterStockStatut} onChange={e=>setFilterStockStatut(e.target.value)}>
                   <option value="">Tous les statuts</option>
                   {[...TOUS_STATUTS_POSSIBLES,"Passage 15 mois (commercialisable)"].map(st=><option key={st} value={st}>{st}</option>)}
@@ -7245,15 +7261,24 @@ export default function App() {
                   <div><span style={s.lbl}>Volume tirage (L)</span>
                     <input type="number" style={s.inp} placeholder="ex. 5000" value={assemblageForm.destTirageVol} onChange={e=>setAssemblageForm(f=>({...f,destTirageVol:e.target.value}))}/></div>
                 </div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
-                  <div><span style={s.lbl}>🔄 Retour réserve (fût)</span>
-                    <select style={s.sel} value={assemblageForm.destRetourId} onChange={e=>setAssemblageForm(f=>({...f,destRetourId:e.target.value}))}>
-                      <option value="">Aucun</option>
-                      {[...tonneaux.map(t=>({id:t.id,nom:t.id+" "+(t.denomination||""),vol:t.contenuActuel||0})),...cuvesCuverie.map(c=>({id:"cuve_"+c.id,nom:c.nom+" (cuve)",vol:(parseFloat(c.contenuActuelHL)||0)*100}))].map(x=><option key={x.id} value={x.id}>{x.nom} — {x.vol} L</option>)}
-                    </select>
+                <div>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"8px"}}>
+                    <span style={{...s.lbl,marginBottom:0}}>🔄 Retours réserve</span>
+                    <button style={s.ghostSm} onClick={()=>setAssemblageForm(f=>({...f,destRetours:[...f.destRetours,{id:"",volume:""}]}))}>+ Ajouter</button>
                   </div>
-                  <div><span style={s.lbl}>Volume retour (L)</span>
-                    <input type="number" style={s.inp} placeholder="ex. 2000" value={assemblageForm.destRetourVol} onChange={e=>setAssemblageForm(f=>({...f,destRetourVol:e.target.value}))}/></div>
+                  {assemblageForm.destRetours.map((dr,i)=>(
+                    <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 120px 24px",gap:"8px",marginBottom:"8px",alignItems:"center"}}>
+                      <select style={s.sel} value={dr.id} onChange={e=>setAssemblageForm(f=>({...f,destRetours:f.destRetours.map((r,j)=>j===i?{...r,id:e.target.value}:r)}))}>
+                        <option value="">Aucun</option>
+                        {[...tonneaux.map(t=>({id:t.id,nom:t.id+" "+(t.denomination||""),vol:t.contenuActuel||0})),...cuvesCuverie.map(c=>({id:"cuve_"+c.id,nom:c.nom+" (cuve)",vol:(parseFloat(c.contenuActuelHL)||0)*100}))].map(x=><option key={x.id} value={x.id}>{x.nom} — {x.vol} L</option>)}
+                      </select>
+                      <input type="number" style={s.inp} placeholder="Volume L" value={dr.volume} onChange={e=>setAssemblageForm(f=>({...f,destRetours:f.destRetours.map((r,j)=>j===i?{...r,volume:e.target.value}:r)}))}/>
+                      <button style={{background:"none",border:"none",cursor:"pointer",color:"#cc2222",fontSize:"16px"}} onClick={()=>setAssemblageForm(f=>({...f,destRetours:f.destRetours.filter((_,j)=>j!==i)}))}>×</button>
+                    </div>
+                  ))}
+                  <div style={{fontSize:"12px",color:"#2C3E50",fontWeight:500,textAlign:"right"}}>
+                    Total retour : {assemblageForm.destRetours.reduce((s,r)=>s+(parseFloat(r.volume)||0),0).toLocaleString()} L
+                  </div>
                 </div>
               </div>
 
