@@ -3978,16 +3978,18 @@ export default function App() {
                         <div style={{fontWeight:500,color:"#2C3E50",marginBottom:"6px"}}>Destinations</div>
                         {a.cuveAssemblageId&&<div style={{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:"0.5px solid #e0e8f0"}}>
                           <span style={{color:"#8B6000"}}>🥃 Cuve d'assemblage — {cuvesCuverie.find(c=>c.id===a.cuveAssemblageId)?.nom||a.cuveAssemblageId}</span>
-                          <span style={{fontWeight:500}}>{((a.sources||[]).reduce((s,src)=>s+(parseFloat(src.volume)||0),0)-(parseFloat(a.destTirageVol)||0)-(parseFloat(a.destRetourVol)||0)).toLocaleString()} L</span>
+                          <span style={{fontWeight:500}}>{((a.sources||[]).reduce((s,src)=>s+(parseFloat(src.volume)||0),0)-(parseFloat(a.destTirageVol)||0)-((a.destRetours||[]).reduce((s,r)=>s+(parseFloat(r.volume)||0),0))).toLocaleString()} L</span>
                         </div>}
                         {a.destTirageId&&<div style={{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:"0.5px solid #e0e8f0"}}>
                           <span style={{color:"#2d6a00"}}>🍾 Tirage — {cuvesCuverie.find(c=>c.id===a.destTirageId)?.nom||a.destTirageId}</span>
                           <span style={{fontWeight:500}}>{a.destTirageVol} L</span>
                         </div>}
-                        {a.destRetourId&&<div style={{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:"0.5px solid #e0e8f0"}}>
-                          <span style={{color:"#7a5200"}}>🔄 Retour réserve — {a.destRetourId.startsWith("cuve_")?(cuvesCuverie.find(c=>c.id===a.destRetourId.replace("cuve_",""))?.nom||a.destRetourId):(a.destRetourId+(tonneaux.find(t=>t.id===a.destRetourId)?.denomination?" — "+tonneaux.find(t=>t.id===a.destRetourId).denomination:""))}</span>
-                          <span style={{fontWeight:500}}>{a.destRetourVol} L</span>
-                        </div>}
+                        {(a.destRetours||[]).filter(r=>r.id&&r.volume).map((r,i)=>(
+                          <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:"0.5px solid #e0e8f0"}}>
+                            <span style={{color:"#7a5200"}}>🔄 Retour réserve — {r.id.startsWith("cuve_")?(cuvesCuverie.find(c=>c.id===r.id.replace("cuve_",""))?.nom||r.id):(r.id+(tonneaux.find(t=>t.id===r.id)?.denomination?" — "+tonneaux.find(t=>t.id===r.id).denomination:""))}</span>
+                            <span style={{fontWeight:500}}>{r.volume} L</span>
+                          </div>
+                        ))}
                       </div>
                     </div>
                     {a.notes&&<div style={{marginTop:"8px",fontSize:"12px",color:"#6a5838",fontStyle:"italic",borderTop:"0.5px solid #ede5d4",paddingTop:"8px"}}>{a.notes}</div>}
@@ -4528,14 +4530,14 @@ export default function App() {
                     // Inclure les assemblages lies a ce fut (source ou retour reserve)
                     assemblages.forEach(a=>{
                       const srcMatch = (a.sources||[]).find(src=>src.id===selectedT?.id);
-                      const isRetour = a.destRetourId===selectedT?.id;
-                      if(srcMatch||isRetour) {
+                      const retourMatch = (a.destRetours||[]).find(r=>r.id===selectedT?.id);
+                      if(srcMatch||retourMatch) {
                         const y = a.date?a.date.slice(0,4):"?";
                         if(!mvtsParAn[y]) mvtsParAn[y]=[];
                         mvtsParAn[y].push({
                           date:a.date,
                           type:"assemblage",
-                          notes:srcMatch?`Assemblage "${a.nomCuvee}" — Source (${srcMatch.volume} L)`:`Assemblage "${a.nomCuvee}" — Retour réserve (${a.destRetourVol} L)`,
+                          notes:srcMatch?`Assemblage "${a.nomCuvee}" — Source (${srcMatch.volume} L)`:`Assemblage "${a.nomCuvee}" — Retour réserve (${retourMatch.volume} L)`,
                           _isAssemblage:true,
                         });
                       }
@@ -7112,15 +7114,15 @@ export default function App() {
         assemblages.forEach(a=>{
           if(a.cuveAssemblageId===showCuveHistorique) {
             const volTotal = (a.sources||[]).reduce((s,src)=>s+(parseFloat(src.volume)||0),0);
-            const volSortie = (parseFloat(a.destTirageVol)||0)+(parseFloat(a.destRetourVol)||0);
+            const volSortie = (parseFloat(a.destTirageVol)||0)+((a.destRetours||[]).reduce((s,r)=>s+(parseFloat(r.volume)||0),0));
             evts.push({date:a.date,type:"Assemblage (réception)",detail:a.nomCuvee,volume:volTotal-volSortie,campagne:a.date?.slice(0,4)});
           }
           if(a.destTirageId===showCuveHistorique) {
             evts.push({date:a.date,type:"Assemblage → Tirage",detail:a.nomCuvee,volume:parseFloat(a.destTirageVol)||0,campagne:a.date?.slice(0,4)});
           }
-          if(a.destRetourId==="cuve_"+showCuveHistorique) {
-            evts.push({date:a.date,type:"Assemblage → Retour réserve",detail:a.nomCuvee,volume:parseFloat(a.destRetourVol)||0,campagne:a.date?.slice(0,4)});
-          }
+          (a.destRetours||[]).filter(r=>r.id==="cuve_"+showCuveHistorique).forEach(r=>{
+            evts.push({date:a.date,type:"Assemblage → Retour réserve",detail:a.nomCuvee,volume:parseFloat(r.volume)||0,campagne:a.date?.slice(0,4)});
+          });
         });
         tirages.filter(t=>t.cuveCuveeId===showCuveHistorique).forEach(t=>{
           evts.push({date:t.date,type:"Tirage (sortie)",detail:t.cuveeCreee||t.nomCuvee,volume:-(parseFloat(t.volumeCuvee)||0)*100,campagne:t.date?.slice(0,4)});
@@ -7293,11 +7295,11 @@ export default function App() {
                   const sourcesValides = assemblageForm.sources.filter(s=>s.id&&s.volume);
                   const isBioAssemblage = sourcesValides.length>0 && sourcesValides.every(s=>tonneaux.find(t=>t.id===s.id)?.certif==="BIO");
                   const a = {id:"asm_"+Date.now(),...assemblageForm,isBio:isBioAssemblage,timestamp:new Date().toISOString()};
-                  // Deduire volumes des sources
+                  const destRetoursValides = (assemblageForm.destRetours||[]).filter(r=>r.id&&r.volume);
+                  // Deduire volumes des sources + ajouter les retours vers des futs
                   const updFuts = tonneaux.map(t=>{
                     const volSortie = assemblageForm.sources.filter(s=>(s.type==="tonneau"||s.type==="reserve")&&s.id===t.id).reduce((sum,s)=>sum+(parseFloat(s.volume)||0),0);
-                    const isRetourTarget = assemblageForm.destRetourId===t.id&&!assemblageForm.destRetourId.startsWith("cuve_");
-                    const volRetour = isRetourTarget ? (parseFloat(assemblageForm.destRetourVol)||0) : 0;
+                    const volRetour = destRetoursValides.filter(r=>r.id===t.id&&!r.id.startsWith("cuve_")).reduce((sum,r)=>sum+(parseFloat(r.volume)||0),0);
                     if(volSortie>0||volRetour>0) {
                       const newVol = Math.max(0,(t.contenuActuel||0)-volSortie+volRetour);
                       const updated = estVide(newVol) ? viderFut(t) : {...t, contenuActuel:newVol, statut:"actif"};
@@ -7310,16 +7312,15 @@ export default function App() {
                   // Volume total recu dans la cuve d'assemblage, puis reparti vers les destinations
                   const volTotalSources = assemblageForm.sources.reduce((s,src)=>s+(parseFloat(src.volume)||0),0);
                   const volTirageR = parseFloat(assemblageForm.destTirageVol)||0;
-                  const volRetourR = parseFloat(assemblageForm.destRetourVol)||0;
-                  const volNetAssemblage = volTotalSources - volTirageR - volRetourR; // ce qui reste dans la cuve d'assemblage
-                  const retourCuveId = assemblageForm.destRetourId&&assemblageForm.destRetourId.startsWith("cuve_") ? assemblageForm.destRetourId.replace("cuve_","") : null;
+                  const volRetourTotal = destRetoursValides.reduce((s,r)=>s+(parseFloat(r.volume)||0),0);
+                  const volNetAssemblage = volTotalSources - volTirageR - volRetourTotal; // ce qui reste dans la cuve d'assemblage
                   // Un seul passage sur toutes les cuves pour eviter les ecrasements
                   setCuvesCuverie(prev=>{
                     const upd = prev.map(c=>{
                       let delta = 0;
                       if(assemblageForm.cuveAssemblageId===c.id) delta += volNetAssemblage;
                       if(assemblageForm.destTirageId===c.id) delta += volTirageR;
-                      if(retourCuveId===c.id) delta += volRetourR;
+                      destRetoursValides.filter(r=>r.id.startsWith("cuve_")&&r.id.replace("cuve_","")===c.id).forEach(r=>{delta += parseFloat(r.volume)||0;});
                       if(delta!==0) {
                         // Sur la cuve d'assemblage : noter ce qui y est stocke temporairement (cuvee + statut BIO)
                         const noteContenu = assemblageForm.cuveAssemblageId===c.id&&volNetAssemblage>0
