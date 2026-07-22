@@ -3191,6 +3191,14 @@ export default function App() {
                           <div style={{display:"flex",gap:"6px"}}>
                             <button style={{...s.ghostSm,fontSize:"10px"}} onClick={()=>setShowCuveHistorique(c.id)}>📄 Historique</button>
                             <button style={{...s.ghostSm,fontSize:"10px"}} onClick={()=>{setCuverieForm({nom:c.nom,type:c.type,volumeHL:c.volumeHL,contenuActuelHL:c.contenuActuelHL||"0",notes:c.notes||""});setEditingCuverie(c);setShowCuverieForm(true);}}>Mod.</button>
+                            {parseFloat(c.contenuActuelHL)>0&&(
+                              <button style={{...s.ghostSm,fontSize:"10px",color:"#c47800",borderColor:"#e8c888"}} onClick={()=>{
+                                if(!window.confirm(`Remettre le volume de "${c.nom}" à zéro (actuellement ${c.contenuActuelHL} HL) ?\n\nCeci ne modifie ni ne supprime aucun assemblage, tirage ou mouvement passé — seul le compteur de volume est réinitialisé.`)) return;
+                                const updated = {...c, contenuActuelHL:"0", notes:"", isBio:false};
+                                setCuvesCuverie(prev=>prev.map(x=>x.id===c.id?updated:x));
+                                fbSave("cuvesCuverie", c.id, updated);
+                              }}>↺ Remettre à 0</button>
+                            )}
                             <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>{if(window.confirm("Supprimer cette cuve ?")){setCuvesCuverie(prev=>prev.filter(x=>x.id!==c.id));fbDelete("cuvesCuverie",c.id);}}}>Sup.</button>
                           </div>
                         </div>
