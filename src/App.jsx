@@ -517,6 +517,7 @@ export default function App() {
   const [stockTab,         setStockTab]         = useState("champagne");
   const [lotAction,        setLotAction]        = useState(null);
   const [editingLot,       setEditingLot]        = useState(null);
+  const [editingAssemblage, setEditingAssemblage] = useState(null);
   const [divPreview,       setDivPreview]        = useState(null);
   const [lotEditForm,      setLotEditForm]       = useState(null);
   const [showSortieForm,   setShowSortieForm]   = useState(false);
@@ -3883,7 +3884,7 @@ export default function App() {
           <div>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
               <div style={{fontFamily:"Georgia,serif",fontSize:"20px",color:"#2C3E50"}}>Assemblages</div>
-              <button style={s.btn} onClick={()=>{setAssemblageForm({nomCuvee:"",date:new Date().toISOString().slice(0,10),sources:[{type:"tonneau",id:"",volume:""}],cuveAssemblageId:"",destTirageId:"",destTirageVol:"",destRetours:[{id:"",volume:""}],notes:""});setShowAssemblageForm(true);}}>+ Nouvel assemblage</button>
+              <button style={s.btn} onClick={()=>{setEditingAssemblage(null);setAssemblageForm({nomCuvee:"",date:new Date().toISOString().slice(0,10),sources:[{type:"tonneau",id:"",volume:""}],cuveAssemblageId:"",destTirageId:"",destTirageVol:"",destRetours:[{id:"",volume:""}],notes:""});setShowAssemblageForm(true);}}>+ Nouvel assemblage</button>
             </div>
             {assemblages.length===0&&<div style={{...s.card,color:"#9a8870",fontStyle:"italic"}}>Aucun assemblage enregistré.</div>}
             {[...new Set(assemblages.map(a=>a.date?.slice(0,4)))].sort().reverse().map(annee=>(
@@ -3897,7 +3898,14 @@ export default function App() {
                         <div style={{fontSize:"12px",color:"#9a8870"}}>{fmt(a.date)}</div>
                       </div>
                       <div style={{display:"flex",gap:"6px"}}>
-                        <button style={{...s.ghostSm,fontSize:"10px"}} onClick={()=>{setAssemblageForm({...a});setShowAssemblageForm(true);}}>Modifier</button>
+                        <button style={{...s.ghostSm,fontSize:"10px"}} onClick={()=>{
+                          const destRetours = a.destRetours && a.destRetours.length>0 ? a.destRetours
+                            : a.destRetourId ? [{id:a.destRetourId,volume:a.destRetourVol||""}]
+                            : [{id:"",volume:""}];
+                          setAssemblageForm({...a, destRetours, sources: a.sources&&a.sources.length>0?a.sources:[{type:"tonneau",id:"",volume:""}]});
+                          setEditingAssemblage(a);
+                          setShowAssemblageForm(true);
+                        }}>Modifier</button>
                         <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>{
                           if(!window.confirm("Supprimer cet assemblage et restituer les volumes ?")) return;
                           // Restituer volumes aux sources
@@ -7201,8 +7209,8 @@ export default function App() {
         <div style={s.modal}>
           <div style={{...s.modalBox,width:"680px",maxHeight:"85vh",overflowY:"auto"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
-              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#2C3E50"}}>Nouvel assemblage</div>
-              <button style={s.ghost} onClick={()=>setShowAssemblageForm(false)}>x</button>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#2C3E50"}}>{editingAssemblage?"Modifier l'assemblage":"Nouvel assemblage"}</div>
+              <button style={s.ghost} onClick={()=>{setShowAssemblageForm(false);setEditingAssemblage(null);}}>x</button>
             </div>
             <div style={{display:"grid",gap:"14px"}}>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
@@ -7288,20 +7296,31 @@ export default function App() {
                 <textarea style={{...s.inp,height:"60px",resize:"vertical"}} value={assemblageForm.notes} onChange={e=>setAssemblageForm(f=>({...f,notes:e.target.value}))}/></div>
 
               <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
-                <button style={s.ghost} onClick={()=>setShowAssemblageForm(false)}>Annuler</button>
+                <button style={s.ghost} onClick={()=>{setShowAssemblageForm(false);setEditingAssemblage(null);}}>Annuler</button>
                 <button style={s.btn} onClick={()=>{
                   if(!assemblageForm.nomCuvee) return alert("Le nom de cuvée est requis.");
                   if(!assemblageForm.sources.some(s=>s.id&&s.volume)) return alert("Ajoutez au moins une source avec un volume.");
                   const sourcesValides = assemblageForm.sources.filter(s=>s.id&&s.volume);
                   const isBioAssemblage = sourcesValides.length>0 && sourcesValides.every(s=>tonneaux.find(t=>t.id===s.id)?.certif==="BIO");
-                  const a = {id:"asm_"+Date.now(),...assemblageForm,isBio:isBioAssemblage,timestamp:new Date().toISOString()};
+                  const oldA = editingAssemblage; // null si creation, sinon assemblage en cours de modification
+                  const a = {id: oldA?oldA.id:"asm_"+Date.now(), ...assemblageForm, isBio:isBioAssemblage, timestamp: oldA?oldA.timestamp:new Date().toISOString()};
                   const destRetoursValides = (assemblageForm.destRetours||[]).filter(r=>r.id&&r.volume);
-                  // Deduire volumes des sources + ajouter les retours vers des futs
+                  const oldSourcesValides = oldA ? (oldA.sources||[]).filter(s=>s.id&&s.volume) : [];
+                  const oldDestRetoursValides = oldA ? (oldA.destRetours||[]).filter(r=>r.id&&r.volume) : [];
+
+                  // Futs : on annule les effets de l'ancien assemblage (si edition) ET on applique les nouveaux, en une seule passe
                   const updFuts = tonneaux.map(t=>{
-                    const volSortie = assemblageForm.sources.filter(s=>(s.type==="tonneau"||s.type==="reserve")&&s.id===t.id).reduce((sum,s)=>sum+(parseFloat(s.volume)||0),0);
+                    let delta = 0;
+                    if(oldA) {
+                      const oldSrc = oldSourcesValides.filter(s=>(s.type==="tonneau"||s.type==="reserve")&&s.id===t.id).reduce((sum,s)=>sum+(parseFloat(s.volume)||0),0);
+                      const oldRetour = oldDestRetoursValides.filter(r=>r.id===t.id&&!r.id.startsWith("cuve_")).reduce((sum,r)=>sum+(parseFloat(r.volume)||0),0);
+                      delta += oldSrc - oldRetour; // restitue ce qui avait ete pris, retire ce qui avait ete redonne
+                    }
+                    const volSortie = sourcesValides.filter(s=>(s.type==="tonneau"||s.type==="reserve")&&s.id===t.id).reduce((sum,s)=>sum+(parseFloat(s.volume)||0),0);
                     const volRetour = destRetoursValides.filter(r=>r.id===t.id&&!r.id.startsWith("cuve_")).reduce((sum,r)=>sum+(parseFloat(r.volume)||0),0);
-                    if(volSortie>0||volRetour>0) {
-                      const newVol = Math.max(0,(t.contenuActuel||0)-volSortie+volRetour);
+                    delta += volRetour - volSortie;
+                    if(delta!==0) {
+                      const newVol = Math.max(0,(t.contenuActuel||0)+delta);
                       const updated = estVide(newVol) ? viderFut(t) : {...t, contenuActuel:newVol, statut:"actif"};
                       saveTonneau(updated);
                       return updated;
@@ -7309,15 +7328,26 @@ export default function App() {
                     return t;
                   });
                   setTonneaux(updFuts);
-                  // Volume total recu dans la cuve d'assemblage, puis reparti vers les destinations
+
+                  // Cuves : meme principe, annulation ancien + application nouveau en une seule passe
+                  const oldVolTotalSources = oldSourcesValides.reduce((s,src)=>s+(parseFloat(src.volume)||0),0);
+                  const oldVolTirage = oldA ? (parseFloat(oldA.destTirageVol)||0) : 0;
+                  const oldVolRetourTotal = oldDestRetoursValides.reduce((s,r)=>s+(parseFloat(r.volume)||0),0);
+                  const oldVolNetAssemblage = oldA ? (oldVolTotalSources - oldVolTirage - oldVolRetourTotal) : 0;
+
                   const volTotalSources = assemblageForm.sources.reduce((s,src)=>s+(parseFloat(src.volume)||0),0);
                   const volTirageR = parseFloat(assemblageForm.destTirageVol)||0;
                   const volRetourTotal = destRetoursValides.reduce((s,r)=>s+(parseFloat(r.volume)||0),0);
                   const volNetAssemblage = volTotalSources - volTirageR - volRetourTotal; // ce qui reste dans la cuve d'assemblage
-                  // Un seul passage sur toutes les cuves pour eviter les ecrasements
+
                   setCuvesCuverie(prev=>{
                     const upd = prev.map(c=>{
                       let delta = 0;
+                      if(oldA) {
+                        if(oldA.cuveAssemblageId===c.id) delta -= oldVolNetAssemblage;
+                        if(oldA.destTirageId===c.id) delta -= oldVolTirage;
+                        oldDestRetoursValides.filter(r=>r.id.startsWith("cuve_")&&r.id.replace("cuve_","")===c.id).forEach(r=>{delta -= parseFloat(r.volume)||0;});
+                      }
                       if(assemblageForm.cuveAssemblageId===c.id) delta += volNetAssemblage;
                       if(assemblageForm.destTirageId===c.id) delta += volTirageR;
                       destRetoursValides.filter(r=>r.id.startsWith("cuve_")&&r.id.replace("cuve_","")===c.id).forEach(r=>{delta += parseFloat(r.volume)||0;});
@@ -7334,10 +7364,11 @@ export default function App() {
                     });
                     return upd;
                   });
-                  setAssemblages(prev=>[a,...prev]);
+                  setAssemblages(prev=> oldA ? prev.map(x=>x.id===a.id?a:x) : [a,...prev]);
                   saveAssemblage(a);
                   setShowAssemblageForm(false);
-                }}>Enregistrer</button>
+                  setEditingAssemblage(null);
+                }}>{editingAssemblage?"Enregistrer les modifications":"Enregistrer"}</button>
               </div>
             </div>
           </div>
