@@ -383,6 +383,7 @@ const TYPES_MOUVEMENT = [
   { value:"ajout_produit",label:"Ajout produit",          icon:"ti-flask",          color:"#BA7517" },
   { value:"entonnage",    label:"Entonnage",               icon:"ti-beer",           color:"#2C3E50" },
   { value:"mutage",       label:"Mutage (bourbes + alcool)", icon:"ti-flask",          color:"#8B0000" },
+  { value:"distillerie",  label:"Excédents (distillerie)", icon:"ti-truck-delivery", color:"#7a5200" },
 ];
 
 
@@ -775,7 +776,7 @@ export default function App() {
   // Mouvement form
   const [mvtForm, setMvtForm] = useState({
     type:"ouillage", date:new Date().toISOString().slice(0,16),
-    operateur:"", futSource:[], futDest:"", volume:"", notes:"", produit:"", dosage:"", numeroLot:"", entonnageMarcId:"", entonnageCuveId:"", entonnageCuves:[{cuveId:"",volume:"",vendangeId:""}], entonnageVendangeId:"", entonnageFuts:[{futId:"",volume:""}], assemblageVolumes:{}, perteVolumes:{}, ouillageDestFuts:[{futId:"",volume:""}], mutageCuveId:"", mutageBourbesHL:"", mutageAlcoolHL:"", mutageDegreAlcool:"", mutageDestId:"",
+    operateur:"", futSource:[], futDest:"", volume:"", notes:"", produit:"", dosage:"", numeroLot:"", entonnageMarcId:"", entonnageCuveId:"", entonnageCuves:[{cuveId:"",volume:"",vendangeId:""}], entonnageVendangeId:"", entonnageFuts:[{futId:"",volume:""}], assemblageVolumes:{}, perteVolumes:{}, ouillageDestFuts:[{futId:"",volume:""}], mutageCuveId:"", mutageBourbesHL:"", mutageAlcoolHL:"", mutageDegreAlcool:"", mutageDestId:"", distillerieSources:[{id:"",volume:""}],
   });
   // Dégustation form - une ligne par dégustateur
   const [degForm, setDegForm] = useState({
@@ -2090,6 +2091,13 @@ export default function App() {
       });
     } else if(mvtForm.type==="remplissage" && mvtForm.futDest){
       upd=upd.map(t=>t.id===mvtForm.futDest?{...t,contenuActuel:Math.min(t.volume,t.contenuActuel+vol)}:t);
+    } else if(mvtForm.type==="distillerie"){
+      const sourcesFuts = (mvtForm.distillerieSources||[]).filter(ds=>ds.id&&!ds.id.startsWith("cuve_")&&parseFloat(ds.volume)>0);
+      upd=upd.map(t=>{
+        const ds = sourcesFuts.find(ds=>ds.id===t.id);
+        if(ds) { const c=Math.max(0,(t.contenuActuel||0)-(parseFloat(ds.volume)||0)); return estVide(c) ? viderFut(t) : {...t,contenuActuel:c}; }
+        return t;
+      });
     }
     setTonneaux(upd);
     // Sauvegarder uniquement les tonneaux modifies
@@ -2229,6 +2237,40 @@ export default function App() {
       const allMvts = [mvtSrc,...mvtsDest];
       setMouvements(prev=>[...allMvts,...prev]);
       allMvts.forEach(m=>saveMouvement(m));
+    } else if(mvtForm.type==="distillerie") {
+      const sourcesValides = (mvtForm.distillerieSources||[]).filter(ds=>ds.id&&parseFloat(ds.volume)>0);
+      if(sourcesValides.length===0) { alert("Ajoutez au moins une source avec un volume."); return; }
+      // Deduire les cuves sources (les futs sont deja deduits plus haut)
+      const sourcesCuves = sourcesValides.filter(ds=>ds.id.startsWith("cuve_"));
+      if(sourcesCuves.length>0) {
+        setCuvesCuverie(prev=>prev.map(c=>{
+          const ds = sourcesCuves.find(ds=>ds.id.replace("cuve_","")===c.id);
+          if(ds) {
+            const updated = majCuveContenu(c, (parseFloat(c.contenuActuelHL)||0)-((parseFloat(ds.volume)||0)/100));
+            fbSave("cuvesCuverie", c.id, updated);
+            return updated;
+          }
+          return c;
+        }));
+      }
+      // Un mouvement par source pour tracabilite
+      const mvtsDistillerie = sourcesValides.map((ds,i)=>{
+        const isCuve = ds.id.startsWith("cuve_");
+        const nomSource = isCuve ? (cuvesCuverie.find(c=>c.id===ds.id.replace("cuve_",""))?.nom||ds.id) : ds.id;
+        return {
+          id:(Date.now()+i).toString(),
+          type:"distillerie",
+          date:mvtForm.date,
+          operateur:mvtForm.operateur,
+          futSource:isCuve?[]:[ds.id],
+          futDest:"",
+          volume:ds.volume,
+          notes:`Envoi distillerie depuis ${nomSource}${mvtForm.notes?" - "+mvtForm.notes:""}`,
+          timestamp:new Date().toISOString()
+        };
+      });
+      setMouvements(prev=>[...mvtsDistillerie,...prev]);
+      mvtsDistillerie.forEach(m=>saveMouvement(m));
     } else {
       const newMvt = {id:Date.now().toString(),...mvtForm,timestamp:new Date().toISOString()};
       setMouvements(prev=>[newMvt,...prev]);
@@ -6554,6 +6596,33 @@ export default function App() {
                       Volume total apres mutage : {(parseFloat(mvtForm.mutageBourbesHL)||0)+(parseFloat(mvtForm.mutageAlcoolHL)||0)} HL
                     </div>
                   )}
+                </div>
+              )}
+              {mvtForm.type==="distillerie"&&(
+                <div style={{borderTop:"0.5px solid #d4c4a0",paddingTop:"12px",display:"grid",gap:"10px"}}>
+                  <div style={{fontFamily:"Georgia,serif",fontSize:"13px",color:"#7a5200",marginBottom:"4px"}}>Details envoi distillerie</div>
+                  <div style={{fontSize:"12px",color:"#7a5200",background:"#fff6e0",border:"0.5px solid #e8c888",borderRadius:"4px",padding:"6px 10px"}}>
+                    Sort du stock un volume d'excédents (fûts et/ou cuves de la cuverie) envoyé à la distillerie.
+                  </div>
+                  <div>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"4px"}}>
+                      <span style={s.lbl}>Sources (fûts ou cuves)</span>
+                      <button style={s.ghostSm} onClick={()=>setMvtForm(f=>({...f,distillerieSources:[...(f.distillerieSources||[{id:"",volume:""}]),{id:"",volume:""}]}))}>+ Ajouter</button>
+                    </div>
+                    {(mvtForm.distillerieSources||[{id:"",volume:""}]).map((ds,i)=>(
+                      <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 100px 24px",gap:"8px",marginBottom:"8px",alignItems:"center"}}>
+                        <select style={s.sel} value={ds.id} onChange={e=>setMvtForm(f=>({...f,distillerieSources:f.distillerieSources.map((x,j)=>j===i?{...x,id:e.target.value}:x)}))}>
+                          <option value="">Selectionner...</option>
+                          {[...tonneaux.filter(t=>(t.contenuActuel||0)>0).map(t=>({id:t.id,nom:t.id+" "+(t.denomination||""),vol:t.contenuActuel||0})),...cuvesCuverie.filter(c=>(parseFloat(c.contenuActuelHL)||0)>0).map(c=>({id:"cuve_"+c.id,nom:c.nom+" (cuve)",vol:(parseFloat(c.contenuActuelHL)||0)*100}))].map(x=><option key={x.id} value={x.id}>{x.nom} — {x.vol} L</option>)}
+                        </select>
+                        <input type="number" style={s.inp} placeholder="Volume L" value={ds.volume} onChange={e=>setMvtForm(f=>({...f,distillerieSources:f.distillerieSources.map((x,j)=>j===i?{...x,volume:e.target.value}:x)}))}/>
+                        {i>0&&<button style={{background:"none",border:"none",cursor:"pointer",color:"#cc2222",fontSize:"16px"}} onClick={()=>setMvtForm(f=>({...f,distillerieSources:f.distillerieSources.filter((_,j)=>j!==i)}))}>×</button>}
+                      </div>
+                    ))}
+                    <div style={{fontSize:"12px",color:"#7a5200",fontWeight:500,textAlign:"right"}}>
+                      Total envoyé : {(mvtForm.distillerieSources||[]).reduce((s,ds)=>s+(parseFloat(ds.volume)||0),0).toLocaleString()} L
+                    </div>
+                  </div>
                 </div>
               )}
               {mvtForm.type==="entonnage"&&(
