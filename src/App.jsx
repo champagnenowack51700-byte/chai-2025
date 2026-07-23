@@ -2048,7 +2048,27 @@ export default function App() {
     const vol = parseFloat(mvtForm.volume)||0;
     let upd = [...tonneaux];
     if(mvtForm.type==="soutirage" && mvtForm.futSource[0] && mvtForm.futDest){
-      upd=upd.map(t=>{ if(t.id===mvtForm.futSource[0]){ const c=Math.max(0,t.contenuActuel-vol); return estVide(c) ? viderFut(t) : {...t,contenuActuel:c}; } if(t.id===mvtForm.futDest) return{...t,contenuActuel:Math.min(t.volume,t.contenuActuel+vol),statut:"actif"}; return t; });
+      const srcId = mvtForm.futSource[0], destId = mvtForm.futDest;
+      const srcIsCuve = srcId.startsWith("cuve_"), destIsCuve = destId.startsWith("cuve_");
+      if(!srcIsCuve) {
+        upd=upd.map(t=>{ if(t.id===srcId){ const c=Math.max(0,t.contenuActuel-vol); return estVide(c) ? viderFut(t) : {...t,contenuActuel:c}; } if(!destIsCuve && t.id===destId) return{...t,contenuActuel:Math.min(t.volume,t.contenuActuel+vol),statut:"actif"}; return t; });
+      } else if(!destIsCuve) {
+        upd=upd.map(t=>t.id===destId?{...t,contenuActuel:Math.min(t.volume,t.contenuActuel+vol),statut:"actif"}:t);
+      }
+      if(srcIsCuve||destIsCuve) {
+        setCuvesCuverie(prev=>prev.map(c=>{
+          let delta=0;
+          if(srcIsCuve && c.id===srcId.replace("cuve_","")) delta -= vol/100;
+          if(destIsCuve && c.id===destId.replace("cuve_","")) delta += vol/100;
+          if(delta!==0) {
+            const newHL = (parseFloat(c.contenuActuelHL)||0)+delta;
+            const updated = delta<0 ? majCuveContenu(c,newHL) : {...c, contenuActuelHL:String(Math.round(newHL*100)/100)};
+            fbSave("cuvesCuverie",c.id,updated);
+            return updated;
+          }
+          return c;
+        }));
+      }
     } else if(mvtForm.type==="assemblage" && mvtForm.futDest){
       const tot=mvtForm.futSource.reduce((s,id)=>s+(parseFloat(mvtForm.assemblageVolumes[id])||getTonneau(id)?.contenuActuel||0),0);
       upd=upd.map(t=>{
@@ -2077,20 +2097,86 @@ export default function App() {
         if(mvtForm.futSource.includes(t.id)) { const volPerte=parseFloat(mvtForm.perteVolumes[t.id])||0; const c=Math.max(0,(t.contenuActuel||0)-volPerte); return estVide(c) ? viderFut(t) : {...t,contenuActuel:c}; }
         return t;
       });
+      const cuvePertes = mvtForm.futSource.filter(id=>id.startsWith("cuve_"));
+      if(cuvePertes.length>0) {
+        setCuvesCuverie(prev=>prev.map(c=>{
+          const key = "cuve_"+c.id;
+          if(cuvePertes.includes(key)) {
+            const volPerte = parseFloat(mvtForm.perteVolumes[key])||0;
+            const updated = majCuveContenu(c, (parseFloat(c.contenuActuelHL)||0)-(volPerte/100));
+            fbSave("cuvesCuverie", c.id, updated);
+            return updated;
+          }
+          return c;
+        }));
+      }
     } else if(mvtForm.type==="ecoulage" && mvtForm.futSource[0]){
-      upd=upd.map(t=>{ if(t.id===mvtForm.futSource[0]){ const c=Math.max(0,t.contenuActuel-vol); return estVide(c) ? viderFut(t) : {...t,contenuActuel:c}; } return t; });
+      const srcId = mvtForm.futSource[0];
+      if(srcId.startsWith("cuve_")) {
+        setCuvesCuverie(prev=>prev.map(c=>{
+          if(c.id===srcId.replace("cuve_","")) {
+            const updated = majCuveContenu(c, (parseFloat(c.contenuActuelHL)||0)-(vol/100));
+            fbSave("cuvesCuverie",c.id,updated);
+            return updated;
+          }
+          return c;
+        }));
+      } else {
+        upd=upd.map(t=>{ if(t.id===srcId){ const c=Math.max(0,t.contenuActuel-vol); return estVide(c) ? viderFut(t) : {...t,contenuActuel:c}; } return t; });
+      }
     } else if(mvtForm.type==="vidange"){
       upd=upd.map(t=>mvtForm.futSource.includes(t.id)?viderFut(t):t);
+      const cuveVidanges = mvtForm.futSource.filter(id=>id.startsWith("cuve_"));
+      if(cuveVidanges.length>0) {
+        setCuvesCuverie(prev=>prev.map(c=>{
+          if(cuveVidanges.includes("cuve_"+c.id)) {
+            const updated = {...c, contenuActuelHL:"0", notes:"", isBio:false};
+            fbSave("cuvesCuverie",c.id,updated);
+            return updated;
+          }
+          return c;
+        }));
+      }
     } else if(mvtForm.type==="ouillage" && mvtForm.futSource[0]){
+      const srcId = mvtForm.futSource[0];
+      const srcIsCuve = srcId.startsWith("cuve_");
       const volTotalOuillage = (mvtForm.ouillageDestFuts||[]).reduce((s,ef)=>s+(parseFloat(ef.volume)||0),0);
+      const destFutsList = (mvtForm.ouillageDestFuts||[]).filter(ef=>ef.futId&&!ef.futId.startsWith("cuve_")&&parseFloat(ef.volume)>0);
+      const destCuvesList = (mvtForm.ouillageDestFuts||[]).filter(ef=>ef.futId&&ef.futId.startsWith("cuve_")&&parseFloat(ef.volume)>0);
       upd=upd.map(t=>{
-        if(t.id===mvtForm.futSource[0]) return {...t,contenuActuel:Math.max(0,(t.contenuActuel||0)-volTotalOuillage)};
-        const ef=(mvtForm.ouillageDestFuts||[]).find(ef=>ef.futId===t.id);
-        if(ef&&parseFloat(ef.volume)>0) return {...t,contenuActuel:Math.min(t.volume,(t.contenuActuel||0)+(parseFloat(ef.volume)||0))};
+        if(!srcIsCuve && t.id===srcId) return {...t,contenuActuel:Math.max(0,(t.contenuActuel||0)-volTotalOuillage)};
+        const ef=destFutsList.find(ef=>ef.futId===t.id);
+        if(ef) return {...t,contenuActuel:Math.min(t.volume,(t.contenuActuel||0)+(parseFloat(ef.volume)||0))};
         return t;
       });
+      if(srcIsCuve || destCuvesList.length>0) {
+        setCuvesCuverie(prev=>prev.map(c=>{
+          let delta=0;
+          if(srcIsCuve && c.id===srcId.replace("cuve_","")) delta -= volTotalOuillage/100;
+          const ef = destCuvesList.find(ef=>ef.futId==="cuve_"+c.id);
+          if(ef) delta += (parseFloat(ef.volume)||0)/100;
+          if(delta!==0) {
+            const newHL = (parseFloat(c.contenuActuelHL)||0)+delta;
+            const updated = delta<0 ? majCuveContenu(c,newHL) : {...c, contenuActuelHL:String(Math.round(newHL*100)/100)};
+            fbSave("cuvesCuverie",c.id,updated);
+            return updated;
+          }
+          return c;
+        }));
+      }
     } else if(mvtForm.type==="remplissage" && mvtForm.futDest){
-      upd=upd.map(t=>t.id===mvtForm.futDest?{...t,contenuActuel:Math.min(t.volume,t.contenuActuel+vol)}:t);
+      if(mvtForm.futDest.startsWith("cuve_")) {
+        setCuvesCuverie(prev=>prev.map(c=>{
+          if(c.id===mvtForm.futDest.replace("cuve_","")) {
+            const updated = {...c, contenuActuelHL:String(Math.round(((parseFloat(c.contenuActuelHL)||0)+(vol/100))*100)/100)};
+            fbSave("cuvesCuverie",c.id,updated);
+            return updated;
+          }
+          return c;
+        }));
+      } else {
+        upd=upd.map(t=>t.id===mvtForm.futDest?{...t,contenuActuel:Math.min(t.volume,t.contenuActuel+vol)}:t);
+      }
     } else if(mvtForm.type==="distillerie"){
       const sourcesFuts = (mvtForm.distillerieSources||[]).filter(ds=>ds.id&&!ds.id.startsWith("cuve_")&&parseFloat(ds.volume)>0);
       upd=upd.map(t=>{
@@ -2433,9 +2519,18 @@ export default function App() {
     );
   };
 
+  const getSrcDestLabel = (id) => {
+    if(!id) return null;
+    if(id.startsWith("cuve_")) {
+      const c = cuvesCuverie.find(c=>c.id===id.replace("cuve_",""));
+      return c ? {id, nomAffiche:c.nom, suffixe:" (cuve)", isCuve:true} : null;
+    }
+    const f = getTonneau(id);
+    return f ? {id:f.id, nomAffiche:f.id, suffixe:" ("+(f.denomination||"-")+")", isCuve:false} : null;
+  };
   const MvtRow = ({m}) => {
-    const srcs=(m.futSource||[]).map(id=>getTonneau(id)).filter(Boolean);
-    const dest=m.futDest?getTonneau(m.futDest):null;
+    const srcs=(m.futSource||[]).map(getSrcDestLabel).filter(Boolean);
+    const dest=m.futDest?getSrcDestLabel(m.futDest):null;
     return (
       <div style={{borderBottom:"1px solid #d0c4a0",padding:"10px 4px",display:"grid",gridTemplateColumns:"120px 1fr 1fr 70px 70px",gap:"10px",fontSize:"12px",alignItems:"start"}}>
         <div>
@@ -2443,8 +2538,8 @@ export default function App() {
           <div style={{color:"#8a7248",fontSize:"10px",marginTop:"3px"}}>{fmtDate(m.timestamp)}</div>
         </div>
         <div>
-          {srcs.length>0&&<div style={{marginBottom:"3px"}}><span style={{color:"#8a7248",marginRight:"4px"}}>De :</span>{srcs.map(f=><span key={f.id} style={{color:"#8B7355",marginRight:"6px",cursor:"pointer",textDecoration:"underline"}} onClick={()=>{setSelectedFut(f.id);setView("fiche");setFicheTab("historique");}}>{f.id}<span style={{color:"#7a6840",textDecoration:"none"}}> ({f.denomination})</span></span>)}</div>}
-          {dest&&<div><span style={{color:"#8a7248",marginRight:"4px"}}>Vers :</span><span style={{color:"#8B7355",cursor:"pointer",textDecoration:"underline"}} onClick={()=>{setSelectedFut(dest.id);setView("fiche");setFicheTab("historique");}}>{dest.id}<span style={{color:"#7a6840",textDecoration:"none"}}> ({dest.denomination})</span></span></div>}
+          {srcs.length>0&&<div style={{marginBottom:"3px"}}><span style={{color:"#8a7248",marginRight:"4px"}}>De :</span>{srcs.map(f=><span key={f.id} style={{color:"#8B7355",marginRight:"6px",cursor:f.isCuve?"default":"pointer",textDecoration:f.isCuve?"none":"underline"}} onClick={()=>{if(!f.isCuve){setSelectedFut(f.id);setView("fiche");setFicheTab("historique");}}}>{f.nomAffiche}<span style={{color:"#7a6840",textDecoration:"none"}}>{f.suffixe}</span></span>)}</div>}
+          {dest&&<div><span style={{color:"#8a7248",marginRight:"4px"}}>Vers :</span><span style={{color:"#8B7355",cursor:dest.isCuve?"default":"pointer",textDecoration:dest.isCuve?"none":"underline"}} onClick={()=>{if(!dest.isCuve){setSelectedFut(dest.id);setView("fiche");setFicheTab("historique");}}}>{dest.nomAffiche}<span style={{color:"#7a6840",textDecoration:"none"}}>{dest.suffixe}</span></span></div>}
           {m.type==="entonnage"&&(()=>{
             const cuveSrc = cuvesCuverie.find(c=>c.id===m.entonnageCuveId);
             // Find vendange from notes
@@ -6444,14 +6539,16 @@ export default function App() {
               </div>
               {needsSource&&mvtForm.type==="perte"&&(
                 <div>
-                  <span style={s.lbl}>Futs concernes (volumes a deduire)</span>
+                  <span style={s.lbl}>Futs/cuves concernes (volumes a deduire)</span>
                   <div style={{maxHeight:"200px",overflowY:"auto",border:"0.5px solid #d4c4a0",borderRadius:"6px",padding:"6px",background:"#fffdf7"}}>
-                    {tonneaux.filter(t=>t.contenuActuel>0).map(t=>(
+                    {[...tonneaux.filter(t=>t.contenuActuel>0).map(t=>({id:t.id,nom:t.denomination,dispo:t.contenuActuel})),
+                      ...cuvesCuverie.filter(c=>(parseFloat(c.contenuActuelHL)||0)>0).map(c=>({id:"cuve_"+c.id,nom:c.nom+" (cuve)",dispo:Math.round((parseFloat(c.contenuActuelHL)||0)*100)}))
+                    ].map(t=>(
                       <div key={t.id} style={{display:"flex",alignItems:"center",gap:"7px",padding:"3px",fontSize:"12px"}}>
                         <input type="checkbox" checked={mvtForm.futSource.includes(t.id)} onChange={()=>setMvtForm(f=>({...f,futSource:f.futSource.includes(t.id)?f.futSource.filter(x=>x!==t.id):[...f.futSource,t.id]}))}/>
-                        <span style={{color:"#8B7355",minWidth:"54px",fontFamily:"monospace"}}>{t.id}</span>
-                        <span style={{color:"#6a5838",flex:1}}>{t.denomination}</span>
-                        <span style={{color:"#9a8870",fontSize:"10px"}}>{t.contenuActuel}L</span>
+                        <span style={{color:"#8B7355",minWidth:"54px",fontFamily:"monospace"}}>{t.id.replace("cuve_","")}</span>
+                        <span style={{color:"#6a5838",flex:1}}>{t.nom}</span>
+                        <span style={{color:"#9a8870",fontSize:"10px"}}>{t.dispo}L</span>
                         {mvtForm.futSource.includes(t.id)&&(
                           <input type="number" style={{...s.inp,width:"75px",padding:"2px 6px",fontSize:"11px"}} placeholder="vol L" value={mvtForm.perteVolumes[t.id]||""} onChange={e=>setMvtForm(f=>({...f,perteVolumes:{...f.perteVolumes,[t.id]:e.target.value}}))}/>
                         )}
@@ -6464,22 +6561,26 @@ export default function App() {
               {mvtForm.type==="ouillage"&&(
                 <div style={{display:"grid",gap:"10px"}}>
                   <div>
-                    <span style={s.lbl}>Fut source (fournit le vin) *</span>
+                    <span style={s.lbl}>Fût/cuve source (fournit le vin) *</span>
                     <select style={s.sel} value={mvtForm.futSource[0]||""} onChange={e=>setMvtForm(f=>({...f,futSource:[e.target.value]}))}>
                       <option value="">Selectionner...</option>
-                      {tonneaux.filter(t=>t.contenuActuel>0).map(t=><option key={t.id} value={t.id}>{t.id} - {t.denomination} ({t.contenuActuel}L)</option>)}
+                      {[...tonneaux.filter(t=>t.contenuActuel>0).map(t=>({id:t.id,nom:t.id+" - "+(t.denomination||""),dispo:t.contenuActuel})),
+                        ...cuvesCuverie.filter(c=>(parseFloat(c.contenuActuelHL)||0)>0).map(c=>({id:"cuve_"+c.id,nom:c.nom+" (cuve)",dispo:Math.round((parseFloat(c.contenuActuelHL)||0)*100)}))
+                      ].map(x=><option key={x.id} value={x.id}>{x.nom} ({x.dispo}L)</option>)}
                     </select>
                   </div>
                   <div>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"4px"}}>
-                      <span style={s.lbl}>Futs a oullier</span>
+                      <span style={s.lbl}>Futs/cuves a oullier</span>
                       <button style={s.ghostSm} onClick={()=>setMvtForm(f=>({...f,ouillageDestFuts:[...(f.ouillageDestFuts||[]),{futId:"",volume:""}]}))}>+ Ajouter</button>
                     </div>
                     {(mvtForm.ouillageDestFuts||[{futId:"",volume:""}]).map((ef,i)=>(
                       <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 80px auto",gap:"6px",marginBottom:"6px",alignItems:"end"}}>
                         <select style={s.sel} value={ef.futId} onChange={e=>setMvtForm(f=>({...f,ouillageDestFuts:f.ouillageDestFuts.map((x,j)=>j===i?{...x,futId:e.target.value}:x)}))}>
                           <option value="">Selectionner...</option>
-                          {tonneaux.filter(t=>t.id!==mvtForm.futSource[0]).map(t=><option key={t.id} value={t.id}>{t.id} - {t.denomination} ({t.contenuActuel}L/{t.volume}L)</option>)}
+                          {[...tonneaux.filter(t=>t.id!==mvtForm.futSource[0]).map(t=>({id:t.id,nom:t.id+" - "+(t.denomination||""),info:t.contenuActuel+"L/"+t.volume+"L"})),
+                            ...cuvesCuverie.filter(c=>("cuve_"+c.id)!==mvtForm.futSource[0]).map(c=>({id:"cuve_"+c.id,nom:c.nom+" (cuve)",info:Math.round((parseFloat(c.contenuActuelHL)||0)*100)+"L/"+Math.round((parseFloat(c.volumeHL)||0)*100)+"L"}))
+                          ].map(x=><option key={x.id} value={x.id}>{x.nom} ({x.info})</option>)}
                         </select>
                         <input type="number" style={s.inp} placeholder="L" value={ef.volume} onChange={e=>setMvtForm(f=>({...f,ouillageDestFuts:f.ouillageDestFuts.map((x,j)=>j===i?{...x,volume:e.target.value}:x)}))}/>
                         {i>0&&<button style={{...s.ghostSm,color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>setMvtForm(f=>({...f,ouillageDestFuts:f.ouillageDestFuts.filter((_,j)=>j!==i)}))}>x</button>}
@@ -6496,26 +6597,28 @@ export default function App() {
               )}
               {needsSource&&mvtForm.type!=="perte"&&(
                 <div>
-                  <span style={s.lbl}>Fût(s) source {mvtForm.type==="assemblage"?"(multi)":""} *</span>
+                  <span style={s.lbl}>Fût/cuve source {mvtForm.type==="assemblage"?"(multi)":""} *</span>
                   <div style={{maxHeight:"220px",overflowY:"auto",border:"1px solid #cfc0a0",borderRadius:"4px",padding:"7px"}}>
-                    {tonneaux.filter(t=>t.contenuActuel>0).map(t=>(
+                    {[...tonneaux.filter(t=>t.contenuActuel>0).map(t=>({id:t.id,nom:t.denomination,dispo:t.contenuActuel})),
+                      ...(mvtForm.type==="assemblage"?[]:cuvesCuverie.filter(c=>(parseFloat(c.contenuActuelHL)||0)>0).map(c=>({id:"cuve_"+c.id,nom:c.nom+" (cuve)",dispo:Math.round((parseFloat(c.contenuActuelHL)||0)*100)})))
+                    ].map(t=>(
                       <div key={t.id} style={{display:"flex",alignItems:"center",gap:"8px",padding:"4px",fontSize:"12px"}}>
                         <input type={mvtForm.type==="assemblage"?"checkbox":"radio"} name="src" checked={mvtForm.futSource.includes(t.id)}
                           onChange={()=>setMvtForm(f=>({
                             ...f,
                             futSource:mvtForm.type==="assemblage"?(f.futSource.includes(t.id)?f.futSource.filter(x=>x!==t.id):[...f.futSource,t.id]):[t.id],
-                            assemblageVolumes:mvtForm.type==="assemblage"?{...f.assemblageVolumes,[t.id]:f.assemblageVolumes[t.id]||t.contenuActuel}:{}
+                            assemblageVolumes:mvtForm.type==="assemblage"?{...f.assemblageVolumes,[t.id]:f.assemblageVolumes[t.id]||t.dispo}:{}
                           }))}/>
-                        <span style={{color:"#8B7355",minWidth:"52px"}}>{t.id}</span>
-                        <span style={{color:"#7a6840",flex:1}}>{t.denomination}</span>
-                        <span style={{color:"#9a8870",fontSize:"10px"}}>{t.contenuActuel}L dispo</span>
+                        <span style={{color:"#8B7355",minWidth:"52px"}}>{t.id.replace("cuve_","")}</span>
+                        <span style={{color:"#7a6840",flex:1}}>{t.nom}</span>
+                        <span style={{color:"#9a8870",fontSize:"10px"}}>{t.dispo}L dispo</span>
                         {mvtForm.type==="assemblage"&&mvtForm.futSource.includes(t.id)&&(
                           <input type="number" style={{...s.inp,width:"80px",padding:"2px 6px",fontSize:"11px"}}
-                            placeholder={String(t.contenuActuel)}
+                            placeholder={String(t.dispo)}
                             value={mvtForm.assemblageVolumes[t.id]||""}
                             onChange={e=>setMvtForm(f=>({...f,assemblageVolumes:{...f.assemblageVolumes,[t.id]:e.target.value}}))}/>
                         )}
-                        {mvtForm.type!=="assemblage"&&<span style={{color:"#6a5838"}}>{t.contenuActuel}L</span>}
+                        {mvtForm.type!=="assemblage"&&<span style={{color:"#6a5838"}}>{t.dispo}L</span>}
                       </div>
                     ))}
                   </div>
@@ -6527,12 +6630,14 @@ export default function App() {
                 </div>
               )}
               {needsDest&&(
-                <div><span style={s.lbl}>{mvtForm.type==="assemblage"?"Cuve destination (Cuverie)":"Fût destination"} *</span>
+                <div><span style={s.lbl}>{mvtForm.type==="assemblage"?"Cuve destination (Cuverie)":"Fût/cuve destination"} *</span>
                   <select style={s.sel} value={mvtForm.futDest} onChange={e=>setMvtForm(f=>({...f,futDest:e.target.value}))}>
                     <option value="">Sélectionner...</option>
                     {mvtForm.type==="assemblage"
                       ? cuvesCuverie.filter(c=>c.type!=="bourbes").map(c=><option key={c.id} value={c.id}>{c.nom} - {c.type} (dispo: {Math.max(0,(parseFloat(c.volumeHL)||0)-(parseFloat(c.contenuActuelHL)||0)).toFixed(1)} HL)</option>)
-                      : tonneaux.filter(t=>!mvtForm.futSource.includes(t.id)).map(t=><option key={t.id} value={t.id}>{t.id} - {t.denomination} ({t.contenuActuel}L/{t.volume}L)</option>)
+                      : [...tonneaux.filter(t=>!mvtForm.futSource.includes(t.id)).map(t=>({id:t.id,nom:t.id+" - "+(t.denomination||""),info:t.contenuActuel+"L/"+t.volume+"L"})),
+                         ...cuvesCuverie.filter(c=>("cuve_"+c.id)!==mvtForm.futSource[0]).map(c=>({id:"cuve_"+c.id,nom:c.nom+" (cuve)",info:Math.round((parseFloat(c.contenuActuelHL)||0)*100)+"L/"+Math.round((parseFloat(c.volumeHL)||0)*100)+"L"}))
+                        ].map(x=><option key={x.id} value={x.id}>{x.nom} ({x.info})</option>)
                     }
                   </select>
                 </div>
