@@ -7329,7 +7329,12 @@ export default function App() {
                     delta += volRetour - volSortie;
                     if(delta!==0) {
                       const newVol = Math.max(0,(t.contenuActuel||0)+delta);
-                      const updated = estVide(newVol) ? viderFut(t) : {...t, contenuActuel:newVol, statut:"actif"};
+                      let updated = estVide(newVol) ? viderFut(t) : {...t, contenuActuel:newVol, statut:"actif"};
+                      // Si le fut recoit effectivement un retour (net positif) et etait vide/sans appellation,
+                      // on renseigne l'appellation et la denomination pour qu'il ne semble pas vide.
+                      if(volRetour>volSortie && !estVide(newVol) && !updated.appellation) {
+                        updated = {...updated, appellation:"vins_reserve", denomination:assemblageForm.nomCuvee, millesime:assemblageForm.millesime||updated.millesime, certif:isBioAssemblage?"BIO":updated.certif};
+                      }
                       saveTonneau(updated);
                       return updated;
                     }
