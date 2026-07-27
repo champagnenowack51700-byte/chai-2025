@@ -4029,7 +4029,7 @@ export default function App() {
           <div>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
               <div style={{fontFamily:"Georgia,serif",fontSize:"20px",color:"#2C3E50"}}>Assemblages</div>
-              <button style={s.btn} onClick={()=>{setEditingAssemblage(null);setAssemblageForm({nomCuvee:"",date:new Date().toISOString().slice(0,10),sources:[{type:"tonneau",id:"",volume:""}],cuveAssemblageId:"",destTirageId:"",destTirageVol:"",destRetours:[{id:"",volume:""}],notes:""});setShowAssemblageForm(true);}}>+ Nouvel assemblage</button>
+              <button style={s.btn} onClick={()=>{setEditingAssemblage(null);setAssemblageForm({nomCuvee:"",date:new Date().toISOString().slice(0,10),isBio:false,sources:[{type:"tonneau",id:"",volume:""}],cuveAssemblageId:"",destTirageId:"",destTirageVol:"",destRetours:[{id:"",volume:""}],notes:""});setShowAssemblageForm(true);}}>+ Nouvel assemblage</button>
             </div>
             {assemblages.length===0&&<div style={{...s.card,color:"#9a8870",fontStyle:"italic"}}>Aucun assemblage enregistré.</div>}
             {[...new Set(assemblages.map(a=>a.date?.slice(0,4)))].sort().reverse().map(annee=>(
@@ -7401,6 +7401,10 @@ export default function App() {
                 <div><span style={s.lbl}>Date</span>
                   <input type="date" style={s.inp} value={assemblageForm.date} onChange={e=>setAssemblageForm(f=>({...f,date:e.target.value}))}/></div>
               </div>
+              <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
+                <input type="checkbox" id="assemblageIsBio" checked={assemblageForm.isBio||false} onChange={e=>setAssemblageForm(f=>({...f,isBio:e.target.checked}))} style={{width:"16px",height:"16px",cursor:"pointer"}}/>
+                <label htmlFor="assemblageIsBio" style={{fontSize:"12px",color:"#2d6a00",fontWeight:500,cursor:"pointer"}}>🌿 Certification BIO</label>
+              </div>
 
               {/* Sources */}
               <div style={{background:"#f4f6f7",borderRadius:"8px",padding:"12px"}}>
@@ -7483,7 +7487,7 @@ export default function App() {
                   if(!assemblageForm.nomCuvee) return alert("Le nom de cuvée est requis.");
                   if(!assemblageForm.sources.some(s=>s.id&&s.volume)) return alert("Ajoutez au moins une source avec un volume.");
                   const sourcesValides = assemblageForm.sources.filter(s=>s.id&&s.volume);
-                  const isBioAssemblage = sourcesValides.length>0 && sourcesValides.every(s=>tonneaux.find(t=>t.id===s.id)?.certif==="BIO");
+                  const isBioAssemblage = assemblageForm.isBio || (sourcesValides.length>0 && sourcesValides.every(s=>tonneaux.find(t=>t.id===s.id)?.certif==="BIO"));
                   const oldA = editingAssemblage; // null si creation, sinon assemblage en cours de modification
                   const a = {id: oldA?oldA.id:"asm_"+Date.now(), ...assemblageForm, isBio:isBioAssemblage, timestamp: oldA?oldA.timestamp:new Date().toISOString()};
                   const destRetoursValides = (assemblageForm.destRetours||[]).filter(r=>r.id&&r.volume);
