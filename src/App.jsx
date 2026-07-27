@@ -4110,6 +4110,18 @@ export default function App() {
                               return c;
                             }));
                           });
+                          // Restituer les cuves sources
+                          (a.sources||[]).filter(src=>src.type==="cuve"&&src.id).forEach(src=>{
+                            const volS = parseFloat(src.volume)||0;
+                            if(volS<=0) return;
+                            setCuvesCuverie(prev=>prev.map(c=>{
+                              if(c.id===src.id) {
+                                const updated = {...c, contenuActuelHL:String((parseFloat(c.contenuActuelHL)||0)+(volS/100))};
+                                fbSave("cuvesCuverie",c.id,updated); return updated;
+                              }
+                              return c;
+                            }));
+                          });
                           setAssemblages(prev=>prev.filter(x=>x.id!==a.id));
                           deleteAssemblageFb(a.id);
                         }}>Supprimer</button>
@@ -4120,7 +4132,12 @@ export default function App() {
                         <div style={{fontWeight:500,color:"#2C3E50",marginBottom:"6px"}}>Sources</div>
                         {(a.sources||[]).map((src,i)=>(
                           <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:"0.5px solid #e0e8f0"}}>
-                            <span style={{color:"#4A6274"}}>{src.type==="reserve"?"🍷 Réserve":src.type==="ri"?"🔒 RI":"🛢 Fût"} {src.id}{tonneaux.find(t=>t.id===src.id)?.denomination?" — "+tonneaux.find(t=>t.id===src.id).denomination:""}</span>
+                            <span style={{color:"#4A6274"}}>
+                              {src.type==="cuve"
+                                ? "🥃 Cuve — "+(cuvesCuverie.find(c=>c.id===src.id)?.nom||src.id)
+                                : (src.type==="reserve"?"🍷 Réserve ":src.type==="ri"?"🔒 RI ":"🛢 Fût ")+src.id+(tonneaux.find(t=>t.id===src.id)?.denomination?" — "+tonneaux.find(t=>t.id===src.id).denomination:"")
+                              }
+                            </span>
                             <span style={{fontWeight:500}}>{src.volume} L</span>
                           </div>
                         ))}
@@ -7325,6 +7342,9 @@ export default function App() {
           (a.destRetoursRI||[]).filter(r=>r.id==="cuve_"+showCuveHistorique).forEach(r=>{
             evts.push({date:a.date,type:"Assemblage → Retour RI",detail:a.nomCuvee,volume:parseFloat(r.volume)||0,campagne:a.date?.slice(0,4)});
           });
+          (a.sources||[]).filter(src=>src.type==="cuve"&&src.id===showCuveHistorique).forEach(src=>{
+            evts.push({date:a.date,type:"Assemblage (source)",detail:a.nomCuvee,volume:-(parseFloat(src.volume)||0),campagne:a.date?.slice(0,4)});
+          });
         });
         tirages.filter(t=>t.cuveCuveeId===showCuveHistorique).forEach(t=>{
           evts.push({date:t.date,type:"Tirage (sortie)",detail:t.cuveeCreee||t.nomCuvee,volume:-(parseFloat(t.volumeCuvee)||0)*100,campagne:t.date?.slice(0,4)});
@@ -7430,6 +7450,7 @@ export default function App() {
                       <option value="tonneau">Fût</option>
                       <option value="reserve">Vins de réserve</option>
                       <option value="ri">RI</option>
+                      <option value="cuve">Cuve</option>
                     </select>
                     <select style={s.sel} value={src.id} onChange={e=>setAssemblageForm(f=>({...f,sources:f.sources.map((s,j)=>j===i?{...s,id:e.target.value}:s)}))}>
                       <option value="">Sélectionner...</option>
@@ -7437,7 +7458,9 @@ export default function App() {
                         ? tonneaux.filter(t=>t.statut!=="vide"&&t.contenuActuel>0).map(t=><option key={t.id} value={t.id}>{t.id} — {t.denomination} ({t.contenuActuel} L)</option>)
                         : src.type==="reserve"
                         ? tonneaux.filter(t=>t.appellation==="vins_reserve"&&t.contenuActuel>0).map(t=><option key={t.id} value={t.id}>{t.id}{t.denomination?" — "+t.denomination:""} ({t.contenuActuel} L)</option>)
-                        : tonneaux.filter(t=>t.appellation==="ri"&&t.contenuActuel>0).map(t=><option key={t.id} value={t.id}>{t.id}{t.denomination?" — "+t.denomination:""} ({t.contenuActuel} L)</option>)
+                        : src.type==="ri"
+                        ? tonneaux.filter(t=>t.appellation==="ri"&&t.contenuActuel>0).map(t=><option key={t.id} value={t.id}>{t.id}{t.denomination?" — "+t.denomination:""} ({t.contenuActuel} L)</option>)
+                        : cuvesCuverie.filter(c=>(parseFloat(c.contenuActuelHL)||0)>0).map(c=><option key={c.id} value={c.id}>{c.nom}{c.notes?" — "+c.notes:""} ({Math.round((parseFloat(c.contenuActuelHL)||0)*100)} L)</option>)
                       }
                     </select>
                     <input type="number" style={s.inp} placeholder="Volume L" value={src.volume} onChange={e=>setAssemblageForm(f=>({...f,sources:f.sources.map((s,j)=>j===i?{...s,volume:e.target.value}:s)}))}/>
@@ -7522,7 +7545,7 @@ export default function App() {
                   if(!assemblageForm.nomCuvee) return alert("Le nom de cuvée est requis.");
                   if(!assemblageForm.sources.some(s=>s.id&&s.volume)) return alert("Ajoutez au moins une source avec un volume.");
                   const sourcesValides = assemblageForm.sources.filter(s=>s.id&&s.volume);
-                  const isBioAssemblage = assemblageForm.isBio || (sourcesValides.length>0 && sourcesValides.every(s=>tonneaux.find(t=>t.id===s.id)?.certif==="BIO"));
+                  const isBioAssemblage = assemblageForm.isBio || (sourcesValides.length>0 && sourcesValides.every(s=>s.type==="cuve" ? cuvesCuverie.find(c=>c.id===s.id)?.isBio : tonneaux.find(t=>t.id===s.id)?.certif==="BIO"));
                   const oldA = editingAssemblage; // null si creation, sinon assemblage en cours de modification
                   const a = {id: oldA?oldA.id:"asm_"+Date.now(), ...assemblageForm, isBio:isBioAssemblage, timestamp: oldA?oldA.timestamp:new Date().toISOString()};
                   const destRetoursValides = (assemblageForm.destRetours||[]).filter(r=>r.id&&r.volume);
@@ -7581,17 +7604,23 @@ export default function App() {
                         if(oldA.destTirageId===c.id) delta -= oldVolTirage;
                         oldDestRetoursValides.filter(r=>r.id.startsWith("cuve_")&&r.id.replace("cuve_","")===c.id).forEach(r=>{delta -= parseFloat(r.volume)||0;});
                         oldDestRetoursRIValides.filter(r=>r.id.startsWith("cuve_")&&r.id.replace("cuve_","")===c.id).forEach(r=>{delta -= parseFloat(r.volume)||0;});
+                        oldSourcesValides.filter(s=>s.type==="cuve"&&s.id===c.id).forEach(s=>{delta += parseFloat(s.volume)||0;});
                       }
                       if(assemblageForm.cuveAssemblageId===c.id) delta += volNetAssemblage;
                       if(assemblageForm.destTirageId===c.id) delta += volTirageR;
                       destRetoursValides.filter(r=>r.id.startsWith("cuve_")&&r.id.replace("cuve_","")===c.id).forEach(r=>{delta += parseFloat(r.volume)||0;});
                       destRetoursRIValides.filter(r=>r.id.startsWith("cuve_")&&r.id.replace("cuve_","")===c.id).forEach(r=>{delta += parseFloat(r.volume)||0;});
+                      sourcesValides.filter(s=>s.type==="cuve"&&s.id===c.id).forEach(s=>{delta -= parseFloat(s.volume)||0;});
                       if(delta!==0) {
+                        const isRecoitAssemblage = assemblageForm.cuveAssemblageId===c.id&&volNetAssemblage>0;
                         // Sur la cuve d'assemblage : noter ce qui y est stocke temporairement (cuvee + statut BIO)
-                        const noteContenu = assemblageForm.cuveAssemblageId===c.id&&volNetAssemblage>0
+                        const noteContenu = isRecoitAssemblage
                           ? `${assemblageForm.nomCuvee}${isBioAssemblage?" 🌿 BIO":""} — assemblé le ${fmt(assemblageForm.date)}`
                           : c.notes;
-                        const updated = {...c, contenuActuelHL:String(((parseFloat(c.contenuActuelHL)||0)+(delta/100))), notes:noteContenu, isBio:assemblageForm.cuveAssemblageId===c.id&&volNetAssemblage>0?isBioAssemblage:c.isBio};
+                        const newHL = (parseFloat(c.contenuActuelHL)||0)+(delta/100);
+                        const updated = (!isRecoitAssemblage && delta<0)
+                          ? majCuveContenu(c, newHL)
+                          : {...c, contenuActuelHL:String(newHL), notes:noteContenu, isBio:isRecoitAssemblage?isBioAssemblage:c.isBio};
                         fbSave("cuvesCuverie",c.id,updated);
                         return updated;
                       }
