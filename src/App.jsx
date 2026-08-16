@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { initializeApp } from "firebase/app";
 import { getFirestore, collection, doc, setDoc, deleteDoc, getDocs, onSnapshot, writeBatch } from "firebase/firestore";
 
@@ -712,7 +712,7 @@ export default function App() {
   const [rendementsAnnuels, setRendementsAnnuels] = useState([]);
   const [apportsParcelles, setApportsParcelles] = useState([]);
   const [showApportForm, setShowApportForm] = useState(null); // parcelleId
-  const [apportForm, setApportForm] = useState({date:new Date().toISOString().slice(0,10),operateur:'',nbCagettes:'',poidsNet:'',campagne:new Date().getFullYear().toString()});
+  const [apportForm, setApportForm] = useState({date:new Date().toISOString().slice(0,10),operateur:'',nbCagettes:'',poidsNet:'',campagne:new Date().getFullYear().toString(),notes:''});
   const [showApportsPanel, setShowApportsPanel] = useState({});
   const [showRendementForm, setShowRendementForm] = useState(false);
   const [reserveRI, setReserveRI] = useState({volumeKg:86110});
@@ -3560,7 +3560,7 @@ export default function App() {
                               </div>
                             </div>
                           )}
-                          {v.observations&&<div style={{borderTop:"0.5px solid #ede5d4",paddingTop:"6px",marginTop:"6px",fontSize:"12px",color:"#6a5838",fontStyle:"italic"}}>{v.observations}</div>}
+                          {v.observations&&<div style={{borderTop:"0.5px solid #ede5d4",paddingTop:"6px",marginTop:"6px",fontSize:"12px",color:"#6a5838"}}>📝 {v.observations}</div>}
                           <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",marginTop:"8px"}}>
                             <button style={{...s.ghostSm}} onClick={()=>openEditVendange(v)}>Modifier</button>
                             <button style={{...s.ghostSm,color:"#cc2222",borderColor:"#f0b4b4"}}
@@ -4974,7 +4974,7 @@ export default function App() {
                       {p.surface&&<div style={{fontSize:"12px",color:"#2C3E50",fontWeight:500,marginBottom:"4px"}}>📐 {p.surface} ha</div>}
                       {p.observations&&<div style={{fontSize:"11px",color:"#7a6840",fontStyle:"italic",marginTop:"6px",padding:"6px",background:"#F8F6F2",borderRadius:"4px"}}>{p.observations}</div>}
                       <div style={{display:"flex",gap:"6px",marginTop:"8px"}}>
-                        <button style={{...s.ghostSm,fontSize:"10px",flex:1}} onClick={()=>{setApportForm({date:new Date().toISOString().slice(0,10),heure:"",operateur:"",nbCagettes:"",poidsNet:"",campagne:new Date().getFullYear().toString()});setShowApportForm(p.id);}}>
+                        <button style={{...s.ghostSm,fontSize:"10px",flex:1}} onClick={()=>{setApportForm({date:new Date().toISOString().slice(0,10),heure:"",operateur:"",nbCagettes:"",poidsNet:"",campagne:new Date().getFullYear().toString(),notes:""});setShowApportForm(p.id);}}>
                           + Ajouter un apport
                         </button>
                         <button style={{...s.ghostSm,fontSize:"10px"}} onClick={()=>setShowApportsPanel(prev=>({...prev,[p.id]:true}))}>
@@ -5551,7 +5551,7 @@ export default function App() {
                               </div>
                             </div>
                           )}
-                          {v.observations&&<div style={{borderTop:"0.5px solid #ede5d4",paddingTop:"6px",marginTop:"6px",fontSize:"12px",color:"#6a5838",fontStyle:"italic"}}>{v.observations}</div>}
+                          {v.observations&&<div style={{borderTop:"0.5px solid #ede5d4",paddingTop:"6px",marginTop:"6px",fontSize:"12px",color:"#6a5838"}}>📝 {v.observations}</div>}
                           <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",marginTop:"8px"}}>
                             <button style={{...s.ghostSm}} onClick={()=>openEditVendange(v)}>Modifier</button>
                             <button style={{...s.ghostSm,color:"#cc2222",borderColor:"#f0b4b4"}}
@@ -7256,7 +7256,8 @@ export default function App() {
                       </thead>
                       <tbody>
                         {apportsAn.map(a=>(
-                          <tr key={a.id} style={{borderBottom:"0.5px solid #ede5d4"}}>
+                          <React.Fragment key={a.id}>
+                          <tr style={{borderBottom:a.notes?"none":"0.5px solid #ede5d4"}}>
                             <td style={{padding:"5px 8px",color:"#2C3E50"}}>{fmt(a.date)}</td>
                             <td style={{padding:"5px 8px",color:"#6a5838"}}>{a.heure||"-"}</td>
                             <td style={{padding:"5px 8px",color:"#2C3E50"}}>{a.operateur||"-"}</td>
@@ -7264,6 +7265,12 @@ export default function App() {
                             <td style={{padding:"5px 8px",fontWeight:500,color:"#2d6a00",textAlign:"right"}}>{parseInt(a.poidsNet).toLocaleString()} kg</td>
                             <td style={{padding:"5px 8px"}}><button style={{background:"none",border:"none",cursor:"pointer",color:"#cc2222",fontSize:"13px"}} onClick={()=>{if(window.confirm("Supprimer ?")){ setApportsParcelles(prev=>prev.filter(x=>x.id!==a.id)); deleteApportParcelle(a.id); }}}>×</button></td>
                           </tr>
+                          {a.notes&&(
+                            <tr style={{borderBottom:"0.5px solid #ede5d4"}}>
+                              <td colSpan={6} style={{padding:"0 8px 6px 8px",color:"#7a6840",fontSize:"11px"}}>📝 {a.notes}</td>
+                            </tr>
+                          )}
+                          </React.Fragment>
                         ))}
                         <tr style={{borderTop:"1px solid #d4c4a0",background:"#f4f6f7"}}>
                           <td colSpan={4} style={{padding:"5px 8px",fontWeight:500,color:"#2C3E50"}}>Total</td>
@@ -7305,6 +7312,8 @@ export default function App() {
                 <div><span style={s.lbl}>Poids net (kg) *</span>
                   <input type="number" style={s.inp} placeholder="ex. 2500" value={apportForm.poidsNet} onChange={e=>setApportForm(f=>({...f,poidsNet:e.target.value}))}/></div>
               </div>
+              <div><span style={s.lbl}>Note</span>
+                <textarea style={{...s.inp,height:"56px",resize:"vertical"}} placeholder="ex. Etat sanitaire, prestataire, remarque particulière..." value={apportForm.notes||""} onChange={e=>setApportForm(f=>({...f,notes:e.target.value}))}/></div>
               <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
                 <button style={s.ghost} onClick={()=>setShowApportForm(null)}>Annuler</button>
                 <button style={s.btn} onClick={()=>{
@@ -7844,8 +7853,8 @@ export default function App() {
                   </div>
                 )}
               </div>
-              <div><span style={s.lbl}>Observations</span>
-                <textarea style={{...s.inp,height:"64px",resize:"vertical"}} placeholder="Etat sanitaire, conditions..." value={vendangeForm.observations} onChange={e=>setVendangeForm(f=>({...f,observations:e.target.value}))}/></div>
+              <div><span style={s.lbl}>Note (ex. parcelle réelle si prestataire, état sanitaire...)</span>
+                <textarea style={{...s.inp,height:"64px",resize:"vertical"}} placeholder="ex. Pressurage prestataire M. Dupont - parcelle Les Riceys" value={vendangeForm.observations} onChange={e=>setVendangeForm(f=>({...f,observations:e.target.value}))}/></div>
               <div style={{background:"#F0EDE8",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
                 <div style={{...s.lbl,marginBottom:"10px"}}>Destination du marc</div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
