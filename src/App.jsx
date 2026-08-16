@@ -3482,6 +3482,10 @@ export default function App() {
                             <div style={s.lbl}>Vendu negoce</div>
                             <div style={{fontSize:"16px",fontWeight:500,color:"#c47800"}}>{Math.round(kgNegoce).toLocaleString()} kg</div>
                           </div>
+                          {kgPrestation>0&&<div style={{...s.card,padding:"10px"}}>
+                            <div style={s.lbl}>Prestation pressurage</div>
+                            <div style={{fontSize:"16px",fontWeight:500,color:"#185FA5"}}>{Math.round(kgPrestation).toLocaleString()} kg</div>
+                          </div>}
                           {surfTotale>0&&<div style={{...s.card,padding:"10px",background:enRI?"#fde8e8":"transparent"}}>
                             <div style={s.lbl}>kg/ha {kgHaAutorise>0?"vs "+kgHaAutorise+" autorise":""}</div>
                             <div style={{fontSize:"16px",fontWeight:500,color:enRI?"#cc2222":"#1a1205"}}>{kgHaReel.toLocaleString()} kg/ha</div>
@@ -5476,6 +5480,10 @@ export default function App() {
                             <div style={s.lbl}>Vendu negoce</div>
                             <div style={{fontSize:"16px",fontWeight:500,color:"#c47800"}}>{Math.round(kgNegoce).toLocaleString()} kg</div>
                           </div>
+                          {kgPrestation>0&&<div style={{...s.card,padding:"10px"}}>
+                            <div style={s.lbl}>Prestation pressurage</div>
+                            <div style={{fontSize:"16px",fontWeight:500,color:"#185FA5"}}>{Math.round(kgPrestation).toLocaleString()} kg</div>
+                          </div>}
                           {surfTotale>0&&<div style={{...s.card,padding:"10px",background:enRI?"#fde8e8":"transparent"}}>
                             <div style={s.lbl}>kg/ha {kgHaAutorise>0?"vs "+kgHaAutorise+" autorise":""}</div>
                             <div style={{fontSize:"16px",fontWeight:500,color:enRI?"#cc2222":"#1a1205"}}>{kgHaReel.toLocaleString()} kg/ha</div>
