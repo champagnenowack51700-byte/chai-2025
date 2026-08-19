@@ -713,6 +713,7 @@ export default function App() {
   const [apportsParcelles, setApportsParcelles] = useState([]);
   const [showApportForm, setShowApportForm] = useState(null); // parcelleId
   const [apportForm, setApportForm] = useState({date:new Date().toISOString().slice(0,10),operateur:'',nbCagettes:'',poidsNet:'',campagne:new Date().getFullYear().toString(),notes:''});
+  const [editingApport, setEditingApport] = useState(null);
   const [showApportsPanel, setShowApportsPanel] = useState({});
   const [showRendementForm, setShowRendementForm] = useState(false);
   const [reserveRI, setReserveRI] = useState({volumeKg:86110});
@@ -4978,7 +4979,7 @@ export default function App() {
                       {p.surface&&<div style={{fontSize:"12px",color:"#2C3E50",fontWeight:500,marginBottom:"4px"}}>📐 {p.surface} ha</div>}
                       {p.observations&&<div style={{fontSize:"11px",color:"#7a6840",fontStyle:"italic",marginTop:"6px",padding:"6px",background:"#F8F6F2",borderRadius:"4px"}}>{p.observations}</div>}
                       <div style={{display:"flex",gap:"6px",marginTop:"8px"}}>
-                        <button style={{...s.ghostSm,fontSize:"10px",flex:1}} onClick={()=>{setApportForm({date:new Date().toISOString().slice(0,10),heure:"",operateur:"",nbCagettes:"",poidsNet:"",campagne:new Date().getFullYear().toString(),notes:""});setShowApportForm(p.id);}}>
+                        <button style={{...s.ghostSm,fontSize:"10px",flex:1}} onClick={()=>{setApportForm({date:new Date().toISOString().slice(0,10),heure:"",operateur:"",nbCagettes:"",poidsNet:"",campagne:new Date().getFullYear().toString(),notes:""});setEditingApport(null);setShowApportForm(p.id);}}>
                           + Ajouter un apport
                         </button>
                         <button style={{...s.ghostSm,fontSize:"10px"}} onClick={()=>setShowApportsPanel(prev=>({...prev,[p.id]:true}))}>
@@ -7271,7 +7272,10 @@ export default function App() {
                             <td style={{padding:"5px 8px",color:"#2C3E50"}}>{a.operateur||"-"}</td>
                             <td style={{padding:"5px 8px",color:"#9a8870",textAlign:"right"}}>{a.nbCagettes||"-"}</td>
                             <td style={{padding:"5px 8px",fontWeight:500,color:"#2d6a00",textAlign:"right"}}>{parseInt(a.poidsNet).toLocaleString()} kg</td>
-                            <td style={{padding:"5px 8px"}}><button style={{background:"none",border:"none",cursor:"pointer",color:"#cc2222",fontSize:"13px"}} onClick={()=>{if(window.confirm("Supprimer ?")){ setApportsParcelles(prev=>prev.filter(x=>x.id!==a.id)); deleteApportParcelle(a.id); }}}>×</button></td>
+                            <td style={{padding:"5px 8px",whiteSpace:"nowrap"}}>
+                              <button style={{background:"none",border:"none",cursor:"pointer",color:"#8B7355",fontSize:"12px",marginRight:"8px"}} onClick={()=>{setApportForm({date:a.date,heure:a.heure||"",operateur:a.operateur||"",nbCagettes:a.nbCagettes||"",poidsNet:a.poidsNet||"",campagne:a.campagne,notes:a.notes||""});setEditingApport(a);setShowApportForm(p.id);}}>✎</button>
+                              <button style={{background:"none",border:"none",cursor:"pointer",color:"#cc2222",fontSize:"13px"}} onClick={()=>{if(window.confirm("Supprimer ?")){ setApportsParcelles(prev=>prev.filter(x=>x.id!==a.id)); deleteApportParcelle(a.id); }}}>×</button>
+                            </td>
                           </tr>
                           {a.notes&&(
                             <tr style={{borderBottom:"0.5px solid #ede5d4"}}>
@@ -7298,8 +7302,8 @@ export default function App() {
         <div style={s.modal}>
           <div style={{...s.modalBox,width:"400px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}>
-              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#2C3E50"}}>Nouvel apport</div>
-              <button style={s.ghost} onClick={()=>setShowApportForm(null)}>x</button>
+              <div style={{fontFamily:"Georgia,serif",fontSize:"17px",color:"#2C3E50"}}>{editingApport?"Modifier l'apport":"Nouvel apport"}</div>
+              <button style={s.ghost} onClick={()=>{setShowApportForm(null);setEditingApport(null);}}>x</button>
             </div>
             <div style={{display:"grid",gap:"12px"}}>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
@@ -7323,14 +7327,17 @@ export default function App() {
               <div><span style={s.lbl}>Note</span>
                 <textarea style={{...s.inp,height:"56px",resize:"vertical"}} placeholder="ex. Etat sanitaire, prestataire, remarque particulière..." value={apportForm.notes||""} onChange={e=>setApportForm(f=>({...f,notes:e.target.value}))}/></div>
               <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
-                <button style={s.ghost} onClick={()=>setShowApportForm(null)}>Annuler</button>
+                <button style={s.ghost} onClick={()=>{setShowApportForm(null);setEditingApport(null);}}>Annuler</button>
                 <button style={s.btn} onClick={()=>{
                   if(!apportForm.poidsNet) return alert("Le poids net est requis.");
-                  const a = {id:"ap_"+Date.now(), parcelleId:showApportForm, ...apportForm, timestamp:new Date().toISOString()};
-                  setApportsParcelles(prev=>[a,...prev]);
+                  const a = editingApport
+                    ? {...editingApport, ...apportForm, parcelleId:showApportForm}
+                    : {id:"ap_"+Date.now(), parcelleId:showApportForm, ...apportForm, timestamp:new Date().toISOString()};
+                  setApportsParcelles(prev=> editingApport ? prev.map(x=>x.id===a.id?a:x) : [a,...prev]);
                   saveApportParcelle(a);
                   setShowApportForm(null);
-                }}>Enregistrer</button>
+                  setEditingApport(null);
+                }}>{editingApport?"Enregistrer les modifications":"Enregistrer"}</button>
               </div>
             </div>
           </div>
