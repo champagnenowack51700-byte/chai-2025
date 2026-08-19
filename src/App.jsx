@@ -714,6 +714,7 @@ export default function App() {
   const [showApportForm, setShowApportForm] = useState(null); // parcelleId
   const [apportForm, setApportForm] = useState({date:new Date().toISOString().slice(0,10),operateur:'',nbCagettes:'',poidsNet:'',campagne:new Date().getFullYear().toString(),notes:''});
   const [editingApport, setEditingApport] = useState(null);
+  const [pdfDestFilter, setPdfDestFilter] = useState("");
   const [showApportsPanel, setShowApportsPanel] = useState({});
   const [showRendementForm, setShowRendementForm] = useState(false);
   const [reserveRI, setReserveRI] = useState({volumeKg:86110});
@@ -1828,12 +1829,21 @@ export default function App() {
     URL.revokeObjectURL(url);
   };
 
-  const exportVendangePDF = (annee, vAnnee) => {
+  const exportVendangePDF = (annee, vAnneeComplete, destFilter="") => {
     const parcsNom = (v) => (v.parcelleIds&&v.parcelleIds.length>0) ? v.parcelleIds.map(id=>parcelles.find(p=>p.id===id)?.nom||id).join(" + ") : (parcelles.find(p=>p.id===v.parcelleId)?.nom||"");
     const isBio = (v) => {
       const ids = v.parcelleIds&&v.parcelleIds.length>0 ? v.parcelleIds : (v.parcelleId?[v.parcelleId]:[]);
       return ids.length>0 && ids.every(id=>parcelles.find(p=>p.id===id)?.certification==="BIO");
     };
+    // Filtre par destination du marc (maison / negoce (total+partiel) / prestation / tous)
+    const vAnnee = !destFilter ? vAnneeComplete : vAnneeComplete.filter(v=>{
+      const d = v.destinationMarc||"maison";
+      if(destFilter==="maison") return d==="maison";
+      if(destFilter==="negoce") return d==="negoce_total"||d==="negoce_partiel";
+      if(destFilter==="prestation") return d==="prestation";
+      return true;
+    });
+    const destLabel = destFilter==="maison"?" — Maison":destFilter==="negoce"?" — Négoce":destFilter==="prestation"?" — Prestation pressurage":"";
     const kgTotal = vAnnee.filter(v=>v.destinationMarc!=="prestation").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0);
     const hlTotal = vAnnee.filter(v=>v.destinationMarc!=="prestation").reduce((s,v)=>s+(parseFloat(v.volumeHL)||0),0);
     const kgPrestation = vAnnee.filter(v=>v.destinationMarc==="prestation").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0);
@@ -1847,36 +1857,43 @@ export default function App() {
       if(v.destinationMarc==="negoce_partiel") return s+(parseFloat(v.kgVendusNegoce)||0);
       return s;
     },0);
-    const rows = vAnnee.map(v=>{
-      const bio = isBio(v);
-      const dest = v.destinationMarc==="prestation"?"🔄 Prestation pressurage"+(v.kgPrestation?" ("+parseInt(v.kgPrestation).toLocaleString()+" kg)":""):v.destinationMarc==="negoce_total"?"Negoce total":v.destinationMarc==="negoce_partiel"?`Negoce partiel (${parseInt(v.kgVendusNegoce)||0} kg negoce / ${(parseFloat(v.poidsMarcKg)||0)-(parseFloat(v.kgVendusNegoce)||0)} kg maison)`:"Maison";
-      return `<tr>
-        <td>${fmt(v.date)}${v.heure?" "+v.heure:""}</td>
-        <td>${parcsNom(v)}${bio?' <span style="background:#2d6a00;color:#fff;border-radius:3px;padding:1px 4px;font-size:9px">🌿 BIO</span>':""}</td>
-        <td>${v.cuveeCreee||"-"}</td>
-        <td>${v.numeroMarc||"-"}</td>
-        <td>${v.poidsMarcKg?parseInt(v.poidsMarcKg).toLocaleString()+" kg":"-"}</td>
-        <td>${v.volumeHL||"-"} HL</td>
-        <td>${dest}</td>
-        <td>${v.degreePotentiel?v.degreePotentiel+"%":"-"}</td>
-        <td>${v.acidite?v.acidite+" g/L":"-"}</td>
-        <td>${v.so2?v.so2+" mg/L":"-"}</td>
-        <td>${v.ph||"-"}</td>
-        <td>${cuvesCuverie.find(c=>c.id===v.cuveTailleId)?.nom||"-"}${v.volumeTaille?" ("+v.volumeTaille+" HL)":""}</td>
-        <td>${cuvesCuverie.find(c=>c.id===v.cuveCuveeId)?.nom||"-"}${v.volumeCuvee?" ("+v.volumeCuvee+" HL)":""}</td>
-        <td>${cuvesCuverie.find(c=>c.id===v.cuveCuveeBId)?.nom||"-"}${v.volumeCuveeB?" ("+v.volumeCuveeB+" HL)":""}</td>
-        <td>${v.produitsAjoutes&&v.produitsAjoutes.length>0?v.produitsAjoutes.map(p=>p.nom+(p.dose?" "+p.dose:"")+(p.lot?" (Lot:"+p.lot+")":"")).join(", "):"-"}</td>
-        <td style="font-style:italic;color:#6a5838">${v.observations||"-"}</td>
-      </tr>`;
+    const destHtml = (v) => v.destinationMarc==="prestation"?"🔄 Prestation pressurage"+(v.kgPrestation?" ("+parseInt(v.kgPrestation).toLocaleString()+" kg)":""):v.destinationMarc==="negoce_total"?"Negoce total":v.destinationMarc==="negoce_partiel"?`Negoce partiel (${parseInt(v.kgVendusNegoce)||0} kg negoce / ${(parseFloat(v.poidsMarcKg)||0)-(parseFloat(v.kgVendusNegoce)||0)} kg maison)`:"Maison";
+    // Definition des colonnes : "always" = toujours affichee, sinon affichee seulement si au moins
+    // une ligne du jeu filtre a une valeur non vide pour cette colonne.
+    const colonnes = [
+      {label:"Date", always:true, html:v=>fmt(v.date)+(v.heure?" "+v.heure:"")},
+      {label:"Parcelles", always:true, html:v=>parcsNom(v)+(isBio(v)?' <span style="background:#2d6a00;color:#fff;border-radius:3px;padding:1px 4px;font-size:9px">🌿 BIO</span>':"")},
+      {label:"Cuvee", check:v=>v.cuveeCreee, html:v=>v.cuveeCreee||"-"},
+      {label:"Marc", check:v=>v.numeroMarc, html:v=>v.numeroMarc||"-"},
+      {label:"Kg", always:true, html:v=>v.poidsMarcKg?parseInt(v.poidsMarcKg).toLocaleString()+" kg":"-"},
+      {label:"HL", always:true, html:v=>v.volumeHL?v.volumeHL+" HL":"-"},
+      {label:"Destination", check:()=>!destFilter, html:destHtml},
+      {label:"Degre", check:v=>v.degreePotentiel, html:v=>v.degreePotentiel?v.degreePotentiel+"%":"-"},
+      {label:"Acidite", check:v=>v.acidite, html:v=>v.acidite?v.acidite+" g/L":"-"},
+      {label:"SO2", check:v=>v.so2, html:v=>v.so2?v.so2+" mg/L":"-"},
+      {label:"pH", check:v=>v.ph, html:v=>v.ph||"-"},
+      {label:"Cuve Taille", check:v=>v.cuveTailleId, html:v=>(cuvesCuverie.find(c=>c.id===v.cuveTailleId)?.nom||"-")+(v.volumeTaille?" ("+v.volumeTaille+" HL)":"")},
+      {label:"Cuve Cuvee A", check:v=>v.cuveCuveeId, html:v=>(cuvesCuverie.find(c=>c.id===v.cuveCuveeId)?.nom||"-")+(v.volumeCuvee?" ("+v.volumeCuvee+" HL)":"")},
+      {label:"Cuve Cuvee B", check:v=>v.cuveCuveeBId, html:v=>(cuvesCuverie.find(c=>c.id===v.cuveCuveeBId)?.nom||"-")+(v.volumeCuveeB?" ("+v.volumeCuveeB+" HL)":"")},
+      {label:"Produits ajoutes", check:v=>v.produitsAjoutes&&v.produitsAjoutes.length>0, html:v=>v.produitsAjoutes&&v.produitsAjoutes.length>0?v.produitsAjoutes.map(p=>p.nom+(p.dose?" "+p.dose:"")+(p.lot?" (Lot:"+p.lot+")":"")).join(", "):"-"},
+      {label:"Observations", check:v=>v.observations, html:v=>v.observations||"-", style:'font-style:italic;color:#6a5838'},
+    ].filter(col => col.always || vAnnee.some(v=>col.check(v)));
+    const rows = vAnnee.map(v=>`<tr>${colonnes.map(col=>`<td${col.style?` style="${col.style}"`:""}>${col.html(v)}</td>`).join("")}</tr>`).join("");
+    const idxKg = Math.max(1,colonnes.findIndex(c=>c.label==="Kg"));
+    const totalRowHtml = `<td colspan="${idxKg}">TOTAL</td>` + colonnes.slice(idxKg).map(col=>{
+      if(col.label==="Kg") return `<td>${kgTotal.toLocaleString()} kg</td>`;
+      if(col.label==="HL") return `<td>${hlTotal.toFixed(2)} HL</td>`;
+      if(col.label==="Destination") return `<td>Maison: ${kgMaison.toLocaleString()} kg / Negoce: ${kgNegoce.toLocaleString()} kg</td>`;
+      return `<td></td>`;
     }).join("");
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
     <style>body{font-family:Georgia,serif;margin:20px;color:#1a1205}h1{color:#7a5200;border-bottom:1px solid #d4c4a0;padding-bottom:8px}
     table{width:100%;border-collapse:collapse;font-size:10px}th{background:#f5e8cc;color:#7a5200;padding:5px;text-align:left;border:0.5px solid #d4c4a0}
     td{padding:4px 5px;border:0.5px solid #ede5d4}tr:nth-child(even){background:#fffdf7}.total{background:#f5f5f0;font-weight:bold}</style></head>
-    <body><h1>Champagne Nowack — Campagne ${annee}</h1>
-    <p style="color:#9a8870;font-size:12px">${vAnnee.filter(v=>v.destinationMarc!=="prestation").length} apport(s) — Total : ${kgTotal.toLocaleString()} kg / ${hlTotal.toFixed(2)} HL — Maison : ${kgMaison.toLocaleString()} kg — Negoce : ${kgNegoce.toLocaleString()} kg${kgPrestation>0?" — Prestation : "+kgPrestation.toLocaleString()+" kg":""}</p>
-    <table><thead><tr><th>Date</th><th>Parcelles</th><th>Cuvee</th><th>Marc</th><th>Kg</th><th>HL</th><th>Destination</th><th>Degre</th><th>Acidite</th><th>SO2</th><th>pH</th><th>Cuve Taille</th><th>Cuve Cuvee A</th><th>Cuve Cuvee B</th><th>Produits ajoutes</th><th>Observations</th></tr></thead>
-    <tbody>${rows}<tr class="total"><td colspan="4">TOTAL</td><td>${kgTotal.toLocaleString()} kg</td><td>${hlTotal.toFixed(2)} HL</td><td>Maison: ${kgMaison.toLocaleString()} kg / Negoce: ${kgNegoce.toLocaleString()} kg</td><td colspan="8"></td></tr></tbody></table>
+    <body><h1>Champagne Nowack — Campagne ${annee}${destLabel}</h1>
+    <p style="color:#9a8870;font-size:12px">${vAnnee.filter(v=>v.destinationMarc!=="prestation").length} apport(s) — Total : ${kgTotal.toLocaleString()} kg / ${hlTotal.toFixed(2)} HL${!destFilter?` — Maison : ${kgMaison.toLocaleString()} kg — Negoce : ${kgNegoce.toLocaleString()} kg${kgPrestation>0?" — Prestation : "+kgPrestation.toLocaleString()+" kg":""}`:""}</p>
+    <table><thead><tr>${colonnes.map(col=>`<th>${col.label}</th>`).join("")}</tr></thead>
+    <tbody>${rows}<tr class="total">${totalRowHtml}</tr></tbody></table>
     </body></html>`;
     const w = window.open("","_blank");
     w.document.write(html);
@@ -3447,7 +3464,13 @@ export default function App() {
                       )}
                       {isCampagneClosed(annee)&&<button style={{...s.ghostSm,fontSize:"10px"}} onClick={()=>rouvrirCampagne(annee)}>Rouvrir</button>}
                       <button style={{...s.ghostSm,fontSize:"10px",color:"#2d6a00",borderColor:"#7ab848"}} onClick={()=>exportVendangeCSV(annee,vAnnee)}>↓ CSV</button>
-                      <button style={{...s.ghostSm,fontSize:"10px",color:"#8B0000",borderColor:"#c85050"}} onClick={()=>exportVendangePDF(annee,vAnnee)}>↓ PDF</button>
+                      <select style={{...s.sel,fontSize:"10px",padding:"4px 6px",width:"140px"}} value={pdfDestFilter} onChange={e=>setPdfDestFilter(e.target.value)}>
+                        <option value="">Toutes destinations</option>
+                        <option value="maison">Maison</option>
+                        <option value="negoce">Négoce</option>
+                        <option value="prestation">Prestation</option>
+                      </select>
+                      <button style={{...s.ghostSm,fontSize:"10px",color:"#8B0000",borderColor:"#c85050"}} onClick={()=>exportVendangePDF(annee,vAnnee,pdfDestFilter)}>↓ PDF</button>
                       <div style={{display:"flex",gap:"12px",fontSize:"11px",color:"#9a8870",fontFamily:"monospace"}}>
                         <span>{vAnnee.length} apport(s)</span>
                         <span style={{color:"#2d6a00",fontWeight:500}}>{volTotal.toLocaleString()} kg</span>
