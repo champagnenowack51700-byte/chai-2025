@@ -1830,7 +1830,7 @@ export default function App() {
   };
 
   const exportVendangePDF = (annee, vAnneeComplete, destFilter="") => {
-    const parcsNom = (v) => (v.parcelleIds&&v.parcelleIds.length>0) ? v.parcelleIds.map(id=>parcelles.find(p=>p.id===id)?.nom||id).join(" + ") : (parcelles.find(p=>p.id===v.parcelleId)?.nom||"");
+    const parcsNom = (v) => (v.parcelleIds&&v.parcelleIds.length>0) ? v.parcelleIds.map(id=>parcelles.find(p=>p.id===id)?.nom||"Parcelle non identifiée").join(" + ") : (parcelles.find(p=>p.id===v.parcelleId)?.nom||"Parcelle non identifiée");
     const isBio = (v) => {
       const ids = v.parcelleIds&&v.parcelleIds.length>0 ? v.parcelleIds : (v.parcelleId?[v.parcelleId]:[]);
       return ids.length>0 && ids.every(id=>parcelles.find(p=>p.id===id)?.certification==="BIO");
@@ -1844,8 +1844,9 @@ export default function App() {
       return true;
     });
     const destLabel = destFilter==="maison"?" — Maison":destFilter==="negoce"?" — Négoce":destFilter==="prestation"?" — Prestation pressurage":"";
-    const kgTotal = vAnnee.filter(v=>v.destinationMarc!=="prestation").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0);
-    const hlTotal = vAnnee.filter(v=>v.destinationMarc!=="prestation").reduce((s,v)=>s+(parseFloat(v.volumeHL)||0),0);
+    const baseTotaux = destFilter==="prestation" ? vAnnee : vAnnee.filter(v=>v.destinationMarc!=="prestation");
+    const kgTotal = baseTotaux.reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0);
+    const hlTotal = baseTotaux.reduce((s,v)=>s+(parseFloat(v.volumeHL)||0),0);
     const kgPrestation = vAnnee.filter(v=>v.destinationMarc==="prestation").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0);
     const kgMaison = vAnnee.reduce((s,v)=>{
       if(!v.destinationMarc||v.destinationMarc==="maison") return s+(parseFloat(v.poidsMarcKg)||0);
@@ -1876,7 +1877,7 @@ export default function App() {
       {label:"Cuve Cuvee A", check:v=>v.cuveCuveeId, html:v=>(cuvesCuverie.find(c=>c.id===v.cuveCuveeId)?.nom||"-")+(v.volumeCuvee?" ("+v.volumeCuvee+" HL)":"")},
       {label:"Cuve Cuvee B", check:v=>v.cuveCuveeBId, html:v=>(cuvesCuverie.find(c=>c.id===v.cuveCuveeBId)?.nom||"-")+(v.volumeCuveeB?" ("+v.volumeCuveeB+" HL)":"")},
       {label:"Produits ajoutes", check:v=>v.produitsAjoutes&&v.produitsAjoutes.length>0, html:v=>v.produitsAjoutes&&v.produitsAjoutes.length>0?v.produitsAjoutes.map(p=>p.nom+(p.dose?" "+p.dose:"")+(p.lot?" (Lot:"+p.lot+")":"")).join(", "):"-"},
-      {label:"Observations", check:v=>v.observations, html:v=>v.observations||"-", style:'font-style:italic;color:#6a5838'},
+      {label:"Observations", always:destFilter==="prestation", check:v=>v.observations, html:v=>v.observations||"-", style:'font-style:italic;color:#6a5838'},
     ].filter(col => col.always || vAnnee.some(v=>col.check(v)));
     const rows = vAnnee.map(v=>`<tr>${colonnes.map(col=>`<td${col.style?` style="${col.style}"`:""}>${col.html(v)}</td>`).join("")}</tr>`).join("");
     const idxKg = Math.max(1,colonnes.findIndex(c=>c.label==="Kg"));
@@ -1891,7 +1892,7 @@ export default function App() {
     table{width:100%;border-collapse:collapse;font-size:10px}th{background:#f5e8cc;color:#7a5200;padding:5px;text-align:left;border:0.5px solid #d4c4a0}
     td{padding:4px 5px;border:0.5px solid #ede5d4}tr:nth-child(even){background:#fffdf7}.total{background:#f5f5f0;font-weight:bold}</style></head>
     <body><h1>Champagne Nowack — Campagne ${annee}${destLabel}</h1>
-    <p style="color:#9a8870;font-size:12px">${vAnnee.filter(v=>v.destinationMarc!=="prestation").length} apport(s) — Total : ${kgTotal.toLocaleString()} kg / ${hlTotal.toFixed(2)} HL${!destFilter?` — Maison : ${kgMaison.toLocaleString()} kg — Negoce : ${kgNegoce.toLocaleString()} kg${kgPrestation>0?" — Prestation : "+kgPrestation.toLocaleString()+" kg":""}`:""}</p>
+    <p style="color:#9a8870;font-size:12px">${baseTotaux.length} apport(s) — Total : ${kgTotal.toLocaleString()} kg / ${hlTotal.toFixed(2)} HL${!destFilter?` — Maison : ${kgMaison.toLocaleString()} kg — Negoce : ${kgNegoce.toLocaleString()} kg${kgPrestation>0?" — Prestation : "+kgPrestation.toLocaleString()+" kg":""}`:""}</p>
     <table><thead><tr>${colonnes.map(col=>`<th>${col.label}</th>`).join("")}</tr></thead>
     <tbody>${rows}<tr class="total">${totalRowHtml}</tr></tbody></table>
     </body></html>`;
