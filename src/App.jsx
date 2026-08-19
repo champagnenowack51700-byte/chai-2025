@@ -1830,7 +1830,15 @@ export default function App() {
   };
 
   const exportVendangePDF = (annee, vAnneeComplete, destFilter="") => {
-    const parcsNom = (v) => (v.parcelleIds&&v.parcelleIds.length>0) ? v.parcelleIds.map(id=>parcelles.find(p=>p.id===id)?.nom||"-").join(" + ") : (parcelles.find(p=>p.id===v.parcelleId)?.nom||"-");
+    const parcsNom = (v) => {
+      const idsArr = v.parcelleIds&&v.parcelleIds.length>0 ? v.parcelleIds : (v.parcelleId?[v.parcelleId]:[]);
+      const noms = idsArr.map(id=>parcelles.find(p=>p.id===id)?.nom).filter(Boolean);
+      if(noms.length>0) return noms.join(" + ");
+      // Repli : si les ids ne correspondent a rien, tenter l'autre champ (donnees anciennes desynchronisees)
+      const idsAlt = (v.parcelleIds&&v.parcelleIds.length>0) ? (v.parcelleId?[v.parcelleId]:[]) : (v.parcelleIds||[]);
+      const nomsAlt = idsAlt.map(id=>parcelles.find(p=>p.id===id)?.nom).filter(Boolean);
+      return nomsAlt.length>0 ? nomsAlt.join(" + ") : "-";
+    };
     const isBio = (v) => {
       const ids = v.parcelleIds&&v.parcelleIds.length>0 ? v.parcelleIds : (v.parcelleId?[v.parcelleId]:[]);
       return ids.length>0 && ids.every(id=>parcelles.find(p=>p.id===id)?.certification==="BIO");
