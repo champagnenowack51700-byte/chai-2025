@@ -7273,7 +7273,7 @@ export default function App() {
                             <td style={{padding:"5px 8px",color:"#9a8870",textAlign:"right"}}>{a.nbCagettes||"-"}</td>
                             <td style={{padding:"5px 8px",fontWeight:500,color:"#2d6a00",textAlign:"right"}}>{parseInt(a.poidsNet).toLocaleString()} kg</td>
                             <td style={{padding:"5px 8px",whiteSpace:"nowrap"}}>
-                              <button style={{background:"none",border:"none",cursor:"pointer",color:"#8B7355",fontSize:"12px",marginRight:"8px"}} onClick={()=>{setApportForm({date:a.date,heure:a.heure||"",operateur:a.operateur||"",nbCagettes:a.nbCagettes||"",poidsNet:a.poidsNet||"",campagne:a.campagne,notes:a.notes||""});setEditingApport(a);setShowApportForm(p.id);}}>✎</button>
+                              <button style={{background:"none",border:"none",cursor:"pointer",color:"#8B7355",fontSize:"12px",marginRight:"8px"}} onClick={()=>{setApportForm({date:a.date,heure:a.heure||"",operateur:a.operateur||"",nbCagettes:a.nbCagettes||"",poidsNet:a.poidsNet||"",campagne:a.campagne,notes:a.notes||""});setEditingApport(a);setShowApportForm(parc.id);}}>✎</button>
                               <button style={{background:"none",border:"none",cursor:"pointer",color:"#cc2222",fontSize:"13px"}} onClick={()=>{if(window.confirm("Supprimer ?")){ setApportsParcelles(prev=>prev.filter(x=>x.id!==a.id)); deleteApportParcelle(a.id); }}}>×</button>
                             </td>
                           </tr>
