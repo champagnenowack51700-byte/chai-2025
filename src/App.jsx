@@ -1830,7 +1830,7 @@ export default function App() {
   };
 
   const exportVendangePDF = (annee, vAnneeComplete, destFilter="") => {
-    const parcsNom = (v) => (v.parcelleIds&&v.parcelleIds.length>0) ? v.parcelleIds.map(id=>parcelles.find(p=>p.id===id)?.nom||"Parcelle non identifiée").join(" + ") : (parcelles.find(p=>p.id===v.parcelleId)?.nom||"Parcelle non identifiée");
+    const parcsNom = (v) => (v.parcelleIds&&v.parcelleIds.length>0) ? v.parcelleIds.map(id=>parcelles.find(p=>p.id===id)?.nom||"-").join(" + ") : (parcelles.find(p=>p.id===v.parcelleId)?.nom||"-");
     const isBio = (v) => {
       const ids = v.parcelleIds&&v.parcelleIds.length>0 ? v.parcelleIds : (v.parcelleId?[v.parcelleId]:[]);
       return ids.length>0 && ids.every(id=>parcelles.find(p=>p.id===id)?.certification==="BIO");
