@@ -712,7 +712,7 @@ export default function App() {
   const [rendementsAnnuels, setRendementsAnnuels] = useState([]);
   const [apportsParcelles, setApportsParcelles] = useState([]);
   const [showApportForm, setShowApportForm] = useState(null); // parcelleId
-  const [apportForm, setApportForm] = useState({date:new Date().toISOString().slice(0,10),operateur:'',nbCagettes:'',poidsNet:'',campagne:new Date().getFullYear().toString(),notes:''});
+  const [apportForm, setApportForm] = useState({date:new Date().toISOString().slice(0,10),operateur:'',nbCagettes:'',poidsNet:'',campagne:new Date().getFullYear().toString(),notes:'',numeroMarc:''});
   const [editingApport, setEditingApport] = useState(null);
   const [pdfDestFilter, setPdfDestFilter] = useState("");
   const [showApportsPanel, setShowApportsPanel] = useState({});
@@ -5011,7 +5011,7 @@ export default function App() {
                       {p.surface&&<div style={{fontSize:"12px",color:"#2C3E50",fontWeight:500,marginBottom:"4px"}}>📐 {p.surface} ha</div>}
                       {p.observations&&<div style={{fontSize:"11px",color:"#7a6840",fontStyle:"italic",marginTop:"6px",padding:"6px",background:"#F8F6F2",borderRadius:"4px"}}>{p.observations}</div>}
                       <div style={{display:"flex",gap:"6px",marginTop:"8px"}}>
-                        <button style={{...s.ghostSm,fontSize:"10px",flex:1}} onClick={()=>{setApportForm({date:new Date().toISOString().slice(0,10),heure:"",operateur:"",nbCagettes:"",poidsNet:"",campagne:new Date().getFullYear().toString(),notes:""});setEditingApport(null);setShowApportForm(p.id);}}>
+                        <button style={{...s.ghostSm,fontSize:"10px",flex:1}} onClick={()=>{setApportForm({date:new Date().toISOString().slice(0,10),heure:"",operateur:"",nbCagettes:"",poidsNet:"",campagne:new Date().getFullYear().toString(),notes:"",numeroMarc:""});setEditingApport(null);setShowApportForm(p.id);}}>
                           + Ajouter un apport
                         </button>
                         <button style={{...s.ghostSm,fontSize:"10px"}} onClick={()=>setShowApportsPanel(prev=>({...prev,[p.id]:true}))}>
@@ -7253,12 +7253,33 @@ export default function App() {
             const apportsAn = apports.filter(a=>a.campagne===an);
             const kgAn = apportsAn.reduce((s,a)=>s+(parseFloat(a.poidsNet)||0),0);
             const surf = parseFloat(parc?.surface)||0;
-            return `<h3 style="color:#2C3E50;margin:16px 0 8px">Campagne ${an} — ${kgAn.toLocaleString()} kg${surf>0?" / "+Math.round(kgAn/surf).toLocaleString()+" kg/ha":""}</h3>
-              <table width="100%" style="border-collapse:collapse;font-size:11px">
-                <tr style="background:#f0f4f7"><th style="padding:5px;text-align:left;border:0.5px solid #d0d8e0">Date</th><th style="padding:5px;text-align:left;border:0.5px solid #d0d8e0">Heure</th><th style="padding:5px;text-align:left;border:0.5px solid #d0d8e0">Opérateur</th><th style="padding:5px;text-align:right;border:0.5px solid #d0d8e0">Cagettes</th><th style="padding:5px;text-align:right;border:0.5px solid #d0d8e0">Poids net</th></tr>
-              ${apportsAn.map(a=>`<tr><td style="padding:4px 5px;border:0.5px solid #e0e8f0">${fmt(a.date)}</td><td style="padding:4px 5px;border:0.5px solid #e0e8f0">${a.heure||"-"}</td><td style="padding:4px 5px;border:0.5px solid #e0e8f0">${a.operateur||"-"}</td><td style="padding:4px 5px;border:0.5px solid #e0e8f0;text-align:right">${a.nbCagettes||"-"}</td><td style="padding:4px 5px;border:0.5px solid #e0e8f0;text-align:right;font-weight:500">${parseInt(a.poidsNet).toLocaleString()} kg</td></tr>${a.notes?`<tr><td colspan="5" style="padding:2px 5px 6px 5px;border:0.5px solid #e0e8f0;border-top:none;font-size:10px;color:#6a5838;font-style:italic">📝 ${a.notes}</td></tr>`:""}`).join("")}
-              <tr style="background:#f0f4f7;font-weight:bold"><td colspan="4" style="padding:5px;border:0.5px solid #d0d8e0">Total</td><td style="padding:5px;border:0.5px solid #d0d8e0;text-align:right">${kgAn.toLocaleString()} kg</td></tr>
-            </table>`;
+            const jours = [...new Set(apportsAn.map(a=>a.date))].sort();
+            const joursHtml = jours.map(jour=>{
+              const apportsJour = apportsAn.filter(a=>a.date===jour).sort((a,b)=>(a.heure||"").localeCompare(b.heure||""));
+              const kgJour = apportsJour.reduce((s,a)=>s+(parseFloat(a.poidsNet)||0),0);
+              return `<div style="margin-top:14px;padding:6px 10px;background:#eef1f4;border-left:3px solid #4A6274;display:flex;justify-content:space-between;font-size:12px;font-weight:600;color:#2C3E50">
+                  <span>${fmt(jour)}</span><span>${kgJour.toLocaleString()} kg</span>
+                </div>
+                <table width="100%" style="border-collapse:collapse;font-size:11px;margin-bottom:2px">
+                  <tr style="background:#f7f9fa">
+                    <th style="padding:4px 6px;text-align:left;border:0.5px solid #d0d8e0;width:55px">Heure</th>
+                    <th style="padding:4px 6px;text-align:left;border:0.5px solid #d0d8e0">Opérateur</th>
+                    <th style="padding:4px 6px;text-align:right;border:0.5px solid #d0d8e0;width:65px">Cagettes</th>
+                    <th style="padding:4px 6px;text-align:right;border:0.5px solid #d0d8e0;width:85px">Poids net</th>
+                    <th style="padding:4px 6px;text-align:center;border:0.5px solid #d0d8e0;width:55px">Marc</th>
+                    <th style="padding:4px 6px;text-align:left;border:0.5px solid #d0d8e0">Note</th>
+                  </tr>
+                  ${apportsJour.map(a=>`<tr>
+                    <td style="padding:4px 6px;border:0.5px solid #e0e8f0">${a.heure||"-"}</td>
+                    <td style="padding:4px 6px;border:0.5px solid #e0e8f0">${a.operateur||"-"}</td>
+                    <td style="padding:4px 6px;border:0.5px solid #e0e8f0;text-align:right">${a.nbCagettes||"-"}</td>
+                    <td style="padding:4px 6px;border:0.5px solid #e0e8f0;text-align:right;font-weight:500">${parseInt(a.poidsNet).toLocaleString()} kg</td>
+                    <td style="padding:4px 6px;border:0.5px solid #e0e8f0;text-align:center;font-weight:600;color:#7a5200">${a.numeroMarc||"-"}</td>
+                    <td style="padding:4px 6px;border:0.5px solid #e0e8f0;font-style:italic;color:#6a5838;font-size:10px">${a.notes||""}</td>
+                  </tr>`).join("")}
+                </table>`;
+            }).join("");
+            return `<h3 style="color:#2C3E50;margin:22px 0 4px;border-bottom:1px solid #d0d8e0;padding-bottom:6px">Campagne ${an} — Total ${kgAn.toLocaleString()} kg${surf>0?" / "+Math.round(kgAn/surf).toLocaleString()+" kg/ha":""}</h3>${joursHtml}`;
           }).join("");
           const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:Georgia,serif;margin:20px;color:#1a2530}h1{color:#2C3E50;border-bottom:1px solid #d0d8e0;padding-bottom:8px}</style></head><body><h1>${parc?.nom} — Apports</h1>${rows}</body></html>`;
           const w = window.open("","_blank"); w.document.write(html); w.document.close(); setTimeout(()=>w.print(),500);
@@ -7292,6 +7313,7 @@ export default function App() {
                           <th style={{textAlign:"left",padding:"5px 8px",color:"#4A6274",fontWeight:400}}>Opérateur</th>
                           <th style={{textAlign:"right",padding:"5px 8px",color:"#4A6274",fontWeight:400}}>Cagettes</th>
                           <th style={{textAlign:"right",padding:"5px 8px",color:"#4A6274",fontWeight:400}}>Poids net</th>
+                          <th style={{textAlign:"center",padding:"5px 8px",color:"#4A6274",fontWeight:400}}>Marc</th>
                           <th style={{width:"20px"}}></th>
                         </tr>
                       </thead>
@@ -7304,14 +7326,15 @@ export default function App() {
                             <td style={{padding:"5px 8px",color:"#2C3E50"}}>{a.operateur||"-"}</td>
                             <td style={{padding:"5px 8px",color:"#9a8870",textAlign:"right"}}>{a.nbCagettes||"-"}</td>
                             <td style={{padding:"5px 8px",fontWeight:500,color:"#2d6a00",textAlign:"right"}}>{parseInt(a.poidsNet).toLocaleString()} kg</td>
+                            <td style={{padding:"5px 8px",textAlign:"center",color:"#7a5200",fontWeight:500}}>{a.numeroMarc||"-"}</td>
                             <td style={{padding:"5px 8px",whiteSpace:"nowrap"}}>
-                              <button style={{background:"none",border:"none",cursor:"pointer",color:"#8B7355",fontSize:"12px",marginRight:"8px"}} onClick={()=>{setApportForm({date:a.date,heure:a.heure||"",operateur:a.operateur||"",nbCagettes:a.nbCagettes||"",poidsNet:a.poidsNet||"",campagne:a.campagne,notes:a.notes||""});setEditingApport(a);setShowApportForm(parc.id);}}>✎</button>
+                              <button style={{background:"none",border:"none",cursor:"pointer",color:"#8B7355",fontSize:"12px",marginRight:"8px"}} onClick={()=>{setApportForm({date:a.date,heure:a.heure||"",operateur:a.operateur||"",nbCagettes:a.nbCagettes||"",poidsNet:a.poidsNet||"",campagne:a.campagne,notes:a.notes||"",numeroMarc:a.numeroMarc||""});setEditingApport(a);setShowApportForm(parc.id);}}>✎</button>
                               <button style={{background:"none",border:"none",cursor:"pointer",color:"#cc2222",fontSize:"13px"}} onClick={()=>{if(window.confirm("Supprimer ?")){ setApportsParcelles(prev=>prev.filter(x=>x.id!==a.id)); deleteApportParcelle(a.id); }}}>×</button>
                             </td>
                           </tr>
                           {a.notes&&(
                             <tr style={{borderBottom:"0.5px solid #ede5d4"}}>
-                              <td colSpan={6} style={{padding:"0 8px 6px 8px",color:"#7a6840",fontSize:"11px"}}>📝 {a.notes}</td>
+                              <td colSpan={7} style={{padding:"0 8px 6px 8px",color:"#7a6840",fontSize:"11px"}}>📝 {a.notes}</td>
                             </tr>
                           )}
                           </React.Fragment>
@@ -7356,6 +7379,9 @@ export default function App() {
                 <div><span style={s.lbl}>Poids net (kg) *</span>
                   <input type="number" style={s.inp} placeholder="ex. 2500" value={apportForm.poidsNet} onChange={e=>setApportForm(f=>({...f,poidsNet:e.target.value}))}/></div>
               </div>
+              <div><span style={s.lbl}>N° de marc</span>
+                <input style={s.inp} placeholder="ex. 1, 2, 3..." value={apportForm.numeroMarc||""} onChange={e=>setApportForm(f=>({...f,numeroMarc:e.target.value}))}/>
+                <div style={{fontSize:"10px",color:"#9a8870",marginTop:"2px"}}>Le marc (pressurage) dans lequel cet apport a été pressé.</div></div>
               <div><span style={s.lbl}>Note</span>
                 <textarea style={{...s.inp,height:"56px",resize:"vertical"}} placeholder="ex. Etat sanitaire, prestataire, remarque particulière..." value={apportForm.notes||""} onChange={e=>setApportForm(f=>({...f,notes:e.target.value}))}/></div>
               <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
