@@ -7254,32 +7254,33 @@ export default function App() {
             const kgAn = apportsAn.reduce((s,a)=>s+(parseFloat(a.poidsNet)||0),0);
             const surf = parseFloat(parc?.surface)||0;
             const jours = [...new Set(apportsAn.map(a=>a.date))].sort();
-            const joursHtml = jours.map(jour=>{
+            const corpsHtml = jours.map(jour=>{
               const apportsJour = apportsAn.filter(a=>a.date===jour).sort((a,b)=>(a.heure||"").localeCompare(b.heure||""));
               const kgJour = apportsJour.reduce((s,a)=>s+(parseFloat(a.poidsNet)||0),0);
-              return `<div style="margin-top:14px;padding:6px 10px;background:#eef1f4;border-left:3px solid #4A6274;display:flex;justify-content:space-between;font-size:12px;font-weight:600;color:#2C3E50">
-                  <span>${fmt(jour)}</span><span>${kgJour.toLocaleString()} kg</span>
-                </div>
-                <table width="100%" style="border-collapse:collapse;font-size:11px;margin-bottom:2px">
-                  <tr style="background:#f7f9fa">
-                    <th style="padding:4px 6px;text-align:left;border:0.5px solid #d0d8e0;width:55px">Heure</th>
-                    <th style="padding:4px 6px;text-align:left;border:0.5px solid #d0d8e0">Opérateur</th>
-                    <th style="padding:4px 6px;text-align:right;border:0.5px solid #d0d8e0;width:65px">Cagettes</th>
-                    <th style="padding:4px 6px;text-align:right;border:0.5px solid #d0d8e0;width:85px">Poids net</th>
-                    <th style="padding:4px 6px;text-align:center;border:0.5px solid #d0d8e0;width:55px">Marc</th>
-                    <th style="padding:4px 6px;text-align:left;border:0.5px solid #d0d8e0">Note</th>
-                  </tr>
-                  ${apportsJour.map(a=>`<tr>
-                    <td style="padding:4px 6px;border:0.5px solid #e0e8f0">${a.heure||"-"}</td>
-                    <td style="padding:4px 6px;border:0.5px solid #e0e8f0">${a.operateur||"-"}</td>
-                    <td style="padding:4px 6px;border:0.5px solid #e0e8f0;text-align:right">${a.nbCagettes||"-"}</td>
-                    <td style="padding:4px 6px;border:0.5px solid #e0e8f0;text-align:right;font-weight:500">${parseInt(a.poidsNet).toLocaleString()} kg</td>
-                    <td style="padding:4px 6px;border:0.5px solid #e0e8f0;text-align:center;font-weight:600;color:#7a5200">${a.numeroMarc||"-"}</td>
-                    <td style="padding:4px 6px;border:0.5px solid #e0e8f0;font-style:italic;color:#6a5838;font-size:10px">${a.notes||""}</td>
-                  </tr>`).join("")}
-                </table>`;
+              return `<tr><td colspan="6" style="padding:6px 8px;background:#eef1f4;border-left:3px solid #4A6274;border-top:0.5px solid #d0d8e0;border-bottom:0.5px solid #d0d8e0;font-weight:600;color:#2C3E50">
+                  <span style="display:inline-block;width:200px">${fmt(jour)}</span><span>${kgJour.toLocaleString()} kg</span>
+                </td></tr>
+                ${apportsJour.map(a=>`<tr>
+                  <td style="padding:4px 6px;border:0.5px solid #e0e8f0;width:55px">${a.heure||"-"}</td>
+                  <td style="padding:4px 6px;border:0.5px solid #e0e8f0">${a.operateur||"-"}</td>
+                  <td style="padding:4px 6px;border:0.5px solid #e0e8f0;text-align:right;width:65px">${a.nbCagettes||"-"}</td>
+                  <td style="padding:4px 6px;border:0.5px solid #e0e8f0;text-align:right;font-weight:500;width:85px">${parseInt(a.poidsNet).toLocaleString()} kg</td>
+                  <td style="padding:4px 6px;border:0.5px solid #e0e8f0;text-align:center;font-weight:600;color:#7a5200;width:55px">${a.numeroMarc||"-"}</td>
+                  <td style="padding:4px 6px;border:0.5px solid #e0e8f0;font-style:italic;color:#6a5838;font-size:10px">${a.notes||""}</td>
+                </tr>`).join("")}`;
             }).join("");
-            return `<h3 style="color:#2C3E50;margin:22px 0 4px;border-bottom:1px solid #d0d8e0;padding-bottom:6px">Campagne ${an} — Total ${kgAn.toLocaleString()} kg${surf>0?" / "+Math.round(kgAn/surf).toLocaleString()+" kg/ha":""}</h3>${joursHtml}`;
+            return `<h3 style="color:#2C3E50;margin:22px 0 4px;border-bottom:1px solid #d0d8e0;padding-bottom:6px">Campagne ${an} — Total ${kgAn.toLocaleString()} kg${surf>0?" / "+Math.round(kgAn/surf).toLocaleString()+" kg/ha":""}</h3>
+              <table width="100%" style="border-collapse:collapse;font-size:11px">
+                <tr style="background:#f7f9fa">
+                  <th style="padding:4px 6px;text-align:left;border:0.5px solid #d0d8e0;width:55px">Heure</th>
+                  <th style="padding:4px 6px;text-align:left;border:0.5px solid #d0d8e0">Opérateur</th>
+                  <th style="padding:4px 6px;text-align:right;border:0.5px solid #d0d8e0;width:65px">Cagettes</th>
+                  <th style="padding:4px 6px;text-align:right;border:0.5px solid #d0d8e0;width:85px">Poids net</th>
+                  <th style="padding:4px 6px;text-align:center;border:0.5px solid #d0d8e0;width:55px">Marc</th>
+                  <th style="padding:4px 6px;text-align:left;border:0.5px solid #d0d8e0">Note</th>
+                </tr>
+                ${corpsHtml}
+              </table>`;
           }).join("");
           const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:Georgia,serif;margin:20px;color:#1a2530}h1{color:#2C3E50;border-bottom:1px solid #d0d8e0;padding-bottom:8px}</style></head><body><h1>${parc?.nom} — Apports</h1>${rows}</body></html>`;
           const w = window.open("","_blank"); w.document.write(html); w.document.close(); setTimeout(()=>w.print(),500);
