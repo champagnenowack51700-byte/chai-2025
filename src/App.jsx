@@ -707,6 +707,7 @@ export default function App() {
     destinationMarc: "maison",
     kgVendusNegoce: "",
     numeroDAE: "",
+    clientPrestation: "",
   };
   const [vendangeForm, setVendangeForm] = useState(VENDANGE_EMPTY);
   const [rendementsAnnuels, setRendementsAnnuels] = useState([]);
@@ -715,6 +716,7 @@ export default function App() {
   const [apportForm, setApportForm] = useState({date:new Date().toISOString().slice(0,10),operateur:'',nbCagettes:'',poidsNet:'',campagne:new Date().getFullYear().toString(),notes:'',numeroMarc:''});
   const [editingApport, setEditingApport] = useState(null);
   const [pdfDestFilter, setPdfDestFilter] = useState("");
+  const [pdfClientFilter, setPdfClientFilter] = useState("");
   const [showApportsPanel, setShowApportsPanel] = useState({});
   const [showRendementForm, setShowRendementForm] = useState(false);
   const [reserveRI, setReserveRI] = useState({volumeKg:86110});
@@ -1829,7 +1831,7 @@ export default function App() {
     URL.revokeObjectURL(url);
   };
 
-  const exportVendangePDF = (annee, vAnneeComplete, destFilter="") => {
+  const exportVendangePDF = (annee, vAnneeComplete, destFilter="", clientFilter="") => {
     const parcsNom = (v) => {
       const idsArr = v.parcelleIds&&v.parcelleIds.length>0 ? v.parcelleIds : (v.parcelleId?[v.parcelleId]:[]);
       const noms = idsArr.map(id=>parcelles.find(p=>p.id===id)?.nom).filter(Boolean);
@@ -1844,14 +1846,16 @@ export default function App() {
       return ids.length>0 && ids.every(id=>parcelles.find(p=>p.id===id)?.certification==="BIO");
     };
     // Filtre par destination du marc (maison / negoce (total+partiel) / prestation / tous)
-    const vAnnee = !destFilter ? vAnneeComplete : vAnneeComplete.filter(v=>{
+    const vAnneeDest = !destFilter ? vAnneeComplete : vAnneeComplete.filter(v=>{
       const d = v.destinationMarc||"maison";
       if(destFilter==="maison") return d==="maison";
       if(destFilter==="negoce") return d==="negoce_total"||d==="negoce_partiel";
       if(destFilter==="prestation") return d==="prestation";
       return true;
     });
-    const destLabel = destFilter==="maison"?" — Maison":destFilter==="negoce"?" — Négoce":destFilter==="prestation"?" — Prestation pressurage":"";
+    // Filtre par client (uniquement pertinent pour la prestation) : n'envoyer que le rapport de ce client
+    const vAnnee = (destFilter==="prestation"&&clientFilter) ? vAnneeDest.filter(v=>v.clientPrestation===clientFilter) : vAnneeDest;
+    const destLabel = destFilter==="maison"?" — Maison":destFilter==="negoce"?" — Négoce":destFilter==="prestation"?" — Prestation pressurage"+(clientFilter?" — "+clientFilter:""):"";
     const baseTotaux = destFilter==="prestation" ? vAnnee : vAnnee.filter(v=>v.destinationMarc!=="prestation");
     const kgTotal = baseTotaux.reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0);
     const hlTotal = baseTotaux.reduce((s,v)=>s+(parseFloat(v.volumeHL)||0),0);
@@ -1866,7 +1870,7 @@ export default function App() {
       if(v.destinationMarc==="negoce_partiel") return s+(parseFloat(v.kgVendusNegoce)||0);
       return s;
     },0);
-    const destHtml = (v) => v.destinationMarc==="prestation"?"🔄 Prestation pressurage"+(v.kgPrestation?" ("+parseInt(v.kgPrestation).toLocaleString()+" kg)":""):v.destinationMarc==="negoce_total"?"Negoce total":v.destinationMarc==="negoce_partiel"?`Negoce partiel (${parseInt(v.kgVendusNegoce)||0} kg negoce / ${(parseFloat(v.poidsMarcKg)||0)-(parseFloat(v.kgVendusNegoce)||0)} kg maison)`:"Maison";
+    const destHtml = (v) => v.destinationMarc==="prestation"?"🔄 Prestation"+(v.clientPrestation?" — "+v.clientPrestation:"")+(v.kgPrestation?" ("+parseInt(v.kgPrestation).toLocaleString()+" kg)":""):v.destinationMarc==="negoce_total"?"Negoce total":v.destinationMarc==="negoce_partiel"?`Negoce partiel (${parseInt(v.kgVendusNegoce)||0} kg negoce / ${(parseFloat(v.poidsMarcKg)||0)-(parseFloat(v.kgVendusNegoce)||0)} kg maison)`:"Maison";
     // Definition des colonnes : "always" = toujours affichee, sinon affichee seulement si au moins
     // une ligne du jeu filtre a une valeur non vide pour cette colonne.
     const colonnes = [
@@ -1877,6 +1881,7 @@ export default function App() {
       {label:"Kg", always:true, html:v=>v.poidsMarcKg?parseInt(v.poidsMarcKg).toLocaleString()+" kg":"-"},
       {label:"HL", always:true, html:v=>v.volumeHL?v.volumeHL+" HL":"-"},
       {label:"Destination", check:()=>!destFilter, html:destHtml},
+      {label:"Client", always:destFilter==="prestation"&&!clientFilter, check:v=>v.clientPrestation, html:v=>v.clientPrestation||"-"},
       {label:"Degre", check:v=>v.degreePotentiel, html:v=>v.degreePotentiel?v.degreePotentiel+"%":"-"},
       {label:"Acidite", check:v=>v.acidite, html:v=>v.acidite?v.acidite+" g/L":"-"},
       {label:"SO2", check:v=>v.so2, html:v=>v.so2?v.so2+" mg/L":"-"},
@@ -3473,13 +3478,19 @@ export default function App() {
                       )}
                       {isCampagneClosed(annee)&&<button style={{...s.ghostSm,fontSize:"10px"}} onClick={()=>rouvrirCampagne(annee)}>Rouvrir</button>}
                       <button style={{...s.ghostSm,fontSize:"10px",color:"#2d6a00",borderColor:"#7ab848"}} onClick={()=>exportVendangeCSV(annee,vAnnee)}>↓ CSV</button>
-                      <select style={{...s.sel,fontSize:"10px",padding:"4px 6px",width:"140px"}} value={pdfDestFilter} onChange={e=>setPdfDestFilter(e.target.value)}>
+                      <select style={{...s.sel,fontSize:"10px",padding:"4px 6px",width:"140px"}} value={pdfDestFilter} onChange={e=>{setPdfDestFilter(e.target.value);setPdfClientFilter("");}}>
                         <option value="">Toutes destinations</option>
                         <option value="maison">Maison</option>
                         <option value="negoce">Négoce</option>
                         <option value="prestation">Prestation</option>
                       </select>
-                      <button style={{...s.ghostSm,fontSize:"10px",color:"#8B0000",borderColor:"#c85050"}} onClick={()=>exportVendangePDF(annee,vAnnee,pdfDestFilter)}>↓ PDF</button>
+                      {pdfDestFilter==="prestation"&&(
+                        <select style={{...s.sel,fontSize:"10px",padding:"4px 6px",width:"150px"}} value={pdfClientFilter} onChange={e=>setPdfClientFilter(e.target.value)}>
+                          <option value="">Tous les clients</option>
+                          {[...new Set(vAnnee.filter(v=>v.destinationMarc==="prestation"&&v.clientPrestation).map(v=>v.clientPrestation))].sort().map(c=><option key={c} value={c}>{c}</option>)}
+                        </select>
+                      )}
+                      <button style={{...s.ghostSm,fontSize:"10px",color:"#8B0000",borderColor:"#c85050"}} onClick={()=>exportVendangePDF(annee,vAnnee,pdfDestFilter,pdfClientFilter)}>↓ PDF</button>
                       <div style={{display:"flex",gap:"12px",fontSize:"11px",color:"#9a8870",fontFamily:"monospace"}}>
                         <span>{vAnnee.length} apport(s)</span>
                         <span style={{color:"#2d6a00",fontWeight:500}}>{volTotal.toLocaleString()} kg</span>
@@ -3559,7 +3570,7 @@ export default function App() {
                               <div style={s.lbl}>Volume recolte</div>
                               {v.poidsMarcKg&&<div style={{fontSize:"18px",fontWeight:500,color:"#2d6a00"}}>{parseInt(v.poidsMarcKg).toLocaleString()} kg</div>}
                               {v.volumeHL&&<div style={{fontSize:"13px",color:"#2d6a00"}}>{v.volumeHL} HL</div>}
-                              {v.destinationMarc&&v.destinationMarc!=="maison"&&<div style={{fontSize:"11px",color:v.destinationMarc==="prestation"?"#185FA5":"#c47800",fontWeight:v.destinationMarc==="prestation"?600:400,marginTop:"3px"}}>{v.destinationMarc==="prestation"?"🔄 Prestation pressurage":v.destinationMarc==="negoce_total"?"Negoce total":"Negoce partiel"}{v.kgVendusNegoce?" - "+parseInt(v.kgVendusNegoce).toLocaleString()+" kg":""}{v.kgPrestation?" - "+parseInt(v.kgPrestation).toLocaleString()+" kg":""}{v.numeroDAE?" - DAE: "+v.numeroDAE:""}</div>}
+                              {v.destinationMarc&&v.destinationMarc!=="maison"&&<div style={{fontSize:"11px",color:v.destinationMarc==="prestation"?"#185FA5":"#c47800",fontWeight:v.destinationMarc==="prestation"?600:400,marginTop:"3px"}}>{v.destinationMarc==="prestation"?"🔄 Prestation"+(v.clientPrestation?" — "+v.clientPrestation:""):v.destinationMarc==="negoce_total"?"Negoce total":"Negoce partiel"}{v.kgVendusNegoce?" - "+parseInt(v.kgVendusNegoce).toLocaleString()+" kg":""}{v.kgPrestation?" - "+parseInt(v.kgPrestation).toLocaleString()+" kg":""}{v.numeroDAE?" - DAE: "+v.numeroDAE:""}</div>}
                             </div>
                             <div>
                               <div style={s.lbl}>Cuves destination</div>
@@ -5555,7 +5566,7 @@ export default function App() {
                               <div style={s.lbl}>Volume recolte</div>
                               {v.poidsMarcKg&&<div style={{fontSize:"18px",fontWeight:500,color:"#2d6a00"}}>{parseInt(v.poidsMarcKg).toLocaleString()} kg</div>}
                               {v.volumeHL&&<div style={{fontSize:"13px",color:"#2d6a00"}}>{v.volumeHL} HL</div>}
-                              {v.destinationMarc&&v.destinationMarc!=="maison"&&<div style={{fontSize:"11px",color:v.destinationMarc==="prestation"?"#185FA5":"#c47800",fontWeight:v.destinationMarc==="prestation"?600:400,marginTop:"3px"}}>{v.destinationMarc==="prestation"?"🔄 Prestation pressurage":v.destinationMarc==="negoce_total"?"Negoce total":"Negoce partiel"}{v.kgVendusNegoce?" - "+parseInt(v.kgVendusNegoce).toLocaleString()+" kg":""}{v.kgPrestation?" - "+parseInt(v.kgPrestation).toLocaleString()+" kg":""}{v.numeroDAE?" - DAE: "+v.numeroDAE:""}</div>}
+                              {v.destinationMarc&&v.destinationMarc!=="maison"&&<div style={{fontSize:"11px",color:v.destinationMarc==="prestation"?"#185FA5":"#c47800",fontWeight:v.destinationMarc==="prestation"?600:400,marginTop:"3px"}}>{v.destinationMarc==="prestation"?"🔄 Prestation"+(v.clientPrestation?" — "+v.clientPrestation:""):v.destinationMarc==="negoce_total"?"Negoce total":"Negoce partiel"}{v.kgVendusNegoce?" - "+parseInt(v.kgVendusNegoce).toLocaleString()+" kg":""}{v.kgPrestation?" - "+parseInt(v.kgPrestation).toLocaleString()+" kg":""}{v.numeroDAE?" - DAE: "+v.numeroDAE:""}</div>}
                             </div>
                             <div>
                               <div style={s.lbl}>Cuves destination</div>
@@ -7254,33 +7265,32 @@ export default function App() {
             const kgAn = apportsAn.reduce((s,a)=>s+(parseFloat(a.poidsNet)||0),0);
             const surf = parseFloat(parc?.surface)||0;
             const jours = [...new Set(apportsAn.map(a=>a.date))].sort();
-            const corpsHtml = jours.map(jour=>{
+            const joursHtml = jours.map(jour=>{
               const apportsJour = apportsAn.filter(a=>a.date===jour).sort((a,b)=>(a.heure||"").localeCompare(b.heure||""));
               const kgJour = apportsJour.reduce((s,a)=>s+(parseFloat(a.poidsNet)||0),0);
-              return `<tr><td colspan="6" style="padding:6px 8px;background:#eef1f4;border-left:3px solid #4A6274;border-top:0.5px solid #d0d8e0;border-bottom:0.5px solid #d0d8e0;font-weight:600;color:#2C3E50">
-                  <span style="display:inline-block;width:200px">${fmt(jour)}</span><span>${kgJour.toLocaleString()} kg</span>
-                </td></tr>
-                ${apportsJour.map(a=>`<tr>
-                  <td style="padding:4px 6px;border:0.5px solid #e0e8f0;width:55px">${a.heure||"-"}</td>
-                  <td style="padding:4px 6px;border:0.5px solid #e0e8f0">${a.operateur||"-"}</td>
-                  <td style="padding:4px 6px;border:0.5px solid #e0e8f0;text-align:right;width:65px">${a.nbCagettes||"-"}</td>
-                  <td style="padding:4px 6px;border:0.5px solid #e0e8f0;text-align:right;font-weight:500;width:85px">${parseInt(a.poidsNet).toLocaleString()} kg</td>
-                  <td style="padding:4px 6px;border:0.5px solid #e0e8f0;text-align:center;font-weight:600;color:#7a5200;width:55px">${a.numeroMarc||"-"}</td>
-                  <td style="padding:4px 6px;border:0.5px solid #e0e8f0;font-style:italic;color:#6a5838;font-size:10px">${a.notes||""}</td>
-                </tr>`).join("")}`;
+              return `<div style="margin-top:14px;padding:6px 10px;background:#eef1f4;border-left:3px solid #4A6274;display:flex;justify-content:space-between;font-size:12px;font-weight:600;color:#2C3E50">
+                  <span>${fmt(jour)}</span><span>${kgJour.toLocaleString()} kg</span>
+                </div>
+                <table width="100%" style="border-collapse:collapse;font-size:11px;margin-bottom:2px">
+                  <tr style="background:#f7f9fa">
+                    <th style="padding:4px 6px;text-align:left;border:0.5px solid #d0d8e0;width:55px">Heure</th>
+                    <th style="padding:4px 6px;text-align:left;border:0.5px solid #d0d8e0">Opérateur</th>
+                    <th style="padding:4px 6px;text-align:right;border:0.5px solid #d0d8e0;width:65px">Cagettes</th>
+                    <th style="padding:4px 6px;text-align:right;border:0.5px solid #d0d8e0;width:85px">Poids net</th>
+                    <th style="padding:4px 6px;text-align:center;border:0.5px solid #d0d8e0;width:55px">Marc</th>
+                    <th style="padding:4px 6px;text-align:left;border:0.5px solid #d0d8e0">Note</th>
+                  </tr>
+                  ${apportsJour.map(a=>`<tr>
+                    <td style="padding:4px 6px;border:0.5px solid #e0e8f0">${a.heure||"-"}</td>
+                    <td style="padding:4px 6px;border:0.5px solid #e0e8f0">${a.operateur||"-"}</td>
+                    <td style="padding:4px 6px;border:0.5px solid #e0e8f0;text-align:right">${a.nbCagettes||"-"}</td>
+                    <td style="padding:4px 6px;border:0.5px solid #e0e8f0;text-align:right;font-weight:500">${parseInt(a.poidsNet).toLocaleString()} kg</td>
+                    <td style="padding:4px 6px;border:0.5px solid #e0e8f0;text-align:center;font-weight:600;color:#7a5200">${a.numeroMarc||"-"}</td>
+                    <td style="padding:4px 6px;border:0.5px solid #e0e8f0;font-style:italic;color:#6a5838;font-size:10px">${a.notes||""}</td>
+                  </tr>`).join("")}
+                </table>`;
             }).join("");
-            return `<h3 style="color:#2C3E50;margin:22px 0 4px;border-bottom:1px solid #d0d8e0;padding-bottom:6px">Campagne ${an} — Total ${kgAn.toLocaleString()} kg${surf>0?" / "+Math.round(kgAn/surf).toLocaleString()+" kg/ha":""}</h3>
-              <table width="100%" style="border-collapse:collapse;font-size:11px">
-                <tr style="background:#f7f9fa">
-                  <th style="padding:4px 6px;text-align:left;border:0.5px solid #d0d8e0;width:55px">Heure</th>
-                  <th style="padding:4px 6px;text-align:left;border:0.5px solid #d0d8e0">Opérateur</th>
-                  <th style="padding:4px 6px;text-align:right;border:0.5px solid #d0d8e0;width:65px">Cagettes</th>
-                  <th style="padding:4px 6px;text-align:right;border:0.5px solid #d0d8e0;width:85px">Poids net</th>
-                  <th style="padding:4px 6px;text-align:center;border:0.5px solid #d0d8e0;width:55px">Marc</th>
-                  <th style="padding:4px 6px;text-align:left;border:0.5px solid #d0d8e0">Note</th>
-                </tr>
-                ${corpsHtml}
-              </table>`;
+            return `<h3 style="color:#2C3E50;margin:22px 0 4px;border-bottom:1px solid #d0d8e0;padding-bottom:6px">Campagne ${an} — Total ${kgAn.toLocaleString()} kg${surf>0?" / "+Math.round(kgAn/surf).toLocaleString()+" kg/ha":""}</h3>${joursHtml}`;
           }).join("");
           const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:Georgia,serif;margin:20px;color:#1a2530}h1{color:#2C3E50;border-bottom:1px solid #d0d8e0;padding-bottom:8px}</style></head><body><h1>${parc?.nom} — Apports</h1>${rows}</body></html>`;
           const w = window.open("","_blank"); w.document.write(html); w.document.close(); setTimeout(()=>w.print(),500);
@@ -7946,6 +7956,11 @@ export default function App() {
                   {vendangeForm.destinationMarc==="negoce_partiel"&&(
                     <div><span style={s.lbl}>Kg vendus negoce</span>
                       <input type="number" style={s.inp} placeholder="2000" value={vendangeForm.kgVendusNegoce||""} onChange={e=>setVendangeForm(f=>({...f,kgVendusNegoce:e.target.value}))}/></div>
+                  )}
+                  {vendangeForm.destinationMarc==="prestation"&&(
+                    <div><span style={s.lbl}>Client / Prestataire *</span>
+                      <input style={s.inp} placeholder="ex. M. Dupont" value={vendangeForm.clientPrestation||""} onChange={e=>setVendangeForm(f=>({...f,clientPrestation:e.target.value}))}/>
+                      <div style={{fontSize:"10px",color:"#9a8870",marginTop:"2px"}}>Permet d'exporter un rapport PDF uniquement pour ce client.</div></div>
                   )}
                 </div>
                 {(vendangeForm.destinationMarc==="negoce_total"||vendangeForm.destinationMarc==="negoce_partiel")&&(
