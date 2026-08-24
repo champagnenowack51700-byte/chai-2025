@@ -708,6 +708,7 @@ export default function App() {
     kgVendusNegoce: "",
     numeroDAE: "",
     clientPrestation: "",
+    typePressoir: "",
   };
   const [vendangeForm, setVendangeForm] = useState(VENDANGE_EMPTY);
   const [rendementsAnnuels, setRendementsAnnuels] = useState([]);
@@ -1878,6 +1879,7 @@ export default function App() {
       {label:"Parcelles", always:true, html:v=>parcsNom(v)+(isBio(v)?' <span style="background:#2d6a00;color:#fff;border-radius:3px;padding:1px 4px;font-size:9px">🌿 BIO</span>':"")},
       {label:"Cuvee", check:v=>v.cuveeCreee, html:v=>v.cuveeCreee||"-"},
       {label:"Marc", check:v=>v.numeroMarc, html:v=>v.numeroMarc||"-"},
+      {label:"Pressoir", check:v=>v.typePressoir, html:v=>v.typePressoir==="pai"?"PAI":v.typePressoir==="traditionnel"?"Traditionnel":"-"},
       {label:"Kg", always:true, html:v=>v.poidsMarcKg?parseInt(v.poidsMarcKg).toLocaleString()+" kg":"-"},
       {label:"HL", always:true, html:v=>v.volumeHL?v.volumeHL+" HL":"-"},
       {label:"Destination", check:()=>!destFilter, html:destHtml},
@@ -3549,6 +3551,7 @@ export default function App() {
                               <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"4px"}}>
                                 {v.numeroMarc&&<span style={{background:"#2C3E50",color:"#fff",borderRadius:"5px",padding:"2px 10px",fontSize:"13px",fontWeight:700,fontFamily:"monospace",letterSpacing:"0.03em"}}>Marc {v.numeroMarc}</span>}
                                 {v.isBio&&<span style={{fontSize:"11px",background:"#2d6a00",color:"#fff",borderRadius:"4px",padding:"2px 8px",fontWeight:600}}>🌿 BIO</span>}
+                                {v.typePressoir&&<span style={{fontSize:"11px",background:"#eef1f4",color:"#4A6274",border:"0.5px solid #b8c4cc",borderRadius:"4px",padding:"2px 8px",fontWeight:500}}>{v.typePressoir==="pai"?"PAI":"Pressoir traditionnel"}</span>}
                               </div>
                               {v.cuveeCreee&&<div style={{fontWeight:600,color:"#2C3E50",fontSize:"14px",marginBottom:"2px"}}>{v.cuveeCreee}</div>}
                               <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"2px"}}>
@@ -5549,6 +5552,7 @@ export default function App() {
                                 {v.numeroMarc&&(
                                   <span style={{background:"#f5e8cc",color:"#2C3E50",border:"0.5px solid #e0c050",borderRadius:"4px",padding:"1px 8px",fontSize:"11px",fontWeight:500,fontFamily:"monospace"}}>Marc {v.numeroMarc}</span>
                                 )}
+                                {v.typePressoir&&<span style={{fontSize:"11px",background:"#eef1f4",color:"#4A6274",border:"0.5px solid #b8c4cc",borderRadius:"4px",padding:"1px 8px",fontWeight:500}}>{v.typePressoir==="pai"?"PAI":"Pressoir traditionnel"}</span>}
                               </div>
                               <div style={{display:"flex",alignItems:"center",gap:"5px",marginBottom:"2px"}}>
                                 {parc?.certification&&(
@@ -7841,6 +7845,16 @@ export default function App() {
                     <input type="number" style={s.inp} placeholder="ex. 5" value={vendangeForm.numeroMarc||""} onChange={e=>setVendangeForm(f=>({...f,numeroMarc:e.target.value}))}/>
                     <div style={{fontSize:"10px",color:"#9a8870",marginTop:"3px"}}>Suit le tonneau</div>
                   </div>
+                </div>
+                <div style={{display:"flex",gap:"20px",marginTop:"12px"}}>
+                  <label style={{display:"flex",alignItems:"center",gap:"6px",cursor:"pointer"}}>
+                    <input type="checkbox" checked={vendangeForm.typePressoir==="traditionnel"} onChange={()=>setVendangeForm(f=>({...f,typePressoir:f.typePressoir==="traditionnel"?"":"traditionnel"}))} style={{width:"16px",height:"16px",cursor:"pointer"}}/>
+                    <span style={{fontSize:"12px",color:"#2C3E50"}}>Pressoir traditionnel</span>
+                  </label>
+                  <label style={{display:"flex",alignItems:"center",gap:"6px",cursor:"pointer"}}>
+                    <input type="checkbox" checked={vendangeForm.typePressoir==="pai"} onChange={()=>setVendangeForm(f=>({...f,typePressoir:f.typePressoir==="pai"?"":"pai"}))} style={{width:"16px",height:"16px",cursor:"pointer"}}/>
+                    <span style={{fontSize:"12px",color:"#2C3E50"}}>PAI</span>
+                  </label>
                 </div>
               </div>
               <div style={{background:"#F0EDE8",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
