@@ -709,6 +709,8 @@ export default function App() {
     numeroDAE: "",
     clientPrestation: "",
     typePressoir: "",
+    presseAilleurs: false,
+    lieuPressurage: "",
   };
   const [vendangeForm, setVendangeForm] = useState(VENDANGE_EMPTY);
   const [rendementsAnnuels, setRendementsAnnuels] = useState([]);
@@ -3564,6 +3566,7 @@ export default function App() {
                                 {v.numeroMarc&&<span style={{background:"#2C3E50",color:"#fff",borderRadius:"5px",padding:"2px 10px",fontSize:"13px",fontWeight:700,fontFamily:"monospace",letterSpacing:"0.03em"}}>Marc {v.numeroMarc}</span>}
                                 {v.isBio&&<span style={{fontSize:"11px",background:"#2d6a00",color:"#fff",borderRadius:"4px",padding:"2px 8px",fontWeight:600}}>🌿 BIO</span>}
                                 {v.typePressoir&&<span style={{fontSize:"11px",background:"#eef1f4",color:"#4A6274",border:"0.5px solid #b8c4cc",borderRadius:"4px",padding:"2px 8px",fontWeight:500}}>{v.typePressoir==="pai"?"PAI":"Pressoir traditionnel"}</span>}
+                                {v.presseAilleurs&&<span style={{fontSize:"11px",background:"#fff3cd",color:"#8B6000",border:"0.5px solid #ffc107",borderRadius:"4px",padding:"2px 8px",fontWeight:500}}>🚚 Pressé ailleurs{v.lieuPressurage?" — "+v.lieuPressurage:""}</span>}
                               </div>
                               {v.cuveeCreee&&<div style={{fontWeight:600,color:"#2C3E50",fontSize:"14px",marginBottom:"2px"}}>{v.cuveeCreee}</div>}
                               <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"2px"}}>
@@ -5565,6 +5568,7 @@ export default function App() {
                                   <span style={{background:"#f5e8cc",color:"#2C3E50",border:"0.5px solid #e0c050",borderRadius:"4px",padding:"1px 8px",fontSize:"11px",fontWeight:500,fontFamily:"monospace"}}>Marc {v.numeroMarc}</span>
                                 )}
                                 {v.typePressoir&&<span style={{fontSize:"11px",background:"#eef1f4",color:"#4A6274",border:"0.5px solid #b8c4cc",borderRadius:"4px",padding:"1px 8px",fontWeight:500}}>{v.typePressoir==="pai"?"PAI":"Pressoir traditionnel"}</span>}
+                                {v.presseAilleurs&&<span style={{fontSize:"11px",background:"#fff3cd",color:"#8B6000",border:"0.5px solid #ffc107",borderRadius:"4px",padding:"1px 8px",fontWeight:500}}>🚚 Pressé ailleurs{v.lieuPressurage?" — "+v.lieuPressurage:""}</span>}
                               </div>
                               <div style={{display:"flex",alignItems:"center",gap:"5px",marginBottom:"2px"}}>
                                 {parc?.certification&&(
@@ -7816,6 +7820,19 @@ export default function App() {
               <button style={s.ghost} onClick={()=>{setShowVendangeForm(false);setEditingVendange(null);}}>x</button>
             </div>
             <div style={{display:"grid",gap:"14px"}}>
+              <div style={{background:"#eef1f4",borderRadius:"8px",padding:"12px 14px",border:"0.5px solid #b8c4cc"}}>
+                <label style={{display:"flex",alignItems:"center",gap:"8px",cursor:"pointer"}}>
+                  <input type="checkbox" checked={vendangeForm.presseAilleurs||false} onChange={e=>setVendangeForm(f=>({...f,presseAilleurs:e.target.checked}))} style={{width:"16px",height:"16px",cursor:"pointer"}}/>
+                  <span style={{fontSize:"13px",color:"#2C3E50",fontWeight:500}}>Raisins pressés ailleurs (nos raisins, mais pas de marc chez nous)</span>
+                </label>
+                <div style={{fontSize:"10px",color:"#7a8590",marginTop:"3px",marginLeft:"24px"}}>Compte quand même dans votre rendement/appellation — formulaire simplifié, sans détails de pressurage.</div>
+                {vendangeForm.presseAilleurs&&(
+                  <div style={{marginTop:"10px",marginLeft:"24px"}}>
+                    <span style={s.lbl}>Lieu de pressurage</span>
+                    <input style={s.inp} placeholder="ex. Pressoir M. Dupont, Chouilly" value={vendangeForm.lieuPressurage||""} onChange={e=>setVendangeForm(f=>({...f,lieuPressurage:e.target.value}))}/>
+                  </div>
+                )}
+              </div>
               <div style={{background:"#F0EDE8",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
                 <div style={{...s.lbl,marginBottom:"10px"}}>Identification</div>
                 <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:"12px"}}>
@@ -7853,12 +7870,12 @@ export default function App() {
                       })}
                     </div>
                   </div>
-                  <div><span style={s.lbl}>N° Marc</span>
+                  {!vendangeForm.presseAilleurs&&<div><span style={s.lbl}>N° Marc</span>
                     <input type="number" style={s.inp} placeholder="ex. 5" value={vendangeForm.numeroMarc||""} onChange={e=>setVendangeForm(f=>({...f,numeroMarc:e.target.value}))}/>
                     <div style={{fontSize:"10px",color:"#9a8870",marginTop:"3px"}}>Suit le tonneau</div>
-                  </div>
+                  </div>}
                 </div>
-                <div style={{display:"flex",gap:"20px",marginTop:"12px"}}>
+                {!vendangeForm.presseAilleurs&&<div style={{display:"flex",gap:"20px",marginTop:"12px"}}>
                   <label style={{display:"flex",alignItems:"center",gap:"6px",cursor:"pointer"}}>
                     <input type="checkbox" checked={vendangeForm.typePressoir==="traditionnel"} onChange={()=>setVendangeForm(f=>({...f,typePressoir:f.typePressoir==="traditionnel"?"":"traditionnel"}))} style={{width:"16px",height:"16px",cursor:"pointer"}}/>
                     <span style={{fontSize:"12px",color:"#2C3E50"}}>Pressoir traditionnel</span>
@@ -7867,17 +7884,18 @@ export default function App() {
                     <input type="checkbox" checked={vendangeForm.typePressoir==="pai"} onChange={()=>setVendangeForm(f=>({...f,typePressoir:f.typePressoir==="pai"?"":"pai"}))} style={{width:"16px",height:"16px",cursor:"pointer"}}/>
                     <span style={{fontSize:"12px",color:"#2C3E50"}}>PAI</span>
                   </label>
-                </div>
+                </div>}
               </div>
               <div style={{background:"#F0EDE8",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
                 <div style={{...s.lbl,marginBottom:"10px"}}>Volume et analyses</div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr",gap:"10px"}}>
+                <div style={{display:"grid",gridTemplateColumns:vendangeForm.presseAilleurs?"1fr 1fr":"1fr 1fr 1fr 1fr 1fr",gap:"10px"}}>
                   <div><span style={s.lbl}>Volume (HL)</span>
                     <input type="number" style={{...s.inp,fontWeight:500,color:"#2d6a00"}} placeholder="0" value={vendangeForm.volumeHL||""}
                       onChange={e=>{const hl=parseFloat(e.target.value)||0;const kg=hl>0?Math.round(hl/25.5*4000):"";setVendangeForm(f=>({...f,volumeHL:e.target.value,poidsMarcKg:kg?String(kg):f.poidsMarcKg}));}}/></div>
                   <div><span style={s.lbl}>Poids marc (kg)</span>
                     <input type="number" style={{...s.inp,fontWeight:500,color:"#2d6a00"}} placeholder="4000" value={vendangeForm.poidsMarcKg||""}
                       onChange={e=>{const kg=parseFloat(e.target.value)||0;const hl=kg>0?Math.ceil(kg/4000*25.5*100)/100:"";setVendangeForm(f=>({...f,poidsMarcKg:e.target.value,volumeHL:hl?String(hl):f.volumeHL}));}}/></div>
+                  {!vendangeForm.presseAilleurs&&<>
                   <div><span style={s.lbl}>Degre pot. (%)</span>
                     <input type="number" step="0.1" style={s.inp} placeholder="0.0" value={vendangeForm.degreePotentiel} onChange={e=>setVendangeForm(f=>({...f,degreePotentiel:e.target.value}))}/></div>
                   <div><span style={s.lbl}>Acidite (g/L)</span>
@@ -7886,9 +7904,10 @@ export default function App() {
                     <input type="number" style={s.inp} placeholder="0" value={vendangeForm.so2} onChange={e=>setVendangeForm(f=>({...f,so2:e.target.value}))}/></div>
                   <div><span style={s.lbl}>pH</span>
                     <input type="number" step="0.01" style={s.inp} placeholder="3.10" value={vendangeForm.ph||""} onChange={e=>setVendangeForm(f=>({...f,ph:e.target.value}))}/></div>
+                  </>}
                 </div>
               </div>
-              <div style={{background:"#F0EDE8",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
+              {!vendangeForm.presseAilleurs&&<div style={{background:"#F0EDE8",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
                 <div style={{marginTop:"10px"}}>
                   <div style={{...s.lbl,marginBottom:"8px"}}>Repartition en cuves</div>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px",marginBottom:"8px"}}>
@@ -7928,8 +7947,8 @@ export default function App() {
                       <input type="number" step="0.1" style={s.inp} placeholder="0" value={vendangeForm.volumeBourbes||""} onChange={e=>setVendangeForm(f=>({...f,volumeBourbes:e.target.value}))}/></div>
                   </div>
                 </div>
-              </div>
-              <div style={{background:"#F0EDE8",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
+              </div>}
+              {!vendangeForm.presseAilleurs&&<div style={{background:"#F0EDE8",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"10px"}}>
                   <span style={s.lbl}>Produits ajoutes</span>
                   <button style={s.btnSm} onClick={()=>setShowProduitVendange(true)}>+ Ajouter</button>
@@ -7962,7 +7981,7 @@ export default function App() {
                     </div>
                   </div>
                 )}
-              </div>
+              </div>}
               <div><span style={s.lbl}>Note (ex. parcelle réelle si prestataire, état sanitaire...)</span>
                 <textarea style={{...s.inp,height:"64px",resize:"vertical"}} placeholder="ex. Pressurage prestataire M. Dupont - parcelle Les Riceys" value={vendangeForm.observations} onChange={e=>setVendangeForm(f=>({...f,observations:e.target.value}))}/></div>
               <div style={{background:"#F0EDE8",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
