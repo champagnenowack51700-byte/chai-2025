@@ -1817,6 +1817,33 @@ export default function App() {
     const w = window.open("","_blank"); w.document.write(html); w.document.close(); setTimeout(()=>w.print(),500);
   };
 
+  const exportTraitementsPDF = (campagne, traits) => {
+    const traitsTries = [...traits].sort((a,b)=>new Date(a.date)-new Date(b.date));
+    const cuivreTotal = traitsTries.reduce((s,t)=>s+(parseFloat(t.cuivreTotal)||0),0);
+    const mois = [["04","Avril"],["05","Mai"],["06","Juin"],["07","Juillet"],["08","Aout"]];
+    const cuivreParMois = mois.map(([num,lbl])=>({lbl,val:traitsTries.filter(t=>t.date?.slice(5,7)===num).reduce((s,t)=>s+(parseFloat(t.cuivreTotal)||0),0)})).filter(m=>m.val>0);
+    const hasObs = traitsTries.some(t=>t.observations);
+    const rows = traitsTries.map(t=>`<tr>
+        <td style="padding:5px 6px;border:0.5px solid #e0e8f0;font-family:monospace;color:#8B7355;font-weight:600">N°${t.numero||"-"}</td>
+        <td style="padding:5px 6px;border:0.5px solid #e0e8f0">${fmt(t.date)}</td>
+        <td style="padding:5px 6px;border:0.5px solid #e0e8f0">${t.operateur||"-"}</td>
+        <td style="padding:5px 6px;border:0.5px solid #e0e8f0;text-align:right">${t.surface||"-"} ha</td>
+        <td style="padding:5px 6px;border:0.5px solid #e0e8f0">${(t.produits||[]).map(p=>p.nom+" "+p.dose).join(", ")||"-"}</td>
+        <td style="padding:5px 6px;border:0.5px solid #e0e8f0;text-align:right;font-weight:600;color:${parseFloat(t.cuivreTotal)>400?"#cc2222":parseFloat(t.cuivreTotal)>200?"#c47800":"#1a7a40"}">${t.cuivreTotal?t.cuivreTotal+" g":"-"}</td>
+        ${hasObs?`<td style="padding:5px 6px;border:0.5px solid #e0e8f0;font-style:italic;color:#6a5838;font-size:10px">${t.observations||""}</td>`:""}
+      </tr>`).join("");
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+    <style>body{font-family:Georgia,serif;margin:20px;color:#1a1205}h1{color:#7a5200;border-bottom:1px solid #d4c4a0;padding-bottom:8px}
+    table{width:100%;border-collapse:collapse;font-size:11px;margin-top:12px}th{background:#f5e8cc;color:#7a5200;padding:5px 6px;text-align:left;border:0.5px solid #d4c4a0}
+    .total{background:#f5f5f0;font-weight:bold}</style></head>
+    <body><h1>Champagne Nowack — Traitements — Campagne ${campagne}</h1>
+    <p style="color:#9a8870;font-size:12px">${traitsTries.length} traitement(s) — Total cuivre : ${(cuivreTotal/1000).toFixed(3)} kg${cuivreParMois.length>0?" ("+cuivreParMois.map(m=>m.lbl+": "+m.val+"g").join(" / ")+")":""}</p>
+    <table><thead><tr><th>N°</th><th>Date</th><th>Opérateur</th><th>Surface</th><th>Produits</th><th>Cuivre</th>${hasObs?"<th>Observations</th>":""}</tr></thead>
+    <tbody>${rows}<tr class="total"><td colspan="5">TOTAL</td><td>${(cuivreTotal/1000).toFixed(3)} kg</td>${hasObs?"<td></td>":""}</tr></tbody></table>
+    </body></html>`;
+    const w = window.open("","_blank"); w.document.write(html); w.document.close(); setTimeout(()=>w.print(),500);
+  };
+
   const exportVendangeCSV = (annee, vAnnee) => {
     const headers = ["Date","Heure","Parcelles","Cuvee creee","Marc","Kg","HL","Degre","Acidite","SO2","pH","Dest. Marc","Cuve Taille","Vol Taille","Cuve Cuvee A","Vol Cuvee A","Cuve Cuvee B","Vol Cuvee B","Operateur","Observations"];
     const rows = vAnnee.map(v=>{
@@ -2945,6 +2972,9 @@ export default function App() {
                     <button style={s.btn} onClick={()=>{setTraitForm({...TRAIT_EMPTY,campagne:filterTraitAn||new Date().getFullYear().toString()});setEditingTrait(null);setShowTraitForm(true);}}>
                       + Traitement
                     </button>
+                  )}
+                  {vigneTab==="traitements" && filterTraitAn && traitsFiltres.length>0 && (
+                    <button style={{...s.ghostSm,fontSize:"10px",color:"#8B0000",borderColor:"#c85050"}} onClick={()=>exportTraitementsPDF(filterTraitAn,traitsFiltres)}>↓ PDF</button>
                   )}
                   {!closed && vigneTab==="biodynamie" && (
                     <button style={s.btn} onClick={()=>{setBiodyForm(f=>({...f,campagne:filterTraitAn||new Date().getFullYear().toString()}));setShowBiodyForm(true);}}>
@@ -5093,6 +5123,9 @@ export default function App() {
                     <button style={s.btn} onClick={()=>{setTraitForm({...TRAIT_EMPTY,campagne:filterTraitAn||new Date().getFullYear().toString()});setEditingTrait(null);setShowTraitForm(true);}}>
                       + Traitement
                     </button>
+                  )}
+                  {vigneTab==="traitements" && filterTraitAn && traitsFiltres.length>0 && (
+                    <button style={{...s.ghostSm,fontSize:"10px",color:"#8B0000",borderColor:"#c85050"}} onClick={()=>exportTraitementsPDF(filterTraitAn,traitsFiltres)}>↓ PDF</button>
                   )}
                   {!closed && vigneTab==="biodynamie" && (
                     <button style={s.btn} onClick={()=>{setBiodyForm(f=>({...f,campagne:filterTraitAn||new Date().getFullYear().toString()}));setShowBiodyForm(true);}}>
