@@ -1828,7 +1828,7 @@ export default function App() {
         <td style="padding:5px 6px;border:0.5px solid #e0e8f0">${fmt(t.date)}</td>
         <td style="padding:5px 6px;border:0.5px solid #e0e8f0">${t.operateur||"-"}</td>
         <td style="padding:5px 6px;border:0.5px solid #e0e8f0;text-align:right">${t.surface||"-"} ha</td>
-        <td style="padding:5px 6px;border:0.5px solid #e0e8f0">${(t.produits||[]).map(p=>p.nom+" "+p.dose).join(", ")||"-"}</td>
+        <td style="padding:5px 6px;border:0.5px solid #e0e8f0">${(t.produits||[]).map(p=>`<div style="margin-bottom:2px"><span style="font-weight:600">${p.nom}</span>${p.dose?` — <span style="color:#7a5200">${p.dose}</span>`:""}</div>`).join("")||"-"}</td>
         <td style="padding:5px 6px;border:0.5px solid #e0e8f0;text-align:right;font-weight:600;color:${parseFloat(t.cuivreTotal)>400?"#cc2222":parseFloat(t.cuivreTotal)>200?"#c47800":"#1a7a40"}">${t.cuivreTotal?t.cuivreTotal+" g":"-"}</td>
         ${hasObs?`<td style="padding:5px 6px;border:0.5px solid #e0e8f0;font-style:italic;color:#6a5838;font-size:10px">${t.observations||""}</td>`:""}
       </tr>`).join("");
