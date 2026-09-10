@@ -382,7 +382,7 @@ const TYPES_MOUVEMENT = [
   { value:"batonnage",   label:"Bâtonnage",               icon:"ti-refresh",        color:"#5F5E5A" },
   { value:"ajout_produit",label:"Ajout produit",          icon:"ti-flask",          color:"#BA7517" },
   { value:"entonnage",    label:"Entonnage",               icon:"ti-beer",           color:"#2C3E50" },
-  { value:"mutage",       label:"Mutage (bourbes + alcool)", icon:"ti-flask",          color:"#8B0000" },
+  { value:"mutage",       label:"Mutage (rebêches + alcool)", icon:"ti-flask",          color:"#8B0000" },
   { value:"distillerie",  label:"Excédents (distillerie)", icon:"ti-truck-delivery", color:"#7a5200" },
 ];
 
@@ -3382,7 +3382,7 @@ export default function App() {
                           <div>
                             <div style={{fontWeight:500,color:"#1a1205",fontSize:"14px"}}>{c.nom}{c.isBio&&(parseFloat(c.contenuActuelHL)||0)>0&&<span style={{marginLeft:"6px",fontSize:"10px",background:"#2d6a00",color:"#fff",borderRadius:"3px",padding:"1px 6px",fontWeight:600}}>🌿 BIO</span>}</div>
                             <div style={{fontSize:"11px",color:"#9a8870",marginTop:"2px"}}>
-                              <span style={{background:c.type==="debourbage"?"#e8f0fb":c.type==="bourbes"?"#fdd0d0":"#d4f0dd",color:c.type==="debourbage"?"#185FA5":c.type==="bourbes"?"#8B0000":"#1a7a40",borderRadius:"3px",padding:"1px 6px",fontSize:"10px"}}>{c.type==="debourbage"?"Debourbage":c.type==="bourbes"?"Bourbes":"Assemblage"}</span>
+                              <span style={{background:c.type==="debourbage"?"#e8f0fb":c.type==="bourbes"?"#fdd0d0":"#d4f0dd",color:c.type==="debourbage"?"#185FA5":c.type==="bourbes"?"#8B0000":"#1a7a40",borderRadius:"3px",padding:"1px 6px",fontSize:"10px"}}>{c.type==="debourbage"?"Debourbage":c.type==="bourbes"?"Rebêches":"Assemblage"}</span>
                             </div>
                           </div>
                           <div>
@@ -3631,7 +3631,7 @@ export default function App() {
                               {v.cuveTailleId&&<div style={{fontSize:"12px",color:"#6a5838"}}>Taille : <strong>{cuvesCuverie.find(c=>c.id===v.cuveTailleId)?.nom||v.cuveTailleId}</strong>{v.volumeTaille&&<span style={{color:"#9a8870"}}> - {v.volumeTaille} HL</span>}</div>}
                               {v.cuveCuveeId&&<div style={{fontSize:"12px",color:"#6a5838"}}>Cuvee A : <strong>{cuvesCuverie.find(c=>c.id===v.cuveCuveeId)?.nom||v.cuveCuveeId}</strong>{v.volumeCuvee&&<span style={{color:"#9a8870"}}> - {v.volumeCuvee} HL</span>}</div>}
                               {v.cuveCuveeBId&&<div style={{fontSize:"12px",color:"#6a5838"}}>Cuvee B : <strong>{cuvesCuverie.find(c=>c.id===v.cuveCuveeBId)?.nom||v.cuveCuveeBId}</strong>{v.volumeCuveeB&&<span style={{color:"#9a8870"}}> - {v.volumeCuveeB} HL</span>}</div>}
-                              {v.cuveBourbesId&&<div style={{fontSize:"12px",color:"#8B0000"}}>Bourbes : <strong>{cuvesCuverie.find(c=>c.id===v.cuveBourbesId)?.nom||v.cuveBourbesId}</strong>{v.volumeBourbes&&<span style={{color:"#9a8870"}}> - {v.volumeBourbes} HL</span>}</div>}
+                              {v.cuveBourbesId&&<div style={{fontSize:"12px",color:"#8B0000"}}>Rebêches : <strong>{cuvesCuverie.find(c=>c.id===v.cuveBourbesId)?.nom||v.cuveBourbesId}</strong>{v.volumeBourbes&&<span style={{color:"#9a8870"}}> - {v.volumeBourbes} HL</span>}</div>}
                               {!v.cuveTailleId&&!v.cuveCuveeId&&<div style={{fontSize:"11px",color:"#9a8870",fontStyle:"italic"}}>Non renseigne</div>}
                             </div>
                             <div>
@@ -6485,7 +6485,7 @@ export default function App() {
                   <select style={s.sel} value={cuverieForm.type} onChange={e=>setCuverieForm(f=>({...f,type:e.target.value}))}>
                     <option value="debourbage">Debourbage</option>
                     <option value="assemblage">Assemblage</option>
-                    <option value="bourbes">Bourbes</option>
+                    <option value="bourbes">Rebêches</option>
                   </select></div>
               </div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
@@ -6813,14 +6813,14 @@ export default function App() {
               {mvtForm.type==="mutage"&&(
                 <div style={{borderTop:"0.5px solid #d4c4a0",paddingTop:"12px",display:"grid",gap:"10px"}}>
                   <div style={{fontFamily:"Georgia,serif",fontSize:"13px",color:"#8B0000",marginBottom:"4px"}}>Details mutage</div>
-                  <div><span style={s.lbl}>Cuve bourbes (source)</span>
+                  <div><span style={s.lbl}>Cuve rebêches (source)</span>
                     <select style={s.sel} value={mvtForm.mutageCuveId||""} onChange={e=>setMvtForm(f=>({...f,mutageCuveId:e.target.value}))}>
                       <option value="">Selectionner...</option>
                       {cuvesCuverie.filter(c=>c.type==="bourbes").map(c=><option key={c.id} value={c.id}>{c.nom} ({c.contenuActuelHL||0} HL)</option>)}
                     </select>
                   </div>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px"}}>
-                    <div><span style={s.lbl}>Volume bourbes (HL)</span>
+                    <div><span style={s.lbl}>Volume rebêches (HL)</span>
                       <input type="number" step="0.1" style={s.inp} placeholder="0" value={mvtForm.mutageBourbesHL||""} onChange={e=>setMvtForm(f=>({...f,mutageBourbesHL:e.target.value}))}/></div>
                     <div><span style={s.lbl}>Volume alcool (HL)</span>
                       <input type="number" step="0.1" style={s.inp} placeholder="0" value={mvtForm.mutageAlcoolHL||""} onChange={e=>setMvtForm(f=>({...f,mutageAlcoolHL:e.target.value}))}/></div>
@@ -7977,12 +7977,12 @@ export default function App() {
                       <input type="number" step="0.1" style={s.inp} placeholder="0" value={vendangeForm.volumeCuveeB||""} onChange={e=>setVendangeForm(f=>({...f,volumeCuveeB:e.target.value}))}/></div>
                   </div>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px",marginTop:"8px",borderTop:"0.5px dashed #d4c4a0",paddingTop:"8px"}}>
-                    <div><span style={s.lbl}>Cuve Bourbes (optionnel)</span>
+                    <div><span style={s.lbl}>Cuve Rebêches (optionnel)</span>
                       <select style={s.sel} value={vendangeForm.cuveBourbesId||""} onChange={e=>setVendangeForm(f=>({...f,cuveBourbesId:e.target.value}))}>
                         <option value="">Aucune</option>
                         {cuvesCuverie.filter(c=>c.type==="bourbes").map(c=><option key={c.id} value={c.id}>{c.nom}</option>)}
                       </select></div>
-                    <div><span style={s.lbl}>Volume bourbes (HL)</span>
+                    <div><span style={s.lbl}>Volume rebêches (HL)</span>
                       <input type="number" step="0.1" style={s.inp} placeholder="0" value={vendangeForm.volumeBourbes||""} onChange={e=>setVendangeForm(f=>({...f,volumeBourbes:e.target.value}))}/></div>
                   </div>
                 </div>
