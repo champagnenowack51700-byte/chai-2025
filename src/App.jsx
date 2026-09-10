@@ -1944,7 +1944,7 @@ export default function App() {
       {label:"Cuve Cuvee A", check:v=>v.cuveCuveeId, html:v=>(cuvesCuverie.find(c=>c.id===v.cuveCuveeId)?.nom||"-")+(v.volumeCuvee?" ("+v.volumeCuvee+" HL)":"")},
       {label:"Cuve Cuvee B", check:v=>v.cuveCuveeBId, html:v=>(cuvesCuverie.find(c=>c.id===v.cuveCuveeBId)?.nom||"-")+(v.volumeCuveeB?" ("+v.volumeCuveeB+" HL)":"")},
       {label:"Produits ajoutes", check:v=>v.produitsAjoutes&&v.produitsAjoutes.length>0, html:v=>v.produitsAjoutes&&v.produitsAjoutes.length>0?v.produitsAjoutes.map(p=>p.nom+(p.dose?" "+p.dose:"")+(p.lot?" (Lot:"+p.lot+")":"")).join(", "):"-"},
-      {label:"Observations", always:destFilter==="prestation", check:v=>v.observations, html:v=>v.observations||"-", style:'font-style:italic;color:#6a5838'},
+      {label:"Observations", always:destFilter==="prestation"||destFilter==="negoce", check:v=>v.observations, html:v=>v.observations||"-", style:'font-style:italic;color:#6a5838'},
     ].filter(col => col.always || vAnnee.some(v=>col.check(v)));
     const rows = vAnnee.map(v=>`<tr>${colonnes.map(col=>`<td${col.style?` style="${col.style}"`:""}>${col.html(v)}</td>`).join("")}</tr>`).join("");
     const idxKg = Math.max(1,colonnes.findIndex(c=>c.label==="Kg"));
