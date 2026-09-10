@@ -1891,7 +1891,7 @@ export default function App() {
     // Filtre par destination du marc (maison / negoce (total+partiel) / prestation / tous)
     const vAnneeDest = !destFilter ? vAnneeComplete : vAnneeComplete.filter(v=>{
       const d = v.destinationMarc||"maison";
-      if(destFilter==="maison") return d==="maison";
+      if(destFilter==="maison") return d==="maison"||d==="negoce_partiel";
       if(destFilter==="negoce") return d==="negoce_total"||d==="negoce_partiel";
       if(destFilter==="prestation") return d==="prestation";
       return true;
@@ -1905,9 +1905,12 @@ export default function App() {
     const propNegoceRow = (v) => { const kg=parseFloat(v.poidsMarcKg)||0, kgN=parseFloat(v.kgVendusNegoce)||0; return kg>0?kgN/kg:0; };
     const kgNegoceRow = (v) => v.destinationMarc==="negoce_total" ? (parseFloat(v.poidsMarcKg)||0) : v.destinationMarc==="negoce_partiel" ? (parseFloat(v.kgVendusNegoce)||0) : 0;
     const hlNegoceRow = (v) => v.destinationMarc==="negoce_total" ? (parseFloat(v.volumeHL)||0) : v.destinationMarc==="negoce_partiel" ? (parseFloat(v.volumeHL)||0)*propNegoceRow(v) : 0;
+    // Part restee maison pour une ligne donnee (pas le marc total pour un "partiel")
+    const kgMaisonRow = (v) => v.destinationMarc==="negoce_partiel" ? (parseFloat(v.poidsMarcKg)||0)-(parseFloat(v.kgVendusNegoce)||0) : (parseFloat(v.poidsMarcKg)||0);
+    const hlMaisonRow = (v) => v.destinationMarc==="negoce_partiel" ? (parseFloat(v.volumeHL)||0)*(1-propNegoceRow(v)) : (parseFloat(v.volumeHL)||0);
     const baseTotaux = destFilter==="prestation" ? vAnnee : vAnnee.filter(v=>v.destinationMarc!=="prestation");
-    const kgTotal = destFilter==="negoce" ? baseTotaux.reduce((s,v)=>s+kgNegoceRow(v),0) : baseTotaux.reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0);
-    const hlTotal = destFilter==="negoce" ? baseTotaux.reduce((s,v)=>s+hlNegoceRow(v),0) : baseTotaux.reduce((s,v)=>s+(parseFloat(v.volumeHL)||0),0);
+    const kgTotal = destFilter==="negoce" ? baseTotaux.reduce((s,v)=>s+kgNegoceRow(v),0) : destFilter==="maison" ? baseTotaux.reduce((s,v)=>s+kgMaisonRow(v),0) : baseTotaux.reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0);
+    const hlTotal = destFilter==="negoce" ? baseTotaux.reduce((s,v)=>s+hlNegoceRow(v),0) : destFilter==="maison" ? baseTotaux.reduce((s,v)=>s+hlMaisonRow(v),0) : baseTotaux.reduce((s,v)=>s+(parseFloat(v.volumeHL)||0),0);
     const kgPrestation = vAnnee.filter(v=>v.destinationMarc==="prestation").reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0);
     const kgMaison = vAnnee.reduce((s,v)=>{
       if(!v.destinationMarc||v.destinationMarc==="maison") return s+(parseFloat(v.poidsMarcKg)||0);
@@ -1932,8 +1935,8 @@ export default function App() {
       {label:"Cuvee", check:v=>v.cuveeCreee, html:v=>v.cuveeCreee||"-"},
       {label:"Marc", check:v=>v.numeroMarc, html:v=>v.numeroMarc||"-"},
       {label:"Pressoir", check:v=>v.typePressoir, html:v=>v.typePressoir==="pai"?"PAI":v.typePressoir==="traditionnel"?"Traditionnel":"-"},
-      {label:"Kg", always:true, html:v=> destFilter==="negoce" ? (kgNegoceRow(v)?Math.round(kgNegoceRow(v)).toLocaleString()+" kg":"-") : (v.poidsMarcKg?parseInt(v.poidsMarcKg).toLocaleString()+" kg":"-")},
-      {label:"HL", always:true, html:v=> destFilter==="negoce" ? (hlNegoceRow(v)?hlNegoceRow(v).toFixed(2)+" HL":"-") : (v.volumeHL?v.volumeHL+" HL":"-")},
+      {label:"Kg", always:true, html:v=> destFilter==="negoce" ? (kgNegoceRow(v)?Math.round(kgNegoceRow(v)).toLocaleString()+" kg":"-") : destFilter==="maison" ? (kgMaisonRow(v)?Math.round(kgMaisonRow(v)).toLocaleString()+" kg":"-") : (v.poidsMarcKg?parseInt(v.poidsMarcKg).toLocaleString()+" kg":"-")},
+      {label:"HL", always:true, html:v=> destFilter==="negoce" ? (hlNegoceRow(v)?hlNegoceRow(v).toFixed(2)+" HL":"-") : destFilter==="maison" ? (hlMaisonRow(v)?hlMaisonRow(v).toFixed(2)+" HL":"-") : (v.volumeHL?v.volumeHL+" HL":"-")},
       {label:"Destination", check:()=>!destFilter, html:destHtml},
       {label:"Client", always:(destFilter==="prestation"||destFilter==="negoce")&&!clientFilter, check:v=>v.clientPrestation||v.clientNegoce, html:v=>v.clientPrestation||v.clientNegoce||"-"},
       {label:"N° DAE", always:destFilter==="negoce", check:v=>v.numeroDAE, html:v=>v.numeroDAE||"-"},
