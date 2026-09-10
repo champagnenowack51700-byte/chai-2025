@@ -1354,6 +1354,14 @@ export default function App() {
     const ids = v.parcelleIds&&v.parcelleIds.length>0 ? v.parcelleIds : (v.parcelleId?[v.parcelleId]:[]);
     return ids.length>0 && ids.every(id=>parcelles.find(p=>p.id===id)?.certification==="BIO");
   };
+  // Renvoie le cepage si toutes les parcelles du marc partagent exactement le meme cepage unique (ex. "Chardonnay"), sinon null.
+  const cepageUniqueVendange = (v) => {
+    const ids = v.parcelleIds&&v.parcelleIds.length>0 ? v.parcelleIds : (v.parcelleId?[v.parcelleId]:[]);
+    if(ids.length===0) return null;
+    const cepages = [...new Set(ids.map(id=>parcelles.find(p=>p.id===id)?.cepage?.trim()).filter(Boolean))];
+    if(cepages.length===1 && !cepages[0].includes("+")) return cepages[0];
+    return null;
+  };
   const degsActifs = degustateurs.filter(d=>d.actif).map(d=>d.nom);
   const toggleActif = (i) => setDegustateurs(prev=>prev.map((d,j)=>j===i?{...d,actif:!d.actif}:d));
 
@@ -1916,7 +1924,11 @@ export default function App() {
     // une ligne du jeu filtre a une valeur non vide pour cette colonne.
     const colonnes = [
       {label:"Date", always:true, html:v=>fmt(v.date)+(v.heure?" "+v.heure:"")},
-      {label:"Parcelles", always:true, html:v=>parcsNom(v)+(isBio(v)?' <span style="background:#2d6a00;color:#fff;border-radius:3px;padding:1px 4px;font-size:9px">🌿 BIO</span>':"")},
+      {label:"Parcelles", always:true, html:v=>{
+        const cep = cepageUniqueVendange(v);
+        const badgeCep = cep ? ` <span style="background:${cep.toLowerCase()==="chardonnay"?"#e8c840":"#eef1f4"};color:${cep.toLowerCase()==="chardonnay"?"#5a4a00":"#4A6274"};border-radius:3px;padding:1px 4px;font-size:9px;font-weight:600">🍇 100% ${cep}</span>` : "";
+        return parcsNom(v)+(isBio(v)?' <span style="background:#2d6a00;color:#fff;border-radius:3px;padding:1px 4px;font-size:9px">🌿 BIO</span>':"")+badgeCep;
+      }},
       {label:"Cuvee", check:v=>v.cuveeCreee, html:v=>v.cuveeCreee||"-"},
       {label:"Marc", check:v=>v.numeroMarc, html:v=>v.numeroMarc||"-"},
       {label:"Pressoir", check:v=>v.typePressoir, html:v=>v.typePressoir==="pai"?"PAI":v.typePressoir==="traditionnel"?"Traditionnel":"-"},
@@ -3609,6 +3621,7 @@ export default function App() {
                               <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"4px"}}>
                                 {v.numeroMarc&&<span style={{background:"#2C3E50",color:"#fff",borderRadius:"5px",padding:"2px 10px",fontSize:"13px",fontWeight:700,fontFamily:"monospace",letterSpacing:"0.03em"}}>Marc {v.numeroMarc}</span>}
                                 {isBioVendange(v)&&<span style={{fontSize:"11px",background:"#2d6a00",color:"#fff",borderRadius:"4px",padding:"2px 8px",fontWeight:600}}>🌿 BIO</span>}
+                                {cepageUniqueVendange(v)&&<span style={{fontSize:"11px",background:cepageUniqueVendange(v).toLowerCase()==="chardonnay"?"#e8c840":"#eef1f4",color:cepageUniqueVendange(v).toLowerCase()==="chardonnay"?"#5a4a00":"#4A6274",borderRadius:"4px",padding:"2px 8px",fontWeight:600}}>🍇 100% {cepageUniqueVendange(v)}</span>}
                                 {v.declasseNonBio&&<span style={{fontSize:"11px",background:"#fde8e8",color:"#8B0000",border:"0.5px solid #f0b4b4",borderRadius:"4px",padding:"2px 8px",fontWeight:600}}>🚫 Déclassé non BIO</span>}
                                 {v.typePressoir&&<span style={{fontSize:"11px",background:"#eef1f4",color:"#4A6274",border:"0.5px solid #b8c4cc",borderRadius:"4px",padding:"2px 8px",fontWeight:500}}>{v.typePressoir==="pai"?"PAI":"Pressoir traditionnel"}</span>}
                                 {v.presseAilleurs&&<span style={{fontSize:"11px",background:"#fff3cd",color:"#8B6000",border:"0.5px solid #ffc107",borderRadius:"4px",padding:"2px 8px",fontWeight:500}}>🚚 Pressé ailleurs{v.lieuPressurage?" — "+v.lieuPressurage:""}</span>}
