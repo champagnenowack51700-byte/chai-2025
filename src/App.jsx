@@ -1936,6 +1936,7 @@ export default function App() {
       {label:"HL", always:true, html:v=> destFilter==="negoce" ? (hlNegoceRow(v)?hlNegoceRow(v).toFixed(2)+" HL":"-") : (v.volumeHL?v.volumeHL+" HL":"-")},
       {label:"Destination", check:()=>!destFilter, html:destHtml},
       {label:"Client", always:(destFilter==="prestation"||destFilter==="negoce")&&!clientFilter, check:v=>v.clientPrestation||v.clientNegoce, html:v=>v.clientPrestation||v.clientNegoce||"-"},
+      {label:"N° DAE", always:destFilter==="negoce", check:v=>v.numeroDAE, html:v=>v.numeroDAE||"-"},
       {label:"Degre", check:v=>v.degreePotentiel, html:v=>v.degreePotentiel?v.degreePotentiel+"%":"-"},
       {label:"Acidite", check:v=>v.acidite, html:v=>v.acidite?v.acidite+" g/L":"-"},
       {label:"SO2", check:v=>v.so2, html:v=>v.so2?v.so2+" mg/L":"-"},
