@@ -708,6 +708,7 @@ export default function App() {
     kgVendusNegoce: "",
     numeroDAE: "",
     clientPrestation: "",
+    clientNegoce: "",
     typePressoir: "",
     presseAilleurs: false,
     lieuPressurage: "",
@@ -1883,9 +1884,11 @@ export default function App() {
       if(destFilter==="prestation") return d==="prestation";
       return true;
     });
-    // Filtre par client (uniquement pertinent pour la prestation) : n'envoyer que le rapport de ce client
-    const vAnnee = (destFilter==="prestation"&&clientFilter) ? vAnneeDest.filter(v=>v.clientPrestation===clientFilter) : vAnneeDest;
-    const destLabel = destFilter==="maison"?" — Maison":destFilter==="negoce"?" — Négoce":destFilter==="prestation"?" — Prestation pressurage"+(clientFilter?" — "+clientFilter:""):"";
+    // Filtre par client (prestation) ou negociant (negoce) : n'envoyer que le rapport de ce client
+    const vAnnee = (destFilter==="prestation"&&clientFilter) ? vAnneeDest.filter(v=>v.clientPrestation===clientFilter)
+      : (destFilter==="negoce"&&clientFilter) ? vAnneeDest.filter(v=>v.clientNegoce===clientFilter)
+      : vAnneeDest;
+    const destLabel = destFilter==="maison"?" — Maison":destFilter==="negoce"?" — Négoce"+(clientFilter?" — "+clientFilter:""):destFilter==="prestation"?" — Prestation pressurage"+(clientFilter?" — "+clientFilter:""):"";
     const baseTotaux = destFilter==="prestation" ? vAnnee : vAnnee.filter(v=>v.destinationMarc!=="prestation");
     const kgTotal = baseTotaux.reduce((s,v)=>s+(parseFloat(v.poidsMarcKg)||0),0);
     const hlTotal = baseTotaux.reduce((s,v)=>s+(parseFloat(v.volumeHL)||0),0);
@@ -1900,7 +1903,7 @@ export default function App() {
       if(v.destinationMarc==="negoce_partiel") return s+(parseFloat(v.kgVendusNegoce)||0);
       return s;
     },0);
-    const destHtml = (v) => v.destinationMarc==="prestation"?"🔄 Prestation"+(v.clientPrestation?" — "+v.clientPrestation:"")+(v.kgPrestation?" ("+parseInt(v.kgPrestation).toLocaleString()+" kg)":""):v.destinationMarc==="negoce_total"?"Negoce total":v.destinationMarc==="negoce_partiel"?`Negoce partiel (${parseInt(v.kgVendusNegoce)||0} kg negoce / ${(parseFloat(v.poidsMarcKg)||0)-(parseFloat(v.kgVendusNegoce)||0)} kg maison)`:"Maison";
+    const destHtml = (v) => v.destinationMarc==="prestation"?"🔄 Prestation"+(v.clientPrestation?" — "+v.clientPrestation:"")+(v.kgPrestation?" ("+parseInt(v.kgPrestation).toLocaleString()+" kg)":""):v.destinationMarc==="negoce_total"?"Negoce total"+(v.clientNegoce?" — "+v.clientNegoce:""):v.destinationMarc==="negoce_partiel"?`Negoce partiel${v.clientNegoce?" — "+v.clientNegoce:""} (${parseInt(v.kgVendusNegoce)||0} kg negoce / ${(parseFloat(v.poidsMarcKg)||0)-(parseFloat(v.kgVendusNegoce)||0)} kg maison)`:"Maison";
     // Definition des colonnes : "always" = toujours affichee, sinon affichee seulement si au moins
     // une ligne du jeu filtre a une valeur non vide pour cette colonne.
     const colonnes = [
@@ -1912,7 +1915,7 @@ export default function App() {
       {label:"Kg", always:true, html:v=>v.poidsMarcKg?parseInt(v.poidsMarcKg).toLocaleString()+" kg":"-"},
       {label:"HL", always:true, html:v=>v.volumeHL?v.volumeHL+" HL":"-"},
       {label:"Destination", check:()=>!destFilter, html:destHtml},
-      {label:"Client", always:destFilter==="prestation"&&!clientFilter, check:v=>v.clientPrestation, html:v=>v.clientPrestation||"-"},
+      {label:"Client", always:(destFilter==="prestation"||destFilter==="negoce")&&!clientFilter, check:v=>v.clientPrestation||v.clientNegoce, html:v=>v.clientPrestation||v.clientNegoce||"-"},
       {label:"Degre", check:v=>v.degreePotentiel, html:v=>v.degreePotentiel?v.degreePotentiel+"%":"-"},
       {label:"Acidite", check:v=>v.acidite, html:v=>v.acidite?v.acidite+" g/L":"-"},
       {label:"SO2", check:v=>v.so2, html:v=>v.so2?v.so2+" mg/L":"-"},
@@ -3518,10 +3521,13 @@ export default function App() {
                         <option value="negoce">Négoce</option>
                         <option value="prestation">Prestation</option>
                       </select>
-                      {pdfDestFilter==="prestation"&&(
+                      {(pdfDestFilter==="prestation"||pdfDestFilter==="negoce")&&(
                         <select style={{...s.sel,fontSize:"10px",padding:"4px 6px",width:"150px"}} value={pdfClientFilter} onChange={e=>setPdfClientFilter(e.target.value)}>
-                          <option value="">Tous les clients</option>
-                          {[...new Set(vAnnee.filter(v=>v.destinationMarc==="prestation"&&v.clientPrestation).map(v=>v.clientPrestation))].sort().map(c=><option key={c} value={c}>{c}</option>)}
+                          <option value="">{pdfDestFilter==="negoce"?"Tous les négociants":"Tous les clients"}</option>
+                          {pdfDestFilter==="prestation"
+                            ? [...new Set(vAnnee.filter(v=>v.destinationMarc==="prestation"&&v.clientPrestation).map(v=>v.clientPrestation))].sort().map(c=><option key={c} value={c}>{c}</option>)
+                            : [...new Set(vAnnee.filter(v=>(v.destinationMarc==="negoce_total"||v.destinationMarc==="negoce_partiel")&&v.clientNegoce).map(v=>v.clientNegoce))].sort().map(c=><option key={c} value={c}>{c}</option>)
+                          }
                         </select>
                       )}
                       <button style={{...s.ghostSm,fontSize:"10px",color:"#8B0000",borderColor:"#c85050"}} onClick={()=>exportVendangePDF(annee,vAnnee,pdfDestFilter,pdfClientFilter)}>↓ PDF</button>
@@ -3618,7 +3624,7 @@ export default function App() {
                               <div style={s.lbl}>Volume recolte</div>
                               {v.poidsMarcKg&&<div style={{fontSize:"18px",fontWeight:500,color:"#2d6a00"}}>{parseInt(v.poidsMarcKg).toLocaleString()} kg</div>}
                               {v.volumeHL&&<div style={{fontSize:"13px",color:"#2d6a00"}}>{v.volumeHL} HL</div>}
-                              {v.destinationMarc&&v.destinationMarc!=="maison"&&<div style={{fontSize:"11px",color:v.destinationMarc==="prestation"?"#185FA5":"#c47800",fontWeight:v.destinationMarc==="prestation"?600:400,marginTop:"3px"}}>{v.destinationMarc==="prestation"?"🔄 Prestation"+(v.clientPrestation?" — "+v.clientPrestation:""):v.destinationMarc==="negoce_total"?"Negoce total":"Negoce partiel"}{v.kgVendusNegoce?" - "+parseInt(v.kgVendusNegoce).toLocaleString()+" kg":""}{v.kgPrestation?" - "+parseInt(v.kgPrestation).toLocaleString()+" kg":""}{v.numeroDAE?" - DAE: "+v.numeroDAE:""}</div>}
+                              {v.destinationMarc&&v.destinationMarc!=="maison"&&<div style={{fontSize:"11px",color:v.destinationMarc==="prestation"?"#185FA5":"#c47800",fontWeight:v.destinationMarc==="prestation"?600:400,marginTop:"3px"}}>{v.destinationMarc==="prestation"?"🔄 Prestation"+(v.clientPrestation?" — "+v.clientPrestation:""):(v.destinationMarc==="negoce_total"?"Negoce total":"Negoce partiel")+(v.clientNegoce?" — "+v.clientNegoce:"")}{v.kgVendusNegoce?" - "+parseInt(v.kgVendusNegoce).toLocaleString()+" kg":""}{v.kgPrestation?" - "+parseInt(v.kgPrestation).toLocaleString()+" kg":""}{v.numeroDAE?" - DAE: "+v.numeroDAE:""}</div>}
                             </div>
                             <div>
                               <div style={s.lbl}>Cuves destination</div>
@@ -5619,7 +5625,7 @@ export default function App() {
                               <div style={s.lbl}>Volume recolte</div>
                               {v.poidsMarcKg&&<div style={{fontSize:"18px",fontWeight:500,color:"#2d6a00"}}>{parseInt(v.poidsMarcKg).toLocaleString()} kg</div>}
                               {v.volumeHL&&<div style={{fontSize:"13px",color:"#2d6a00"}}>{v.volumeHL} HL</div>}
-                              {v.destinationMarc&&v.destinationMarc!=="maison"&&<div style={{fontSize:"11px",color:v.destinationMarc==="prestation"?"#185FA5":"#c47800",fontWeight:v.destinationMarc==="prestation"?600:400,marginTop:"3px"}}>{v.destinationMarc==="prestation"?"🔄 Prestation"+(v.clientPrestation?" — "+v.clientPrestation:""):v.destinationMarc==="negoce_total"?"Negoce total":"Negoce partiel"}{v.kgVendusNegoce?" - "+parseInt(v.kgVendusNegoce).toLocaleString()+" kg":""}{v.kgPrestation?" - "+parseInt(v.kgPrestation).toLocaleString()+" kg":""}{v.numeroDAE?" - DAE: "+v.numeroDAE:""}</div>}
+                              {v.destinationMarc&&v.destinationMarc!=="maison"&&<div style={{fontSize:"11px",color:v.destinationMarc==="prestation"?"#185FA5":"#c47800",fontWeight:v.destinationMarc==="prestation"?600:400,marginTop:"3px"}}>{v.destinationMarc==="prestation"?"🔄 Prestation"+(v.clientPrestation?" — "+v.clientPrestation:""):(v.destinationMarc==="negoce_total"?"Negoce total":"Negoce partiel")+(v.clientNegoce?" — "+v.clientNegoce:"")}{v.kgVendusNegoce?" - "+parseInt(v.kgVendusNegoce).toLocaleString()+" kg":""}{v.kgPrestation?" - "+parseInt(v.kgPrestation).toLocaleString()+" kg":""}{v.numeroDAE?" - DAE: "+v.numeroDAE:""}</div>}
                             </div>
                             <div>
                               <div style={s.lbl}>Cuves destination</div>
@@ -8027,6 +8033,11 @@ export default function App() {
                       <option value="negoce_partiel">Vente negoce (partiel)</option>
                       <option value="prestation">Prestation de pressurage</option>
                     </select></div>
+                  {(vendangeForm.destinationMarc==="negoce_total"||vendangeForm.destinationMarc==="negoce_partiel")&&(
+                    <div><span style={s.lbl}>Négociant *</span>
+                      <input style={s.inp} placeholder="ex. Maison Dupont" value={vendangeForm.clientNegoce||""} onChange={e=>setVendangeForm(f=>({...f,clientNegoce:e.target.value}))}/>
+                      <div style={{fontSize:"10px",color:"#9a8870",marginTop:"2px"}}>Permet d'exporter un rapport PDF uniquement pour ce négociant.</div></div>
+                  )}
                   {(vendangeForm.destinationMarc==="negoce_total"||vendangeForm.destinationMarc==="negoce_partiel")&&(
                     <div><span style={s.lbl}>N° DAE</span>
                       <input style={s.inp} placeholder="DAE-2025-001" value={vendangeForm.numeroDAE||""} onChange={e=>setVendangeForm(f=>({...f,numeroDAE:e.target.value}))}/></div>
