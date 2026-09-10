@@ -712,6 +712,7 @@ export default function App() {
     typePressoir: "",
     presseAilleurs: false,
     lieuPressurage: "",
+    declasseNonBio: false,
   };
   const [vendangeForm, setVendangeForm] = useState(VENDANGE_EMPTY);
   const [rendementsAnnuels, setRendementsAnnuels] = useState([]);
@@ -1347,6 +1348,12 @@ export default function App() {
   }, []);
 
   const getTonneau = (id) => tonneaux.find(t=>t.id===id);
+  // Statut BIO d'un marc : derive de la certification des parcelles, sauf si declasse manuellement en non BIO.
+  const isBioVendange = (v) => {
+    if(v.declasseNonBio) return false;
+    const ids = v.parcelleIds&&v.parcelleIds.length>0 ? v.parcelleIds : (v.parcelleId?[v.parcelleId]:[]);
+    return ids.length>0 && ids.every(id=>parcelles.find(p=>p.id===id)?.certification==="BIO");
+  };
   const degsActifs = degustateurs.filter(d=>d.actif).map(d=>d.nom);
   const toggleActif = (i) => setDegustateurs(prev=>prev.map((d,j)=>j===i?{...d,actif:!d.actif}:d));
 
@@ -1872,10 +1879,7 @@ export default function App() {
       const nomsAlt = idsAlt.map(id=>parcelles.find(p=>p.id===id)?.nom).filter(Boolean);
       return nomsAlt.length>0 ? nomsAlt.join(" + ") : "-";
     };
-    const isBio = (v) => {
-      const ids = v.parcelleIds&&v.parcelleIds.length>0 ? v.parcelleIds : (v.parcelleId?[v.parcelleId]:[]);
-      return ids.length>0 && ids.every(id=>parcelles.find(p=>p.id===id)?.certification==="BIO");
-    };
+    const isBio = isBioVendange;
     // Filtre par destination du marc (maison / negoce (total+partiel) / prestation / tous)
     const vAnneeDest = !destFilter ? vAnneeComplete : vAnneeComplete.filter(v=>{
       const d = v.destinationMarc||"maison";
@@ -3600,7 +3604,8 @@ export default function App() {
                             <div>
                               <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"4px"}}>
                                 {v.numeroMarc&&<span style={{background:"#2C3E50",color:"#fff",borderRadius:"5px",padding:"2px 10px",fontSize:"13px",fontWeight:700,fontFamily:"monospace",letterSpacing:"0.03em"}}>Marc {v.numeroMarc}</span>}
-                                {v.isBio&&<span style={{fontSize:"11px",background:"#2d6a00",color:"#fff",borderRadius:"4px",padding:"2px 8px",fontWeight:600}}>🌿 BIO</span>}
+                                {isBioVendange(v)&&<span style={{fontSize:"11px",background:"#2d6a00",color:"#fff",borderRadius:"4px",padding:"2px 8px",fontWeight:600}}>🌿 BIO</span>}
+                                {v.declasseNonBio&&<span style={{fontSize:"11px",background:"#fde8e8",color:"#8B0000",border:"0.5px solid #f0b4b4",borderRadius:"4px",padding:"2px 8px",fontWeight:600}}>🚫 Déclassé non BIO</span>}
                                 {v.typePressoir&&<span style={{fontSize:"11px",background:"#eef1f4",color:"#4A6274",border:"0.5px solid #b8c4cc",borderRadius:"4px",padding:"2px 8px",fontWeight:500}}>{v.typePressoir==="pai"?"PAI":"Pressoir traditionnel"}</span>}
                                 {v.presseAilleurs&&<span style={{fontSize:"11px",background:"#fff3cd",color:"#8B6000",border:"0.5px solid #ffc107",borderRadius:"4px",padding:"2px 8px",fontWeight:500}}>🚚 Pressé ailleurs{v.lieuPressurage?" — "+v.lieuPressurage:""}</span>}
                               </div>
@@ -7871,6 +7876,17 @@ export default function App() {
                     <input style={s.inp} placeholder="ex. Pressoir M. Dupont, Chouilly" value={vendangeForm.lieuPressurage||""} onChange={e=>setVendangeForm(f=>({...f,lieuPressurage:e.target.value}))}/>
                   </div>
                 )}
+                {(()=>{
+                  const idsSel = vendangeForm.parcelleIds&&vendangeForm.parcelleIds.length>0 ? vendangeForm.parcelleIds : (vendangeForm.parcelleId?[vendangeForm.parcelleId]:[]);
+                  const parcellesBio = idsSel.length>0 && idsSel.every(id=>parcelles.find(p=>p.id===id)?.certification==="BIO");
+                  if(!parcellesBio) return null;
+                  return (
+                    <label style={{display:"flex",alignItems:"center",gap:"8px",cursor:"pointer",marginTop:"10px",paddingTop:"10px",borderTop:"0.5px dashed #b8c4cc"}}>
+                      <input type="checkbox" checked={vendangeForm.declasseNonBio||false} onChange={e=>setVendangeForm(f=>({...f,declasseNonBio:e.target.checked}))} style={{width:"16px",height:"16px",cursor:"pointer"}}/>
+                      <span style={{fontSize:"13px",color:"#8B0000",fontWeight:500}}>🚫 Déclasser ce marc en non BIO</span>
+                    </label>
+                  );
+                })()}
               </div>
               <div style={{background:"#F0EDE8",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
                 <div style={{...s.lbl,marginBottom:"10px"}}>Identification</div>
