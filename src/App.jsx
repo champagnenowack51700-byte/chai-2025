@@ -598,7 +598,7 @@ export default function App() {
   const [showAmendForm,    setShowAmendForm]     = useState(false);
   const [editingAmend,     setEditingAmend]      = useState(null);
   const [biodyForm,        setBiodyForm]         = useState({campagne:new Date().getFullYear().toString(),date:"",surface:"",produit:"",observations:""});
-  const [amendForm,        setAmendForm]         = useState({campagne:new Date().getFullYear().toString(),parcelle:"",surface:"",produit:"",quantite:"",nTotal:"",nParHa:"",observations:"",teneurAzote:""});
+  const [amendForm,        setAmendForm]         = useState({campagne:new Date().getFullYear().toString(),parcelle:"",date:"",surface:"",produit:"",quantite:"",nTotal:"",nParHa:"",observations:"",teneurAzote:""});
   const TRAIT_EMPTY = {
     campagne: new Date().getFullYear().toString(),
     numero: "",
@@ -965,14 +965,14 @@ export default function App() {
 
   // Traitement
   // Upload PDF en base64 dans Firestore
-  const uploadPdf = (file, campagne, nom) => {
+  const uploadPdf = (file, campagne, nom, categorie="traitements") => {
     if(!file) return;
     if(file.size > 900000) { alert("Le PDF est trop volumineux (max 900 KB). Compressez-le d'abord."); return; }
     setUploadingPdf(true);
     const reader = new FileReader();
     reader.onload = (e) => {
       const base64 = e.target.result;
-      const pdfDoc = { id:`pdf_${Date.now()}`, campagne:String(campagne), nom:nom||file.name, base64, dateUpload:new Date().toISOString() };
+      const pdfDoc = { id:`pdf_${Date.now()}`, campagne:String(campagne), nom:nom||file.name, base64, dateUpload:new Date().toISOString(), categorie };
       setPdfDocs(prev=>[...prev, pdfDoc]);
       fbSave("pdfDocs", pdfDoc.id, pdfDoc);
       setUploadingPdf(false);
@@ -1165,7 +1165,7 @@ export default function App() {
   };
 
   const submitAmend = () => {
-    if(!amendForm.parcelle.trim()) return alert("La parcelle est requise.");
+    if(!amendForm.produit) return alert("Le produit est requis.");
     const a = { id:editingAmend?editingAmend.id:`amend_${Date.now()}`, ...amendForm, timestamp:new Date().toISOString() };
     if(editingAmend){ setAmendements(prev=>prev.map(x=>x.id===a.id?a:x)); }
     else {
@@ -1186,7 +1186,7 @@ export default function App() {
       }
     }
     fbSave("amendements", a.id, a);
-    setAmendForm({campagne:new Date().getFullYear().toString(),parcelle:"",surface:"",produit:"",quantite:"",nTotal:"",nParHa:"",observations:"",teneurAzote:""});
+    setAmendForm({campagne:new Date().getFullYear().toString(),parcelle:"",date:"",surface:"",produit:"",quantite:"",nTotal:"",nParHa:"",observations:"",teneurAzote:""});
     setEditingAmend(null); setShowAmendForm(false);
   };
 
@@ -1856,6 +1856,51 @@ export default function App() {
     <p style="color:#9a8870;font-size:12px">${traitsTries.length} traitement(s) — Total cuivre : ${(cuivreTotal/1000).toFixed(3)} kg${cuivreParMois.length>0?" ("+cuivreParMois.map(m=>m.lbl+": "+m.val+"g").join(" / ")+")":""}</p>
     <table><thead><tr><th>N°</th><th>Date</th><th>Opérateur</th><th>Surface</th><th>Produits</th><th>Cuivre</th>${hasObs?"<th>Observations</th>":""}</tr></thead>
     <tbody>${rows}<tr class="total"><td colspan="5">TOTAL</td><td>${(cuivreTotal/1000).toFixed(3)} kg</td>${hasObs?"<td></td>":""}</tr></tbody></table>
+    </body></html>`;
+    const w = window.open("","_blank"); w.document.write(html); w.document.close(); setTimeout(()=>w.print(),500);
+  };
+
+  const exportBiodynamiePDF = (campagne, biodys) => {
+    const tries = [...biodys].sort((a,b)=>new Date(a.date)-new Date(b.date));
+    const hasObs = tries.some(b=>b.observations);
+    const rows = tries.map(b=>`<tr>
+        <td style="padding:5px 6px;border:0.5px solid #e0e8f0">${fmt(b.date)}</td>
+        <td style="padding:5px 6px;border:0.5px solid #e0e8f0;text-align:right">${b.surface||"-"}</td>
+        <td style="padding:5px 6px;border:0.5px solid #e0e8f0;font-weight:600;color:#2d6a00">${b.produit||"-"}</td>
+        ${hasObs?`<td style="padding:5px 6px;border:0.5px solid #e0e8f0;font-style:italic;color:#6a5838;font-size:10px">${b.observations||""}</td>`:""}
+      </tr>`).join("");
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+    <style>body{font-family:Georgia,serif;margin:20px;color:#1a1205}h1{color:#7a5200;border-bottom:1px solid #d4c4a0;padding-bottom:8px}
+    table{width:100%;border-collapse:collapse;font-size:11px;margin-top:12px}th{background:#f5e8cc;color:#7a5200;padding:5px 6px;text-align:left;border:0.5px solid #d4c4a0}</style></head>
+    <body><h1>Champagne Nowack — Biodynamie — Campagne ${campagne}</h1>
+    <p style="color:#9a8870;font-size:12px">${tries.length} passage(s) biodynamique(s)</p>
+    <table><thead><tr><th>Date</th><th>Surface</th><th>Produit</th>${hasObs?"<th>Observations</th>":""}</tr></thead>
+    <tbody>${rows}</tbody></table>
+    </body></html>`;
+    const w = window.open("","_blank"); w.document.write(html); w.document.close(); setTimeout(()=>w.print(),500);
+  };
+
+  const exportAmendementsPDF = (campagne, amends) => {
+    const tries = [...amends].sort((a,b)=>(a.timestamp||"").localeCompare(b.timestamp||""));
+    const hasObs = tries.some(a=>a.observations||a.parcelle);
+    const nTotalSum = tries.reduce((s,a)=>s+(parseFloat(a.nTotal)||0),0);
+    const surfSum = tries.reduce((s,a)=>s+(parseFloat(a.surface)||0),0);
+    const rows = tries.map(a=>`<tr>
+        <td style="padding:5px 6px;border:0.5px solid #e0e8f0;text-align:right">${a.surface||"-"} ha</td>
+        <td style="padding:5px 6px;border:0.5px solid #e0e8f0;font-weight:600;color:#2C3E50">${a.produit||"-"}</td>
+        <td style="padding:5px 6px;border:0.5px solid #e0e8f0;text-align:right">${a.quantite||"-"}</td>
+        <td style="padding:5px 6px;border:0.5px solid #e0e8f0;text-align:right;font-weight:600;color:#2d6a00">${a.nTotal?a.nTotal+" kg":"-"}</td>
+        <td style="padding:5px 6px;border:0.5px solid #e0e8f0;text-align:right">${a.nParHa?a.nParHa+" kg/ha":"-"}</td>
+        ${hasObs?`<td style="padding:5px 6px;border:0.5px solid #e0e8f0;font-style:italic;color:#6a5838;font-size:10px">${[a.parcelle,a.observations].filter(Boolean).join(" — ")}</td>`:""}
+      </tr>`).join("");
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+    <style>body{font-family:Georgia,serif;margin:20px;color:#1a1205}h1{color:#7a5200;border-bottom:1px solid #d4c4a0;padding-bottom:8px}
+    table{width:100%;border-collapse:collapse;font-size:11px;margin-top:12px}th{background:#f5e8cc;color:#7a5200;padding:5px 6px;text-align:left;border:0.5px solid #d4c4a0}
+    .total{background:#f5f5f0;font-weight:bold}</style></head>
+    <body><h1>Champagne Nowack — Amendements — Campagne ${campagne}</h1>
+    <p style="color:#9a8870;font-size:12px">${tries.length} amendement(s) — Total azote : ${Math.round(nTotalSum*100)/100} kg N</p>
+    <table><thead><tr><th>Surface</th><th>Produit</th><th>Quantité</th><th>N total</th><th>N/ha</th>${hasObs?"<th>Observations</th>":""}</tr></thead>
+    <tbody>${rows}<tr class="total"><td style="text-align:right">${Math.round(surfSum*1000)/1000} ha</td><td colspan="2">TOTAL</td><td style="text-align:right">${Math.round(nTotalSum*100)/100} kg</td><td></td>${hasObs?"<td></td>":""}</tr></tbody></table>
     </body></html>`;
     const w = window.open("","_blank"); w.document.write(html); w.document.close(); setTimeout(()=>w.print(),500);
   };
@@ -3013,6 +3058,12 @@ export default function App() {
                       + Amendement
                     </button>
                   )}
+                  {vigneTab==="biodynamie" && filterTraitAn && biodyFiltres.length>0 && (
+                    <button style={{...s.ghostSm,fontSize:"10px",color:"#8B0000",borderColor:"#c85050"}} onClick={()=>exportBiodynamiePDF(filterTraitAn,biodyFiltres)}>↓ PDF</button>
+                  )}
+                  {vigneTab==="amendements" && filterTraitAn && amendFiltres.length>0 && (
+                    <button style={{...s.ghostSm,fontSize:"10px",color:"#8B0000",borderColor:"#c85050"}} onClick={()=>exportAmendementsPDF(filterTraitAn,amendFiltres)}>↓ PDF</button>
+                  )}
                 </div>
               </div>
 
@@ -3115,11 +3166,11 @@ export default function App() {
                 </div>
               )}
 
-              {/* Documents PDF prestataires - uniquement onglet traitements */}
-              {vigneTab==="traitements" && filterTraitAn && (
+              {/* Documents PDF prestataires - traitements, biodynamie, amendements */}
+              {["traitements","biodynamie","amendements"].includes(vigneTab) && filterTraitAn && (
                 <div style={{...s.card,marginTop:"14px"}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
-                    <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#2C3E50"}}>Calendriers prestataires</div>
+                    <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#2C3E50"}}>Calendriers / documents prestataires</div>
                     {!closed && (
                       <label style={{...s.btnSm,cursor:"pointer",display:"flex",alignItems:"center",gap:"5px"}}>
                         {uploadingPdf?"Chargement...":"+ Ajouter PDF"}
@@ -3127,18 +3178,18 @@ export default function App() {
                           const file=e.target.files[0];
                           if(file){
                             const nom=window.prompt("Nom du document (ex: Calendrier Lorain 2026)", file.name.replace(".pdf",""));
-                            if(nom!==null) uploadPdf(file, filterTraitAn, nom||file.name);
+                            if(nom!==null) uploadPdf(file, filterTraitAn, nom||file.name, vigneTab);
                           }
                           e.target.value="";
                         }}/>
                       </label>
                     )}
                   </div>
-                  {pdfDocs.filter(p=>p.campagne===filterTraitAn).length===0&&(
+                  {pdfDocs.filter(p=>p.campagne===filterTraitAn&&(p.categorie||"traitements")===vigneTab).length===0&&(
                     <div style={{fontSize:"12px",color:"#9a8870",fontStyle:"italic"}}>Aucun document pour cette campagne.</div>
                   )}
                   <div style={{display:"grid",gap:"8px"}}>
-                    {pdfDocs.filter(p=>p.campagne===filterTraitAn).map(pdf=>(
+                    {pdfDocs.filter(p=>p.campagne===filterTraitAn&&(p.categorie||"traitements")===vigneTab).map(pdf=>(
                       <div key={pdf.id} style={{display:"flex",alignItems:"center",gap:"12px",padding:"10px 12px",background:"#F0EDE8",borderRadius:"6px",border:"0.5px solid #d4c4a0"}}>
                         <div style={{width:"32px",height:"32px",background:"#fdd0d0",borderRadius:"4px",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
                           <span style={{fontSize:"10px",fontWeight:500,color:"#cc2222",fontFamily:"monospace"}}>PDF</span>
@@ -3331,15 +3382,14 @@ export default function App() {
                       <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
                         <thead>
                           <tr style={{borderBottom:"1px solid #d4c4a0",background:"#F0EDE8"}}>
-                            {["Parcelle","Surface","Produit","Quantite","N total","N/ha","Observations",""].map(h=>(
+                            {["Surface","Produit","Quantite","N total","N/ha","Observations",""].map(h=>(
                               <th key={h} style={{textAlign:"left",padding:"7px 10px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#9a8870",fontWeight:500}}>{h}</th>
                             ))}
                           </tr>
                         </thead>
                         <tbody>
-                          {amendFiltres.sort((a,b)=>a.parcelle.localeCompare(b.parcelle)).map((a,i)=>(
+                          {amendFiltres.sort((a,b)=>(a.timestamp||"").localeCompare(b.timestamp||"")).map((a,i)=>(
                             <tr key={a.id} style={{borderBottom:"1px solid #ede5d4",background:i%2===0?"transparent":"#F8F6F2"}}>
-                              <td style={{padding:"8px 10px",fontWeight:500,color:"#1a1205"}}>{a.parcelle}</td>
                               <td style={{padding:"8px 10px",color:"#6a5838",fontFamily:"monospace"}}>{a.surface} ha</td>
                               <td style={{padding:"8px 10px"}}>
                                 <span style={{background:"#E8E0D0",color:"#2C3E50",borderRadius:"3px",padding:"1px 7px",fontSize:"11px",fontFamily:"monospace"}}>{a.produit}</span>
@@ -3347,12 +3397,12 @@ export default function App() {
                               <td style={{padding:"8px 10px",color:"#6a5838",fontFamily:"monospace"}}>{a.quantite}</td>
                               <td style={{padding:"8px 10px",color:"#6a5838",fontFamily:"monospace"}}>{a.nTotal}</td>
                               <td style={{padding:"8px 10px",color:"#6a5838",fontFamily:"monospace"}}>{a.nParHa}</td>
-                              <td style={{padding:"8px 10px",color:"#7a6840",fontStyle:"italic",fontSize:"11px"}}>{a.observations}</td>
+                              <td style={{padding:"8px 10px",color:"#7a6840",fontStyle:"italic",fontSize:"11px"}}>{a.parcelle?<span style={{fontStyle:"normal",color:"#2C3E50",marginRight:"6px"}}>{a.parcelle}</span>:null}{a.observations}</td>
                               <td style={{padding:"8px 10px"}}>
                                 {!closed&&(
                                   <div style={{display:"flex",gap:"3px"}}>
                                     <button style={{...s.ghostSm,fontSize:"10px"}}
-                                      onClick={()=>{setAmendForm({campagne:a.campagne,parcelle:a.parcelle,surface:a.surface,produit:a.produit,quantite:a.quantite,nTotal:a.nTotal,nParHa:a.nParHa,observations:a.observations,teneurAzote:a.teneurAzote||""});setEditingAmend(a);setShowAmendForm(true);}}>Mod.</button>
+                                      onClick={()=>{setAmendForm({campagne:a.campagne,parcelle:a.parcelle||"",date:a.date||"",surface:a.surface,produit:a.produit,quantite:a.quantite,nTotal:a.nTotal,nParHa:a.nParHa,observations:a.observations,teneurAzote:a.teneurAzote||""});setEditingAmend(a);setShowAmendForm(true);}}>Mod.</button>
                                     <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
                                       onClick={()=>{if(window.confirm("Supprimer ?")){ setAmendements(prev=>prev.filter(x=>x.id!==a.id)); fbDelete("amendements",a.id); if(a.produit && a.quantite){ const sp=findStockProd(a.produit); if(sp){ const q=parseFloat(a.quantite.replace(/[^0-9.]/g,""))||0; const updated={...sp,stockActuel:String(Math.round(((parseFloat(sp.stockActuel)||0)+q)*100)/100)}; setStockProduits(prev=>prev.map(x=>x.id===sp.id?updated:x)); fbSave("stockProduits",sp.id,updated); } } }}}>Sup.</button>
                                   </div>
@@ -5169,6 +5219,12 @@ export default function App() {
                       + Amendement
                     </button>
                   )}
+                  {vigneTab==="biodynamie" && filterTraitAn && biodyFiltres.length>0 && (
+                    <button style={{...s.ghostSm,fontSize:"10px",color:"#8B0000",borderColor:"#c85050"}} onClick={()=>exportBiodynamiePDF(filterTraitAn,biodyFiltres)}>↓ PDF</button>
+                  )}
+                  {vigneTab==="amendements" && filterTraitAn && amendFiltres.length>0 && (
+                    <button style={{...s.ghostSm,fontSize:"10px",color:"#8B0000",borderColor:"#c85050"}} onClick={()=>exportAmendementsPDF(filterTraitAn,amendFiltres)}>↓ PDF</button>
+                  )}
                 </div>
               </div>
 
@@ -5271,11 +5327,11 @@ export default function App() {
                 </div>
               )}
 
-              {/* Documents PDF prestataires - uniquement onglet traitements */}
-              {vigneTab==="traitements" && filterTraitAn && (
+              {/* Documents PDF prestataires - traitements, biodynamie, amendements */}
+              {["traitements","biodynamie","amendements"].includes(vigneTab) && filterTraitAn && (
                 <div style={{...s.card,marginTop:"14px"}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
-                    <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#2C3E50"}}>Calendriers prestataires</div>
+                    <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#2C3E50"}}>Calendriers / documents prestataires</div>
                     {!closed && (
                       <label style={{...s.btnSm,cursor:"pointer",display:"flex",alignItems:"center",gap:"5px"}}>
                         {uploadingPdf?"Chargement...":"+ Ajouter PDF"}
@@ -5283,18 +5339,18 @@ export default function App() {
                           const file=e.target.files[0];
                           if(file){
                             const nom=window.prompt("Nom du document (ex: Calendrier Lorain 2026)", file.name.replace(".pdf",""));
-                            if(nom!==null) uploadPdf(file, filterTraitAn, nom||file.name);
+                            if(nom!==null) uploadPdf(file, filterTraitAn, nom||file.name, vigneTab);
                           }
                           e.target.value="";
                         }}/>
                       </label>
                     )}
                   </div>
-                  {pdfDocs.filter(p=>p.campagne===filterTraitAn).length===0&&(
+                  {pdfDocs.filter(p=>p.campagne===filterTraitAn&&(p.categorie||"traitements")===vigneTab).length===0&&(
                     <div style={{fontSize:"12px",color:"#9a8870",fontStyle:"italic"}}>Aucun document pour cette campagne.</div>
                   )}
                   <div style={{display:"grid",gap:"8px"}}>
-                    {pdfDocs.filter(p=>p.campagne===filterTraitAn).map(pdf=>(
+                    {pdfDocs.filter(p=>p.campagne===filterTraitAn&&(p.categorie||"traitements")===vigneTab).map(pdf=>(
                       <div key={pdf.id} style={{display:"flex",alignItems:"center",gap:"12px",padding:"10px 12px",background:"#F0EDE8",borderRadius:"6px",border:"0.5px solid #d4c4a0"}}>
                         <div style={{width:"32px",height:"32px",background:"#fdd0d0",borderRadius:"4px",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
                           <span style={{fontSize:"10px",fontWeight:500,color:"#cc2222",fontFamily:"monospace"}}>PDF</span>
@@ -5487,15 +5543,14 @@ export default function App() {
                       <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
                         <thead>
                           <tr style={{borderBottom:"1px solid #d4c4a0",background:"#F0EDE8"}}>
-                            {["Parcelle","Surface","Produit","Quantite","N total","N/ha","Observations",""].map(h=>(
+                            {["Surface","Produit","Quantite","N total","N/ha","Observations",""].map(h=>(
                               <th key={h} style={{textAlign:"left",padding:"7px 10px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#9a8870",fontWeight:500}}>{h}</th>
                             ))}
                           </tr>
                         </thead>
                         <tbody>
-                          {amendFiltres.sort((a,b)=>a.parcelle.localeCompare(b.parcelle)).map((a,i)=>(
+                          {amendFiltres.sort((a,b)=>(a.timestamp||"").localeCompare(b.timestamp||"")).map((a,i)=>(
                             <tr key={a.id} style={{borderBottom:"1px solid #ede5d4",background:i%2===0?"transparent":"#F8F6F2"}}>
-                              <td style={{padding:"8px 10px",fontWeight:500,color:"#1a1205"}}>{a.parcelle}</td>
                               <td style={{padding:"8px 10px",color:"#6a5838",fontFamily:"monospace"}}>{a.surface} ha</td>
                               <td style={{padding:"8px 10px"}}>
                                 <span style={{background:"#E8E0D0",color:"#2C3E50",borderRadius:"3px",padding:"1px 7px",fontSize:"11px",fontFamily:"monospace"}}>{a.produit}</span>
@@ -5503,12 +5558,12 @@ export default function App() {
                               <td style={{padding:"8px 10px",color:"#6a5838",fontFamily:"monospace"}}>{a.quantite}</td>
                               <td style={{padding:"8px 10px",color:"#6a5838",fontFamily:"monospace"}}>{a.nTotal}</td>
                               <td style={{padding:"8px 10px",color:"#6a5838",fontFamily:"monospace"}}>{a.nParHa}</td>
-                              <td style={{padding:"8px 10px",color:"#7a6840",fontStyle:"italic",fontSize:"11px"}}>{a.observations}</td>
+                              <td style={{padding:"8px 10px",color:"#7a6840",fontStyle:"italic",fontSize:"11px"}}>{a.parcelle?<span style={{fontStyle:"normal",color:"#2C3E50",marginRight:"6px"}}>{a.parcelle}</span>:null}{a.observations}</td>
                               <td style={{padding:"8px 10px"}}>
                                 {!closed&&(
                                   <div style={{display:"flex",gap:"3px"}}>
                                     <button style={{...s.ghostSm,fontSize:"10px"}}
-                                      onClick={()=>{setAmendForm({campagne:a.campagne,parcelle:a.parcelle,surface:a.surface,produit:a.produit,quantite:a.quantite,nTotal:a.nTotal,nParHa:a.nParHa,observations:a.observations,teneurAzote:a.teneurAzote||""});setEditingAmend(a);setShowAmendForm(true);}}>Mod.</button>
+                                      onClick={()=>{setAmendForm({campagne:a.campagne,parcelle:a.parcelle||"",date:a.date||"",surface:a.surface,produit:a.produit,quantite:a.quantite,nTotal:a.nTotal,nParHa:a.nParHa,observations:a.observations,teneurAzote:a.teneurAzote||""});setEditingAmend(a);setShowAmendForm(true);}}>Mod.</button>
                                     <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
                                       onClick={()=>{if(window.confirm("Supprimer ?")){ setAmendements(prev=>prev.filter(x=>x.id!==a.id)); fbDelete("amendements",a.id); if(a.produit && a.quantite){ const sp=findStockProd(a.produit); if(sp){ const q=parseFloat(a.quantite.replace(/[^0-9.]/g,""))||0; const updated={...sp,stockActuel:String(Math.round(((parseFloat(sp.stockActuel)||0)+q)*100)/100)}; setStockProduits(prev=>prev.map(x=>x.id===sp.id?updated:x)); fbSave("stockProduits",sp.id,updated); } } }}}>Sup.</button>
                                   </div>
@@ -8238,13 +8293,6 @@ export default function App() {
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
                 <div><span style={s.lbl}>Campagne</span>
                   <input type="number" style={s.inp} value={amendForm.campagne} onChange={e=>setAmendForm(f=>({...f,campagne:e.target.value}))}/></div>
-                <div><span style={s.lbl}>Parcelle *</span>
-                  <select style={s.sel} value={amendForm.parcelle} onChange={e=>setAmendForm(f=>({...f,parcelle:e.target.value}))}>
-                    <option value="">Selectionner...</option>
-                    {parcelles.length>0 ? parcelles.map(p=><option key={p.id} value={p.nom}>{p.nom}</option>) :
-                      ["La Fontinette","Bauchet Thomas PN","Les Garennes","La Tuilerie","Arpent Rouge","Les Maisons Brulees","Les Terres Bleues","Bellevue","Laurinette","Branscourt","Try","Festigny","Vincelles"].map(n=><option key={n} value={n}>{n}</option>)
-                    }
-                  </select></div>
               </div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
                 <div><span style={s.lbl}>Surface (ha)</span>
