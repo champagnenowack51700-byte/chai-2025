@@ -508,6 +508,7 @@ export default function App() {
   const [filterStockCuvee, setFilterStockCuvee] = useState("");
   const [riRequis,         setRiRequis]         = useState([]);
   const [degresRatafia,    setDegresRatafia]     = useState([]);
+  const [surfacesExploitees, setSurfacesExploitees] = useState([]);
   const [showRiForm,       setShowRiForm]       = useState(false);
   const [showDegreRatafiaForm, setShowDegreRatafiaForm] = useState(false);
   const [degreRatafiaForm, setDegreRatafiaForm] = useState("18");
@@ -1324,6 +1325,7 @@ export default function App() {
     ["cuvesCuverie",  setCuvesCuverie],
     ["riRequis",      setRiRequis],
     ["degresRatafia", setDegresRatafia],
+    ["surfacesExploitees", setSurfacesExploitees],
     ["rendements",    setRendementsAnnuels],
     ["apportsParcelles", setApportsParcelles],
   ];
@@ -1348,6 +1350,22 @@ export default function App() {
   }, []);
 
   const getTonneau = (id) => tonneaux.find(t=>t.id===id);
+  // Surface totale de l'exploitation pour une campagne (base du ratio azote/ha). Par defaut : somme des surfaces des parcelles.
+  const surfaceExploiteeDefaut = () => Math.round(parcelles.reduce((s,p)=>s+(parseFloat(p.surface)||0),0)*10000)/10000;
+  const getSurfaceExploitee = (camp) => {
+    const r = surfacesExploitees.find(x=>x.campagne===String(camp));
+    return r&&parseFloat(r.surface)>0 ? parseFloat(r.surface) : surfaceExploiteeDefaut();
+  };
+  const modifierSurfaceExploitee = (camp) => {
+    const actuelle = getSurfaceExploitee(camp);
+    const v = window.prompt(`Surface totale exploitée pour la campagne ${camp} (ha) :\n(par défaut : somme de vos parcelles = ${surfaceExploiteeDefaut()} ha)`, String(actuelle));
+    if(v===null) return;
+    const surface = parseFloat(String(v).replace(",","."));
+    if(!(surface>0)) return alert("Surface invalide.");
+    const doc = {id:"surf_"+camp, campagne:String(camp), surface:String(surface)};
+    setSurfacesExploitees(prev=>[...prev.filter(x=>x.campagne!==String(camp)), doc]);
+    fbSave("surfacesExploitees", doc.id, doc);
+  };
   // Statut BIO d'un marc : derive de la certification des parcelles, sauf si declasse manuellement en non BIO.
   const isBioVendange = (v) => {
     if(v.declasseNonBio) return false;
@@ -1880,7 +1898,7 @@ export default function App() {
     const w = window.open("","_blank"); w.document.write(html); w.document.close(); setTimeout(()=>w.print(),500);
   };
 
-  const exportAmendementsPDF = (campagne, amends) => {
+  const exportAmendementsPDF = (campagne, amends, surfExpl=0) => {
     const tries = [...amends].sort((a,b)=>(a.timestamp||"").localeCompare(b.timestamp||""));
     const hasObs = tries.some(a=>a.observations||a.parcelle);
     const nTotalSum = tries.reduce((s,a)=>s+(parseFloat(a.nTotal)||0),0);
@@ -1899,6 +1917,7 @@ export default function App() {
     .total{background:#f5f5f0;font-weight:bold}</style></head>
     <body><h1>Champagne Nowack — Amendements — Campagne ${campagne}</h1>
     <p style="color:#9a8870;font-size:12px">${tries.length} amendement(s) — Total azote : ${Math.round(nTotalSum*100)/100} kg N</p>
+    ${surfExpl>0?`<p style="font-size:13px;color:#2d6a00;font-weight:bold">Surface exploitée : ${surfExpl} ha — Ratio : ${Math.round(nTotalSum/surfExpl*100)/100} kg N/ha</p>`:""}
     <table><thead><tr><th>Surface</th><th>Produit</th><th>Quantité</th><th>N total</th><th>N/ha</th>${hasObs?"<th>Observations</th>":""}</tr></thead>
     <tbody>${rows}<tr class="total"><td style="text-align:right">${Math.round(surfSum*1000)/1000} ha</td><td colspan="2">TOTAL</td><td style="text-align:right">${Math.round(nTotalSum*100)/100} kg</td><td></td>${hasObs?"<td></td>":""}</tr></tbody></table>
     </body></html>`;
@@ -3062,7 +3081,7 @@ export default function App() {
                     <button style={{...s.ghostSm,fontSize:"10px",color:"#8B0000",borderColor:"#c85050"}} onClick={()=>exportBiodynamiePDF(filterTraitAn,biodyFiltres)}>↓ PDF</button>
                   )}
                   {vigneTab==="amendements" && filterTraitAn && amendFiltres.length>0 && (
-                    <button style={{...s.ghostSm,fontSize:"10px",color:"#8B0000",borderColor:"#c85050"}} onClick={()=>exportAmendementsPDF(filterTraitAn,amendFiltres)}>↓ PDF</button>
+                    <button style={{...s.ghostSm,fontSize:"10px",color:"#8B0000",borderColor:"#c85050"}} onClick={()=>exportAmendementsPDF(filterTraitAn,amendFiltres,getSurfaceExploitee(filterTraitAn))}>↓ PDF</button>
                   )}
                 </div>
               </div>
@@ -3116,10 +3135,11 @@ export default function App() {
                       {lbl:"Amendements",val:amendFiltres.length},
                       {lbl:"Total azote",val:`${Math.round(nTot*100)/100} kg N`,col:"#2d6a00"},
                       {lbl:"Surface amendée",val:`${Math.round(surfTot*1000)/1000} ha`},
-                      {lbl:"N/ha moyen",val:surfTot>0?`${Math.round(nTot/surfTot*100)/100} kg`:"-",col:"#2d6a00"},
+                      {lbl:"Surface exploitée ✎",val:`${getSurfaceExploitee(filterTraitAn)} ha`,onClick:()=>modifierSurfaceExploitee(filterTraitAn)},
+                      {lbl:"N/ha exploitation",val:getSurfaceExploitee(filterTraitAn)>0?`${Math.round(nTot/getSurfaceExploitee(filterTraitAn)*100)/100} kg`:"-",col:"#2d6a00",fort:true},
                       ...Object.entries(parProduit).filter(([,v])=>v>0).map(([p,v])=>({lbl:p,val:`${Math.round(v*100)/100} kg N`,col:"#185FA5"})),
                     ].map((k,i)=>(
-                      <div key={i} style={{...s.card,padding:"10px 12px"}}>
+                      <div key={i} onClick={k.onClick} title={k.onClick?"Cliquer pour modifier":undefined} style={{...s.card,padding:"10px 12px",cursor:k.onClick?"pointer":"default",border:k.fort?"1px solid #2d6a00":s.card.border}}>
                         <div style={s.lbl}>{k.lbl}</div>
                         <div style={{fontSize:"16px",fontWeight:500,color:k.col||"#8B7355",lineHeight:1.2}}>{k.val}</div>
                       </div>
@@ -5247,7 +5267,7 @@ export default function App() {
                     <button style={{...s.ghostSm,fontSize:"10px",color:"#8B0000",borderColor:"#c85050"}} onClick={()=>exportBiodynamiePDF(filterTraitAn,biodyFiltres)}>↓ PDF</button>
                   )}
                   {vigneTab==="amendements" && filterTraitAn && amendFiltres.length>0 && (
-                    <button style={{...s.ghostSm,fontSize:"10px",color:"#8B0000",borderColor:"#c85050"}} onClick={()=>exportAmendementsPDF(filterTraitAn,amendFiltres)}>↓ PDF</button>
+                    <button style={{...s.ghostSm,fontSize:"10px",color:"#8B0000",borderColor:"#c85050"}} onClick={()=>exportAmendementsPDF(filterTraitAn,amendFiltres,getSurfaceExploitee(filterTraitAn))}>↓ PDF</button>
                   )}
                 </div>
               </div>
@@ -5301,10 +5321,11 @@ export default function App() {
                       {lbl:"Amendements",val:amendFiltres.length},
                       {lbl:"Total azote",val:`${Math.round(nTot*100)/100} kg N`,col:"#2d6a00"},
                       {lbl:"Surface amendée",val:`${Math.round(surfTot*1000)/1000} ha`},
-                      {lbl:"N/ha moyen",val:surfTot>0?`${Math.round(nTot/surfTot*100)/100} kg`:"-",col:"#2d6a00"},
+                      {lbl:"Surface exploitée ✎",val:`${getSurfaceExploitee(filterTraitAn)} ha`,onClick:()=>modifierSurfaceExploitee(filterTraitAn)},
+                      {lbl:"N/ha exploitation",val:getSurfaceExploitee(filterTraitAn)>0?`${Math.round(nTot/getSurfaceExploitee(filterTraitAn)*100)/100} kg`:"-",col:"#2d6a00",fort:true},
                       ...Object.entries(parProduit).filter(([,v])=>v>0).map(([p,v])=>({lbl:p,val:`${Math.round(v*100)/100} kg N`,col:"#185FA5"})),
                     ].map((k,i)=>(
-                      <div key={i} style={{...s.card,padding:"10px 12px"}}>
+                      <div key={i} onClick={k.onClick} title={k.onClick?"Cliquer pour modifier":undefined} style={{...s.card,padding:"10px 12px",cursor:k.onClick?"pointer":"default",border:k.fort?"1px solid #2d6a00":s.card.border}}>
                         <div style={s.lbl}>{k.lbl}</div>
                         <div style={{fontSize:"16px",fontWeight:500,color:k.col||"#8B7355",lineHeight:1.2}}>{k.val}</div>
                       </div>
