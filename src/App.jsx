@@ -3226,6 +3226,7 @@ export default function App() {
                                 <td style={{padding:"8px 10px"}}>
                                   <div style={{fontWeight:500,color:"#1a1205"}}>{p.nom}</div>
                                   {p.fournisseur&&<div style={{fontSize:"10px",color:"#9a8870"}}>{p.fournisseur}</div>}
+                                  <div style={{fontSize:"10px",marginTop:"2px",color:(p.categorie||"traitement")==="amendement"?"#2d6a00":(p.categorie==="biodynamie"?"#7a5200":"#185FA5")}}>{{traitement:"🛡️ Traitements",amendement:"🌱 Amendements",biodynamie:"✨ Biodynamie"}[p.categorie||"traitement"]}</div>
                                 </td>
                                 <td style={{padding:"8px 10px",fontFamily:"monospace",fontSize:"11px",color:"#9a8870"}}>{p.nAmm||"-"}</td>
                                 <td style={{padding:"8px 10px"}}>
@@ -5410,6 +5411,7 @@ export default function App() {
                                 <td style={{padding:"8px 10px"}}>
                                   <div style={{fontWeight:500,color:"#1a1205"}}>{p.nom}</div>
                                   {p.fournisseur&&<div style={{fontSize:"10px",color:"#9a8870"}}>{p.fournisseur}</div>}
+                                  <div style={{fontSize:"10px",marginTop:"2px",color:(p.categorie||"traitement")==="amendement"?"#2d6a00":(p.categorie==="biodynamie"?"#7a5200":"#185FA5")}}>{{traitement:"🛡️ Traitements",amendement:"🌱 Amendements",biodynamie:"✨ Biodynamie"}[p.categorie||"traitement"]}</div>
                                 </td>
                                 <td style={{padding:"8px 10px",fontFamily:"monospace",fontSize:"11px",color:"#9a8870"}}>{p.nAmm||"-"}</td>
                                 <td style={{padding:"8px 10px"}}>
@@ -8230,32 +8232,42 @@ export default function App() {
                 <div><span style={s.lbl}>N° AMM</span>
                    <input style={s.inp} placeholder="ex. 9800474" value={produitForm.nAmm||""} onChange={e=>setProduitForm(f=>({...f,nAmm:e.target.value}))}/></div>
               </div>
-              <div>
-                <span style={s.lbl}>Catégorie</span>
-                <div style={{display:"flex",gap:"8px"}}>
-                  {[["traitement","🛡️ Traitement"],["amendement","🌱 Amendement"],["biodynamie","✨ Biodynamie"]].map(([val,lbl])=>(
-                    <button key={val} type="button" onClick={()=>setProduitForm(f=>({...f,categorie:val}))}
-                      style={{flex:1,padding:"8px",borderRadius:"6px",border:`0.5px solid ${produitForm.categorie===val?"#8B7355":"#d4c4a0"}`,background:produitForm.categorie===val?"#F0EDE8":"transparent",color:produitForm.categorie===val?"#8B7355":"#9a8870",fontSize:"12px",cursor:"pointer",fontWeight:produitForm.categorie===val?600:400}}>
-                      {lbl}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              {(()=>{
+                const PA = [
+                  ["Cuivre","traitement"],["Soufre","traitement"],["Pyrethrine","traitement"],["Bicarbonate","traitement"],["Autre","traitement"],
+                  ["Azote","amendement"],
+                  ["Preparation biodynamique","biodynamie"],
+                ];
+                const paActuel = produitForm.categorie==="amendement" ? "Azote" : produitForm.categorie==="biodynamie" ? "Preparation biodynamique" : (produitForm.substanceActive||"Cuivre");
+                const dest = {traitement:"🛡️ Traitements",amendement:"🌱 Amendements",biodynamie:"✨ Biodynamie"}[produitForm.categorie||"traitement"];
+                return (
+                  <div>
+                    <span style={s.lbl}>Principe actif</span>
+                    <select style={s.sel} value={paActuel} onChange={e=>{
+                      const pa=e.target.value; const cat=(PA.find(x=>x[0]===pa)||[])[1]||"traitement";
+                      setProduitForm(f=>({...f,substanceActive:pa,categorie:cat}));
+                    }}>
+                      <optgroup label="Traitements (cuivre)">
+                        {PA.filter(x=>x[1]==="traitement").map(([pa])=><option key={pa} value={pa}>{pa}</option>)}
+                      </optgroup>
+                      <optgroup label="Amendements (azote)">
+                        <option value="Azote">Azote</option>
+                      </optgroup>
+                      <optgroup label="Biodynamie">
+                        <option value="Preparation biodynamique">Préparation biodynamique</option>
+                      </optgroup>
+                    </select>
+                    <div style={{fontSize:"10px",color:"#7a6840",marginTop:"3px"}}>Ce produit apparaîtra dans : <strong>{dest}</strong></div>
+                  </div>
+                );
+              })()}
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
-                {produitForm.categorie==="traitement"&&(<>
-                  <div><span style={s.lbl}>Substance active</span>
-                    <select style={s.sel} value={produitForm.substanceActive||"Cuivre"} onChange={e=>setProduitForm(f=>({...f,substanceActive:e.target.value}))}>
-                      <option value="Cuivre">Cuivre</option>
-                      <option value="Soufre">Soufre</option>
-                      <option value="Pyrethrine">Pyrethrine</option>
-                      <option value="Bicarbonate">Bicarbonate</option>
-                      <option value="Autre">Autre</option>
-                    </select></div>
-                  <div><span style={s.lbl}>Teneur Cu (g/kg ou g/L)</span>
+                {(produitForm.categorie||"traitement")==="traitement"&&(produitForm.substanceActive||"Cuivre")==="Cuivre"&&(
+                  <div style={{gridColumn:"span 2"}}><span style={s.lbl}>Teneur Cu (g/kg ou g/L)</span>
                     <input type="number" step="1" style={s.inp} placeholder="ex. 200" value={produitForm.teneurCuivre||""} onChange={e=>setProduitForm(f=>({...f,teneurCuivre:e.target.value}))}/>
                     {produitForm.teneurCuivre&&<div style={{fontSize:"10px",color:"#c47800",marginTop:"2px"}}>= {Math.round(parseFloat(produitForm.teneurCuivre)/10)}% de cuivre</div>}
                   </div>
-                </>)}
+                )}
                 {produitForm.categorie==="amendement"&&(
                   <div style={{gridColumn:"span 2"}}><span style={s.lbl}>Teneur en azote (% N)</span>
                     <input type="number" step="0.1" style={s.inp} placeholder="ex. 6" value={produitForm.teneurAzote||""} onChange={e=>setProduitForm(f=>({...f,teneurAzote:e.target.value}))}/>
@@ -8466,7 +8478,7 @@ export default function App() {
                     <div style={{...s.lbl,marginBottom:"8px"}}>Depuis le stock produits :</div>
                     {stockProduits.length>0&&(
                       <div style={{display:"flex",gap:"5px",flexWrap:"wrap",marginBottom:"10px"}}>
-                        {stockProduits.map((sp,i)=>(
+                        {stockProduits.filter(sp=>(sp.categorie||"traitement")==="traitement").map((sp,i)=>(
                           <button key={i} style={{background:"#F0EDE8",border:"0.5px solid #d4c4a0",borderRadius:"4px",padding:"4px 8px",fontSize:"10px",cursor:"pointer",color:"#2C3E50",fontFamily:"monospace"}}
                             onClick={()=>setTraitProduit(f=>({...f,
                               nom:sp.nom,
