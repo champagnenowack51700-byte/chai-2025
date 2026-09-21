@@ -570,7 +570,7 @@ export default function App() {
   const [showImportBL,     setShowImportBL]      = useState(false);
   const [importBLResult,   setImportBLResult]    = useState([]);
   const [importBLLoading,  setImportBLLoading]   = useState(false);
-  const PRODUIT_EMPTY = {nom:"",nAmm:"",substanceActive:"Cuivre",teneurCuivre:"",unite:"kg",stockActuel:"",fournisseur:"",observations:""};
+  const PRODUIT_EMPTY = {nom:"",nAmm:"",substanceActive:"Cuivre",teneurCuivre:"",teneurAzote:"",categorie:"traitement",unite:"kg",stockActuel:"",fournisseur:"",observations:""};
   const [produitForm,      setProduitForm]       = useState(PRODUIT_EMPTY);
   const [surfaceCalcul,    setSurfaceCalcul]     = useState("9.30");
   // teneurCuivre = g de cuivre metal par kg ou par L de produit
@@ -598,7 +598,7 @@ export default function App() {
   const [showAmendForm,    setShowAmendForm]     = useState(false);
   const [editingAmend,     setEditingAmend]      = useState(null);
   const [biodyForm,        setBiodyForm]         = useState({campagne:new Date().getFullYear().toString(),date:"",surface:"",produit:"",observations:""});
-  const [amendForm,        setAmendForm]         = useState({campagne:new Date().getFullYear().toString(),parcelle:"",surface:"",produit:"",quantite:"",nTotal:"",nParHa:"",observations:""});
+  const [amendForm,        setAmendForm]         = useState({campagne:new Date().getFullYear().toString(),parcelle:"",surface:"",produit:"",quantite:"",nTotal:"",nParHa:"",observations:"",teneurAzote:""});
   const TRAIT_EMPTY = {
     campagne: new Date().getFullYear().toString(),
     numero: "",
@@ -1186,7 +1186,7 @@ export default function App() {
       }
     }
     fbSave("amendements", a.id, a);
-    setAmendForm({campagne:new Date().getFullYear().toString(),parcelle:"",surface:"",produit:"",quantite:"",nTotal:"",nParHa:"",observations:""});
+    setAmendForm({campagne:new Date().getFullYear().toString(),parcelle:"",surface:"",produit:"",quantite:"",nTotal:"",nParHa:"",observations:"",teneurAzote:""});
     setEditingAmend(null); setShowAmendForm(false);
   };
 
@@ -3352,7 +3352,7 @@ export default function App() {
                                 {!closed&&(
                                   <div style={{display:"flex",gap:"3px"}}>
                                     <button style={{...s.ghostSm,fontSize:"10px"}}
-                                      onClick={()=>{setAmendForm({campagne:a.campagne,parcelle:a.parcelle,surface:a.surface,produit:a.produit,quantite:a.quantite,nTotal:a.nTotal,nParHa:a.nParHa,observations:a.observations});setEditingAmend(a);setShowAmendForm(true);}}>Mod.</button>
+                                      onClick={()=>{setAmendForm({campagne:a.campagne,parcelle:a.parcelle,surface:a.surface,produit:a.produit,quantite:a.quantite,nTotal:a.nTotal,nParHa:a.nParHa,observations:a.observations,teneurAzote:a.teneurAzote||""});setEditingAmend(a);setShowAmendForm(true);}}>Mod.</button>
                                     <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
                                       onClick={()=>{if(window.confirm("Supprimer ?")){ setAmendements(prev=>prev.filter(x=>x.id!==a.id)); fbDelete("amendements",a.id); if(a.produit && a.quantite){ const sp=findStockProd(a.produit); if(sp){ const q=parseFloat(a.quantite.replace(/[^0-9.]/g,""))||0; const updated={...sp,stockActuel:String(Math.round(((parseFloat(sp.stockActuel)||0)+q)*100)/100)}; setStockProduits(prev=>prev.map(x=>x.id===sp.id?updated:x)); fbSave("stockProduits",sp.id,updated); } } }}}>Sup.</button>
                                   </div>
@@ -5508,7 +5508,7 @@ export default function App() {
                                 {!closed&&(
                                   <div style={{display:"flex",gap:"3px"}}>
                                     <button style={{...s.ghostSm,fontSize:"10px"}}
-                                      onClick={()=>{setAmendForm({campagne:a.campagne,parcelle:a.parcelle,surface:a.surface,produit:a.produit,quantite:a.quantite,nTotal:a.nTotal,nParHa:a.nParHa,observations:a.observations});setEditingAmend(a);setShowAmendForm(true);}}>Mod.</button>
+                                      onClick={()=>{setAmendForm({campagne:a.campagne,parcelle:a.parcelle,surface:a.surface,produit:a.produit,quantite:a.quantite,nTotal:a.nTotal,nParHa:a.nParHa,observations:a.observations,teneurAzote:a.teneurAzote||""});setEditingAmend(a);setShowAmendForm(true);}}>Mod.</button>
                                     <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
                                       onClick={()=>{if(window.confirm("Supprimer ?")){ setAmendements(prev=>prev.filter(x=>x.id!==a.id)); fbDelete("amendements",a.id); if(a.produit && a.quantite){ const sp=findStockProd(a.produit); if(sp){ const q=parseFloat(a.quantite.replace(/[^0-9.]/g,""))||0; const updated={...sp,stockActuel:String(Math.round(((parseFloat(sp.stockActuel)||0)+q)*100)/100)}; setStockProduits(prev=>prev.map(x=>x.id===sp.id?updated:x)); fbSave("stockProduits",sp.id,updated); } } }}}>Sup.</button>
                                   </div>
@@ -8129,19 +8129,38 @@ export default function App() {
                 <div><span style={s.lbl}>N° AMM</span>
                    <input style={s.inp} placeholder="ex. 9800474" value={produitForm.nAmm||""} onChange={e=>setProduitForm(f=>({...f,nAmm:e.target.value}))}/></div>
               </div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
-                <div><span style={s.lbl}>Substance active</span>
-                  <select style={s.sel} value={produitForm.substanceActive||"Cuivre"} onChange={e=>setProduitForm(f=>({...f,substanceActive:e.target.value}))}>
-                    <option value="Cuivre">Cuivre</option>
-                    <option value="Soufre">Soufre</option>
-                    <option value="Pyrethrine">Pyrethrine</option>
-                    <option value="Bicarbonate">Bicarbonate</option>
-                    <option value="Autre">Autre</option>
-                  </select></div>
-                <div><span style={s.lbl}>Teneur Cu (g/kg ou g/L)</span>
-                  <input type="number" step="1" style={s.inp} placeholder="ex. 200" value={produitForm.teneurCuivre||""} onChange={e=>setProduitForm(f=>({...f,teneurCuivre:e.target.value}))}/>
-                  {produitForm.teneurCuivre&&<div style={{fontSize:"10px",color:"#c47800",marginTop:"2px"}}>= {Math.round(parseFloat(produitForm.teneurCuivre)/10)}% de cuivre</div>}
+              <div>
+                <span style={s.lbl}>Catégorie</span>
+                <div style={{display:"flex",gap:"8px"}}>
+                  {[["traitement","🛡️ Traitement"],["amendement","🌱 Amendement"],["biodynamie","✨ Biodynamie"]].map(([val,lbl])=>(
+                    <button key={val} type="button" onClick={()=>setProduitForm(f=>({...f,categorie:val}))}
+                      style={{flex:1,padding:"8px",borderRadius:"6px",border:`0.5px solid ${produitForm.categorie===val?"#8B7355":"#d4c4a0"}`,background:produitForm.categorie===val?"#F0EDE8":"transparent",color:produitForm.categorie===val?"#8B7355":"#9a8870",fontSize:"12px",cursor:"pointer",fontWeight:produitForm.categorie===val?600:400}}>
+                      {lbl}
+                    </button>
+                  ))}
                 </div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
+                {produitForm.categorie==="traitement"&&(<>
+                  <div><span style={s.lbl}>Substance active</span>
+                    <select style={s.sel} value={produitForm.substanceActive||"Cuivre"} onChange={e=>setProduitForm(f=>({...f,substanceActive:e.target.value}))}>
+                      <option value="Cuivre">Cuivre</option>
+                      <option value="Soufre">Soufre</option>
+                      <option value="Pyrethrine">Pyrethrine</option>
+                      <option value="Bicarbonate">Bicarbonate</option>
+                      <option value="Autre">Autre</option>
+                    </select></div>
+                  <div><span style={s.lbl}>Teneur Cu (g/kg ou g/L)</span>
+                    <input type="number" step="1" style={s.inp} placeholder="ex. 200" value={produitForm.teneurCuivre||""} onChange={e=>setProduitForm(f=>({...f,teneurCuivre:e.target.value}))}/>
+                    {produitForm.teneurCuivre&&<div style={{fontSize:"10px",color:"#c47800",marginTop:"2px"}}>= {Math.round(parseFloat(produitForm.teneurCuivre)/10)}% de cuivre</div>}
+                  </div>
+                </>)}
+                {produitForm.categorie==="amendement"&&(
+                  <div style={{gridColumn:"span 2"}}><span style={s.lbl}>Teneur en azote (% N)</span>
+                    <input type="number" step="0.1" style={s.inp} placeholder="ex. 6" value={produitForm.teneurAzote||""} onChange={e=>setProduitForm(f=>({...f,teneurAzote:e.target.value}))}/>
+                    {produitForm.teneurAzote&&<div style={{fontSize:"10px",color:"#2d6a00",marginTop:"2px"}}>= {produitForm.teneurAzote} kg N pour 100 kg de produit</div>}
+                  </div>
+                )}
                 <div><span style={s.lbl}>Unite</span>
                   <select style={s.sel} value={produitForm.unite||"kg"} onChange={e=>setProduitForm(f=>({...f,unite:e.target.value}))}>
                     <option value="kg">kg</option><option value="L">L</option><option value="g">g</option>
@@ -8193,6 +8212,7 @@ export default function App() {
                   <option value="501">501 (Silice de corne)</option>
                   <option value="Prele de Paques">Prele de Paques</option>
                   <option value="Silice">Silice</option>
+                  {stockProduits.filter(sp=>sp.categorie==="biodynamie").map(sp=><option key={sp.id} value={sp.nom}>{sp.nom}</option>)}
                   <option value="Autre">Autre</option>
                 </select></div>
               <div><span style={s.lbl}>Observations</span>
@@ -8228,26 +8248,50 @@ export default function App() {
               </div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"12px"}}>
                 <div><span style={s.lbl}>Surface (ha)</span>
-                  <input type="number" step="0.001" style={s.inp} placeholder="ex. 0.318" value={amendForm.surface} onChange={e=>setAmendForm(f=>({...f,surface:e.target.value}))}/></div>
+                  <input type="number" step="0.001" style={s.inp} placeholder="ex. 0.318" value={amendForm.surface} onChange={e=>{
+                    const surface=e.target.value;
+                    const teneur=parseFloat(amendForm.teneurAzote)||0;
+                    const qte=parseFloat((amendForm.quantite||"").replace(/[^0-9.]/g,""))||0;
+                    const nTotal = teneur>0 ? Math.round(qte*(teneur/100)*100)/100 : amendForm.nTotal;
+                    const nParHa = teneur>0 && parseFloat(surface)>0 ? Math.round((nTotal/parseFloat(surface))*100)/100 : amendForm.nParHa;
+                    setAmendForm(f=>({...f,surface,nTotal:String(nTotal),nParHa:String(nParHa)}));
+                  }}/></div>
                 <div><span style={s.lbl}>Produit</span>
-                  <select style={s.sel} value={amendForm.produit} onChange={e=>setAmendForm(f=>({...f,produit:e.target.value}))}>
+                  <select style={s.sel} value={amendForm.produit} onChange={e=>{
+                    const nom=e.target.value;
+                    const sp=stockProduits.find(x=>x.nom===nom&&x.categorie==="amendement");
+                    const teneur = sp?parseFloat(sp.teneurAzote)||0:0;
+                    const qte=parseFloat((amendForm.quantite||"").replace(/[^0-9.]/g,""))||0;
+                    const surf=parseFloat(amendForm.surface)||0;
+                    const nTotal = teneur>0 ? Math.round(qte*(teneur/100)*100)/100 : amendForm.nTotal;
+                    const nParHa = teneur>0 && surf>0 ? Math.round((nTotal/surf)*100)/100 : amendForm.nParHa;
+                    setAmendForm(f=>({...f,produit:nom,teneurAzote:String(teneur),nTotal:String(nTotal),nParHa:String(nParHa)}));
+                  }}>
                     <option value="">Selectionner...</option>
-                    <option value="Activor">Activor</option>
-                    <option value="Phenix">Phenix</option>
-                    <option value="Bio3G">Bio3G</option>
-                    <option value="Composte Biodynamique">Composte Biodynamique</option>
-                    <option value="Biofumur AB2F">Biofumur AB2F</option>
-                    <option value="ActiVert+">ActiVert+</option>
-                    <option value="Autre">Autre</option>
+                    {stockProduits.filter(sp=>sp.categorie==="amendement").map(sp=><option key={sp.id} value={sp.nom}>{sp.nom}{parseFloat(sp.teneurAzote)>0?" ("+sp.teneurAzote+"% N)":""}</option>)}
+                    <option value="Autre">Autre (non lie au stock)</option>
                   </select></div>
-                <div><span style={s.lbl}>Quantite</span>
-                  <input style={s.inp} placeholder="ex. 324.5 kg" value={amendForm.quantite} onChange={e=>setAmendForm(f=>({...f,quantite:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Quantite ({(()=>{const sp=stockProduits.find(x=>x.nom===amendForm.produit);return sp?.unite||"kg";})()})</span>
+                  <input style={s.inp} placeholder="ex. 324.5" value={amendForm.quantite} onChange={e=>{
+                    const quantite=e.target.value;
+                    const teneur=parseFloat(amendForm.teneurAzote)||0;
+                    const qte=parseFloat(quantite.replace(/[^0-9.]/g,""))||0;
+                    const surf=parseFloat(amendForm.surface)||0;
+                    const nTotal = teneur>0 ? Math.round(qte*(teneur/100)*100)/100 : amendForm.nTotal;
+                    const nParHa = teneur>0 && surf>0 ? Math.round((nTotal/surf)*100)/100 : amendForm.nParHa;
+                    setAmendForm(f=>({...f,quantite,nTotal:String(nTotal),nParHa:String(nParHa)}));
+                  }}/></div>
               </div>
+              {parseFloat(amendForm.teneurAzote)>0&&(
+                <div style={{background:"#E8F0DC",borderRadius:"6px",padding:"10px 14px",fontSize:"12px",color:"#2d6a00"}}>
+                  <strong>Calcul auto :</strong> {amendForm.quantite||0} x {amendForm.teneurAzote}% N = <strong>{amendForm.nTotal||0} kg N total</strong>{amendForm.surface?` / ${amendForm.surface} ha = ${amendForm.nParHa||0} kg N/ha`:""}
+                </div>
+              )}
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
-                <div><span style={s.lbl}>N total (kg)</span>
-                  <input type="number" step="0.01" style={s.inp} value={amendForm.nTotal} onChange={e=>setAmendForm(f=>({...f,nTotal:e.target.value}))}/></div>
-                <div><span style={s.lbl}>N / ha</span>
-                  <input type="number" step="0.01" style={s.inp} value={amendForm.nParHa} onChange={e=>setAmendForm(f=>({...f,nParHa:e.target.value}))}/></div>
+                <div><span style={s.lbl}>N total (kg) {parseFloat(amendForm.teneurAzote)>0&&<span style={{fontSize:"10px",color:"#2d6a00"}}>(auto)</span>}</span>
+                  <input type="number" step="0.01" style={s.inp} value={amendForm.nTotal} onChange={e=>setAmendForm(f=>({...f,nTotal:e.target.value}))} disabled={parseFloat(amendForm.teneurAzote)>0}/></div>
+                <div><span style={s.lbl}>N / ha {parseFloat(amendForm.teneurAzote)>0&&<span style={{fontSize:"10px",color:"#2d6a00"}}>(auto)</span>}</span>
+                  <input type="number" step="0.01" style={s.inp} value={amendForm.nParHa} onChange={e=>setAmendForm(f=>({...f,nParHa:e.target.value}))} disabled={parseFloat(amendForm.teneurAzote)>0}/></div>
               </div>
               <div><span style={s.lbl}>Observations</span>
                 <textarea style={{...s.inp,height:"58px",resize:"vertical"}} value={amendForm.observations} onChange={e=>setAmendForm(f=>({...f,observations:e.target.value}))}/></div>
