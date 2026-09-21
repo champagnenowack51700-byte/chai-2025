@@ -3105,6 +3105,29 @@ export default function App() {
                 );
               })()}
 
+              {filterTraitAn && vigneTab==="amendements" && (()=>{
+                const nTot = amendFiltres.reduce((s,a)=>s+(parseFloat(a.nTotal)||0),0);
+                const surfTot = amendFiltres.reduce((s,a)=>s+(parseFloat(a.surface)||0),0);
+                const parProduit = {};
+                amendFiltres.forEach(a=>{ if(a.produit) parProduit[a.produit]=(parProduit[a.produit]||0)+(parseFloat(a.nTotal)||0); });
+                return (
+                  <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(120px,1fr))",gap:"8px",marginBottom:"14px"}}>
+                    {[
+                      {lbl:"Amendements",val:amendFiltres.length},
+                      {lbl:"Total azote",val:`${Math.round(nTot*100)/100} kg N`,col:"#2d6a00"},
+                      {lbl:"Surface amendée",val:`${Math.round(surfTot*1000)/1000} ha`},
+                      {lbl:"N/ha moyen",val:surfTot>0?`${Math.round(nTot/surfTot*100)/100} kg`:"-",col:"#2d6a00"},
+                      ...Object.entries(parProduit).filter(([,v])=>v>0).map(([p,v])=>({lbl:p,val:`${Math.round(v*100)/100} kg N`,col:"#185FA5"})),
+                    ].map((k,i)=>(
+                      <div key={i} style={{...s.card,padding:"10px 12px"}}>
+                        <div style={s.lbl}>{k.lbl}</div>
+                        <div style={{fontSize:"16px",fontWeight:500,color:k.col||"#8B7355",lineHeight:1.2}}>{k.val}</div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+
               {/* Onglets */}
               <div style={{display:"flex",borderBottom:"0.5px solid #d4c4a0",marginBottom:"16px"}}>
                 {[["traitements","Traitements"],["biodynamie","Biodynamie"],["amendements","Amendements"],["stockprod","Stock Produits"]].map(([tab,lbl])=>(
@@ -3162,60 +3185,6 @@ export default function App() {
                         {traitsFiltres.length===0&&<tr><td colSpan={6} style={{padding:"20px",color:"#9a8870",textAlign:"center",fontStyle:"italic"}}>Aucun traitement pour cette campagne.</td></tr>}
                       </tbody>
                     </table>
-                  </div>
-                </div>
-              )}
-
-              {/* Documents PDF prestataires - traitements, biodynamie, amendements */}
-              {["traitements","biodynamie","amendements"].includes(vigneTab) && filterTraitAn && (
-                <div style={{...s.card,marginTop:"14px"}}>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
-                    <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#2C3E50"}}>Calendriers / documents prestataires</div>
-                    {!closed && (
-                      <label style={{...s.btnSm,cursor:"pointer",display:"flex",alignItems:"center",gap:"5px"}}>
-                        {uploadingPdf?"Chargement...":"+ Ajouter PDF"}
-                        <input type="file" accept=".pdf" style={{display:"none"}} onChange={e=>{
-                          const file=e.target.files[0];
-                          if(file){
-                            const nom=window.prompt("Nom du document (ex: Calendrier Lorain 2026)", file.name.replace(".pdf",""));
-                            if(nom!==null) uploadPdf(file, filterTraitAn, nom||file.name, vigneTab);
-                          }
-                          e.target.value="";
-                        }}/>
-                      </label>
-                    )}
-                  </div>
-                  {pdfDocs.filter(p=>p.campagne===filterTraitAn&&(p.categorie||"traitements")===vigneTab).length===0&&(
-                    <div style={{fontSize:"12px",color:"#9a8870",fontStyle:"italic"}}>Aucun document pour cette campagne.</div>
-                  )}
-                  <div style={{display:"grid",gap:"8px"}}>
-                    {pdfDocs.filter(p=>p.campagne===filterTraitAn&&(p.categorie||"traitements")===vigneTab).map(pdf=>(
-                      <div key={pdf.id} style={{display:"flex",alignItems:"center",gap:"12px",padding:"10px 12px",background:"#F0EDE8",borderRadius:"6px",border:"0.5px solid #d4c4a0"}}>
-                        <div style={{width:"32px",height:"32px",background:"#fdd0d0",borderRadius:"4px",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                          <span style={{fontSize:"10px",fontWeight:500,color:"#cc2222",fontFamily:"monospace"}}>PDF</span>
-                        </div>
-                        <div style={{flex:1}}>
-                          <div style={{fontWeight:500,color:"#1a1205",fontSize:"13px"}}>{pdf.nom}</div>
-                          <div style={{fontSize:"10px",color:"#9a8870",marginTop:"1px"}}>{pdf.dateUpload?.slice(0,10)}</div>
-                        </div>
-                        <button style={s.btnSm} onClick={()=>openPdf(pdf)}>
-                          Ouvrir
-                        </button>
-                        {!closed&&(
-                          <div style={{display:"flex",gap:"4px"}}>
-                            <button style={s.ghostSm} onClick={()=>{
-                              const n=window.prompt("Nouveau nom :", pdf.nom);
-                              if(n&&n.trim()){
-                                const updated={...pdf,nom:n.trim()};
-                                setPdfDocs(prev=>prev.map(p=>p.id===pdf.id?updated:p));
-                                fbSave("pdfDocs",pdf.id,updated);
-                              }
-                            }}>Renommer</button>
-                            <button style={{...s.ghostSm,color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>deletePdf(pdf)}>Sup.</button>
-                          </div>
-                        )}
-                      </div>
-                    ))}
                   </div>
                 </div>
               )}
@@ -3414,6 +3383,60 @@ export default function App() {
                       </table>
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Documents PDF prestataires - traitements, biodynamie, amendements */}
+              {["traitements","biodynamie","amendements"].includes(vigneTab) && filterTraitAn && (
+                <div style={{...s.card,marginTop:"14px"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
+                    <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#2C3E50"}}>Calendriers / documents prestataires</div>
+                    {!closed && (
+                      <label style={{...s.btnSm,cursor:"pointer",display:"flex",alignItems:"center",gap:"5px"}}>
+                        {uploadingPdf?"Chargement...":"+ Ajouter PDF"}
+                        <input type="file" accept=".pdf" style={{display:"none"}} onChange={e=>{
+                          const file=e.target.files[0];
+                          if(file){
+                            const nom=window.prompt("Nom du document (ex: Calendrier Lorain 2026)", file.name.replace(".pdf",""));
+                            if(nom!==null) uploadPdf(file, filterTraitAn, nom||file.name, vigneTab);
+                          }
+                          e.target.value="";
+                        }}/>
+                      </label>
+                    )}
+                  </div>
+                  {pdfDocs.filter(p=>p.campagne===filterTraitAn&&(p.categorie||"traitements")===vigneTab).length===0&&(
+                    <div style={{fontSize:"12px",color:"#9a8870",fontStyle:"italic"}}>Aucun document pour cette campagne.</div>
+                  )}
+                  <div style={{display:"grid",gap:"8px"}}>
+                    {pdfDocs.filter(p=>p.campagne===filterTraitAn&&(p.categorie||"traitements")===vigneTab).map(pdf=>(
+                      <div key={pdf.id} style={{display:"flex",alignItems:"center",gap:"12px",padding:"10px 12px",background:"#F0EDE8",borderRadius:"6px",border:"0.5px solid #d4c4a0"}}>
+                        <div style={{width:"32px",height:"32px",background:"#fdd0d0",borderRadius:"4px",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                          <span style={{fontSize:"10px",fontWeight:500,color:"#cc2222",fontFamily:"monospace"}}>PDF</span>
+                        </div>
+                        <div style={{flex:1}}>
+                          <div style={{fontWeight:500,color:"#1a1205",fontSize:"13px"}}>{pdf.nom}</div>
+                          <div style={{fontSize:"10px",color:"#9a8870",marginTop:"1px"}}>{pdf.dateUpload?.slice(0,10)}</div>
+                        </div>
+                        <button style={s.btnSm} onClick={()=>openPdf(pdf)}>
+                          Ouvrir
+                        </button>
+                        {!closed&&(
+                          <div style={{display:"flex",gap:"4px"}}>
+                            <button style={s.ghostSm} onClick={()=>{
+                              const n=window.prompt("Nouveau nom :", pdf.nom);
+                              if(n&&n.trim()){
+                                const updated={...pdf,nom:n.trim()};
+                                setPdfDocs(prev=>prev.map(p=>p.id===pdf.id?updated:p));
+                                fbSave("pdfDocs",pdf.id,updated);
+                              }
+                            }}>Renommer</button>
+                            <button style={{...s.ghostSm,color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>deletePdf(pdf)}>Sup.</button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -5266,6 +5289,29 @@ export default function App() {
                 );
               })()}
 
+              {filterTraitAn && vigneTab==="amendements" && (()=>{
+                const nTot = amendFiltres.reduce((s,a)=>s+(parseFloat(a.nTotal)||0),0);
+                const surfTot = amendFiltres.reduce((s,a)=>s+(parseFloat(a.surface)||0),0);
+                const parProduit = {};
+                amendFiltres.forEach(a=>{ if(a.produit) parProduit[a.produit]=(parProduit[a.produit]||0)+(parseFloat(a.nTotal)||0); });
+                return (
+                  <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(120px,1fr))",gap:"8px",marginBottom:"14px"}}>
+                    {[
+                      {lbl:"Amendements",val:amendFiltres.length},
+                      {lbl:"Total azote",val:`${Math.round(nTot*100)/100} kg N`,col:"#2d6a00"},
+                      {lbl:"Surface amendée",val:`${Math.round(surfTot*1000)/1000} ha`},
+                      {lbl:"N/ha moyen",val:surfTot>0?`${Math.round(nTot/surfTot*100)/100} kg`:"-",col:"#2d6a00"},
+                      ...Object.entries(parProduit).filter(([,v])=>v>0).map(([p,v])=>({lbl:p,val:`${Math.round(v*100)/100} kg N`,col:"#185FA5"})),
+                    ].map((k,i)=>(
+                      <div key={i} style={{...s.card,padding:"10px 12px"}}>
+                        <div style={s.lbl}>{k.lbl}</div>
+                        <div style={{fontSize:"16px",fontWeight:500,color:k.col||"#8B7355",lineHeight:1.2}}>{k.val}</div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+
               {/* Onglets */}
               <div style={{display:"flex",borderBottom:"0.5px solid #d4c4a0",marginBottom:"16px"}}>
                 {[["traitements","Traitements"],["biodynamie","Biodynamie"],["amendements","Amendements"],["stockprod","Stock Produits"]].map(([tab,lbl])=>(
@@ -5323,60 +5369,6 @@ export default function App() {
                         {traitsFiltres.length===0&&<tr><td colSpan={6} style={{padding:"20px",color:"#9a8870",textAlign:"center",fontStyle:"italic"}}>Aucun traitement pour cette campagne.</td></tr>}
                       </tbody>
                     </table>
-                  </div>
-                </div>
-              )}
-
-              {/* Documents PDF prestataires - traitements, biodynamie, amendements */}
-              {["traitements","biodynamie","amendements"].includes(vigneTab) && filterTraitAn && (
-                <div style={{...s.card,marginTop:"14px"}}>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
-                    <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#2C3E50"}}>Calendriers / documents prestataires</div>
-                    {!closed && (
-                      <label style={{...s.btnSm,cursor:"pointer",display:"flex",alignItems:"center",gap:"5px"}}>
-                        {uploadingPdf?"Chargement...":"+ Ajouter PDF"}
-                        <input type="file" accept=".pdf" style={{display:"none"}} onChange={e=>{
-                          const file=e.target.files[0];
-                          if(file){
-                            const nom=window.prompt("Nom du document (ex: Calendrier Lorain 2026)", file.name.replace(".pdf",""));
-                            if(nom!==null) uploadPdf(file, filterTraitAn, nom||file.name, vigneTab);
-                          }
-                          e.target.value="";
-                        }}/>
-                      </label>
-                    )}
-                  </div>
-                  {pdfDocs.filter(p=>p.campagne===filterTraitAn&&(p.categorie||"traitements")===vigneTab).length===0&&(
-                    <div style={{fontSize:"12px",color:"#9a8870",fontStyle:"italic"}}>Aucun document pour cette campagne.</div>
-                  )}
-                  <div style={{display:"grid",gap:"8px"}}>
-                    {pdfDocs.filter(p=>p.campagne===filterTraitAn&&(p.categorie||"traitements")===vigneTab).map(pdf=>(
-                      <div key={pdf.id} style={{display:"flex",alignItems:"center",gap:"12px",padding:"10px 12px",background:"#F0EDE8",borderRadius:"6px",border:"0.5px solid #d4c4a0"}}>
-                        <div style={{width:"32px",height:"32px",background:"#fdd0d0",borderRadius:"4px",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                          <span style={{fontSize:"10px",fontWeight:500,color:"#cc2222",fontFamily:"monospace"}}>PDF</span>
-                        </div>
-                        <div style={{flex:1}}>
-                          <div style={{fontWeight:500,color:"#1a1205",fontSize:"13px"}}>{pdf.nom}</div>
-                          <div style={{fontSize:"10px",color:"#9a8870",marginTop:"1px"}}>{pdf.dateUpload?.slice(0,10)}</div>
-                        </div>
-                        <button style={s.btnSm} onClick={()=>openPdf(pdf)}>
-                          Ouvrir
-                        </button>
-                        {!closed&&(
-                          <div style={{display:"flex",gap:"4px"}}>
-                            <button style={s.ghostSm} onClick={()=>{
-                              const n=window.prompt("Nouveau nom :", pdf.nom);
-                              if(n&&n.trim()){
-                                const updated={...pdf,nom:n.trim()};
-                                setPdfDocs(prev=>prev.map(p=>p.id===pdf.id?updated:p));
-                                fbSave("pdfDocs",pdf.id,updated);
-                              }
-                            }}>Renommer</button>
-                            <button style={{...s.ghostSm,color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>deletePdf(pdf)}>Sup.</button>
-                          </div>
-                        )}
-                      </div>
-                    ))}
                   </div>
                 </div>
               )}
@@ -5575,6 +5567,60 @@ export default function App() {
                       </table>
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Documents PDF prestataires - traitements, biodynamie, amendements */}
+              {["traitements","biodynamie","amendements"].includes(vigneTab) && filterTraitAn && (
+                <div style={{...s.card,marginTop:"14px"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
+                    <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#2C3E50"}}>Calendriers / documents prestataires</div>
+                    {!closed && (
+                      <label style={{...s.btnSm,cursor:"pointer",display:"flex",alignItems:"center",gap:"5px"}}>
+                        {uploadingPdf?"Chargement...":"+ Ajouter PDF"}
+                        <input type="file" accept=".pdf" style={{display:"none"}} onChange={e=>{
+                          const file=e.target.files[0];
+                          if(file){
+                            const nom=window.prompt("Nom du document (ex: Calendrier Lorain 2026)", file.name.replace(".pdf",""));
+                            if(nom!==null) uploadPdf(file, filterTraitAn, nom||file.name, vigneTab);
+                          }
+                          e.target.value="";
+                        }}/>
+                      </label>
+                    )}
+                  </div>
+                  {pdfDocs.filter(p=>p.campagne===filterTraitAn&&(p.categorie||"traitements")===vigneTab).length===0&&(
+                    <div style={{fontSize:"12px",color:"#9a8870",fontStyle:"italic"}}>Aucun document pour cette campagne.</div>
+                  )}
+                  <div style={{display:"grid",gap:"8px"}}>
+                    {pdfDocs.filter(p=>p.campagne===filterTraitAn&&(p.categorie||"traitements")===vigneTab).map(pdf=>(
+                      <div key={pdf.id} style={{display:"flex",alignItems:"center",gap:"12px",padding:"10px 12px",background:"#F0EDE8",borderRadius:"6px",border:"0.5px solid #d4c4a0"}}>
+                        <div style={{width:"32px",height:"32px",background:"#fdd0d0",borderRadius:"4px",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                          <span style={{fontSize:"10px",fontWeight:500,color:"#cc2222",fontFamily:"monospace"}}>PDF</span>
+                        </div>
+                        <div style={{flex:1}}>
+                          <div style={{fontWeight:500,color:"#1a1205",fontSize:"13px"}}>{pdf.nom}</div>
+                          <div style={{fontSize:"10px",color:"#9a8870",marginTop:"1px"}}>{pdf.dateUpload?.slice(0,10)}</div>
+                        </div>
+                        <button style={s.btnSm} onClick={()=>openPdf(pdf)}>
+                          Ouvrir
+                        </button>
+                        {!closed&&(
+                          <div style={{display:"flex",gap:"4px"}}>
+                            <button style={s.ghostSm} onClick={()=>{
+                              const n=window.prompt("Nouveau nom :", pdf.nom);
+                              if(n&&n.trim()){
+                                const updated={...pdf,nom:n.trim()};
+                                setPdfDocs(prev=>prev.map(p=>p.id===pdf.id?updated:p));
+                                fbSave("pdfDocs",pdf.id,updated);
+                              }
+                            }}>Renommer</button>
+                            <button style={{...s.ghostSm,color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>deletePdf(pdf)}>Sup.</button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
