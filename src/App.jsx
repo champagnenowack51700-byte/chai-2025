@@ -5400,6 +5400,49 @@ export default function App() {
                         ))}
                       </div>
                     </div>
+                    {/* Déclaration de récolte de la campagne (PDF) */}
+                    {(()=>{
+                      const drs = pdfDocs.filter(p=>p.categorie==="declaration_recolte"&&p.campagne===String(annee))
+                        .sort((a,b)=>(a.dateUpload||"").localeCompare(b.dateUpload||""));
+                      return (
+                        <div style={{borderTop:"0.5px solid #d4c4a0",marginTop:"10px",paddingTop:"10px"}}>
+                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:drs.length?"8px":0,gap:"8px",flexWrap:"wrap"}}>
+                            <span style={{fontSize:"10px",letterSpacing:"0.08em",textTransform:"uppercase",color:"#9a8870",fontFamily:"monospace"}}>Déclaration de récolte</span>
+                            <label style={{...s.ghostSm,fontSize:"10px",cursor:"pointer"}}>
+                              {uploadingPdf?"Chargement...":(drs.length?"+ Ajouter (rectificative…)":"+ Joindre la déclaration (PDF)")}
+                              <input type="file" accept=".pdf" style={{display:"none"}} onChange={e=>{
+                                const file=e.target.files[0];
+                                if(file){
+                                  const nomDefaut = drs.length ? `Déclaration de récolte ${annee} - rectificative` : `Déclaration de récolte ${annee}`;
+                                  const nom=window.prompt("Nom du document", nomDefaut);
+                                  if(nom!==null) uploadPdf(file, annee, nom.trim()||nomDefaut, "declaration_recolte", {typeDoc:"declaration_recolte"});
+                                }
+                                e.target.value="";
+                              }}/>
+                            </label>
+                          </div>
+                          {drs.length===0
+                            ? <div style={{fontSize:"11px",color:"#c47800",fontStyle:"italic",marginTop:"4px"}}>Aucune déclaration jointe pour {annee}.</div>
+                            : <div style={{display:"grid",gap:"6px"}}>
+                                {drs.map(pdf=>(
+                                  <div key={pdf.id} style={{display:"flex",alignItems:"center",gap:"8px",padding:"6px 10px",background:"#eef4f0",borderRadius:"6px",border:"0.5px solid #a5c8b0"}}>
+                                    <span style={{fontSize:"14px"}}>📄</span>
+                                    <div style={{flex:1,minWidth:0}}>
+                                      <div style={{fontSize:"12px",fontWeight:500,color:"#1a1205",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{pdf.nom}</div>
+                                      <div style={{fontSize:"10px",color:"#9a8870"}}>ajoutée le {fmt(pdf.dateUpload)}</div>
+                                    </div>
+                                    <button style={{...s.btnSm,fontSize:"10px"}} onClick={()=>openPdf(pdf)}>Ouvrir</button>
+                                    <button style={{...s.ghostSm,fontSize:"10px"}} onClick={()=>{
+                                      const n=window.prompt("Nouveau nom :", pdf.nom);
+                                      if(n&&n.trim()){ const updated={...pdf,nom:n.trim()}; setPdfDocs(prev=>prev.map(p=>p.id===pdf.id?updated:p)); fbSave("pdfDocs",pdf.id,updated); }
+                                    }}>Renommer</button>
+                                    <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>deletePdf(pdf)}>Sup.</button>
+                                  </div>
+                                ))}
+                              </div>}
+                        </div>
+                      );
+                    })()}
                   </div>
                 );
               })}
