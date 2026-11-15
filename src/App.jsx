@@ -596,6 +596,8 @@ export default function App() {
   const DOC_FORM_EMPTY = { file:null, typeDoc:"calendrier", nom:"", fournisseur:"", dateValidite:"" };
   const [docForm,          setDocForm]          = useState(null);
   const [filterTypeDoc,    setFilterTypeDoc]    = useState("tous");
+  // Formulaire d'ajout de facture de produits oenologiques (Vendanges / Tirages / Mouvements)
+  const [oenoForm,         setOenoForm]         = useState(null);
   const [pdfFactures,      setPdfFactures]      = useState([]);
   const [biodynamies,      setBiodynamies]       = useState([]);
   const [showBiodyForm,    setShowBiodyForm]     = useState(false);
@@ -979,7 +981,8 @@ export default function App() {
     reader.onload = (e) => {
       const base64 = e.target.result;
       const pdfDoc = { id:`pdf_${Date.now()}`, campagne:String(campagne), nom:nom||file.name, base64, dateUpload:new Date().toISOString(), categorie,
-        typeDoc: meta.typeDoc||"calendrier", fournisseur: (meta.fournisseur||"").trim(), dateValidite: meta.dateValidite||"" };
+        typeDoc: meta.typeDoc||"calendrier", fournisseur: (meta.fournisseur||"").trim(), dateValidite: meta.dateValidite||"",
+        ...(meta.dateFacture!==undefined?{dateFacture:meta.dateFacture}:{}), ...(meta.produits!==undefined?{produits:meta.produits}:{}) };
       setPdfDocs(prev=>[...prev, pdfDoc]);
       fbSave("pdfDocs", pdfDoc.id, pdfDoc);
       setUploadingPdf(false);
@@ -2633,6 +2636,137 @@ export default function App() {
 
   // -- COMPOSANTS ------------------------------------------------------------
 
+  // -- Factures de produits oenologiques (Vendanges / Tirages / Mouvements) --
+  // Stockées dans la collection "pdfDocs" avec categorie = "oeno_<onglet>" et campagne = année.
+  // annee vide ("Toutes") : on affiche tous les documents de l'onglet et un ajout va dans l'année en cours.
+  const TYPES_DOC_OENO = {
+    facture:        {court:"Facture / BL",   icon:"🧾", bg:"#E8E0D0", col:"#7a5200"},
+    certificat_bio: {court:"Certificat bio", icon:"🌿", bg:"#d4edc0", col:"#2d6a00"},
+  };
+  const renderFacturesOeno = (onglet, annee, verrouille=false) => {
+    const categorie = "oeno_"+onglet;
+    const anneeAjout = annee || new Date().getFullYear().toString();
+    const docs = pdfDocs
+      .filter(p=>p.categorie===categorie && (!annee || p.campagne===String(annee)))
+      .sort((a,b)=>(b.dateFacture||b.dateUpload||"").localeCompare(a.dateFacture||a.dateUpload||""));
+    const fournisseursConnus = [...new Set(pdfDocs.map(p=>(p.fournisseur||"").trim()).filter(Boolean))].sort();
+    const formOuvert = oenoForm && oenoForm.onglet===onglet;
+    const valider = () => {
+      if(!oenoForm?.file) return alert("Choisissez un fichier PDF.");
+      if(!oenoForm.fournisseur.trim()) return alert("Indiquez le fournisseur.");
+      uploadPdf(oenoForm.file, anneeAjout, oenoForm.nom.trim()||oenoForm.file.name.replace(/\.pdf$/i,""), categorie,
+        {typeDoc:oenoForm.typeDoc, fournisseur:oenoForm.fournisseur, dateValidite:oenoForm.typeDoc==="certificat_bio"?oenoForm.dateValidite:"",
+         dateFacture:oenoForm.typeDoc==="facture"?(oenoForm.dateFacture||""):"", produits:(oenoForm.produits||"").trim()});
+      setOenoForm(null);
+    };
+    return (
+      <div style={{...s.card,marginTop:"16px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px",flexWrap:"wrap",gap:"8px"}}>
+          <div>
+            <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#2C3E50"}}>Factures produits œnologiques</div>
+            <div style={{fontSize:"11px",color:"#9a8870"}}>{annee?`Année ${annee}`:"Toutes les années"} · {docs.length} document(s)</div>
+          </div>
+          {!verrouille && !formOuvert && (
+            <label style={{...s.btnSm,cursor:"pointer",display:"flex",alignItems:"center",gap:"5px"}}>
+              {uploadingPdf?"Chargement...":"+ Ajouter une facture (PDF)"}
+              <input type="file" accept=".pdf" style={{display:"none"}} onChange={e=>{
+                const file=e.target.files[0];
+                if(file) setOenoForm({onglet, file, typeDoc:"facture", nom:file.name.replace(/\.pdf$/i,""), fournisseur:"", dateFacture:"", produits:"", dateValidite:""});
+                e.target.value="";
+              }}/>
+            </label>
+          )}
+        </div>
+
+        {formOuvert && (
+          <div style={{background:"#F8F6F2",border:"0.5px solid #d4c4a0",borderRadius:"6px",padding:"12px",marginBottom:"12px"}}>
+            <div style={{fontSize:"11px",color:"#9a8870",marginBottom:"8px"}}>Fichier : <b style={{color:"#2C3E50"}}>{oenoForm.file?.name}</b> → rangé dans l'année <b style={{color:"#2C3E50"}}>{anneeAjout}</b></div>
+            <div style={{display:"flex",gap:"6px",marginBottom:"10px",flexWrap:"wrap"}}>
+              {Object.entries(TYPES_DOC_OENO).map(([k,t])=>(
+                <button key={k} onClick={()=>setOenoForm(f=>({...f,typeDoc:k}))}
+                  style={{padding:"6px 12px",borderRadius:"5px",cursor:"pointer",fontSize:"12px",
+                    border:`1px solid ${oenoForm.typeDoc===k?t.col:"#d4c4a0"}`,background:oenoForm.typeDoc===k?t.bg:"transparent",color:oenoForm.typeDoc===k?t.col:"#7a6840",fontWeight:oenoForm.typeDoc===k?500:400}}>
+                  {t.icon} {t.court}
+                </button>
+              ))}
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:"10px"}}>
+              <div>
+                <div style={s.lbl}>Nom du document</div>
+                <input style={s.inp} value={oenoForm.nom} onChange={e=>setOenoForm(f=>({...f,nom:e.target.value}))} placeholder="ex : Facture n°1234"/>
+              </div>
+              <div>
+                <div style={s.lbl}>Fournisseur *</div>
+                <input style={s.inp} list={"fournisseurs-oeno-"+onglet} value={oenoForm.fournisseur} onChange={e=>setOenoForm(f=>({...f,fournisseur:e.target.value}))} placeholder="ex : Laffort, IOC, Martin Vialatte…"/>
+                <datalist id={"fournisseurs-oeno-"+onglet}>{fournisseursConnus.map(f=><option key={f} value={f}/>)}</datalist>
+              </div>
+              {oenoForm.typeDoc==="facture" ? (
+                <div>
+                  <div style={s.lbl}>Date de la facture</div>
+                  <input type="date" style={s.inp} value={oenoForm.dateFacture} onChange={e=>setOenoForm(f=>({...f,dateFacture:e.target.value}))}/>
+                </div>
+              ) : (
+                <div>
+                  <div style={s.lbl}>Valide jusqu'au</div>
+                  <input type="date" style={s.inp} value={oenoForm.dateValidite} onChange={e=>setOenoForm(f=>({...f,dateValidite:e.target.value}))}/>
+                </div>
+              )}
+              <div>
+                <div style={s.lbl}>Produits concernés</div>
+                <input style={s.inp} value={oenoForm.produits} onChange={e=>setOenoForm(f=>({...f,produits:e.target.value}))} placeholder="ex : levures, liqueur de tirage, SO2…"/>
+              </div>
+            </div>
+            <div style={{display:"flex",gap:"8px",marginTop:"12px",justifyContent:"flex-end"}}>
+              <button style={s.ghostSm} onClick={()=>setOenoForm(null)}>Annuler</button>
+              <button style={s.btnSm} onClick={valider}>Enregistrer</button>
+            </div>
+          </div>
+        )}
+
+        {docs.length===0 && !formOuvert && (
+          <div style={{fontSize:"12px",color:"#9a8870",fontStyle:"italic"}}>Aucune facture {annee?`pour ${annee}`:"enregistrée"}.</div>
+        )}
+        <div style={{display:"grid",gap:"8px"}}>
+          {docs.map(pdf=>{
+            const t = TYPES_DOC_OENO[pdf.typeDoc]||TYPES_DOC_OENO.facture;
+            const today = new Date().toISOString().slice(0,10);
+            const expire = pdf.typeDoc==="certificat_bio" && pdf.dateValidite && pdf.dateValidite<today;
+            return (
+              <div key={pdf.id} style={{display:"flex",alignItems:"center",gap:"12px",padding:"10px 12px",background:"#F0EDE8",borderRadius:"6px",border:"0.5px solid #d4c4a0",flexWrap:"wrap"}}>
+                <div style={{width:"32px",height:"32px",background:t.bg,borderRadius:"4px",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:"16px"}}>{t.icon}</div>
+                <div style={{flex:1,minWidth:"160px"}}>
+                  <div style={{fontWeight:500,color:"#1a1205",fontSize:"13px"}}>{pdf.nom}</div>
+                  <div style={{display:"flex",gap:"6px",alignItems:"center",flexWrap:"wrap",marginTop:"3px"}}>
+                    <span style={{background:t.bg,color:t.col,borderRadius:"3px",padding:"0 6px",fontSize:"10px",fontFamily:"monospace"}}>{t.court}</span>
+                    {pdf.fournisseur&&<span style={{fontSize:"11px",color:"#2C3E50"}}>{pdf.fournisseur}</span>}
+                    {pdf.dateFacture&&<span style={{fontSize:"11px",color:"#6a5838"}}>du {fmt(pdf.dateFacture)}</span>}
+                    {pdf.typeDoc==="certificat_bio"&&pdf.dateValidite&&<span style={{background:expire?"#fdd0d0":"#d4edc0",color:expire?"#cc2222":"#2d6a00",borderRadius:"3px",padding:"0 6px",fontSize:"10px"}}>{expire?"Expiré le ":"Valide jusqu'au "}{fmt(pdf.dateValidite)}</span>}
+                    {!annee&&<span style={{fontSize:"10px",color:"#9a8870"}}>({pdf.campagne})</span>}
+                  </div>
+                  {pdf.produits&&<div style={{fontSize:"11px",color:"#7a6840",fontStyle:"italic",marginTop:"2px"}}>{pdf.produits}</div>}
+                </div>
+                <button style={s.btnSm} onClick={()=>openPdf(pdf)}>Ouvrir</button>
+                {!verrouille&&(
+                  <div style={{display:"flex",gap:"4px"}}>
+                    <button style={s.ghostSm} onClick={()=>{
+                      const n=window.prompt("Nom du document :", pdf.nom); if(n===null) return;
+                      const f=window.prompt("Fournisseur :", pdf.fournisseur||""); if(f===null) return;
+                      const pr=window.prompt("Produits concernés :", pdf.produits||""); if(pr===null) return;
+                      const updated={...pdf,nom:n.trim()||pdf.nom,fournisseur:f.trim(),produits:pr.trim()};
+                      setPdfDocs(prev=>prev.map(p=>p.id===pdf.id?updated:p));
+                      fbSave("pdfDocs",pdf.id,updated);
+                    }}>Modifier</button>
+                    <button style={{...s.ghostSm,color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>deletePdf(pdf)}>Sup.</button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   const FutCard = ({t}) => {
     const p=pct(t); const ng=avgNoteG(t.id); const hasNotes=notesForFut(t.id).length>0;
     const apc = getApc(t.appellation);
@@ -3941,6 +4075,7 @@ export default function App() {
                 );
               })}
             </div>
+            <div style={{gridColumn:"1 / -1"}}>{renderFacturesOeno("vendanges", filterVendangeAn)}</div>
           </div>
         )}
 
@@ -4669,6 +4804,7 @@ export default function App() {
                 </div>
               ))}
             </div>
+            {renderFacturesOeno("tirages", filterTirageAnnee)}
           </div>
           );
         })()}
@@ -6673,6 +6809,7 @@ export default function App() {
               {filteredMouvements.length===0&&<div style={{color:"#8a7248",fontSize:"13px"}}>Aucun mouvement pour cette campagne.</div>}
               {filteredMouvements.map(m=><MvtRow key={m.id} m={m}/>)}
             </div>
+            {renderFacturesOeno("mouvements", filterMvtAnnee, isMvtCampagneClosed(filterMvtAnnee))}
           </div>
         )}
       </div>
