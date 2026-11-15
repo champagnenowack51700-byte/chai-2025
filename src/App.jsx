@@ -760,6 +760,7 @@ export default function App() {
     levainLevure: "",
     levainLevureNom: "",
     levainLot: "",
+    produitsOeno: [],   // [{nom, lot, quantite, unite}] - n'impacte pas le volume tiré
     qte75: "",
     lot75: "",
     qteMagnum: "",
@@ -975,7 +976,7 @@ export default function App() {
   // meta : { typeDoc: "calendrier"|"facture"|"certificat_bio", fournisseur, dateValidite }
   const uploadPdf = (file, campagne, nom, categorie="traitements", meta={}) => {
     if(!file) return;
-    if(file.size > 900000) { alert("Le PDF est trop volumineux (max 900 KB). Compressez-le d'abord."); return; }
+    if(file.size > 730000) { alert("Le PDF est trop volumineux (max ~700 Ko). Compressez-le d'abord."); return; }
     setUploadingPdf(true);
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -983,9 +984,20 @@ export default function App() {
       const pdfDoc = { id:`pdf_${Date.now()}`, campagne:String(campagne), nom:nom||file.name, base64, dateUpload:new Date().toISOString(), categorie,
         typeDoc: meta.typeDoc||"calendrier", fournisseur: (meta.fournisseur||"").trim(), dateValidite: meta.dateValidite||"",
         ...(meta.dateFacture!==undefined?{dateFacture:meta.dateFacture}:{}), ...(meta.produits!==undefined?{produits:meta.produits}:{}) };
+      // Firestore refuse les documents de plus de 1 Mo : le PDF encodé en base64 pèse ~1,37x le fichier.
+      if(base64.length > 1000000) {
+        setUploadingPdf(false);
+        alert(`Ce PDF est trop lourd pour être enregistré (${Math.round(file.size/1024)} Ko). La limite réelle est d'environ 700 Ko : compressez-le (ex : ilovepdf.com > Compresser PDF) puis réessayez.`);
+        return;
+      }
       setPdfDocs(prev=>[...prev, pdfDoc]);
-      fbSave("pdfDocs", pdfDoc.id, pdfDoc);
-      setUploadingPdf(false);
+      fbSave("pdfDocs", pdfDoc.id, pdfDoc)
+        .then(()=>setUploadingPdf(false))
+        .catch(err=>{
+          setUploadingPdf(false);
+          setPdfDocs(prev=>prev.filter(p=>p.id!==pdfDoc.id));
+          alert("Le document n'a pas pu être enregistré : "+(err?.message||err));
+        });
     };
     reader.readAsDataURL(file);
   };
@@ -1015,15 +1027,25 @@ export default function App() {
   // Upload facture PDF
   const uploadFacture = (file, nom) => {
     if(!file) return;
-    if(file.size > 900000) { alert("Le PDF est trop volumineux (max 900 KB)."); return; }
+    if(file.size > 730000) { alert("Le PDF est trop volumineux (max ~700 Ko). Compressez-le d'abord."); return; }
     setUploadingPdf(true);
     const reader = new FileReader();
     reader.onload = (e) => {
       const base64 = e.target.result;
       const doc = { id:`facture_${Date.now()}`, nom:nom||file.name, base64, dateUpload:new Date().toISOString() };
+      if(base64.length > 1000000) {
+        setUploadingPdf(false);
+        alert(`Ce PDF est trop lourd pour être enregistré (${Math.round(file.size/1024)} Ko). La limite réelle est d'environ 700 Ko : compressez-le puis réessayez.`);
+        return;
+      }
       setPdfFactures(prev=>[...prev, doc]);
-      fbSave("pdfFactures", doc.id, doc);
-      setUploadingPdf(false);
+      fbSave("pdfFactures", doc.id, doc)
+        .then(()=>setUploadingPdf(false))
+        .catch(err=>{
+          setUploadingPdf(false);
+          setPdfFactures(prev=>prev.filter(p=>p.id!==doc.id));
+          alert("La facture n'a pas pu être enregistrée : "+(err?.message||err));
+        });
     };
     reader.readAsDataURL(file);
   };
@@ -1484,6 +1506,7 @@ export default function App() {
       volumeTotal:t.volumeTotal||"", levainEau:t.levainEau||"",
       levainVin:t.levainVin||"", levainLevure:t.levainLevure||"",
       levainLevureNom:t.levainLevureNom||"", levainLot:t.levainLot||"",
+      produitsOeno:Array.isArray(t.produitsOeno)?t.produitsOeno:[],
       qte75:t.qte75||"", lot75:t.lot75||"",
       qteMagnum:t.qteMagnum||"", lotMagnum:t.lotMagnum||"",
       qteJeroboam:t.qteJeroboam||"", lotJeroboam:t.lotJeroboam||"",
@@ -1504,6 +1527,7 @@ export default function App() {
     const updated = {
       id: editingTirage ? editingTirage.id : `tirage_${Date.now()}`,
       ...tirageForm,
+      produitsOeno: (tirageForm.produitsOeno||[]).filter(p=>(p.nom||"").trim()).map(p=>({nom:p.nom.trim(),lot:(p.lot||"").trim(),quantite:p.quantite||"",unite:p.unite||"g"})),
       volLevain: calcVolLevain(tirageForm),
       volBouteilles: calcVolBouteilles(tirageForm),
       volAssemble: calcTotalAssemble(tirageForm),
@@ -4721,18 +4745,27 @@ export default function App() {
                       )}
                     </div>
 
-                    {/* Levain */}
+                    {/* Produits oenologiques ajoutés (anciens tirages : levain) */}
                     <div style={{borderLeft:"0.5px solid #d4c4a0",paddingLeft:"14px"}}>
-                      <div style={s.lbl}>Levain</div>
-                      {t.levainLevureNom ? (
+                      <div style={s.lbl}>Produits œnologiques</div>
+                      {(t.produitsOeno||[]).length>0 ? (
+                        <div style={{display:"grid",gap:"4px"}}>
+                          {t.produitsOeno.map((p,i)=>(
+                            <div key={i}>
+                              <div style={{fontSize:"12px",fontWeight:500,color:"#1a1205"}}>{p.nom}{p.quantite?<span style={{fontWeight:400,color:"#6a5838"}}> · {p.quantite} {p.unite}</span>:null}</div>
+                              {p.lot&&<div style={{display:"inline-flex",background:"#F0EDE8",border:"0.5px solid #d4c4a0",borderRadius:"3px",padding:"0 6px",fontSize:"10px",color:"#2C3E50",fontFamily:"monospace"}}>Lot: {p.lot}</div>}
+                            </div>
+                          ))}
+                        </div>
+                      ) : t.levainLevureNom ? (
                         <div>
-                          <div style={{fontSize:"13px",fontWeight:500,color:"#1a1205",marginBottom:"3px"}}>{t.levainLevureNom}</div>
+                          <div style={{fontSize:"13px",fontWeight:500,color:"#1a1205",marginBottom:"3px"}}>{t.levainLevureNom} <span style={{fontSize:"10px",color:"#9a8870",fontWeight:400}}>(levain)</span></div>
                           {t.levainLot&&<div style={{display:"inline-flex",alignItems:"center",background:"#F0EDE8",border:"0.5px solid #d4c4a0",borderRadius:"3px",padding:"1px 7px",fontSize:"10px",color:"#2C3E50",fontFamily:"monospace",marginBottom:"4px"}}>Lot: {t.levainLot}</div>}
                           <div style={{fontSize:"11px",color:"#9a8870"}}>
                             Eau: {t.levainEau||0}L · Vin: {t.levainVin||0}L · Lev: {t.levainLevure||0}L
                           </div>
                         </div>
-                      ) : <div style={{fontSize:"12px",color:"#9a8870",fontStyle:"italic"}}>Pas de levain</div>}
+                      ) : <div style={{fontSize:"12px",color:"#9a8870",fontStyle:"italic"}}>Aucun produit</div>}
                     </div>
 
                     {/* Bouteilles */}
@@ -9377,33 +9410,51 @@ export default function App() {
                 </div>
               </div>
               <div style={{background:"#F0EDE8",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
-                <div style={{...s.lbl,marginBottom:"10px",fontSize:"11px"}}>Preparation du levain</div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px",marginBottom:"10px"}}>
-                  <div><span style={s.lbl}>Nom de la levure</span>
-                    <input style={s.inp} placeholder="ex. EC1118, Zymaflore..." value={tirageForm.levainLevureNom} onChange={e=>setTirageForm(f=>({...f,levainLevureNom:e.target.value}))}/></div>
-                  <div><span style={s.lbl}>Numero de lot levure</span>
-                    <input style={s.inp} placeholder="ex. LOT-2025-042" value={tirageForm.levainLot} onChange={e=>setTirageForm(f=>({...f,levainLot:e.target.value}))}/></div>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"10px",gap:"8px",flexWrap:"wrap"}}>
+                  <div style={{...s.lbl,fontSize:"11px",marginBottom:0}}>Produits œnologiques ajoutés</div>
+                  <span style={{fontSize:"10px",color:"#9a8870",fontStyle:"italic"}}>n'ajoute rien au volume tiré</span>
                 </div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:"10px"}}>
-                  <div><span style={s.lbl}>Eau (L)</span>
-                    <input type="number" style={s.inp} placeholder="0" value={tirageForm.levainEau} onChange={e=>setTirageForm(f=>({...f,levainEau:e.target.value}))}/></div>
-                  <div><span style={s.lbl}>Vin (L)</span>
-                    <input type="number" style={s.inp} placeholder="0" value={tirageForm.levainVin} onChange={e=>setTirageForm(f=>({...f,levainVin:e.target.value}))}/></div>
-                  <div><span style={s.lbl}>Levures (L)</span>
-                    <input type="number" style={s.inp} placeholder="0" value={tirageForm.levainLevure} onChange={e=>setTirageForm(f=>({...f,levainLevure:e.target.value}))}/></div>
-                  <div style={{display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
-                    <div style={{background:"#d4edc0",borderRadius:"6px",padding:"8px",textAlign:"center"}}>
-                      <div style={{fontSize:"10px",color:"#2d6a00",fontFamily:"monospace",marginBottom:"2px"}}>Total levain</div>
-                      <div style={{fontSize:"16px",fontWeight:500,color:"#2d6a00"}}>{calcVolLevain(tirageForm).toFixed(1)} L</div>
+                {(()=>{
+                  const prods = tirageForm.produitsOeno||[];
+                  const nomsConnus = [...new Set(tirages.flatMap(t=>(t.produitsOeno||[]).map(p=>p.nom)).filter(Boolean))].sort();
+                  const majProd = (i,champ,val) => setTirageForm(f=>({...f,produitsOeno:(f.produitsOeno||[]).map((p,j)=>j===i?{...p,[champ]:val}:p)}));
+                  return (
+                    <div style={{display:"grid",gap:"8px"}}>
+                      {prods.length===0&&<div style={{fontSize:"12px",color:"#9a8870",fontStyle:"italic"}}>Aucun produit ajouté.</div>}
+                      {prods.map((p,i)=>(
+                        <div key={i} style={{display:"grid",gridTemplateColumns:"2fr 1.3fr 1fr 0.9fr auto",gap:"8px",alignItems:"end"}}>
+                          <div>{i===0&&<span style={s.lbl}>Produit</span>}
+                            <input style={s.inp} list="produits-oeno-tirage" placeholder="ex. Liqueur de tirage, levures EC1118, adjuvant…" value={p.nom} onChange={e=>majProd(i,"nom",e.target.value)}/></div>
+                          <div>{i===0&&<span style={s.lbl}>N° de lot</span>}
+                            <input style={s.inp} placeholder="ex. LOT-2025-042" value={p.lot} onChange={e=>majProd(i,"lot",e.target.value)}/></div>
+                          <div>{i===0&&<span style={s.lbl}>Quantité</span>}
+                            <input type="number" style={s.inp} placeholder="0" value={p.quantite} onChange={e=>majProd(i,"quantite",e.target.value)}/></div>
+                          <div>{i===0&&<span style={s.lbl}>Unité</span>}
+                            <select style={s.sel} value={p.unite||"g"} onChange={e=>majProd(i,"unite",e.target.value)}>
+                              {["g","kg","g/hL","mL","cL","L","mL/hL"].map(u=><option key={u} value={u}>{u}</option>)}
+                            </select></div>
+                          <button style={{...s.ghostSm,color:"#cc2222",borderColor:"#f0b4b4",height:"36px"}} title="Retirer ce produit"
+                            onClick={()=>setTirageForm(f=>({...f,produitsOeno:(f.produitsOeno||[]).filter((_,j)=>j!==i)}))}>✕</button>
+                        </div>
+                      ))}
+                      <datalist id="produits-oeno-tirage">{nomsConnus.map(n=><option key={n} value={n}/>)}</datalist>
+                      <div>
+                        <button style={s.ghostSm} onClick={()=>setTirageForm(f=>({...f,produitsOeno:[...(f.produitsOeno||[]),{nom:"",lot:"",quantite:"",unite:"g"}]}))}>+ Ajouter un produit</button>
+                      </div>
                     </div>
+                  );
+                })()}
+                {calcVolLevain(tirageForm)>0&&(
+                  <div style={{fontSize:"11px",color:"#7a5200",marginTop:"10px",background:"#fbe8c8",borderRadius:"5px",padding:"6px 10px"}}>
+                    Ancien tirage : un levain de {calcVolLevain(tirageForm).toFixed(1)} L ({tirageForm.levainLevureNom||"levure"}) avait été saisi et reste compté dans le volume assemblé.
                   </div>
-                </div>
+                )}
               </div>
               <div style={{background:"#f5e8cc",borderRadius:"8px",padding:"14px",border:"0.5px solid #e0c050"}}>
                 <div style={{...s.lbl,marginBottom:"8px",fontSize:"11px",color:"#2C3E50"}}>Volume total assemble</div>
                 <div style={{display:"flex",alignItems:"baseline",gap:"8px"}}>
                   <div style={{fontSize:"28px",fontWeight:500,color:"#2C3E50"}}>{calcTotalAssemble(tirageForm).toFixed(1)} L</div>
-                  <div style={{fontSize:"12px",color:"#9a8870"}}>= {tirageForm.volumeTotal||0} L vin + {calcVolLevain(tirageForm).toFixed(1)} L levain</div>
+                  <div style={{fontSize:"12px",color:"#9a8870"}}>= {tirageForm.volumeTotal||0} L vin{calcVolLevain(tirageForm)>0?` + ${calcVolLevain(tirageForm).toFixed(1)} L levain (ancien)`:""}</div>
                 </div>
               </div>
               <div style={{background:"#F0EDE8",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
