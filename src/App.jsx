@@ -592,6 +592,10 @@ export default function App() {
   const [campagnesClosees, setCampagnesClosees]  = useState([]);
   const [pdfDocs,          setPdfDocs]          = useState([]);
   const [uploadingPdf,     setUploadingPdf]     = useState(false);
+  // Formulaire d'ajout de document (calendrier / facture / certificat bio) dans l'onglet Vigne
+  const DOC_FORM_EMPTY = { file:null, typeDoc:"calendrier", nom:"", fournisseur:"", dateValidite:"" };
+  const [docForm,          setDocForm]          = useState(null);
+  const [filterTypeDoc,    setFilterTypeDoc]    = useState("tous");
   const [pdfFactures,      setPdfFactures]      = useState([]);
   const [biodynamies,      setBiodynamies]       = useState([]);
   const [showBiodyForm,    setShowBiodyForm]     = useState(false);
@@ -966,14 +970,16 @@ export default function App() {
 
   // Traitement
   // Upload PDF en base64 dans Firestore
-  const uploadPdf = (file, campagne, nom, categorie="traitements") => {
+  // meta : { typeDoc: "calendrier"|"facture"|"certificat_bio", fournisseur, dateValidite }
+  const uploadPdf = (file, campagne, nom, categorie="traitements", meta={}) => {
     if(!file) return;
     if(file.size > 900000) { alert("Le PDF est trop volumineux (max 900 KB). Compressez-le d'abord."); return; }
     setUploadingPdf(true);
     const reader = new FileReader();
     reader.onload = (e) => {
       const base64 = e.target.result;
-      const pdfDoc = { id:`pdf_${Date.now()}`, campagne:String(campagne), nom:nom||file.name, base64, dateUpload:new Date().toISOString(), categorie };
+      const pdfDoc = { id:`pdf_${Date.now()}`, campagne:String(campagne), nom:nom||file.name, base64, dateUpload:new Date().toISOString(), categorie,
+        typeDoc: meta.typeDoc||"calendrier", fournisseur: (meta.fournisseur||"").trim(), dateValidite: meta.dateValidite||"" };
       setPdfDocs(prev=>[...prev, pdfDoc]);
       fbSave("pdfDocs", pdfDoc.id, pdfDoc);
       setUploadingPdf(false);
@@ -3151,7 +3157,7 @@ export default function App() {
               {/* Onglets */}
               <div style={{display:"flex",borderBottom:"0.5px solid #d4c4a0",marginBottom:"16px"}}>
                 {[["traitements","Traitements"],["biodynamie","Biodynamie"],["amendements","Amendements"],["stockprod","Stock Produits"]].map(([tab,lbl])=>(
-                  <button key={tab} style={s.tabBtn(vigneTab===tab)} onClick={()=>setVigneTab(tab)}>{lbl}</button>
+                  <button key={tab} style={s.tabBtn(vigneTab===tab)} onClick={()=>{setVigneTab(tab);setDocForm(null);}}>{lbl}</button>
                 ))}
               </div>
 
@@ -3407,37 +3413,139 @@ export default function App() {
                 </div>
               )}
 
-              {/* Documents PDF prestataires - traitements, biodynamie, amendements */}
-              {["traitements","biodynamie","amendements"].includes(vigneTab) && filterTraitAn && (
+              {/* Documents PDF - calendriers, factures, certificats bio (traitements, biodynamie, amendements) */}
+              {["traitements","biodynamie","amendements"].includes(vigneTab) && filterTraitAn && (()=>{
+                const TYPES_DOC = {
+                  calendrier:     {lbl:"Calendrier / document prestataire", court:"Calendrier",     icon:"📅", bg:"#e6f0fb", col:"#185FA5"},
+                  facture:        {lbl:"Facture / BL",                      court:"Facture",        icon:"🧾", bg:"#E8E0D0", col:"#7a5200"},
+                  certificat_bio: {lbl:"Certificat bio fournisseur",        court:"Certificat bio", icon:"🌿", bg:"#d4edc0", col:"#2d6a00"},
+                };
+                const docsOnglet = pdfDocs.filter(p=>p.campagne===filterTraitAn&&(p.categorie||"traitements")===vigneTab);
+                const docsAffiches = docsOnglet
+                  .filter(p=>filterTypeDoc==="tous"||(p.typeDoc||"calendrier")===filterTypeDoc)
+                  .sort((a,b)=>{
+                    const ordre = {certificat_bio:0,facture:1,calendrier:2};
+                    const d = (ordre[a.typeDoc||"calendrier"]??9)-(ordre[b.typeDoc||"calendrier"]??9);
+                    if(d!==0) return d;
+                    return (a.fournisseur||"").localeCompare(b.fournisseur||"") || (b.dateUpload||"").localeCompare(a.dateUpload||"");
+                  });
+                const nbParType = (t) => docsOnglet.filter(p=>(p.typeDoc||"calendrier")===t).length;
+                // Fournisseurs connus : ceux du stock produits + ceux déjà saisis sur des documents
+                const fournisseursConnus = [...new Set([
+                  ...stockProduits.map(sp=>(sp.fournisseur||"").trim()),
+                  ...pdfDocs.map(p=>(p.fournisseur||"").trim()),
+                ].filter(Boolean))].sort();
+                // Fournisseurs des produits du stock qui n'ont aucun certificat bio valide (toutes campagnes)
+                const today = new Date().toISOString().slice(0,10);
+                const fournStock = [...new Set(stockProduits.filter(sp=>(sp.categorie||"traitement")===({traitements:"traitement",biodynamie:"biodynamie",amendements:"amendement"}[vigneTab])).map(sp=>(sp.fournisseur||"").trim()).filter(Boolean))];
+                const sansCertif = fournStock.filter(f=>!pdfDocs.some(p=>p.typeDoc==="certificat_bio"&&(p.fournisseur||"").trim().toLowerCase()===f.toLowerCase()&&(!p.dateValidite||p.dateValidite>=today)));
+                const etatValidite = (pdf) => {
+                  if(pdf.typeDoc!=="certificat_bio"||!pdf.dateValidite) return null;
+                  const jours = Math.round((new Date(pdf.dateValidite)-new Date(today))/86400000);
+                  if(jours<0)   return {txt:`Expiré depuis le ${fmt(pdf.dateValidite)}`, bg:"#fdd0d0", col:"#cc2222"};
+                  if(jours<=30) return {txt:`Expire le ${fmt(pdf.dateValidite)} (${jours} j)`, bg:"#fbe8c8", col:"#c47800"};
+                  return {txt:`Valide jusqu'au ${fmt(pdf.dateValidite)}`, bg:"#d4edc0", col:"#2d6a00"};
+                };
+                const validerDoc = () => {
+                  if(!docForm?.file) return alert("Choisissez un fichier PDF.");
+                  if(docForm.typeDoc!=="calendrier" && !docForm.fournisseur.trim()) return alert("Indiquez le fournisseur.");
+                  uploadPdf(docForm.file, filterTraitAn, docForm.nom.trim()||docForm.file.name.replace(/\.pdf$/i,""), vigneTab,
+                    {typeDoc:docForm.typeDoc, fournisseur:docForm.fournisseur, dateValidite:docForm.typeDoc==="certificat_bio"?docForm.dateValidite:""});
+                  setDocForm(null);
+                };
+                return (
                 <div style={{...s.card,marginTop:"14px"}}>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
-                    <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#2C3E50"}}>Calendriers / documents prestataires</div>
-                    {!closed && (
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px",flexWrap:"wrap",gap:"8px"}}>
+                    <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#2C3E50"}}>Documents : calendriers, factures, certificats bio</div>
+                    {!closed && !docForm && (
                       <label style={{...s.btnSm,cursor:"pointer",display:"flex",alignItems:"center",gap:"5px"}}>
                         {uploadingPdf?"Chargement...":"+ Ajouter PDF"}
                         <input type="file" accept=".pdf" style={{display:"none"}} onChange={e=>{
                           const file=e.target.files[0];
-                          if(file){
-                            const nom=window.prompt("Nom du document (ex: Calendrier Lorain 2026)", file.name.replace(".pdf",""));
-                            if(nom!==null) uploadPdf(file, filterTraitAn, nom||file.name, vigneTab);
-                          }
+                          if(file) setDocForm({...DOC_FORM_EMPTY, file, nom:file.name.replace(/\.pdf$/i,""), typeDoc:filterTypeDoc!=="tous"?filterTypeDoc:"calendrier"});
                           e.target.value="";
                         }}/>
                       </label>
                     )}
                   </div>
-                  {pdfDocs.filter(p=>p.campagne===filterTraitAn&&(p.categorie||"traitements")===vigneTab).length===0&&(
+
+                  {/* Formulaire d'ajout */}
+                  {docForm && (
+                    <div style={{background:"#F8F6F2",border:"0.5px solid #d4c4a0",borderRadius:"6px",padding:"12px",marginBottom:"12px"}}>
+                      <div style={{fontSize:"11px",color:"#9a8870",marginBottom:"8px"}}>Fichier : <b style={{color:"#2C3E50"}}>{docForm.file?.name}</b></div>
+                      <div style={{display:"flex",gap:"6px",marginBottom:"10px",flexWrap:"wrap"}}>
+                        {Object.entries(TYPES_DOC).map(([k,t])=>(
+                          <button key={k} onClick={()=>setDocForm(f=>({...f,typeDoc:k}))}
+                            style={{padding:"6px 12px",borderRadius:"5px",cursor:"pointer",fontSize:"12px",
+                              border:`1px solid ${docForm.typeDoc===k?t.col:"#d4c4a0"}`,background:docForm.typeDoc===k?t.bg:"transparent",color:docForm.typeDoc===k?t.col:"#7a6840",fontWeight:docForm.typeDoc===k?500:400}}>
+                            {t.icon} {t.court}
+                          </button>
+                        ))}
+                      </div>
+                      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:"10px"}}>
+                        <div>
+                          <div style={s.lbl}>Nom du document</div>
+                          <input style={s.inp} value={docForm.nom} onChange={e=>setDocForm(f=>({...f,nom:e.target.value}))}
+                            placeholder={docForm.typeDoc==="facture"?"ex : Facture n°1234":docForm.typeDoc==="certificat_bio"?"ex : Certificat Ecocert 2026":"ex : Calendrier Lorain 2026"}/>
+                        </div>
+                        <div>
+                          <div style={s.lbl}>Fournisseur{docForm.typeDoc!=="calendrier"?" *":""}</div>
+                          <input style={s.inp} list="fournisseurs-docs" value={docForm.fournisseur} onChange={e=>setDocForm(f=>({...f,fournisseur:e.target.value}))} placeholder="ex : Lorain, De Sangosse…"/>
+                          <datalist id="fournisseurs-docs">{fournisseursConnus.map(f=><option key={f} value={f}/>)}</datalist>
+                        </div>
+                        {docForm.typeDoc==="certificat_bio" && (
+                          <div>
+                            <div style={s.lbl}>Valide jusqu'au</div>
+                            <input type="date" style={s.inp} value={docForm.dateValidite} onChange={e=>setDocForm(f=>({...f,dateValidite:e.target.value}))}/>
+                          </div>
+                        )}
+                      </div>
+                      <div style={{display:"flex",gap:"8px",marginTop:"12px",justifyContent:"flex-end"}}>
+                        <button style={s.ghostSm} onClick={()=>setDocForm(null)}>Annuler</button>
+                        <button style={s.btnSm} onClick={validerDoc}>Enregistrer</button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Alerte fournisseurs sans certificat bio valide */}
+                  {sansCertif.length>0 && (
+                    <div style={{background:"#fbe8c8",border:"0.5px solid #e0b878",borderRadius:"6px",padding:"8px 12px",marginBottom:"12px",fontSize:"12px",color:"#7a5200"}}>
+                      ⚠️ Pas de certificat bio valide pour : <b>{sansCertif.join(", ")}</b>
+                    </div>
+                  )}
+
+                  {/* Filtre par type */}
+                  {docsOnglet.length>0 && (
+                    <div style={{display:"flex",gap:"6px",marginBottom:"10px",flexWrap:"wrap"}}>
+                      {[["tous",`Tous (${docsOnglet.length})`],...Object.entries(TYPES_DOC).map(([k,t])=>[k,`${t.icon} ${t.court} (${nbParType(k)})`])].map(([k,lbl])=>(
+                        <button key={k} onClick={()=>setFilterTypeDoc(k)}
+                          style={{padding:"3px 10px",borderRadius:"4px",cursor:"pointer",fontSize:"11px",border:`0.5px solid ${filterTypeDoc===k?"#2d6a00":"#d4c4a0"}`,background:filterTypeDoc===k?"#d4edc0":"transparent",color:filterTypeDoc===k?"#2d6a00":"#9a8870"}}>
+                          {lbl}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {docsAffiches.length===0&&(
                     <div style={{fontSize:"12px",color:"#9a8870",fontStyle:"italic"}}>Aucun document pour cette campagne.</div>
                   )}
                   <div style={{display:"grid",gap:"8px"}}>
-                    {pdfDocs.filter(p=>p.campagne===filterTraitAn&&(p.categorie||"traitements")===vigneTab).map(pdf=>(
-                      <div key={pdf.id} style={{display:"flex",alignItems:"center",gap:"12px",padding:"10px 12px",background:"#F0EDE8",borderRadius:"6px",border:"0.5px solid #d4c4a0"}}>
-                        <div style={{width:"32px",height:"32px",background:"#fdd0d0",borderRadius:"4px",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                          <span style={{fontSize:"10px",fontWeight:500,color:"#cc2222",fontFamily:"monospace"}}>PDF</span>
+                    {docsAffiches.map(pdf=>{
+                      const t = TYPES_DOC[pdf.typeDoc||"calendrier"]||TYPES_DOC.calendrier;
+                      const v = etatValidite(pdf);
+                      return (
+                      <div key={pdf.id} style={{display:"flex",alignItems:"center",gap:"12px",padding:"10px 12px",background:"#F0EDE8",borderRadius:"6px",border:"0.5px solid #d4c4a0",flexWrap:"wrap"}}>
+                        <div style={{width:"32px",height:"32px",background:t.bg,borderRadius:"4px",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:"16px"}}>
+                          {t.icon}
                         </div>
-                        <div style={{flex:1}}>
+                        <div style={{flex:1,minWidth:"160px"}}>
                           <div style={{fontWeight:500,color:"#1a1205",fontSize:"13px"}}>{pdf.nom}</div>
-                          <div style={{fontSize:"10px",color:"#9a8870",marginTop:"1px"}}>{pdf.dateUpload?.slice(0,10)}</div>
+                          <div style={{display:"flex",gap:"6px",alignItems:"center",flexWrap:"wrap",marginTop:"3px"}}>
+                            <span style={{background:t.bg,color:t.col,borderRadius:"3px",padding:"0 6px",fontSize:"10px",fontFamily:"monospace"}}>{t.court}</span>
+                            {pdf.fournisseur&&<span style={{fontSize:"11px",color:"#2C3E50"}}>{pdf.fournisseur}</span>}
+                            {v&&<span style={{background:v.bg,color:v.col,borderRadius:"3px",padding:"0 6px",fontSize:"10px"}}>{v.txt}</span>}
+                            <span style={{fontSize:"10px",color:"#9a8870"}}>ajouté le {fmt(pdf.dateUpload)}</span>
+                          </div>
                         </div>
                         <button style={s.btnSm} onClick={()=>openPdf(pdf)}>
                           Ouvrir
@@ -3445,21 +3553,33 @@ export default function App() {
                         {!closed&&(
                           <div style={{display:"flex",gap:"4px"}}>
                             <button style={s.ghostSm} onClick={()=>{
-                              const n=window.prompt("Nouveau nom :", pdf.nom);
-                              if(n&&n.trim()){
-                                const updated={...pdf,nom:n.trim()};
-                                setPdfDocs(prev=>prev.map(p=>p.id===pdf.id?updated:p));
-                                fbSave("pdfDocs",pdf.id,updated);
+                              const n=window.prompt("Nom du document :", pdf.nom);
+                              if(n===null) return;
+                              const f=window.prompt("Fournisseur :", pdf.fournisseur||"");
+                              if(f===null) return;
+                              let dv=pdf.dateValidite||"";
+                              if((pdf.typeDoc||"calendrier")==="certificat_bio"){
+                                const saisie=window.prompt("Valide jusqu'au (JJ/MM/AAAA) :", dv?fmt(dv):"");
+                                if(saisie===null) return;
+                                const m=saisie.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+                                if(saisie.trim()==="") dv="";
+                                else if(m) dv=`${m[3]}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}`;
+                                else { alert("Date non reconnue, elle n'a pas été modifiée."); }
                               }
-                            }}>Renommer</button>
+                              const updated={...pdf,nom:n.trim()||pdf.nom,fournisseur:f.trim(),dateValidite:dv};
+                              setPdfDocs(prev=>prev.map(p=>p.id===pdf.id?updated:p));
+                              fbSave("pdfDocs",pdf.id,updated);
+                            }}>Modifier</button>
                             <button style={{...s.ghostSm,color:"#cc2222",borderColor:"#f0b4b4"}} onClick={()=>deletePdf(pdf)}>Sup.</button>
                           </div>
                         )}
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
-              )}
+                );
+              })()}
             </div>
           );
         })()}
