@@ -488,6 +488,258 @@ const HIST_TRAITEMENTS = [
   {campagne:"2024",numero:"24",date:"2024-07-10",surface:"8.20 ha",cuivreTotal:400,produits:[{nom:"Bouillie Bordelaise",dose:"1kg/ha",matiereActive:"Cuivre",cuivre:400},{nom:"Nordox",dose:"270g/ha",matiereActive:"Cuivre"}]},
 ];
 
+// ===================== DOSSIER AUDIT BIO =====================
+// Construit un ZIP classé par catégorie pour une période [debut, fin] (dates "AAAA-MM-JJ").
+// libs = { JSZip, jsPDF, autoTable } (chargés à la demande pour ne pas alourdir l'application)
+// data = { traitements, biodynamies, amendements, vendanges, mouvements, assemblages, tirages,
+//          pdfDocs, pdfFactures, parcelles, cuvesCuverie, stockProduits }
+const construireDossierAuditBio = async (data, debut, fin, libs, nomDomaine="Champagne Nowack") => {
+  const { JSZip, jsPDF, autoTable } = libs;
+  const zip = new JSZip();
+  const fmtD = (d) => { if(!d) return "-"; const p=String(d).slice(0,10).split("-"); return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:String(d); };
+  const dansPeriode = (d) => { if(!d) return false; const x=String(d).slice(0,10); return x>=debut && x<=fin; };
+  const anDebut = parseInt(debut.slice(0,4)), anFin = parseInt(fin.slice(0,4));
+  const anneeDansPeriode = (a) => { const n=parseInt(a); return !isNaN(n) && n>=anDebut && n<=anFin; };
+  const periodeTxt = `du ${fmtD(debut)} au ${fmtD(fin)}`;
+  const nomRacine = `Audit_bio_${debut}_au_${fin}`;
+  const racine = zip.folder(nomRacine);
+  const num = (v) => parseFloat(v)||0;
+  const nomCuve = (id) => (data.cuvesCuverie||[]).find(c=>c.id===id)?.nom || id || "-";
+  const nomParcelles = (v) => {
+    const ids = v.parcelleIds&&v.parcelleIds.length>0 ? v.parcelleIds : (v.parcelleId?[v.parcelleId]:[]);
+    const noms = ids.map(id=>(data.parcelles||[]).find(p=>p.id===id)?.nom).filter(Boolean);
+    return noms.length ? noms.join(" + ") : "-";
+  };
+  const estBioVendange = (v) => {
+    if(v.declasseNonBio) return false;
+    const ids = v.parcelleIds&&v.parcelleIds.length>0 ? v.parcelleIds : (v.parcelleId?[v.parcelleId]:[]);
+    return ids.length>0 && ids.every(id=>(data.parcelles||[]).find(p=>p.id===id)?.certification==="BIO");
+  };
+  // Les polices standard des PDF ne gèrent pas les emojis : on les retire
+  const propre = (t) => String(t??"").replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu,"").replace(/\s+/g," ").trim();
+  const nomFichier = (t) => propre(t).normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-zA-Z0-9._-]+/g,"_").replace(/_+/g,"_").replace(/^_|_$/g,"").slice(0,80) || "document";
+
+  // ---------- Registres PDF ----------
+  const registre = (titre, sousTitre, colonnes, lignes, totaux) => {
+    const doc = new jsPDF({orientation:"landscape", unit:"mm", format:"a4"});
+    doc.setFont("helvetica","bold"); doc.setFontSize(14); doc.setTextColor(44,62,80);
+    doc.text(propre(`${nomDomaine} - ${titre}`), 14, 15);
+    doc.setFont("helvetica","normal"); doc.setFontSize(9); doc.setTextColor(120,110,90);
+    doc.text(propre(`Période ${periodeTxt} - ${sousTitre}`), 14, 21);
+    autoTable(doc, {
+      startY: 26,
+      head: [colonnes.map(propre)],
+      body: lignes.length ? lignes.map(l=>l.map(propre)) : [[{content:"Aucune donnée sur la période.", colSpan:colonnes.length, styles:{fontStyle:"italic",textColor:[150,140,120]}}]],
+      foot: totaux ? [totaux.map(propre)] : undefined,
+      styles: {fontSize:7.5, cellPadding:1.6, overflow:"linebreak", valign:"top"},
+      headStyles: {fillColor:[245,232,204], textColor:[122,82,0], fontStyle:"bold"},
+      footStyles: {fillColor:[240,237,232], textColor:[44,62,80], fontStyle:"bold"},
+      alternateRowStyles: {fillColor:[252,250,245]},
+      margin: {left:14, right:14},
+      didDrawPage: () => {
+        const h = doc.internal.pageSize.getHeight(), w = doc.internal.pageSize.getWidth();
+        doc.setFontSize(7); doc.setTextColor(150,140,120);
+        doc.text(`Généré le ${fmtD(new Date().toISOString())} - page ${doc.internal.getNumberOfPages()}`, w-14, h-6, {align:"right"});
+      },
+    });
+    return doc.output("arraybuffer");
+  };
+
+  // ---------- Ajout des PDF stockés (base64) ----------
+  const nomsUtilises = new Set();
+  const ajouterPdf = (dossier, chemin, pdf, prefixeDate) => {
+    const b64 = String(pdf.base64||"").split(",").pop();
+    if(!b64) return false;
+    const date = prefixeDate || (pdf.dateFacture || pdf.dateUpload || "").slice(0,10);
+    let base = [date, pdf.fournisseur, pdf.nom].filter(Boolean).map(nomFichier).join("_");
+    let nom = `${base}.pdf`, i = 2;
+    while(nomsUtilises.has(chemin+"/"+nom)) nom = `${base}_${i++}.pdf`;
+    nomsUtilises.add(chemin+"/"+nom);
+    dossier.file(nom, b64, {base64:true});
+    return true;
+  };
+  // Un document "de campagne" est retenu si sa date de facture est dans la période,
+  // sinon (pas de date de facture) si son année de campagne recoupe la période.
+  const docRetenu = (p) => p.dateFacture ? dansPeriode(p.dateFacture) : anneeDansPeriode(p.campagne);
+  const typeDe = (p, defaut) => p.typeDoc || defaut;
+  const sommaire = []; // [section, élément, nombre]
+  const alertes = [];
+
+  // ===== 01 Déclarations officielles =====
+  const d01 = racine.folder("01_Declarations_officielles");
+  const drs = (data.pdfDocs||[]).filter(p=>p.categorie==="declaration_recolte" && anneeDansPeriode(p.campagne));
+  const parcs = (data.pdfDocs||[]).filter(p=>p.categorie==="parcellaire_civc" && anneeDansPeriode(p.campagne));
+  drs.forEach(p=>ajouterPdf(d01.folder("Declarations_de_recolte"), "01/dr", p, `${p.campagne}`));
+  parcs.forEach(p=>ajouterPdf(d01.folder("Parcellaire_CIVC"), "01/parc", p, `${p.campagne}`));
+  sommaire.push(["01 Déclarations officielles","Déclarations de récolte",drs.length],["","Parcellaires CIVC",parcs.length]);
+  for(let a=anDebut;a<=anFin;a++){
+    if(!drs.some(p=>parseInt(p.campagne)===a)) alertes.push(`Aucune déclaration de récolte jointe pour la campagne ${a}.`);
+    if(!parcs.some(p=>parseInt(p.campagne)===a)) alertes.push(`Aucun parcellaire CIVC joint pour la campagne ${a}.`);
+  }
+
+  // ===== 02 Vigne =====
+  const d02 = racine.folder("02_Vigne");
+  const traits = (data.traitements||[]).filter(t=>dansPeriode(t.date)).sort((a,b)=>(a.date||"").localeCompare(b.date||""));
+  const cuTotal = traits.reduce((s,t)=>s+num(t.cuivreTotal),0);
+  d02.file("1_Registre_traitements.pdf", registre("Registre des traitements phytosanitaires", `${traits.length} traitement(s) - cuivre total ${(cuTotal/1000).toFixed(3)} kg`,
+    ["N°","Date","Campagne","Surface (ha)","Produits (dose)","N° AMM / matière active","Cuivre (g)","Observations"],
+    traits.map(t=>[t.numero?`N°${t.numero}`:"-", fmtD(t.date), t.campagne||"-", t.surface||"-",
+      (t.produits||[]).map(p=>`${p.nom||""} ${p.dose||""}`.trim()).join("\n")||"-",
+      (t.produits||[]).map(p=>{ const sp=(data.stockProduits||[]).find(x=>x.nom===p.nom); return [sp?.nAmm, p.matiereActive||sp?.substanceActive].filter(Boolean).join(" - ")||"-"; }).join("\n"),
+      t.cuivreTotal?String(t.cuivreTotal):"-", t.observations||""]),
+    ["","","","","","Total cuivre",`${Math.round(cuTotal)} g`,""]));
+  const biodys = (data.biodynamies||[]).filter(b=>dansPeriode(b.date)).sort((a,b)=>(a.date||"").localeCompare(b.date||""));
+  d02.file("2_Registre_biodynamie.pdf", registre("Registre biodynamie", `${biodys.length} passage(s)`,
+    ["Date","Campagne","Surface (ha)","Préparation","Dose","Observations"],
+    biodys.map(b=>[fmtD(b.date), b.campagne||"-", b.surface||"-", b.produit||"-", b.dose||"-", b.observations||""])));
+  // Amendements : la date est parfois vide -> on retient alors l'année de campagne
+  const amends = (data.amendements||[]).filter(a=>a.date ? dansPeriode(a.date) : anneeDansPeriode(a.campagne));
+  const nTot = amends.reduce((s,a)=>s+num(a.nTotal),0);
+  d02.file("3_Registre_amendements.pdf", registre("Registre des amendements / fertilisation", `${amends.length} apport(s) - azote total ${Math.round(nTot*100)/100} kg N`,
+    ["Date","Campagne","Parcelle","Surface (ha)","Produit","Quantité","N total (kg)","N/ha","Observations"],
+    amends.map(a=>[fmtD(a.date), a.campagne||"-", a.parcelle||"-", a.surface||"-", a.produit||"-", a.quantite||"-", a.nTotal||"-", a.nParHa||"-", a.observations||""]),
+    ["","","","","","Total",String(Math.round(nTot*100)/100),"",""]));
+  const docsVigne = (data.pdfDocs||[]).filter(p=>["traitements","biodynamie","amendements"].includes(p.categorie||"traitements") && !p.categorie?.startsWith("oeno_") && docRetenu(p));
+  const sousDossierVigne = {calendrier:"Calendriers_prestataires", facture:"Factures", fiche_technique:"Fiches_techniques"};
+  let nbDocsVigne = {calendrier:0,facture:0,fiche_technique:0};
+  docsVigne.filter(p=>typeDe(p,"calendrier")!=="certificat_bio").forEach(p=>{
+    const t = typeDe(p,"calendrier");
+    if(ajouterPdf(d02.folder(sousDossierVigne[t]||"Autres"), "02/"+t, p)) nbDocsVigne[t]=(nbDocsVigne[t]||0)+1;
+  });
+  sommaire.push(["02 Vigne","Registre des traitements",traits.length],["","Registre biodynamie",biodys.length],["","Registre des amendements",amends.length],
+    ["","Calendriers prestataires",nbDocsVigne.calendrier],["","Factures (vigne)",nbDocsVigne.facture],["","Fiches techniques (vigne)",nbDocsVigne.fiche_technique]);
+
+  // ===== 03 Vendanges =====
+  const d03 = racine.folder("03_Vendanges");
+  const vends = (data.vendanges||[]).filter(v=>dansPeriode(v.date)).sort((a,b)=>(a.date||"").localeCompare(b.date||""));
+  const destLbl = {maison:"Maison",negoce_total:"Négoce total",negoce_partiel:"Négoce partiel",prestation:"Prestation"};
+  const kgTot = vends.reduce((s,v)=>s+num(v.poidsMarcKg),0), hlTot = vends.reduce((s,v)=>s+num(v.volumeHL),0);
+  d03.file("1_Registre_vendanges.pdf", registre("Registre des vendanges / pressurages", `${vends.length} marc(s) - ${Math.round(kgTot).toLocaleString("fr-FR")} kg - ${hlTot.toFixed(2)} HL`,
+    ["Date","N° marc","Parcelle(s)","BIO","Poids (kg)","Volume (HL)","Cuve réception","Destination","Produits ajoutés (dose, lot)","Observations"],
+    vends.map(v=>[fmtD(v.date), v.numeroMarc||"-", nomParcelles(v), estBioVendange(v)?"BIO":"Non", v.poidsMarcKg||"-", v.volumeHL||"-",
+      v.cuveReception?nomCuve(v.cuveReception):(v.nouvelleCuveNom||"-"),
+      (destLbl[v.destinationMarc||"maison"]||v.destinationMarc)+(v.clientNegoce?` (${v.clientNegoce})`:"")+(v.clientPrestation?` (${v.clientPrestation})`:"")+(v.numeroDAE?` DAE ${v.numeroDAE}`:""),
+      (v.produitsAjoutes||[]).map(p=>[p.nom,p.dose,p.lot?`lot ${p.lot}`:""].filter(Boolean).join(" ")).join("\n")||"-",
+      v.observations||""]),
+    ["","","","Total",String(Math.round(kgTot)),hlTot.toFixed(2),"","","",""]));
+  const ajouterDocsOeno = (dossier, cat, code) => {
+    const n = {facture:0,fiche_technique:0};
+    (data.pdfDocs||[]).filter(p=>p.categorie===cat && docRetenu(p) && typeDe(p,"facture")!=="certificat_bio").forEach(p=>{
+      const t = typeDe(p,"facture");
+      if(ajouterPdf(dossier.folder(t==="fiche_technique"?"Fiches_techniques":"Factures_produits_oenologiques"), code+"/"+t, p)) n[t]=(n[t]||0)+1;
+    });
+    return n;
+  };
+  const nV = ajouterDocsOeno(d03, "oeno_vendanges", "03");
+  sommaire.push(["03 Vendanges","Registre des vendanges",vends.length],["","Factures produits œnologiques",nV.facture],["","Fiches techniques",nV.fiche_technique]);
+  const vendNonBio = vends.filter(v=>!estBioVendange(v)).length;
+  if(vendNonBio>0) alertes.push(`${vendNonBio} marc(s) de vendange non BIO sur la période (vérifier la séparation des lots).`);
+
+  // ===== 04 Traçabilité chai : mouvements de fûts -> assemblages -> tirages =====
+  const d04 = racine.folder("04_Tracabilite_chai");
+  const typeMvt = (v) => ({ouillage:"Ouillage",soutirage:"Soutirage",perte:"Perte de volume",remplissage:"Remplissage cuve",batonnage:"Bâtonnage",ajout_produit:"Ajout produit",entonnage:"Entonnage",mutage:"Mutage",distillerie:"Excédents (distillerie)"}[v]||v||"-");
+  const mvts = (data.mouvements||[]).filter(m=>dansPeriode(m.date)).sort((a,b)=>(a.date||"").localeCompare(b.date||""));
+  const volMvt = (m) => {
+    if(m.type==="entonnage") return (m.entonnageFuts||[]).filter(f=>f.futId).map(f=>`${f.futId}: ${f.volume} L`).join("\n") || "-";
+    if(m.type==="ouillage" && (m.ouillageDestFuts||[]).some(f=>f.futId)) return (m.ouillageDestFuts||[]).filter(f=>f.futId).map(f=>`${f.futId}: ${f.volume} L`).join("\n");
+    return m.volume ? `${m.volume} L` : "-";
+  };
+  const srcMvt = (m) => {
+    if(m.type==="entonnage") return [m.entonnageCuveId?nomCuve(m.entonnageCuveId):"", ...(m.entonnageCuves||[]).filter(c=>c.cuveId).map(c=>nomCuve(c.cuveId))].filter(Boolean).join(", ")||"-";
+    if(m.type==="distillerie") return (m.distillerieSources||[]).filter(x=>x.id).map(x=>`${x.id} (${x.volume})`).join(", ")||"-";
+    return (m.futSource||[]).join(", ")||"-";
+  };
+  const destMvt = (m) => {
+    if(m.type==="entonnage") return (m.entonnageFuts||[]).filter(f=>f.futId).map(f=>f.futId).join(", ")||"-";
+    if(m.type==="ouillage" && (m.ouillageDestFuts||[]).some(f=>f.futId)) return (m.ouillageDestFuts||[]).filter(f=>f.futId).map(f=>f.futId).join(", ");
+    if(m.type==="mutage") return m.mutageDestId||"-";
+    return m.futDest||"-";
+  };
+  d04.file("1_Mouvements_futs_et_cuves.pdf", registre("Traçabilité - mouvements de fûts et cuves", `${mvts.length} mouvement(s)`,
+    ["Date","Type","Source","Destination","Volume","Produit / dosage / lot","Opérateur","Notes"],
+    mvts.map(m=>[fmtD(m.date)+(String(m.date||"").length>10?` ${String(m.date).slice(11,16)}`:""), typeMvt(m.type), srcMvt(m), destMvt(m), volMvt(m),
+      [m.produit, m.dosage, m.numeroLot?`lot ${m.numeroLot}`:""].filter(Boolean).join(" - ")||"-", m.operateur||"-", m.notes||""])));
+  const asms = (data.assemblages||[]).filter(a=>dansPeriode(a.date)).sort((a,b)=>(a.date||"").localeCompare(b.date||""));
+  const srcAsm = (s) => `${s.type==="cuve"?nomCuve(s.id):s.id}: ${s.volume||0} L`;
+  d04.file("2_Assemblages.pdf", registre("Traçabilité - assemblages", `${asms.length} assemblage(s)`,
+    ["Date","Cuvée","BIO","Sources (fûts / cuves : volume)","Volume total","Cuve d'assemblage","Vers tirage","Retours (dont RI)","Notes"],
+    asms.map(a=>{
+      const srcs = (a.sources||[]).filter(s=>s.id);
+      const retours = [...(a.destRetours||[]),...(a.destRetoursRI||[]).map(r=>({...r,ri:true}))].filter(r=>r.id);
+      return [fmtD(a.date), a.nomCuvee||"-", a.isBio?"BIO":"Non", srcs.map(srcAsm).join("\n")||"-",
+        `${srcs.reduce((s,x)=>s+num(x.volume),0)} L`, a.cuveAssemblageId?nomCuve(a.cuveAssemblageId):"-",
+        a.destTirageId?`${nomCuve(a.destTirageId)}: ${a.destTirageVol||0} L`:"-",
+        retours.map(r=>`${r.id.startsWith("cuve_")?nomCuve(r.id.replace("cuve_","")):r.id}: ${r.volume||0} L${r.ri?" (RI)":""}`).join("\n")||"-", a.notes||""];
+    })));
+  const tirs = (data.tirages||[]).filter(t=>dansPeriode(t.date)).sort((a,b)=>(a.date||"").localeCompare(b.date||""));
+  d04.file("3_Tirages.pdf", registre("Traçabilité - tirages", `${tirs.length} tirage(s)`,
+    ["Date","Cuvée","Millésime","BIO","Origine du vin","Volume vin (L)","Produits œnologiques (qté, lot)","Bouteilles (lot)","Opérateur"],
+    tirs.map(t=>{
+      const fmt75 = t.typeProduit==="ratafia"?"50cl":"75cl";
+      const prods = (t.produitsOeno||[]).length
+        ? t.produitsOeno.map(p=>[p.nom, p.quantite?`${p.quantite} ${p.unite||""}`:"", p.lot?`lot ${p.lot}`:""].filter(Boolean).join(" ")).join("\n")
+        : (t.levainLevureNom ? `Levain : ${t.levainLevureNom}${t.levainLot?` lot ${t.levainLot}`:""}` : "-");
+      const origine = [t.cuveSourceId?nomCuve(t.cuveSourceId):"", ...(t.futsSources||[]).map(f=>`${f}${t.futsSourcesVolumes?.[f]?` (${t.futsSourcesVolumes[f]} L)`:""}`)].filter(Boolean).join("\n")||"-";
+      const btl = [[t.qte75,fmt75,t.lot75],[t.qteMagnum,"Magnum",t.lotMagnum],[t.qteJeroboam,"Jéroboam",t.lotJeroboam]].filter(([q])=>num(q)>0).map(([q,f,l])=>`${q} x ${f}${l?` (lot ${l})`:""}`).join("\n")||"-";
+      return [fmtD(t.date), t.cuvee||"-", t.millesime||"-", t.isBio?"BIO":"Non", origine, t.volumeTotal||"-", prods, btl, t.operateur||"-"];
+    })));
+  const nT = ajouterDocsOeno(d04, "oeno_tirages", "04t");
+  const nM = ajouterDocsOeno(d04, "oeno_mouvements", "04m");
+  sommaire.push(["04 Traçabilité chai","Mouvements de fûts et cuves",mvts.length],["","Assemblages",asms.length],["","Tirages",tirs.length],
+    ["","Factures produits œnologiques",nT.facture+nM.facture],["","Fiches techniques",nT.fiche_technique+nM.fiche_technique]);
+  const tirSansProd = tirs.filter(t=>!(t.produitsOeno||[]).length && !t.levainLevureNom).length;
+  if(tirSansProd>0) alertes.push(`${tirSansProd} tirage(s) sans produit œnologique renseigné.`);
+
+  // ===== 05 Certificats bio fournisseurs (toutes rubriques confondues) =====
+  const d05 = racine.folder("05_Certificats_bio_fournisseurs");
+  // Retenu si le certificat couvre au moins une partie de la période
+  const certifs = (data.pdfDocs||[]).filter(p=>p.typeDoc==="certificat_bio" && (
+    p.dateValidite ? (p.dateValidite>=debut && parseInt(p.campagne||"0")<=anFin) : anneeDansPeriode(p.campagne)));
+  let nbCertifs = 0;
+  certifs.forEach(p=>{ if(ajouterPdf(d05, "05", p, p.dateValidite?`valide_${p.dateValidite}`:"")) nbCertifs++; });
+  sommaire.push(["05 Certificats bio fournisseurs","Certificats",nbCertifs]);
+  const fournisseursUtilises = [...new Set((data.stockProduits||[]).map(sp=>(sp.fournisseur||"").trim()).filter(Boolean))];
+  const sansCertif = fournisseursUtilises.filter(f=>!certifs.some(c=>(c.fournisseur||"").trim().toLowerCase()===f.toLowerCase()));
+  if(sansCertif.length) alertes.push(`Fournisseurs sans certificat bio sur la période : ${sansCertif.join(", ")}.`);
+  const expires = certifs.filter(c=>c.dateValidite && c.dateValidite<fin);
+  if(expires.length) alertes.push(`Certificat(s) expirant avant la fin de la période : ${expires.map(c=>`${c.fournisseur||c.nom} (${fmtD(c.dateValidite)})`).join(", ")}.`);
+
+  // ===== 06 Factures du stock produits (onglet Vigne > Stock Produits) =====
+  const factStock = (data.pdfFactures||[]).filter(f=>dansPeriode(f.dateUpload));
+  if(factStock.length){
+    const d06 = racine.folder("06_Factures_stock_produits");
+    factStock.forEach(f=>ajouterPdf(d06, "06", f));
+  }
+  sommaire.push(["06 Factures stock produits","Factures / BL (date d'ajout)",factStock.length]);
+
+  // ===== 00 Sommaire =====
+  const doc = new jsPDF({unit:"mm", format:"a4"});
+  doc.setFont("helvetica","bold"); doc.setFontSize(18); doc.setTextColor(44,62,80);
+  doc.text(propre(`${nomDomaine}`), 14, 20);
+  doc.setFontSize(13); doc.text("Dossier d'audit Agriculture Biologique", 14, 28);
+  doc.setFont("helvetica","normal"); doc.setFontSize(10); doc.setTextColor(120,110,90);
+  doc.text(`Période ${periodeTxt} - généré le ${fmtD(new Date().toISOString())}`, 14, 35);
+  autoTable(doc, {
+    startY: 42, head:[["Dossier","Élément","Nombre"]], body: sommaire.map(r=>r.map(x=>propre(String(x)))),
+    styles:{fontSize:9, cellPadding:2}, headStyles:{fillColor:[245,232,204], textColor:[122,82,0]},
+    columnStyles:{2:{halign:"right", cellWidth:22}}, margin:{left:14,right:14},
+  });
+  let y = doc.lastAutoTable.finalY + 10;
+  doc.setFont("helvetica","bold"); doc.setFontSize(11); doc.setTextColor(alertes.length?196:45, alertes.length?120:106, 0);
+  doc.text(alertes.length ? "Points à vérifier avant l'audit" : "Aucun point d'alerte détecté", 14, y); y += 6;
+  doc.setFont("helvetica","normal"); doc.setFontSize(9); doc.setTextColor(60,50,30);
+  alertes.forEach(a=>{
+    const lignes = doc.splitTextToSize(propre("- "+a), 180);
+    if(y + lignes.length*4.5 > 285){ doc.addPage(); y = 20; }
+    doc.text(lignes, 14, y); y += lignes.length*4.5 + 1;
+  });
+  racine.file("00_Sommaire.pdf", doc.output("arraybuffer"));
+
+  const blob = await zip.generateAsync({type: typeof window!=="undefined" ? "blob" : "nodebuffer", compression:"DEFLATE"});
+  return { blob, nomFichier:`${nomRacine}.zip`, sommaire, alertes };
+};
+
+
 export default function App() {
   const [appError, setAppError] = useState(null);
   const [tonneaux,      setTonneaux]      = useState(INIT_TONNEAUX);
@@ -598,6 +850,11 @@ export default function App() {
   const [filterTypeDoc,    setFilterTypeDoc]    = useState("tous");
   // Formulaire d'ajout de facture de produits oenologiques (Vendanges / Tirages / Mouvements)
   const [oenoForm,         setOenoForm]         = useState(null);
+  // Dossier audit bio : période choisie manuellement
+  const [auditDebut,       setAuditDebut]       = useState(()=>new Date().getFullYear()+"-01-01");
+  const [auditFin,         setAuditFin]         = useState(()=>new Date().toISOString().slice(0,10));
+  const [auditEnCours,     setAuditEnCours]     = useState(false);
+  const [auditResultat,    setAuditResultat]    = useState(null);
   const [filtreTypeOeno,   setFiltreTypeOeno]   = useState({}); // { vendanges:"tous", tirages:"facture", ... }
   const [pdfFactures,      setPdfFactures]      = useState([]);
   const [biodynamies,      setBiodynamies]       = useState([]);
@@ -2803,6 +3060,27 @@ export default function App() {
     );
   };
 
+  const telechargerDossierAuditBio = async () => {
+    if(!auditDebut || !auditFin) return alert("Choisissez une date de début et une date de fin.");
+    if(auditDebut > auditFin) return alert("La date de début doit être avant la date de fin.");
+    setAuditEnCours(true); setAuditResultat(null);
+    try {
+      const [{default: JSZip}, {jsPDF}, autoTableMod] = await Promise.all([import("jszip"), import("jspdf"), import("jspdf-autotable")]);
+      const autoTable = autoTableMod.default || autoTableMod.autoTable;
+      const res = await construireDossierAuditBio(
+        {traitements, biodynamies, amendements, vendanges, mouvements, assemblages, tirages, pdfDocs, pdfFactures, parcelles, cuvesCuverie, stockProduits},
+        auditDebut, auditFin, {JSZip, jsPDF, autoTable});
+      const url = URL.createObjectURL(res.blob);
+      const a = document.createElement("a"); a.href = url; a.download = res.nomFichier; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url), 5000);
+      setAuditResultat({alertes:res.alertes, total:res.sommaire.reduce((s,r)=>s+(Number(r[2])||0),0)});
+    } catch(err) {
+      console.error(err);
+      alert("Le dossier d'audit n'a pas pu être créé : "+(err?.message||err));
+    }
+    setAuditEnCours(false);
+  };
+
   const FutCard = ({t}) => {
     const p=pct(t); const ng=avgNoteG(t.id); const hasNotes=notesForFut(t.id).length>0;
     const apc = getApc(t.appellation);
@@ -3037,6 +3315,34 @@ export default function App() {
         {/* -- DASHBOARD -- */}
         {view==="dashboard" && (
           <div>
+            {/* DOSSIER AUDIT BIO */}
+            <div style={{...s.card,marginBottom:"20px",borderLeft:"3px solid #2d6a00"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:"12px"}}>
+                <div>
+                  <div style={{fontFamily:"Georgia,serif",fontSize:"16px",color:"#2C3E50"}}>Dossier audit bio</div>
+                  <div style={{fontSize:"11px",color:"#9a8870",marginTop:"2px"}}>Registres + documents classés par dossier, en un seul fichier .zip</div>
+                </div>
+                <div style={{display:"flex",gap:"8px",alignItems:"flex-end",flexWrap:"wrap"}}>
+                  <div><div style={s.lbl}>Du</div><input type="date" style={{...s.inp,width:"150px"}} value={auditDebut} onChange={e=>setAuditDebut(e.target.value)}/></div>
+                  <div><div style={s.lbl}>Au</div><input type="date" style={{...s.inp,width:"150px"}} value={auditFin} onChange={e=>setAuditFin(e.target.value)}/></div>
+                  <div style={{display:"flex",flexDirection:"column",gap:"4px"}}>
+                    <button style={{...s.ghostSm,fontSize:"10px"}} onClick={()=>{const a=new Date().getFullYear(); setAuditDebut(a+"-01-01"); setAuditFin(new Date().toISOString().slice(0,10));}}>Année en cours</button>
+                    <button style={{...s.ghostSm,fontSize:"10px"}} onClick={()=>{const a=new Date().getFullYear()-1; setAuditDebut(a+"-01-01"); setAuditFin(a+"-12-31");}}>Année précédente</button>
+                  </div>
+                  <button style={{...s.btn,opacity:auditEnCours?0.6:1}} disabled={auditEnCours} onClick={telechargerDossierAuditBio}>
+                    {auditEnCours?"Préparation…":"↓ Télécharger le dossier"}
+                  </button>
+                </div>
+              </div>
+              {auditResultat && (
+                <div style={{marginTop:"12px",fontSize:"12px",background:auditResultat.alertes.length?"#fbe8c8":"#d4edc0",color:auditResultat.alertes.length?"#7a5200":"#2d6a00",borderRadius:"6px",padding:"8px 12px"}}>
+                  {auditResultat.alertes.length
+                    ? <><b>Dossier téléchargé. Points à vérifier :</b><ul style={{margin:"4px 0 0 18px",padding:0}}>{auditResultat.alertes.map((a,i)=><li key={i}>{a}</li>)}</ul></>
+                    : <b>Dossier téléchargé, aucun point d'alerte détecté.</b>}
+                </div>
+              )}
+            </div>
+
 
             {/* SECTION 1 : STOCK CHAI */}
             <div style={{display:"flex",alignItems:"center",gap:"10px",marginBottom:"16px"}}>
