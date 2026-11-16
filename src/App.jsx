@@ -529,7 +529,7 @@ const construireDossierAuditBio = async (data, debut, fin, libs, nomDomaine="Cha
     autoTable(doc, {
       startY: 26,
       head: [colonnes.map(propre)],
-      body: lignes.length ? lignes.map(l=>l.map(propre)) : [[{content:"Aucune donnée sur la période.", colSpan:colonnes.length, styles:{fontStyle:"italic",textColor:[150,140,120]}}]],
+      body: lignes.length ? lignes.map(l=>l.map(c=>(c&&typeof c==="object")?{...c,content:propre(c.content)}:propre(c))) : [[{content:"Aucune donnée sur la période.", colSpan:colonnes.length, styles:{fontStyle:"italic",textColor:[150,140,120]}}]],
       foot: totaux ? [totaux.map(propre)] : undefined,
       styles: {fontSize:7.5, cellPadding:1.6, overflow:"linebreak", valign:"top"},
       headStyles: {fillColor:[245,232,204], textColor:[122,82,0], fontStyle:"bold"},
@@ -579,6 +579,25 @@ const construireDossierAuditBio = async (data, debut, fin, libs, nomDomaine="Cha
 
   // ===== 02 Vigne =====
   const d02 = racine.folder("02_Vigne");
+  // Registre parcellaire (état actuel des parcelles, statut de plantation calculé à la fin de la période)
+  const parcs2 = [...(data.parcelles||[])].sort((a,b)=>(a.commune||"").localeCompare(b.commune||"")||(a.nom||"").localeCompare(b.nom||""));
+  const statutPlantation = (pc) => {
+    const an = parseInt(pc.anneePlantation); if(!an) return "En production";
+    const diff = anFin - an; return diff<=0 ? "1ère feuille" : diff===1 ? "2ème feuille" : "En production";
+  };
+  const surfTot = parcs2.reduce((x,pc)=>x+num(pc.surface),0);
+  const surfBio = parcs2.filter(pc=>pc.certification==="BIO").reduce((x,pc)=>x+num(pc.surface),0);
+  const surfExpl = [];
+  for(let a=anDebut;a<=anFin;a++){ const r=(data.surfacesExploitees||[]).find(x=>x.campagne===String(a)); if(r&&num(r.surface)>0) surfExpl.push(`${a} : ${num(r.surface)} ha`); }
+  d02.file("0_Registre_parcellaire.pdf", registre("Registre parcellaire",
+    `${parcs2.length} parcelle(s) - ${surfTot.toFixed(4)} ha dont ${surfBio.toFixed(4)} ha BIO`+(surfExpl.length?` - surface exploitée déclarée ${surfExpl.join(", ")}`:""),
+    ["Parcelle","Commune","Cépage","Surface (ha)","Certification","Année plantation","Statut","Observations"],
+    parcs2.map(pc=>[pc.nom||"-", pc.commune||"-", pc.cepage||"-", pc.surface||"-", pc.certification||"-", pc.anneePlantation||"-", statutPlantation(pc), pc.observations||""]),
+    ["Total","","",surfTot.toFixed(4),`BIO : ${surfBio.toFixed(4)} ha`,"","",""]));
+  const enConversion = parcs2.filter(pc=>/^C\d/.test(pc.certification||""));
+  const nonBio = parcs2.filter(pc=>pc.certification!=="BIO" && !/^C\d/.test(pc.certification||""));
+  if(nonBio.length) alertes.push(`Exploitation mixte : ${nonBio.reduce((x,pc)=>x+num(pc.surface),0).toFixed(4)} ha non BIO (${nonBio.map(pc=>pc.nom).join(", ")}) - vérifier la séparation des récoltes.`);
+  if(enConversion.length) alertes.push(`Parcelle(s) en conversion : ${enConversion.map(pc=>`${pc.nom} (${pc.certification})`).join(", ")}.`);
   const traits = (data.traitements||[]).filter(t=>dansPeriode(t.date)).sort((a,b)=>(a.date||"").localeCompare(b.date||""));
   const cuTotal = traits.reduce((s,t)=>s+num(t.cuivreTotal),0);
   d02.file("1_Registre_traitements.pdf", registre("Registre des traitements phytosanitaires", `${traits.length} traitement(s) - cuivre total ${(cuTotal/1000).toFixed(3)} kg`,
@@ -606,7 +625,7 @@ const construireDossierAuditBio = async (data, debut, fin, libs, nomDomaine="Cha
     const t = typeDe(p,"calendrier");
     if(ajouterPdf(d02.folder(sousDossierVigne[t]||"Autres"), "02/"+t, p)) nbDocsVigne[t]=(nbDocsVigne[t]||0)+1;
   });
-  sommaire.push(["02 Vigne","Registre des traitements",traits.length],["","Registre biodynamie",biodys.length],["","Registre des amendements",amends.length],
+  sommaire.push(["02 Vigne","Registre parcellaire",parcs2.length],["","Registre des traitements",traits.length],["","Registre biodynamie",biodys.length],["","Registre des amendements",amends.length],
     ["","Calendriers prestataires",nbDocsVigne.calendrier],["","Factures (vigne)",nbDocsVigne.facture],["","Fiches techniques (vigne)",nbDocsVigne.fiche_technique]);
 
   // ===== 03 Vendanges =====
@@ -622,6 +641,28 @@ const construireDossierAuditBio = async (data, debut, fin, libs, nomDomaine="Cha
       (v.produitsAjoutes||[]).map(p=>[p.nom,p.dose,p.lot?`lot ${p.lot}`:""].filter(Boolean).join(" ")).join("\n")||"-",
       v.observations||""]),
     ["","","","Total",String(Math.round(kgTot)),hlTot.toFixed(2),"","","",""]));
+  // Apports de raisins par parcelle (cagettes / poids net / marc), regroupés par parcelle avec sous-totaux
+  const apps = (data.apportsParcelles||[]).filter(a=>a.date ? dansPeriode(a.date) : anneeDansPeriode(a.campagne));
+  const parcDe = (id) => (data.parcelles||[]).find(pc=>pc.id===id);
+  const idsParc = [...new Set(apps.map(a=>a.parcelleId))].sort((a,b)=>(parcDe(a)?.nom||"").localeCompare(parcDe(b)?.nom||""));
+  const lignesApports = [];
+  let kgApports = 0;
+  idsParc.forEach(id=>{
+    const pc = parcDe(id);
+    const liste = apps.filter(a=>a.parcelleId===id).sort((a,b)=>((a.date||"")+(a.heure||"")).localeCompare((b.date||"")+(b.heure||"")));
+    const kg = liste.reduce((x,a)=>x+num(a.poidsNet),0); kgApports += kg;
+    liste.forEach(a=>lignesApports.push([fmtD(a.date), a.heure||"-", pc?.nom||id||"-", pc?.certification||"-", a.operateur||"-", a.nbCagettes||"-", a.poidsNet?`${Math.round(num(a.poidsNet)).toLocaleString("fr-FR")} kg`:"-", a.numeroMarc||"-", a.notes||""]));
+    const surf = num(pc?.surface);
+    lignesApports.push([{content:`Sous-total ${pc?.nom||id} : ${Math.round(kg).toLocaleString("fr-FR")} kg${surf>0?` - ${Math.round(kg/surf).toLocaleString("fr-FR")} kg/ha (${surf} ha)`:""}`, colSpan:9, styles:{fontStyle:"bold",fillColor:[238,241,244],textColor:[44,62,80]}}]);
+  });
+  d03.file("0_Apports_raisins_par_parcelle.pdf", registre("Apports de raisins par parcelle", `${apps.length} apport(s) - ${idsParc.length} parcelle(s) - ${Math.round(kgApports).toLocaleString("fr-FR")} kg`,
+    ["Date","Heure","Parcelle","Certif.","Opérateur","Cagettes","Poids net","N° marc","Notes"],
+    lignesApports, ["","","","","","Total",`${Math.round(kgApports).toLocaleString("fr-FR")} kg`,"",""]));
+  const appsNonBio = apps.filter(a=>parcDe(a.parcelleId)?.certification!=="BIO");
+  if(appsNonBio.length) alertes.push(`${appsNonBio.length} apport(s) de raisins provenant de parcelles non BIO sur la période.`);
+  const appsSansMarc = apps.filter(a=>!a.numeroMarc);
+  if(appsSansMarc.length) alertes.push(`${appsSansMarc.length} apport(s) de raisins sans n° de marc (lien apport -> pressurage incomplet).`);
+
   const ajouterDocsOeno = (dossier, cat, code) => {
     const n = {facture:0,fiche_technique:0};
     (data.pdfDocs||[]).filter(p=>p.categorie===cat && docRetenu(p) && typeDe(p,"facture")!=="certificat_bio").forEach(p=>{
@@ -631,7 +672,7 @@ const construireDossierAuditBio = async (data, debut, fin, libs, nomDomaine="Cha
     return n;
   };
   const nV = ajouterDocsOeno(d03, "oeno_vendanges", "03");
-  sommaire.push(["03 Vendanges","Registre des vendanges",vends.length],["","Factures produits œnologiques",nV.facture],["","Fiches techniques",nV.fiche_technique]);
+  sommaire.push(["03 Vendanges","Apports de raisins par parcelle",apps.length],["","Registre des vendanges",vends.length],["","Factures produits œnologiques",nV.facture],["","Fiches techniques",nV.fiche_technique]);
   const vendNonBio = vends.filter(v=>!estBioVendange(v)).length;
   if(vendNonBio>0) alertes.push(`${vendNonBio} marc(s) de vendange non BIO sur la période (vérifier la séparation des lots).`);
 
@@ -3081,7 +3122,7 @@ export default function App() {
       const [{default: JSZip}, {jsPDF}, autoTableMod] = await Promise.all([import("jszip"), import("jspdf"), import("jspdf-autotable")]);
       const autoTable = autoTableMod.default || autoTableMod.autoTable;
       const res = await construireDossierAuditBio(
-        {traitements, biodynamies, amendements, vendanges, mouvements, assemblages, tirages, pdfDocs, pdfFactures, parcelles, cuvesCuverie, stockProduits},
+        {traitements, biodynamies, amendements, vendanges, mouvements, assemblages, tirages, pdfDocs, pdfFactures, parcelles, cuvesCuverie, stockProduits, apportsParcelles, surfacesExploitees},
         auditDebut, auditFin, {JSZip, jsPDF, autoTable});
       const url = URL.createObjectURL(res.blob);
       const a = document.createElement("a"); a.href = url; a.download = res.nomFichier; document.body.appendChild(a); a.click(); a.remove();
