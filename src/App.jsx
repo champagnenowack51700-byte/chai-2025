@@ -598,6 +598,7 @@ export default function App() {
   const [filterTypeDoc,    setFilterTypeDoc]    = useState("tous");
   // Formulaire d'ajout de facture de produits oenologiques (Vendanges / Tirages / Mouvements)
   const [oenoForm,         setOenoForm]         = useState(null);
+  const [filtreTypeOeno,   setFiltreTypeOeno]   = useState({}); // { vendanges:"tous", tirages:"facture", ... }
   const [pdfFactures,      setPdfFactures]      = useState([]);
   const [biodynamies,      setBiodynamies]       = useState([]);
   const [showBiodyForm,    setShowBiodyForm]     = useState(false);
@@ -2666,18 +2667,21 @@ export default function App() {
   const TYPES_DOC_OENO = {
     facture:        {court:"Facture / BL",   icon:"🧾", bg:"#E8E0D0", col:"#7a5200"},
     certificat_bio: {court:"Certificat bio", icon:"🌿", bg:"#d4edc0", col:"#2d6a00"},
+    fiche_technique:{court:"Fiche technique",icon:"📋", bg:"#ece6f7", col:"#533AB7"},
   };
   const renderFacturesOeno = (onglet, annee, verrouille=false) => {
     const categorie = "oeno_"+onglet;
     const anneeAjout = annee || new Date().getFullYear().toString();
-    const docs = pdfDocs
-      .filter(p=>p.categorie===categorie && (!annee || p.campagne===String(annee)))
+    const filtreType = filtreTypeOeno[onglet]||"tous";
+    const docsAnnee = pdfDocs.filter(p=>p.categorie===categorie && (!annee || p.campagne===String(annee)));
+    const docs = docsAnnee
+      .filter(p=>filtreType==="tous" || (p.typeDoc||"facture")===filtreType)
       .sort((a,b)=>(b.dateFacture||b.dateUpload||"").localeCompare(a.dateFacture||a.dateUpload||""));
     const fournisseursConnus = [...new Set(pdfDocs.map(p=>(p.fournisseur||"").trim()).filter(Boolean))].sort();
     const formOuvert = oenoForm && oenoForm.onglet===onglet;
     const valider = () => {
       if(!oenoForm?.file) return alert("Choisissez un fichier PDF.");
-      if(!oenoForm.fournisseur.trim()) return alert("Indiquez le fournisseur.");
+      if(oenoForm.typeDoc!=="fiche_technique" && !oenoForm.fournisseur.trim()) return alert("Indiquez le fournisseur.");
       uploadPdf(oenoForm.file, anneeAjout, oenoForm.nom.trim()||oenoForm.file.name.replace(/\.pdf$/i,""), categorie,
         {typeDoc:oenoForm.typeDoc, fournisseur:oenoForm.fournisseur, dateValidite:oenoForm.typeDoc==="certificat_bio"?oenoForm.dateValidite:"",
          dateFacture:oenoForm.typeDoc==="facture"?(oenoForm.dateFacture||""):"", produits:(oenoForm.produits||"").trim()});
@@ -2687,15 +2691,15 @@ export default function App() {
       <div style={{...s.card,marginTop:"16px"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px",flexWrap:"wrap",gap:"8px"}}>
           <div>
-            <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#2C3E50"}}>Factures produits œnologiques</div>
-            <div style={{fontSize:"11px",color:"#9a8870"}}>{annee?`Année ${annee}`:"Toutes les années"} · {docs.length} document(s)</div>
+            <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#2C3E50"}}>Produits œnologiques : factures, certificats, fiches techniques</div>
+            <div style={{fontSize:"11px",color:"#9a8870"}}>{annee?`Année ${annee}`:"Toutes les années"} · {docsAnnee.length} document(s)</div>
           </div>
           {!verrouille && !formOuvert && (
             <label style={{...s.btnSm,cursor:"pointer",display:"flex",alignItems:"center",gap:"5px"}}>
-              {uploadingPdf?"Chargement...":"+ Ajouter une facture (PDF)"}
+              {uploadingPdf?"Chargement...":"+ Ajouter un document (PDF)"}
               <input type="file" accept=".pdf" style={{display:"none"}} onChange={e=>{
                 const file=e.target.files[0];
-                if(file) setOenoForm({onglet, file, typeDoc:"facture", nom:file.name.replace(/\.pdf$/i,""), fournisseur:"", dateFacture:"", produits:"", dateValidite:""});
+                if(file) setOenoForm({onglet, file, typeDoc:filtreType!=="tous"?filtreType:"facture", nom:file.name.replace(/\.pdf$/i,""), fournisseur:"", dateFacture:"", produits:"", dateValidite:""});
                 e.target.value="";
               }}/>
             </label>
@@ -2717,14 +2721,14 @@ export default function App() {
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:"10px"}}>
               <div>
                 <div style={s.lbl}>Nom du document</div>
-                <input style={s.inp} value={oenoForm.nom} onChange={e=>setOenoForm(f=>({...f,nom:e.target.value}))} placeholder="ex : Facture n°1234"/>
+                <input style={s.inp} value={oenoForm.nom} onChange={e=>setOenoForm(f=>({...f,nom:e.target.value}))} placeholder={oenoForm.typeDoc==="fiche_technique"?"ex : Fiche technique Lalvin EC1118":oenoForm.typeDoc==="certificat_bio"?"ex : Certificat bio Laffort 2026":"ex : Facture n°1234"}/>
               </div>
               <div>
-                <div style={s.lbl}>Fournisseur *</div>
+                <div style={s.lbl}>Fournisseur{oenoForm.typeDoc!=="fiche_technique"?" *":""}</div>
                 <input style={s.inp} list={"fournisseurs-oeno-"+onglet} value={oenoForm.fournisseur} onChange={e=>setOenoForm(f=>({...f,fournisseur:e.target.value}))} placeholder="ex : Laffort, IOC, Martin Vialatte…"/>
                 <datalist id={"fournisseurs-oeno-"+onglet}>{fournisseursConnus.map(f=><option key={f} value={f}/>)}</datalist>
               </div>
-              {oenoForm.typeDoc==="facture" ? (
+              {oenoForm.typeDoc==="fiche_technique" ? null : oenoForm.typeDoc==="facture" ? (
                 <div>
                   <div style={s.lbl}>Date de la facture</div>
                   <input type="date" style={s.inp} value={oenoForm.dateFacture} onChange={e=>setOenoForm(f=>({...f,dateFacture:e.target.value}))}/>
@@ -2747,8 +2751,16 @@ export default function App() {
           </div>
         )}
 
+        <div style={{display:"flex",borderBottom:"0.5px solid #d4c4a0",marginBottom:"10px",flexWrap:"wrap"}}>
+          {[["tous","Tous",docsAnnee.length],...Object.entries(TYPES_DOC_OENO).map(([k,t])=>[k,`${t.icon} ${t.court}`,docsAnnee.filter(p=>(p.typeDoc||"facture")===k).length])].map(([k,lbl,n])=>(
+            <button key={k} onClick={()=>setFiltreTypeOeno(f=>({...f,[onglet]:k}))}
+              style={{padding:"6px 12px",border:"none",borderBottom:filtreType===k?"2px solid #b8860b":"2px solid transparent",background:"transparent",color:filtreType===k?"#2C3E50":"#9a8870",fontWeight:filtreType===k?500:400,fontSize:"12px",cursor:"pointer"}}>
+              {lbl} <span style={{fontSize:"10px",color:"#9a8870"}}>({n})</span>
+            </button>
+          ))}
+        </div>
         {docs.length===0 && !formOuvert && (
-          <div style={{fontSize:"12px",color:"#9a8870",fontStyle:"italic"}}>Aucune facture {annee?`pour ${annee}`:"enregistrée"}.</div>
+          <div style={{fontSize:"12px",color:"#9a8870",fontStyle:"italic"}}>Aucun document{filtreType!=="tous"?` de ce type`:""} {annee?`pour ${annee}`:"enregistré"}.</div>
         )}
         <div style={{display:"grid",gap:"8px"}}>
           {docs.map(pdf=>{
@@ -3577,12 +3589,13 @@ export default function App() {
                   calendrier:     {lbl:"Calendrier / document prestataire", court:"Calendrier",     icon:"📅", bg:"#e6f0fb", col:"#185FA5"},
                   facture:        {lbl:"Facture / BL",                      court:"Facture",        icon:"🧾", bg:"#E8E0D0", col:"#7a5200"},
                   certificat_bio: {lbl:"Certificat bio fournisseur",        court:"Certificat bio", icon:"🌿", bg:"#d4edc0", col:"#2d6a00"},
+                  fiche_technique:{lbl:"Fiche technique produit",           court:"Fiche technique",icon:"📋", bg:"#ece6f7", col:"#533AB7"},
                 };
                 const docsOnglet = pdfDocs.filter(p=>p.campagne===filterTraitAn&&(p.categorie||"traitements")===vigneTab);
                 const docsAffiches = docsOnglet
                   .filter(p=>filterTypeDoc==="tous"||(p.typeDoc||"calendrier")===filterTypeDoc)
                   .sort((a,b)=>{
-                    const ordre = {certificat_bio:0,facture:1,calendrier:2};
+                    const ordre = {certificat_bio:0,facture:1,fiche_technique:2,calendrier:3};
                     const d = (ordre[a.typeDoc||"calendrier"]??9)-(ordre[b.typeDoc||"calendrier"]??9);
                     if(d!==0) return d;
                     return (a.fournisseur||"").localeCompare(b.fournisseur||"") || (b.dateUpload||"").localeCompare(a.dateUpload||"");
@@ -3606,7 +3619,7 @@ export default function App() {
                 };
                 const validerDoc = () => {
                   if(!docForm?.file) return alert("Choisissez un fichier PDF.");
-                  if(docForm.typeDoc!=="calendrier" && !docForm.fournisseur.trim()) return alert("Indiquez le fournisseur.");
+                  if(["facture","certificat_bio"].includes(docForm.typeDoc) && !docForm.fournisseur.trim()) return alert("Indiquez le fournisseur.");
                   uploadPdf(docForm.file, filterTraitAn, docForm.nom.trim()||docForm.file.name.replace(/\.pdf$/i,""), vigneTab,
                     {typeDoc:docForm.typeDoc, fournisseur:docForm.fournisseur, dateValidite:docForm.typeDoc==="certificat_bio"?docForm.dateValidite:""});
                   setDocForm(null);
@@ -3614,7 +3627,7 @@ export default function App() {
                 return (
                 <div style={{...s.card,marginTop:"14px"}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px",flexWrap:"wrap",gap:"8px"}}>
-                    <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#2C3E50"}}>Documents : calendriers, factures, certificats bio</div>
+                    <div style={{fontFamily:"Georgia,serif",fontSize:"14px",color:"#2C3E50"}}>Documents : calendriers, factures, certificats bio, fiches techniques</div>
                     {!closed && !docForm && (
                       <label style={{...s.btnSm,cursor:"pointer",display:"flex",alignItems:"center",gap:"5px"}}>
                         {uploadingPdf?"Chargement...":"+ Ajouter PDF"}
@@ -3644,10 +3657,10 @@ export default function App() {
                         <div>
                           <div style={s.lbl}>Nom du document</div>
                           <input style={s.inp} value={docForm.nom} onChange={e=>setDocForm(f=>({...f,nom:e.target.value}))}
-                            placeholder={docForm.typeDoc==="facture"?"ex : Facture n°1234":docForm.typeDoc==="certificat_bio"?"ex : Certificat Ecocert 2026":"ex : Calendrier Lorain 2026"}/>
+                            placeholder={docForm.typeDoc==="facture"?"ex : Facture n°1234":docForm.typeDoc==="certificat_bio"?"ex : Certificat Ecocert 2026":docForm.typeDoc==="fiche_technique"?"ex : Fiche technique Héliosoufre S":"ex : Calendrier Lorain 2026"}/>
                         </div>
                         <div>
-                          <div style={s.lbl}>Fournisseur{docForm.typeDoc!=="calendrier"?" *":""}</div>
+                          <div style={s.lbl}>Fournisseur{["facture","certificat_bio"].includes(docForm.typeDoc)?" *":""}</div>
                           <input style={s.inp} list="fournisseurs-docs" value={docForm.fournisseur} onChange={e=>setDocForm(f=>({...f,fournisseur:e.target.value}))} placeholder="ex : Lorain, De Sangosse…"/>
                           <datalist id="fournisseurs-docs">{fournisseursConnus.map(f=><option key={f} value={f}/>)}</datalist>
                         </div>
