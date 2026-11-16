@@ -488,6 +488,26 @@ const HIST_TRAITEMENTS = [
   {campagne:"2024",numero:"24",date:"2024-07-10",surface:"8.20 ha",cuivreTotal:400,produits:[{nom:"Bouillie Bordelaise",dose:"1kg/ha",matiereActive:"Cuivre",cuivre:400},{nom:"Nordox",dose:"270g/ha",matiereActive:"Cuivre"}]},
 ];
 
+// Dose d'un produit de traitement, avec son unité.
+// Anciennes saisies : texte libre ("0.7kg/ha"). Nouvelles saisies : nombre + unite (kg | L | g), exprimé par hectare.
+const doseProduitTxt = (p) => {
+  const d = String(p?.dose ?? "").trim();
+  if(!d) return "";
+  if(/^[0-9]+([.,][0-9]+)?$/.test(d)) return `${d.replace(".",",")} ${p.unite||"kg"}/ha`;
+  return d;
+};
+// Quantité totale épandue = dose/ha x surface (ha), quand les deux sont des nombres
+const quantiteTotaleProduit = (p, surface) => {
+  const d = String(p?.dose ?? "").trim().replace(",",".");
+  const surf = parseFloat(String(surface??"").replace(",","."));
+  let val = null, unite = p?.unite||"kg";
+  if(/^[0-9]+(\.[0-9]+)?$/.test(d)) val = parseFloat(d);
+  else { const m = d.match(/^([0-9]+(?:\.[0-9]+)?)\s*(kg|l|g)\s*\/\s*ha$/i); if(m){ val=parseFloat(m[1]); unite = m[2].toLowerCase()==="l"?"L":m[2].toLowerCase(); } }
+  if(val===null || !(surf>0)) return "";
+  const q = Math.round(val*surf*1000)/1000;
+  return `${String(q).replace(".",",")} ${unite}`;
+};
+
 // ===================== DOSSIER AUDIT BIO =====================
 // Construit un ZIP classé par catégorie pour une période [debut, fin] (dates "AAAA-MM-JJ").
 // libs = { JSZip, jsPDF, autoTable } (chargés à la demande pour ne pas alourdir l'application)
@@ -531,7 +551,7 @@ const construireDossierAuditBio = async (data, debut, fin, libs, nomDomaine="Cha
       head: [colonnes.map(propre)],
       body: lignes.length ? lignes.map(l=>l.map(c=>(c&&typeof c==="object")?{...c,content:propre(c.content)}:propre(c))) : [[{content:"Aucune donnée sur la période.", colSpan:colonnes.length, styles:{fontStyle:"italic",textColor:[150,140,120]}}]],
       foot: totaux ? [totaux.map(propre)] : undefined,
-      styles: {fontSize:7.5, cellPadding:1.6, overflow:"linebreak", valign:"top"},
+      styles: {fontSize:7.5, cellPadding:1.6, overflow:"linebreak", valign:"top", lineColor:[230,222,205], lineWidth:0.1},
       headStyles: {fillColor:[245,232,204], textColor:[122,82,0], fontStyle:"bold"},
       footStyles: {fillColor:[240,237,232], textColor:[44,62,80], fontStyle:"bold"},
       alternateRowStyles: {fillColor:[252,250,245]},
@@ -600,13 +620,29 @@ const construireDossierAuditBio = async (data, debut, fin, libs, nomDomaine="Cha
   if(enConversion.length) alertes.push(`Parcelle(s) en conversion : ${enConversion.map(pc=>`${pc.nom} (${pc.certification})`).join(", ")}.`);
   const traits = (data.traitements||[]).filter(t=>dansPeriode(t.date)).sort((a,b)=>(a.date||"").localeCompare(b.date||""));
   const cuTotal = traits.reduce((s,t)=>s+num(t.cuivreTotal),0);
+  const lignesTraits = [];
+  traits.forEach(t=>{
+    const prods = (t.produits||[]).length ? t.produits : [{}];
+    const n = prods.length;
+    prods.forEach((pr,i)=>{
+      const sp = (data.stockProduits||[]).find(x=>x.nom===pr.nom);
+      const ligne = [];
+      if(i===0) ligne.push(
+        {content:t.numero?`N°${t.numero}`:"-", rowSpan:n},
+        {content:fmtD(t.date), rowSpan:n},
+        {content:String(t.surface||"-"), rowSpan:n});
+      ligne.push(pr.nom||"-", doseProduitTxt(pr)||"-", quantiteTotaleProduit(pr, t.surface)||"-",
+        [pr.matiereActive||sp?.substanceActive, sp?.nAmm?`AMM ${sp.nAmm}`:""].filter(Boolean).join(" - ")||"-");
+      if(i===0) ligne.push(
+        {content:t.cuivreTotal?String(t.cuivreTotal):"-", rowSpan:n},
+        {content:[t.operateur, t.observations].filter(Boolean).join(" - ")||"", rowSpan:n});
+      lignesTraits.push(ligne);
+    });
+  });
   d02.file("1_Registre_traitements.pdf", registre("Registre des traitements phytosanitaires", `${traits.length} traitement(s) - cuivre total ${(cuTotal/1000).toFixed(3)} kg`,
-    ["N°","Date","Campagne","Surface (ha)","Produits (dose)","N° AMM / matière active","Cuivre (g)","Observations"],
-    traits.map(t=>[t.numero?`N°${t.numero}`:"-", fmtD(t.date), t.campagne||"-", t.surface||"-",
-      (t.produits||[]).map(p=>`${p.nom||""} ${p.dose||""}`.trim()).join("\n")||"-",
-      (t.produits||[]).map(p=>{ const sp=(data.stockProduits||[]).find(x=>x.nom===p.nom); return [sp?.nAmm, p.matiereActive||sp?.substanceActive].filter(Boolean).join(" - ")||"-"; }).join("\n"),
-      t.cuivreTotal?String(t.cuivreTotal):"-", t.observations||""]),
-    ["","","","","","Total cuivre",`${Math.round(cuTotal)} g`,""]));
+    ["N°","Date","Surface (ha)","Produit","Dose / ha","Quantité totale","Matière active / N° AMM","Cuivre (g)","Opérateur / observations"],
+    lignesTraits,
+    ["","","","","","","Total cuivre",`${Math.round(cuTotal)} g`,""]));
   const biodys = (data.biodynamies||[]).filter(b=>dansPeriode(b.date)).sort((a,b)=>(a.date||"").localeCompare(b.date||""));
   d02.file("2_Registre_biodynamie.pdf", registre("Registre biodynamie", `${biodys.length} passage(s)`,
     ["Date","Campagne","Surface (ha)","Préparation","Dose","Observations"],
@@ -2207,7 +2243,7 @@ export default function App() {
         <td style="padding:5px 6px;border:0.5px solid #e0e8f0">${fmt(t.date)}</td>
         <td style="padding:5px 6px;border:0.5px solid #e0e8f0">${t.operateur||"-"}</td>
         <td style="padding:5px 6px;border:0.5px solid #e0e8f0;text-align:right">${t.surface||"-"} ha</td>
-        <td style="padding:5px 6px;border:0.5px solid #e0e8f0">${(t.produits||[]).map(p=>`<div style="margin-bottom:2px"><span style="font-weight:600">${p.nom}</span>${p.dose?` — <span style="color:#7a5200">${p.dose}</span>`:""}</div>`).join("")||"-"}</td>
+        <td style="padding:5px 6px;border:0.5px solid #e0e8f0">${(t.produits||[]).map(p=>`<div style="margin-bottom:2px"><span style="font-weight:600">${p.nom}</span>${p.dose?` — <span style="color:#7a5200">${doseProduitTxt(p)}</span>`:""}</div>`).join("")||"-"}</td>
         <td style="padding:5px 6px;border:0.5px solid #e0e8f0;text-align:right;font-weight:600;color:${parseFloat(t.cuivreTotal)>400?"#cc2222":parseFloat(t.cuivreTotal)>200?"#c47800":"#1a7a40"}">${t.cuivreTotal?t.cuivreTotal+" g":"-"}</td>
         ${hasObs?`<td style="padding:5px 6px;border:0.5px solid #e0e8f0;font-style:italic;color:#6a5838;font-size:10px">${t.observations||""}</td>`:""}
       </tr>`).join("");
@@ -3717,7 +3753,7 @@ export default function App() {
                                 <div style={{display:"flex",gap:"3px",flexWrap:"wrap"}}>
                                   {(t.produits||[]).map((p,j)=>(
                                     <span key={j} style={{background:p.matiereActive==="Cuivre"?"#E8E0D0":p.matiereActive==="Soufre"?"#e6f0fb":"#ede5d4",color:p.matiereActive==="Cuivre"?"#2C3E50":p.matiereActive==="Soufre"?"#185FA5":"#5f5e5a",borderRadius:"3px",padding:"1px 5px",fontSize:"10px",fontFamily:"monospace",whiteSpace:"nowrap"}}>
-                                      {p.nom} {p.dose}
+                                      {p.nom} {doseProduitTxt(p)}
                                     </span>
                                   ))}
                                 </div>
@@ -6077,7 +6113,7 @@ export default function App() {
                                 <div style={{display:"flex",gap:"3px",flexWrap:"wrap"}}>
                                   {(t.produits||[]).map((p,j)=>(
                                     <span key={j} style={{background:p.matiereActive==="Cuivre"?"#E8E0D0":p.matiereActive==="Soufre"?"#e6f0fb":"#ede5d4",color:p.matiereActive==="Cuivre"?"#2C3E50":p.matiereActive==="Soufre"?"#185FA5":"#5f5e5a",borderRadius:"3px",padding:"1px 5px",fontSize:"10px",fontFamily:"monospace",whiteSpace:"nowrap"}}>
-                                      {p.nom} {p.dose}
+                                      {p.nom} {doseProduitTxt(p)}
                                     </span>
                                   ))}
                                 </div>
