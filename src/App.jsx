@@ -850,6 +850,7 @@ export default function App() {
   const [filterTypeDoc,    setFilterTypeDoc]    = useState("tous");
   // Formulaire d'ajout de facture de produits oenologiques (Vendanges / Tirages / Mouvements)
   const [oenoForm,         setOenoForm]         = useState(null);
+  const [filtreAppAjoutProduit, setFiltreAppAjoutProduit] = useState(null); // null = tous, sinon appellation (ex. "vins_clairs_2026")
   // Dossier audit bio : période choisie manuellement
   const [auditDebut,       setAuditDebut]       = useState(()=>new Date().getFullYear()+"-01-01");
   const [auditFin,         setAuditFin]         = useState(()=>new Date().toISOString().slice(0,10));
@@ -7602,18 +7603,60 @@ export default function App() {
               {mvtForm.type==="ajout_produit"&&(
                 <div style={{display:"grid",gap:"12px"}}>
                   <div>
-                    <span style={s.lbl}>Tonneaux concernés *</span>
-                    <div style={{maxHeight:"160px",overflowY:"auto",border:"0.5px solid #d4c4a0",borderRadius:"6px",padding:"6px",background:"#fffdf7"}}>
-                      {tonneaux.filter(t=>t.statut!=="vide"&&t.contenuActuel>0).map(t=>(
-                        <label key={t.id} style={{display:"flex",alignItems:"center",gap:"7px",padding:"3px",cursor:"pointer",fontSize:"12px"}}>
-                          <input type="checkbox" checked={(mvtForm.futSource||[]).includes(t.id)}
-                            onChange={()=>setMvtForm(f=>({...f,futSource:f.futSource.includes(t.id)?f.futSource.filter(x=>x!==t.id):[...f.futSource,t.id]}))}/>
-                          <span style={{color:"#8B7355",minWidth:"54px",fontFamily:"monospace"}}>{t.id}</span>
-                          <span style={{color:"#6a5838",flex:1}}>{t.denomination}</span>
-                          <span style={{color:"#9a8870",fontSize:"10px"}}>{t.contenuActuel}L</span>
-                        </label>
-                      ))}
-                    </div>
+                    {(()=>{
+                      const futsPleins = tonneaux.filter(t=>t.statut!=="vide"&&t.contenuActuel>0);
+                      // Catégories présentes (Vins clairs 2026, Vins de réserve, RI…), triées : vins clairs les plus récents d'abord
+                      const cats = [...new Set(futsPleins.map(t=>t.appellation||""))]
+                        .sort((a,b)=>{ const va=a.startsWith("vins_clairs"), vb=b.startsWith("vins_clairs"); if(va!==vb) return va?-1:1; return b.localeCompare(a); });
+                      const labelCat = (a) => a ? (getApc(a).label||a) : "Sans appellation";
+                      const filtre = filtreAppAjoutProduit;
+                      const visibles = futsPleins.filter(t=>filtre===null||(t.appellation||"")===filtre)
+                        .sort((a,b)=>String(a.id).localeCompare(String(b.id),"fr",{numeric:true}));
+                      const sel = mvtForm.futSource||[];
+                      const tousVisiblesCoches = visibles.length>0 && visibles.every(t=>sel.includes(t.id));
+                      const volSel = futsPleins.filter(t=>sel.includes(t.id)).reduce((s2,t)=>s2+(parseFloat(t.contenuActuel)||0),0);
+                      return (<>
+                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:"8px",flexWrap:"wrap",marginBottom:"6px"}}>
+                          <span style={s.lbl}>Tonneaux concernés *</span>
+                          <span style={{fontSize:"11px",color:"#2d6a00"}}>{sel.length} sélectionné(s){sel.length?` · ${Math.round(volSel)} L`:""}</span>
+                        </div>
+                        <div style={{display:"flex",gap:"5px",flexWrap:"wrap",marginBottom:"6px"}}>
+                          {[[null,`Tous (${futsPleins.length})`],...cats.map(a=>[a,`${labelCat(a)} (${futsPleins.filter(t=>(t.appellation||"")===a).length})`])].map(([a,lbl])=>{
+                            const actif = filtre===a; const apc = a?getApc(a):null;
+                            return (
+                              <button key={String(a)} type="button" onClick={()=>setFiltreAppAjoutProduit(a)}
+                                style={{padding:"3px 9px",borderRadius:"4px",fontSize:"11px",cursor:"pointer",
+                                  border:`0.5px solid ${actif?(apc?.color||"#2C3E50"):"#d4c4a0"}`,
+                                  background:actif?(apc?.bg&&apc.bg!=="transparent"?apc.bg:"#f5e8cc"):"transparent",
+                                  color:actif?(apc?.color||"#2C3E50"):"#9a8870",fontWeight:actif?500:400}}>
+                                {lbl}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <div style={{display:"flex",gap:"6px",marginBottom:"6px"}}>
+                          <button type="button" style={{...s.ghostSm,fontSize:"10px"}} onClick={()=>setMvtForm(f=>({...f,futSource:tousVisiblesCoches
+                            ? (f.futSource||[]).filter(id=>!visibles.some(t=>t.id===id))
+                            : [...new Set([...(f.futSource||[]),...visibles.map(t=>t.id)])]}))}>
+                            {tousVisiblesCoches?"Tout décocher":"Tout cocher"}{filtre!==null?` (${labelCat(filtre)})`:""}
+                          </button>
+                          {sel.length>0&&<button type="button" style={{...s.ghostSm,fontSize:"10px"}} onClick={()=>setMvtForm(f=>({...f,futSource:[]}))}>Vider la sélection</button>}
+                        </div>
+                        <div style={{maxHeight:"220px",overflowY:"auto",border:"0.5px solid #d4c4a0",borderRadius:"6px",padding:"6px",background:"#fffdf7"}}>
+                          {visibles.length===0&&<div style={{fontSize:"12px",color:"#9a8870",fontStyle:"italic",padding:"4px"}}>Aucun fût plein dans cette catégorie.</div>}
+                          {visibles.map(t=>{ const apc=getApc(t.appellation); return (
+                            <label key={t.id} style={{display:"flex",alignItems:"center",gap:"7px",padding:"3px",cursor:"pointer",fontSize:"12px"}}>
+                              <input type="checkbox" checked={sel.includes(t.id)}
+                                onChange={()=>setMvtForm(f=>({...f,futSource:f.futSource.includes(t.id)?f.futSource.filter(x=>x!==t.id):[...f.futSource,t.id]}))}/>
+                              <span style={{color:"#8B7355",minWidth:"54px",fontFamily:"monospace"}}>{t.id}</span>
+                              <span style={{color:"#6a5838",flex:1}}>{t.denomination}</span>
+                              {filtre===null&&t.appellation&&<span style={{fontSize:"9px",color:apc.color,border:`0.5px solid ${apc.color}55`,borderRadius:"3px",padding:"0 5px",whiteSpace:"nowrap"}}>{labelCat(t.appellation)}</span>}
+                              <span style={{color:"#9a8870",fontSize:"10px"}}>{t.contenuActuel}L</span>
+                            </label>
+                          ); })}
+                        </div>
+                      </>);
+                    })()}
                   </div>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
                     <div><span style={s.lbl}>Produit</span><input style={s.inp} placeholder="SO2, ACT'O..." value={mvtForm.produit} onChange={e=>setMvtForm(f=>({...f,produit:e.target.value}))}/></div>
