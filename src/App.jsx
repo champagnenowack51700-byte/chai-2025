@@ -645,8 +645,8 @@ const construireDossierAuditBio = async (data, debut, fin, libs, nomDomaine="Cha
     ["","","","","","","Total cuivre",`${Math.round(cuTotal)} g`,""]));
   const biodys = (data.biodynamies||[]).filter(b=>dansPeriode(b.date)).sort((a,b)=>(a.date||"").localeCompare(b.date||""));
   d02.file("2_Registre_biodynamie.pdf", registre("Registre biodynamie", `${biodys.length} passage(s)`,
-    ["Date","Campagne","Surface (ha)","Préparation","Dose","Observations"],
-    biodys.map(b=>[fmtD(b.date), b.campagne||"-", b.surface||"-", b.produit||"-", b.dose||"-", b.observations||""])));
+    ["Date","Campagne","Surface (ha)","Préparation","Dose / ha","Quantité totale","Observations"],
+    biodys.map(b=>[fmtD(b.date), b.campagne||"-", b.surface||"-", b.produit||"-", doseProduitTxt({dose:b.dose,unite:b.unite||"g"})||"-", quantiteTotaleProduit({dose:b.dose,unite:b.unite||"g"}, b.surface)||"-", b.observations||""])));
   // Amendements : la date est parfois vide -> on retient alors l'année de campagne
   const amends = (data.amendements||[]).filter(a=>a.date ? dansPeriode(a.date) : anneeDansPeriode(a.campagne));
   const nTot = amends.reduce((s,a)=>s+num(a.nTotal),0);
@@ -940,7 +940,7 @@ export default function App() {
   const [editingBiody,     setEditingBiody]      = useState(null);
   const [showAmendForm,    setShowAmendForm]     = useState(false);
   const [editingAmend,     setEditingAmend]      = useState(null);
-  const [biodyForm,        setBiodyForm]         = useState({campagne:new Date().getFullYear().toString(),date:"",surface:"",produit:"",observations:""});
+  const [biodyForm,        setBiodyForm]         = useState({campagne:new Date().getFullYear().toString(),date:"",surface:"",produit:"",dose:"",unite:"g",observations:""});
   const [amendForm,        setAmendForm]         = useState({campagne:new Date().getFullYear().toString(),parcelle:"",date:"",surface:"",produit:"",quantite:"",nTotal:"",nParHa:"",observations:"",teneurAzote:""});
   const TRAIT_EMPTY = {
     campagne: new Date().getFullYear().toString(),
@@ -1518,17 +1518,17 @@ export default function App() {
     if(editingBiody){
       setBiodynamies(prev=>prev.map(x=>x.id===b.id?b:x));
       if(biodyForm.produit && biodyForm.surface && biodyForm.dose) {
-        deduireStock([{nom:biodyForm.produit,dose:biodyForm.dose}], biodyForm.surface,
-          editingBiody.produit?[{nom:editingBiody.produit,dose:editingBiody.dose}]:[], editingBiody.surface);
+        deduireStock([{nom:biodyForm.produit,dose:biodyForm.dose,unite:biodyForm.unite||"g"}], biodyForm.surface,
+          editingBiody.produit&&editingBiody.dose?[{nom:editingBiody.produit,dose:editingBiody.dose,unite:editingBiody.unite||"g"}]:[], editingBiody.surface);
       }
     } else {
       setBiodynamies(prev=>[b,...prev]);
       if(biodyForm.produit && biodyForm.surface && biodyForm.dose) {
-        deduireStock([{nom:biodyForm.produit, dose:biodyForm.dose}], biodyForm.surface);
+        deduireStock([{nom:biodyForm.produit, dose:biodyForm.dose, unite:biodyForm.unite||"g"}], biodyForm.surface);
       }
     }
     fbSave("biodynamies", b.id, b);
-    setBiodyForm({campagne:new Date().getFullYear().toString(),date:"",surface:"",produit:"",observations:""});
+    setBiodyForm({campagne:new Date().getFullYear().toString(),date:"",surface:"",produit:"",dose:"",unite:"g",observations:""});
     setEditingBiody(null); setShowBiodyForm(false);
   };
 
@@ -1563,6 +1563,14 @@ export default function App() {
     (nom||"").toLowerCase().includes(sp.nom.toLowerCase().slice(0,6))
   );
 
+  // Facteur de conversion entre l'unité de dose et l'unité du stock (ex. dose en g, stock en kg -> x0,001)
+  const facteurUnite = (de, vers) => {
+    const n = (u)=>String(u||"").trim().toLowerCase().replace("ml","ml");
+    const a=n(de), b=n(vers);
+    if(!a||!b||a===b) return 1;
+    const t={"g>kg":0.001,"kg>g":1000,"ml>l":0.001,"l>ml":1000};
+    return t[a+">"+b] ?? 1;
+  };
   const deduireStock = (produits, surface, produitsAnciensOpt, surfaceAncienneOpt) => {
     const surf = parseFloat(surface)||0;
     const surfAnc = parseFloat(surfaceAncienneOpt)||0;
@@ -1574,7 +1582,7 @@ export default function App() {
         if(!p.nom) return;
         const sp = findStockProd(p.nom);
         if(!sp) return;
-        const dose = parseFloat(p.dose)||0;
+        const dose = (parseFloat(p.dose)||0) * facteurUnite(p.unite, sp.unite);
         const qte = dose * surfAnc;
         if(!updates[sp.id]) updates[sp.id] = {sp, delta:0};
         updates[sp.id].delta += qte; // rembourse
@@ -1585,7 +1593,7 @@ export default function App() {
       if(!p.nom) return;
       const sp = findStockProd(p.nom);
       if(!sp || surf <= 0) return;
-      const dose = parseFloat(p.dose)||0;
+      const dose = (parseFloat(p.dose)||0) * facteurUnite(p.unite, sp.unite);
       const qte = dose * surf;
       if(!updates[sp.id]) updates[sp.id] = {sp, delta:0};
       updates[sp.id].delta -= qte; // deduit
@@ -3150,6 +3158,43 @@ export default function App() {
     );
   };
 
+  // Ligne produit commune aux tableaux Traitements / Biodynamie / Amendements :
+  // pastille de couleur + nom | dose par hectare mise en avant | quantité totale appliquée
+  const COUL_PRODUIT = {
+    cuivre:     {bg:"#f3ead8",fg:"#7a5200",pt:"#b8860b"},
+    soufre:     {bg:"#e6f0fb",fg:"#185FA5",pt:"#185FA5"},
+    biodynamie: {bg:"#d4edc0",fg:"#2d6a00",pt:"#2d6a00"},
+    amendement: {bg:"#efe6da",fg:"#6b3a00",pt:"#a0622d"},
+    autre:      {bg:"#eef4ea",fg:"#2d6a00",pt:"#2d6a00"},
+  };
+  const renderLigneProduit = (key, nom, coul, dose, total, titrePastille="") => (
+    <React.Fragment key={key}>
+      <span style={{display:"flex",alignItems:"center",gap:"6px",fontSize:"12px",color:"#1a1205",fontWeight:500}}>
+        <span style={{width:"7px",height:"7px",borderRadius:"50%",background:coul.pt,flexShrink:0}} title={titrePastille}/>
+        {nom||"-"}
+      </span>
+      <span style={{background:dose?coul.bg:"#fdd0d0",color:dose?coul.fg:"#cc2222",borderRadius:"4px",padding:"2px 8px",fontSize:"12px",fontWeight:600,fontFamily:"monospace",whiteSpace:"nowrap",textAlign:"right"}}>
+        {dose||"dose ?"}
+      </span>
+      <span style={{fontSize:"11px",color:"#6a5838",fontFamily:"monospace",whiteSpace:"nowrap",textAlign:"right"}} title="Quantité totale appliquée">
+        {total?`= ${total}`:""}
+      </span>
+    </React.Fragment>
+  );
+  const GRILLE_PRODUITS = {display:"grid",gridTemplateColumns:"minmax(110px,1fr) auto auto",columnGap:"10px",rowGap:"4px",alignItems:"center"};
+  const surfaceTxt = (v) => /^[0-9]+([.,][0-9]+)?$/.test(String(v||"").trim()) ? `${v} ha` : (v||"-");
+  // Amendement : la quantité saisie est le total épandu (unité du produit en stock, kg par défaut) -> dose/ha = total / surface
+  const fmtNb = (n) => String(Math.round(n*100)/100).replace(".",",");
+  const doseAmendement = (a) => {
+    const txt = String(a.quantite||"").trim();
+    const q = parseFloat(txt.replace(",",".").replace(/[^0-9.]/g,""));
+    const uTxt = (txt.match(/[a-zA-Z³]+/)||[])[0];
+    const unite = uTxt || findStockProd(a.produit)?.unite || "kg";
+    const surf = parseFloat(String(a.surface||"").replace(",","."));
+    if(!(q>0)) return {dose:"", total:""};
+    return { dose: surf>0 ? `${fmtNb(q/surf)} ${unite}/ha` : "", total: `${fmtNb(q)} ${unite}` };
+  };
+
   const telechargerDossierAuditBio = async () => {
     if(!auditDebut || !auditFin) return alert("Choisissez une date de début et une date de fin.");
     if(auditDebut > auditFin) return alert("La date de début doit être avant la date de fin.");
@@ -3753,7 +3798,7 @@ export default function App() {
                                 {/* Un produit par ligne : nom | dose / ha (mise en avant) | quantité totale appliquée */}
                                 <div style={{display:"grid",gridTemplateColumns:"minmax(110px,1fr) auto auto",columnGap:"10px",rowGap:"4px",alignItems:"center"}}>
                                   {(t.produits||[]).map((p,j)=>{
-                                    const coul = p.matiereActive==="Cuivre"?{bg:"#f3ead8",fg:"#7a5200",pt:"#b8860b"}:p.matiereActive==="Soufre"?{bg:"#e6f0fb",fg:"#185FA5",pt:"#185FA5"}:{bg:"#eef4ea",fg:"#2d6a00",pt:"#2d6a00"};
+                                    const coul = p.matiereActive==="Cuivre"?COUL_PRODUIT.cuivre:p.matiereActive==="Soufre"?COUL_PRODUIT.soufre:COUL_PRODUIT.autre;
                                     const dose = doseProduitTxt(p);
                                     const total = quantiteTotaleProduit(p, t.surface);
                                     return (
@@ -3918,7 +3963,7 @@ export default function App() {
                     <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
                       <thead>
                         <tr style={{borderBottom:"1px solid #d4c4a0",background:"#F0EDE8"}}>
-                          {["Date","Surface","Produit","Observations",""].map(h=>(
+                          {["Date","Surface","Produit · dose/ha · quantité totale","Observations",""].map(h=>(
                             <th key={h} style={{textAlign:"left",padding:"7px 10px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#9a8870",fontWeight:500}}>{h}</th>
                           ))}
                         </tr>
@@ -3927,18 +3972,20 @@ export default function App() {
                         {biodyFiltres.sort((a,b)=>new Date(a.date)-new Date(b.date)).map((b,i)=>(
                           <tr key={b.id} style={{borderBottom:"1px solid #ede5d4",background:i%2===0?"transparent":"#F8F6F2"}}>
                             <td style={{padding:"8px 10px",color:"#6a5838"}}>{fmt(b.date)}</td>
-                            <td style={{padding:"8px 10px",color:"#6a5838"}}>{b.surface}</td>
-                            <td style={{padding:"8px 10px"}}>
-                              <span style={{background:"#d4edc0",color:"#2d6a00",borderRadius:"3px",padding:"1px 8px",fontSize:"11px",fontFamily:"monospace",fontWeight:500}}>{b.produit}</span>
+                            <td style={{padding:"8px 10px",color:"#6a5838",whiteSpace:"nowrap"}}>{surfaceTxt(b.surface)}</td>
+                            <td style={{padding:"8px 10px",minWidth:"340px"}}>
+                              <div style={GRILLE_PRODUITS}>
+                                {renderLigneProduit("p", b.produit, COUL_PRODUIT.biodynamie, doseProduitTxt({dose:b.dose,unite:b.unite||"g"}), quantiteTotaleProduit({dose:b.dose,unite:b.unite||"g"}, b.surface), "Biodynamie")}
+                              </div>
                             </td>
                             <td style={{padding:"8px 10px",color:"#7a6840",fontStyle:"italic",fontSize:"11px"}}>{b.observations}</td>
                             <td style={{padding:"8px 10px"}}>
                               {!closed&&(
                                 <div style={{display:"flex",gap:"3px"}}>
                                   <button style={{...s.ghostSm,fontSize:"10px"}}
-                                    onClick={()=>{setBiodyForm({campagne:b.campagne,date:b.date,surface:b.surface,produit:b.produit,observations:b.observations});setEditingBiody(b);setShowBiodyForm(true);}}>Mod.</button>
+                                    onClick={()=>{setBiodyForm({campagne:b.campagne,date:b.date,surface:b.surface,produit:b.produit,dose:b.dose||"",unite:b.unite||"g",observations:b.observations});setEditingBiody(b);setShowBiodyForm(true);}}>Mod.</button>
                                   <button style={{...s.ghostSm,fontSize:"10px",color:"#cc2222",borderColor:"#f0b4b4"}}
-                                    onClick={()=>{if(window.confirm("Supprimer ?")){ setBiodynamies(prev=>prev.filter(x=>x.id!==b.id)); fbDelete("biodynamies",b.id); if(b.produit && b.surface && b.dose) deduireStock([], 0, [{nom:b.produit,dose:b.dose}], b.surface); }}}>Sup.</button>
+                                    onClick={()=>{if(window.confirm("Supprimer ?")){ setBiodynamies(prev=>prev.filter(x=>x.id!==b.id)); fbDelete("biodynamies",b.id); if(b.produit && b.surface && b.dose) deduireStock([], 0, [{nom:b.produit,dose:b.dose,unite:b.unite||"g"}], b.surface); }}}>Sup.</button>
                                 </div>
                               )}
                             </td>
@@ -3959,7 +4006,7 @@ export default function App() {
                       <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
                         <thead>
                           <tr style={{borderBottom:"1px solid #d4c4a0",background:"#F0EDE8"}}>
-                            {["Surface","Produit","Quantite","N total","N/ha","Observations",""].map(h=>(
+                            {["Date","Surface","Produit · dose/ha · quantité totale","N total","N/ha","Parcelle / observations",""].map(h=>(
                               <th key={h} style={{textAlign:"left",padding:"7px 10px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#9a8870",fontWeight:500}}>{h}</th>
                             ))}
                           </tr>
@@ -3967,13 +4014,15 @@ export default function App() {
                         <tbody>
                           {amendFiltres.sort((a,b)=>(a.timestamp||"").localeCompare(b.timestamp||"")).map((a,i)=>(
                             <tr key={a.id} style={{borderBottom:"1px solid #ede5d4",background:i%2===0?"transparent":"#F8F6F2"}}>
-                              <td style={{padding:"8px 10px",color:"#6a5838",fontFamily:"monospace"}}>{a.surface} ha</td>
-                              <td style={{padding:"8px 10px"}}>
-                                <span style={{background:"#E8E0D0",color:"#2C3E50",borderRadius:"3px",padding:"1px 7px",fontSize:"11px",fontFamily:"monospace"}}>{a.produit}</span>
+                              <td style={{padding:"8px 10px",color:"#6a5838",whiteSpace:"nowrap"}}>{a.date?fmt(a.date):"-"}</td>
+                              <td style={{padding:"8px 10px",color:"#6a5838",whiteSpace:"nowrap"}}>{surfaceTxt(a.surface)}</td>
+                              <td style={{padding:"8px 10px",minWidth:"340px"}}>
+                                <div style={GRILLE_PRODUITS}>
+                                  {(()=>{ const d=doseAmendement(a); return renderLigneProduit("p", a.produit, COUL_PRODUIT.amendement, d.dose, d.total, "Amendement"); })()}
+                                </div>
                               </td>
-                              <td style={{padding:"8px 10px",color:"#6a5838",fontFamily:"monospace"}}>{a.quantite}</td>
-                              <td style={{padding:"8px 10px",color:"#6a5838",fontFamily:"monospace"}}>{a.nTotal}</td>
-                              <td style={{padding:"8px 10px",color:"#6a5838",fontFamily:"monospace"}}>{a.nParHa}</td>
+                              <td style={{padding:"8px 10px",color:"#6a5838",fontFamily:"monospace",whiteSpace:"nowrap"}}>{a.nTotal?`${a.nTotal} kg`:"-"}</td>
+                              <td style={{padding:"8px 10px",fontFamily:"monospace",whiteSpace:"nowrap"}}>{a.nParHa?<span style={{background:"#eef1f4",color:"#2C3E50",borderRadius:"4px",padding:"2px 7px",fontWeight:600}}>{a.nParHa} kg/ha</span>:"-"}</td>
                               <td style={{padding:"8px 10px",color:"#7a6840",fontStyle:"italic",fontSize:"11px"}}>{a.parcelle?<span style={{fontStyle:"normal",color:"#2C3E50",marginRight:"6px"}}>{a.parcelle}</span>:null}{a.observations}</td>
                               <td style={{padding:"8px 10px"}}>
                                 {!closed&&(
@@ -9153,6 +9202,17 @@ export default function App() {
                   {stockProduits.filter(sp=>sp.categorie==="biodynamie").map(sp=><option key={sp.id} value={sp.nom}>{sp.nom}</option>)}
                   <option value="Autre">Autre</option>
                 </select></div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 120px 1fr",gap:"12px",alignItems:"end"}}>
+                <div><span style={s.lbl}>Dose par hectare</span>
+                  <input type="number" step="0.001" style={s.inp} placeholder="ex. 100" value={biodyForm.dose||""} onChange={e=>setBiodyForm(f=>({...f,dose:e.target.value}))}/></div>
+                <div><span style={s.lbl}>Unité</span>
+                  <select style={s.sel} value={biodyForm.unite||"g"} onChange={e=>setBiodyForm(f=>({...f,unite:e.target.value}))}>
+                    <option value="g">g/ha</option><option value="kg">kg/ha</option><option value="mL">mL/ha</option><option value="L">L/ha</option>
+                  </select></div>
+                <div style={{fontSize:"12px",color:"#2d6a00",paddingBottom:"8px"}}>
+                  {quantiteTotaleProduit({dose:biodyForm.dose,unite:biodyForm.unite||"g"}, biodyForm.surface) ? `Quantité totale : ${quantiteTotaleProduit({dose:biodyForm.dose,unite:biodyForm.unite||"g"}, biodyForm.surface)}` : ""}
+                </div>
+              </div>
               <div><span style={s.lbl}>Observations</span>
                 <textarea style={{...s.inp,height:"60px",resize:"vertical"}} value={biodyForm.observations} onChange={e=>setBiodyForm(f=>({...f,observations:e.target.value}))}/></div>
               <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",borderTop:"0.5px solid #d4c4a0",paddingTop:"14px"}}>
