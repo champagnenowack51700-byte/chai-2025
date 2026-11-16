@@ -1774,10 +1774,20 @@ export default function App() {
       nouvelleCuveId:t.nouvelleCuveId||"",
       nouvelleCuveVolume:t.nouvelleCuveVolume||"",
       isBio:t.isBio||false,
+      isBioManuel:t.isBioManuel||false,
     });
     setEditingTirage(t); setShowTirageForm(true);
   };
 
+  // Statut BIO effectif d'un tirage : la case cochée fait foi dès qu'on l'a modifiée à la main ;
+  // sinon (ancien comportement) BIO si la case est cochée ou si la cuve source est BIO.
+  const bioEffectifTirage = (f) => f.isBioManuel ? !!f.isBio : !!(f.isBio || cuvesCuverie.find(c=>c.id===f.cuveSourceId)?.isBio);
+  // Statut BIO effectif d'un assemblage : même principe (case manuelle prioritaire, sinon case OU toutes sources BIO).
+  const bioEffectifAssemblage = (f) => {
+    if(f.isBioManuel) return !!f.isBio;
+    const srcs = (f.sources||[]).filter(s=>s.id&&s.volume);
+    return !!(f.isBio || (srcs.length>0 && srcs.every(s=>s.type==="cuve" ? cuvesCuverie.find(c=>c.id===s.id)?.isBio : tonneaux.find(t=>t.id===s.id)?.certif==="BIO")));
+  };
   const submitTirage = () => {
     if(!tirageForm.cuvee.trim()) return alert("La cuvee est requise.");
     if(!tirageForm.date) return alert("La date est requise.");
@@ -1785,6 +1795,7 @@ export default function App() {
     const updated = {
       id: editingTirage ? editingTirage.id : `tirage_${Date.now()}`,
       ...tirageForm,
+      isBio: bioEffectifTirage(tirageForm),
       produitsOeno: (tirageForm.produitsOeno||[]).filter(p=>(p.nom||"").trim()).map(p=>({nom:p.nom.trim(),lot:(p.lot||"").trim(),quantite:p.quantite||"",unite:p.unite||"g"})),
       volLevain: calcVolLevain(tirageForm),
       volBouteilles: calcVolBouteilles(tirageForm),
@@ -1794,7 +1805,7 @@ export default function App() {
     if(editingTirage) {
       setTirages(prev=>prev.map(t=>t.id===editingTirage.id ? updated : t));
       // Update isBio in stock bouteilles
-      const isBioActuel = tirageForm.isBio||cuvesCuverie.find(c=>c.id===tirageForm.cuveSourceId)?.isBio||false;
+      const isBioActuel = bioEffectifTirage(tirageForm);
       setStockBouteilles(prev=>prev.map(lot=>{
         if(lot.tirageId===editingTirage.id) {
           const updatedLot = {...lot, isBio:isBioActuel};
@@ -1846,7 +1857,7 @@ export default function App() {
           denomination:tirageForm.cuvee||"Cuve tirage",
           millesime:tirageForm.millesime?+tirageForm.millesime:null,
           volume:parseFloat(tirageForm.nouvelleCuveVolume)||Math.ceil(volAssemble*1.1),
-          tonnelier:"",grain:"",chauffe:"",certif:"BIO",statut:"actif",
+          tonnelier:"",grain:"",chauffe:"",certif:bioEffectifTirage(tirageForm)?"BIO":"",statut:"actif",
           contenuActuel:volAssemble, marc:"",
           commentaire:`Cuve creee lors du tirage du ${tirageForm.date} - ${tirageForm.cuvee}`,
         }];
@@ -1869,6 +1880,7 @@ export default function App() {
           const diff = newQte - (existingLot.qteInitiale||0);
           const updatedLot = {
             ...existingLot,
+            isBio: bioEffectifTirage(tirageForm),
             cuvee: tirageForm.cuvee,
             millesime: tirageForm.millesime||"",
             dateTirage: tirageForm.date,
@@ -1883,7 +1895,7 @@ export default function App() {
             id: lotId,
             tirageId: updated.id,
             typeProduit: tirageForm.typeProduit||"champagne",
-            isBio: tirageForm.isBio||cuvesCuverie.find(c=>c.id===tirageForm.cuveSourceId)?.isBio||false,
+            isBio: bioEffectifTirage(tirageForm),
             cuvee: tirageForm.cuvee,
             millesime: tirageForm.millesime||"",
             dateTirage: tirageForm.date,
@@ -1914,7 +1926,7 @@ export default function App() {
           id: updated.id+"_"+l.fmt,
           tirageId: updated.id,
           typeProduit: tirageForm.typeProduit||"champagne",
-          isBio: tirageForm.isBio||cuvesCuverie.find(c=>c.id===tirageForm.cuveSourceId)?.isBio||false,
+          isBio: bioEffectifTirage(tirageForm),
           cuvee: tirageForm.cuvee,
           millesime: tirageForm.millesime||"",
           dateTirage: tirageForm.date,
@@ -2376,7 +2388,7 @@ export default function App() {
           denomination:parcelles.find(p=>p.id===vendangeForm.parcelleId)?.nom||"Vendange",
           millesime:+vendangeForm.annee,
           volume:parseFloat(vendangeForm.nouvelleCuveVolume)||Math.ceil(vol*1.1),
-          tonnelier:"",grain:"",chauffe:"",certif:"BIO",statut:"actif",
+          tonnelier:"",grain:"",chauffe:"",certif:isBioVendange(v)?"BIO":"",statut:"actif",
           contenuActuel:vol, marc:vendangeForm.numeroMarc||"",
           commentaire:`Marc ${vendangeForm.numeroMarc||"-"} - Vendange ${vendangeForm.annee} - ${parcelles.find(p=>p.id===vendangeForm.parcelleId)?.nom||""}`,
         };
@@ -8393,7 +8405,7 @@ export default function App() {
                   <input type="date" style={s.inp} value={assemblageForm.date} onChange={e=>setAssemblageForm(f=>({...f,date:e.target.value}))}/></div>
               </div>
               <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
-                <input type="checkbox" id="assemblageIsBio" checked={assemblageForm.isBio||false} onChange={e=>setAssemblageForm(f=>({...f,isBio:e.target.checked}))} style={{width:"16px",height:"16px",cursor:"pointer"}}/>
+                <input type="checkbox" id="assemblageIsBio" checked={bioEffectifAssemblage(assemblageForm)} onChange={e=>setAssemblageForm(f=>({...f,isBio:e.target.checked,isBioManuel:true}))} style={{width:"16px",height:"16px",cursor:"pointer"}}/>
                 <label htmlFor="assemblageIsBio" style={{fontSize:"12px",color:"#2d6a00",fontWeight:500,cursor:"pointer"}}>🌿 Certification BIO</label>
               </div>
 
@@ -8504,7 +8516,7 @@ export default function App() {
                   if(!assemblageForm.nomCuvee) return alert("Le nom de cuvée est requis.");
                   if(!assemblageForm.sources.some(s=>s.id&&s.volume)) return alert("Ajoutez au moins une source avec un volume.");
                   const sourcesValides = assemblageForm.sources.filter(s=>s.id&&s.volume);
-                  const isBioAssemblage = assemblageForm.isBio || (sourcesValides.length>0 && sourcesValides.every(s=>s.type==="cuve" ? cuvesCuverie.find(c=>c.id===s.id)?.isBio : tonneaux.find(t=>t.id===s.id)?.certif==="BIO"));
+                  const isBioAssemblage = bioEffectifAssemblage(assemblageForm);
                   const oldA = editingAssemblage; // null si creation, sinon assemblage en cours de modification
                   const a = {id: oldA?oldA.id:"asm_"+Date.now(), ...assemblageForm, isBio:isBioAssemblage, timestamp: oldA?oldA.timestamp:new Date().toISOString()};
                   const destRetoursValides = (assemblageForm.destRetours||[]).filter(r=>r.id&&r.volume);
@@ -9692,7 +9704,7 @@ export default function App() {
                       <option value="ratafia">Ratafia</option>
                     </select></div>
                   <div style={{display:"flex",alignItems:"center",gap:"8px",paddingTop:"18px"}}>
-                    <input type="checkbox" id="tirageIsBio" checked={tirageForm.isBio||false} onChange={e=>setTirageForm(f=>({...f,isBio:e.target.checked}))} style={{width:"16px",height:"16px",cursor:"pointer"}}/>
+                    <input type="checkbox" id="tirageIsBio" checked={bioEffectifTirage(tirageForm)} onChange={e=>setTirageForm(f=>({...f,isBio:e.target.checked,isBioManuel:true}))} style={{width:"16px",height:"16px",cursor:"pointer"}}/>
                     <label htmlFor="tirageIsBio" style={{fontSize:"12px",color:"#2d6a00",fontWeight:500,cursor:"pointer"}}>🌿 Certification BIO</label>
                   </div>
                   <div><span style={s.lbl}>Date *</span>
