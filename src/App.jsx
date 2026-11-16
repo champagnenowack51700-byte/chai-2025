@@ -8817,9 +8817,9 @@ export default function App() {
                   </div>
                 </div>
               </div>}
-              {!vendangeForm.presseAilleurs&&<div style={{background:"#F0EDE8",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
+              {<div style={{background:"#F0EDE8",borderRadius:"8px",padding:"14px",border:"0.5px solid #d4c4a0"}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"10px"}}>
-                  <span style={s.lbl}>Produits ajoutes</span>
+                  <span style={s.lbl}>Produits ajoutes{vendangeForm.presseAilleurs?" (pressurage chez le prestataire)":""}</span>
                   <button style={s.btnSm} onClick={()=>setShowProduitVendange(true)}>+ Ajouter</button>
                 </div>
                 {vendangeForm.produitsAjoutes.length===0&&<div style={{fontSize:"12px",color:"#9a8870",fontStyle:"italic"}}>Aucun produit ajoute.</div>}
