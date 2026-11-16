@@ -3734,7 +3734,7 @@ export default function App() {
                     <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px"}}>
                       <thead>
                         <tr style={{borderBottom:"1px solid #d4c4a0",background:"#F0EDE8"}}>
-                          {["N°","Date","Surface","Produits","Cu/ha",""].map(h=>(
+                          {["N°","Date","Surface","Produits · dose/ha · quantité totale","Cu/ha",""].map(h=>(
                             <th key={h} style={{textAlign:"left",padding:"7px 10px",fontSize:"10px",letterSpacing:"0.07em",textTransform:"uppercase",color:"#9a8870",fontWeight:500}}>{h}</th>
                           ))}
                         </tr>
@@ -3748,14 +3748,29 @@ export default function App() {
                             <tr key={t.id||i} style={{borderBottom:"1px solid #ede5d4",background:i%2===0?"transparent":"#F8F6F2"}}>
                               <td style={{padding:"8px 10px",fontFamily:"monospace",color:"#8B7355",fontWeight:500}}>N°{t.numero}</td>
                               <td style={{padding:"8px 10px",color:"#6a5838"}}>{fmt(t.date)}</td>
-                              <td style={{padding:"8px 10px",color:"#6a5838"}}>{t.surface}</td>
-                              <td style={{padding:"8px 10px",maxWidth:"320px"}}>
-                                <div style={{display:"flex",gap:"3px",flexWrap:"wrap"}}>
-                                  {(t.produits||[]).map((p,j)=>(
-                                    <span key={j} style={{background:p.matiereActive==="Cuivre"?"#E8E0D0":p.matiereActive==="Soufre"?"#e6f0fb":"#ede5d4",color:p.matiereActive==="Cuivre"?"#2C3E50":p.matiereActive==="Soufre"?"#185FA5":"#5f5e5a",borderRadius:"3px",padding:"1px 5px",fontSize:"10px",fontFamily:"monospace",whiteSpace:"nowrap"}}>
-                                      {p.nom} {doseProduitTxt(p)}
-                                    </span>
-                                  ))}
+                              <td style={{padding:"8px 10px",color:"#6a5838",whiteSpace:"nowrap"}}>{/^[0-9]+([.,][0-9]+)?$/.test(String(t.surface||"").trim())?`${t.surface} ha`:t.surface}</td>
+                              <td style={{padding:"8px 10px",minWidth:"340px"}}>
+                                {/* Un produit par ligne : nom | dose / ha (mise en avant) | quantité totale appliquée */}
+                                <div style={{display:"grid",gridTemplateColumns:"minmax(110px,1fr) auto auto",columnGap:"10px",rowGap:"4px",alignItems:"center"}}>
+                                  {(t.produits||[]).map((p,j)=>{
+                                    const coul = p.matiereActive==="Cuivre"?{bg:"#f3ead8",fg:"#7a5200",pt:"#b8860b"}:p.matiereActive==="Soufre"?{bg:"#e6f0fb",fg:"#185FA5",pt:"#185FA5"}:{bg:"#eef4ea",fg:"#2d6a00",pt:"#2d6a00"};
+                                    const dose = doseProduitTxt(p);
+                                    const total = quantiteTotaleProduit(p, t.surface);
+                                    return (
+                                      <React.Fragment key={j}>
+                                        <span style={{display:"flex",alignItems:"center",gap:"6px",fontSize:"12px",color:"#1a1205",fontWeight:500}}>
+                                          <span style={{width:"7px",height:"7px",borderRadius:"50%",background:coul.pt,flexShrink:0}} title={p.matiereActive||""}/>
+                                          {p.nom}
+                                        </span>
+                                        <span style={{background:dose?coul.bg:"#fdd0d0",color:dose?coul.fg:"#cc2222",borderRadius:"4px",padding:"2px 8px",fontSize:"12px",fontWeight:600,fontFamily:"monospace",whiteSpace:"nowrap",textAlign:"right"}}>
+                                          {dose||"dose ?"}
+                                        </span>
+                                        <span style={{fontSize:"11px",color:"#6a5838",fontFamily:"monospace",whiteSpace:"nowrap",textAlign:"right"}} title="Quantité totale appliquée (dose x surface)">
+                                          {total?`= ${total}`:""}
+                                        </span>
+                                      </React.Fragment>
+                                    );
+                                  })}
                                 </div>
                                 {t.observations&&<div style={{fontSize:"11px",color:"#9a8870",fontStyle:"italic",marginTop:"2px"}}>{t.observations}</div>}
                               </td>
