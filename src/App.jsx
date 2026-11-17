@@ -488,6 +488,26 @@ const HIST_TRAITEMENTS = [
   {campagne:"2024",numero:"24",date:"2024-07-10",surface:"8.20 ha",cuivreTotal:400,produits:[{nom:"Bouillie Bordelaise",dose:"1kg/ha",matiereActive:"Cuivre",cuivre:400},{nom:"Nordox",dose:"270g/ha",matiereActive:"Cuivre"}]},
 ];
 
+// Petite répartition BIO / non BIO affichée sous un total (barre proportionnelle + deux valeurs)
+const RepartitionBio = ({bio=0, nonBio=0, unite="", decimales=2}) => {
+  const total = (bio||0)+(nonBio||0);
+  if(!(total>0)) return null;
+  const f = (v) => decimales===0 ? Math.round(v).toLocaleString("fr-FR") : v.toLocaleString("fr-FR",{minimumFractionDigits:decimales,maximumFractionDigits:decimales});
+  const pct = Math.round(bio/total*100);
+  return (
+    <div style={{marginTop:"8px"}}>
+      <div style={{display:"flex",height:"5px",borderRadius:"3px",overflow:"hidden",background:"#e8e0d0"}}>
+        <div style={{width:`${pct}%`,background:"#2d6a00"}} title={`BIO ${pct}%`}/>
+        <div style={{flex:1,background:"#b8aa8c"}}/>
+      </div>
+      <div style={{display:"flex",justifyContent:"space-between",gap:"6px",marginTop:"4px",fontSize:"11px",flexWrap:"wrap"}}>
+        <span style={{color:"#2d6a00",fontWeight:600,whiteSpace:"nowrap"}}>BIO {f(bio)} {unite}</span>
+        <span style={{color:"#7a6840",whiteSpace:"nowrap"}}>Non BIO {f(nonBio)} {unite}</span>
+      </div>
+    </div>
+  );
+};
+
 // Dose d'un produit de traitement, avec son unité.
 // Anciennes saisies : texte libre ("0.7kg/ha"). Nouvelles saisies : nombre + unite (kg | L | g), exprimé par hectare.
 const doseProduitTxt = (p) => {
@@ -863,6 +883,7 @@ export default function App() {
   const [filterStockStatut,setFilterStockStatut]= useState("");
   const [filterStockFormat, setFilterStockFormat] = useState("");
   const [filterStock15,    setFilterStock15]    = useState("");
+  const [filterStockBio,   setFilterStockBio]   = useState(""); // "" | "bio" | "nonbio"
   const [groupByStock,     setGroupByStock]     = useState(["cuvee"]);
   const [filterTirageAnnee, setFilterTirageAnnee] = useState("");
   const [showTotauxDetail, setShowTotauxDetail] = useState(false);
@@ -3501,16 +3522,24 @@ export default function App() {
                 const totalRatafiaHL = futsActifs.filter(t=>t.appellation==="ratafia").reduce((s,t)=>s+(t.contenuActuel||0),0)/100;
                 const degreRatafia = parseFloat(degresRatafia[0]?.degre) || 18;
                 const hlapRatafia = totalRatafiaHL*degreRatafia/100;
+                // Répartition BIO / non BIO (certification du fût)
+                const estBio = t => t.certif==="BIO";
+                const hl = (futs) => futs.reduce((s,t)=>s+(t.contenuActuel||0),0)/100;
+                const riHL = (futs) => futs.reduce((s,t)=>{ const vri=parseFloat(t.volumeRI)||0; return s+(t.appellation==="ri"?(vri>0?vri:(t.contenuActuel||0)):vri)/100; },0);
+                const champ = futsActifs.filter(isChampagne);
+                const split = (fn, futs) => ({bio:fn(futs.filter(estBio)), nonBio:fn(futs.filter(t=>!estBio(t)))});
+                const tirable = (futs) => Math.max(0, hl(futs)-riHL(futs));
                 return [
-                  {lbl:"Volume Champagne",val:(totalVin/100).toFixed(2)+" HL",sub:`cap. ${(totalCap/100).toFixed(0)} HL`},
-                  {lbl:"Volume tirable",val:totalTirable.toFixed(2)+" HL",sub:"~"+Math.floor(totalTirable*100/0.75).toLocaleString("fr-FR")+" btl 75cl",col:"#1a7a40"},
-                  ...(futsActifs.filter(t=>t.appellation==="coteaux").reduce((s,t)=>s+(t.contenuActuel||0),0)>0?[{lbl:"Coteaux Champenois",val:(futsActifs.filter(t=>t.appellation==="coteaux").reduce((s,t)=>s+(t.contenuActuel||0),0)/100).toFixed(2)+" HL",sub:"",col:"#8B0000"}]:[]),
-                  ...(totalRatafiaHL>0?[{lbl:"Ratafia",val:totalRatafiaHL.toFixed(2)+" HL",sub:`≈ ${hlapRatafia.toFixed(2)} HL d'alcool pur (à ${degreRatafia}°)`,col:"#5c2a08",ratafia:true}]:[]),
+                  {lbl:"Volume Champagne",val:(totalVin/100).toFixed(2)+" HL",sub:`cap. ${(totalCap/100).toFixed(0)} HL`,rep:split(hl,champ)},
+                  {lbl:"Volume tirable",val:totalTirable.toFixed(2)+" HL",sub:"~"+Math.floor(totalTirable*100/0.75).toLocaleString("fr-FR")+" btl 75cl",col:"#1a7a40",rep:split(tirable,champ)},
+                  ...(futsActifs.filter(t=>t.appellation==="coteaux").reduce((s,t)=>s+(t.contenuActuel||0),0)>0?[{lbl:"Coteaux Champenois",rep:split(hl,futsActifs.filter(t=>t.appellation==="coteaux")),val:(futsActifs.filter(t=>t.appellation==="coteaux").reduce((s,t)=>s+(t.contenuActuel||0),0)/100).toFixed(2)+" HL",sub:"",col:"#8B0000"}]:[]),
+                  ...(totalRatafiaHL>0?[{lbl:"Ratafia",val:totalRatafiaHL.toFixed(2)+" HL",sub:`≈ ${hlapRatafia.toFixed(2)} HL d'alcool pur (à ${degreRatafia}°)`,col:"#5c2a08",ratafia:true,rep:split(hl,futsActifs.filter(t=>t.appellation==="ratafia"))}]:[]),
                 ].map((k,i)=>(
                   <div key={i} style={s.card}>
                     <div style={s.lbl}>{k.lbl}</div>
                     <div style={{fontSize:"28px",fontWeight:700,color:k.col||"#8B7355",letterSpacing:"-0.5px"}}>{k.val}</div>
                     <div style={{fontSize:"11px",color:"#9a8870",marginTop:"4px"}}>{k.sub}</div>
+                    {k.rep&&<RepartitionBio bio={k.rep.bio} nonBio={k.rep.nonBio} unite="HL" decimales={2}/>}
                     {k.ratafia&&<button style={{...s.ghostSm,fontSize:"10px",marginTop:"6px",padding:"3px 8px"}} onClick={()=>{setDegreRatafiaForm(String(degreRatafia));setShowDegreRatafiaForm(true);}}>Modifier le degré</button>}
                   </div>
                 ));
@@ -3570,6 +3599,7 @@ export default function App() {
                         <div><div style={{fontSize:"10px",color:"#9a8870",textTransform:"uppercase",letterSpacing:"0.05em"}}>Tirable</div><div style={{fontSize:"18px",fontWeight:600,color:"#1a7a40"}}>{calcTirable(vinsClairs).toFixed(2)} <span style={{fontSize:"11px"}}>HL</span></div></div>
                         <div><div style={{fontSize:"10px",color:"#9a8870",textTransform:"uppercase",letterSpacing:"0.05em"}}>~Bouteilles</div><div style={{fontSize:"18px",fontWeight:600,color:"#1a7a40"}}>{Math.floor(calcTirable(vinsClairs)*100/0.75).toLocaleString("fr-FR")} <span style={{fontSize:"11px"}}>btl</span></div></div>
                       </div>
+                      <RepartitionBio bio={calcTirable(vinsClairs.filter(t=>t.certif==="BIO"))} nonBio={calcTirable(vinsClairs.filter(t=>t.certif!=="BIO"))} unite="HL tirables" decimales={2}/>
                     </div>
                     <div style={{width:"1px",background:"#d4c4a0",alignSelf:"stretch"}}/>
                     <div style={{paddingLeft:"16px"}}>
@@ -3581,6 +3611,7 @@ export default function App() {
                         <div><div style={{fontSize:"10px",color:"#9a8870",textTransform:"uppercase",letterSpacing:"0.05em"}}>Tirable</div><div style={{fontSize:"18px",fontWeight:600,color:"#1a7a40"}}>{calcTirable(vinsReserve).toFixed(2)} <span style={{fontSize:"11px"}}>HL</span></div></div>
                         <div><div style={{fontSize:"10px",color:"#9a8870",textTransform:"uppercase",letterSpacing:"0.05em"}}>~Bouteilles</div><div style={{fontSize:"18px",fontWeight:600,color:"#1a7a40"}}>{Math.floor(calcTirable(vinsReserve)*100/0.75).toLocaleString("fr-FR")} <span style={{fontSize:"11px"}}>btl</span></div></div>
                       </div>
+                      <RepartitionBio bio={calcTirable(vinsReserve.filter(t=>t.certif==="BIO"))} nonBio={calcTirable(vinsReserve.filter(t=>t.certif!=="BIO"))} unite="HL tirables" decimales={2}/>
                     </div>
                   </div>
                 </div>
@@ -4591,6 +4622,8 @@ export default function App() {
             if(filterStockFormat && stockTab==="champagne" && (l.format||"75cl")!==filterStockFormat) return false;
             if(filterStock15==="moins15" && l.mois>=15) return false;
             if(filterStock15==="plus15" && l.mois<15) return false;
+            if(filterStockBio==="bio" && !l.isBio) return false;
+            if(filterStockBio==="nonbio" && l.isBio) return false;
             return true;
           });
           // Fusion pour Habille CRD et Habille Export uniquement
@@ -4699,10 +4732,15 @@ export default function App() {
                   <option value="moins15">Moins de 15 mois</option>
                   <option value="plus15">Plus de 15 mois</option>
                 </select>
-                {(filterStockLieu||filterStockStatut||filterStock15||filterStockCuvee)&&(
-                  <button style={s.ghostSm} onClick={()=>{setFilterStockLieu("");setFilterStockStatut("");setFilterStock15("");setFilterStockCuvee("");}}>Reinitialiser</button>
+                <select style={{...s.sel,maxWidth:"150px",...(filterStockBio?{borderColor:"#2d6a00",color:"#2d6a00"}:{})}} value={filterStockBio} onChange={e=>setFilterStockBio(e.target.value)}>
+                  <option value="">BIO et non BIO</option>
+                  <option value="bio">BIO uniquement</option>
+                  <option value="nonbio">Non BIO uniquement</option>
+                </select>
+                {(filterStockLieu||filterStockStatut||filterStock15||filterStockCuvee||filterStockBio)&&(
+                  <button style={s.ghostSm} onClick={()=>{setFilterStockLieu("");setFilterStockStatut("");setFilterStock15("");setFilterStockCuvee("");setFilterStockBio("");}}>Reinitialiser</button>
                 )}
-                <span style={{marginLeft:"auto",fontSize:"11px",color:"#9a8870"}}>{lotsFusionnes.length} ligne(s) ({lotsFiltre.length} lots)</span>
+                <span style={{marginLeft:"auto",fontSize:"11px",color:"#9a8870"}}>{lotsFusionnes.length} ligne(s) ({lotsFiltre.length} lots) · <b style={{color:"#2C3E50"}}>{lotsFiltre.reduce((x,l)=>x+(parseInt(l.qteActuelle)||0),0).toLocaleString("fr-FR")} btl</b></span>
               </div>
 
               {/* 3. Tableau */}
